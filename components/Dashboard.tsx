@@ -1,0 +1,386 @@
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { StorageService } from '../services/storageService';
+import { Event, Registration, User, SystemNotification, Broadcast } from '../types';
+import { Card, Button, Badge, formatTime, Input, Select } from './UI';
+import { 
+    Search, Calendar, Grid, List as ListIcon, MoreVertical, 
+    Copy, Trash2, Edit, ExternalLink, QrCode, Download, 
+    Code, Eye, EyeOff, BarChart3, DollarSign, Ticket, RefreshCw,
+    Link as LinkIcon, ArrowRight, Wallet, Megaphone, X, Bell, Globe, MapPin, MoreHorizontal, Settings, Gift
+} from 'lucide-react';
+
+export const Dashboard = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [systemNote, setSystemNote] = useState<SystemNotification | null>(null);
+  
+  // View State
+  const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'drafts' | 'past'>('upcoming');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  
+  // Messages State
+  const [showMessages, setShowMessages] = useState(false);
+  const [userMessages, setUserMessages] = useState<{broadcast: Broadcast, eventTitle: string}[]>([]);
+
+  // Menu State for Cards
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = StorageService.getCurrentUser();
+    if (!user) { 
+        navigate('/auth'); 
+        return; 
+    }
+    
+    // SECURITY CHECK: Redirect non-organizers immediately
+    if (user.role !== 'organizer' && !user.isAdmin) {
+        // If they are affiliate, send to affiliate portal, else browse
+        if (user.role === 'affiliate') {
+            navigate('/affiliate', { replace: true });
+        } else {
+            navigate('/browse', { replace: true });
+        }
+        return;
+    }
+
+    setCurrentUser(user);
+    refreshData(user.id);
+    
+    const note = StorageService.getSystemNotification();
+    setSystemNote(note);
+
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+
+  }, [navigate]); 
+
+  // ... rest of the dashboard code remains the same ...
+  
+  useEffect(() => {
+      if (location.state && (location.state as any).showSuccess) {
+          setShowSuccessOverlay(true);
+          window.history.replaceState({}, document.title);
+          const timer = setTimeout(() => setShowSuccessOverlay(false), 2000);
+          return () => clearTimeout(timer);
+      }
+  }, [location]);
+
+  const refreshData = async (userId: string) => {
+      const allEvents = await StorageService.getEvents();
+      // Only show events owned by user
+      const myEvents = allEvents.filter(e => e.ownerId === userId);
+      setEvents(myEvents);
+      
+      const allRegs = await StorageService.getRegistrations();
+      // Get regs for my events
+      const myRegs = allRegs.filter(r => myEvents.some(e => e.id === r.eventId));
+      setRegistrations(myRegs);
+
+      // Get regs where I am an attendee to show messages
+      const userRegs = allRegs.filter(r => r.attendeeEmail === currentUser?.email);
+      const attendedEvents = allEvents.filter(e => userRegs.some(r => r.eventId === e.id));
+      
+      const messages: {broadcast: Broadcast, eventTitle: string}[] = [];
+      attendedEvents.forEach(e => {
+          if (e.broadcasts) {
+              e.broadcasts.forEach(b => {
+                  messages.push({ broadcast: b, eventTitle: e.title });
+              });
+          }
+      });
+      setUserMessages(messages.sort((a,b) => b.broadcast.sentAt - a.broadcast.sentAt));
+  };
+
+  const handleDuplicate = async (event: Event) => {
+      const user = currentUser || StorageService.getCurrentUser();
+      if (!user) return;
+      
+      if (!window.confirm(`Duplicate "${event.title}"?`)) return;
+      
+      try {
+          const { id, registeredCount, createdAt, moderationStatus, moderationReason, broadcasts, ...eventProps } = event;
+          const cleanProps = JSON.parse(JSON.stringify(eventProps));
+
+          const newEvent: Event = {
+              ...cleanProps,
+              id: `evt-${Date.now()}`,
+              title: `${event.title} (Copy)`,
+              registeredCount: 0,
+              createdAt: Date.now(),
+              isDraft: true,
+              broadcasts: [],
+              moderationStatus: 'approved'
+          };
+      
+          await StorageService.saveEvent(newEvent);
+          setEvents(prev => [newEvent, ...prev]);
+          // Switch to drafts tab to show new item
+          setActiveTab('drafts');
+      } catch (e: any) {
+        alert(`Failed to duplicate: ${e.message}`);
+      }
+  };
+
+  const handleDelete = async (id: string) => {
+      if (!window.confirm("Delete this event? This cannot be undone.")) return;
+      try {
+          await StorageService.deleteEvent(id);
+          setEvents(prev => prev.filter(e => e.id !== id));
+      } catch (e: any) {
+          alert(`Failed to delete: ${e.message}`);
+      }
+  };
+
+  const getEventStats = (eventId: string) => {
+      const eventRegs = registrations.filter(r => r.eventId === eventId && r.paymentStatus !== 'refunded');
+      const itemsSold = eventRegs.reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + t.quantity, 0) || 1), 0);
+      const grossRevenue = eventRegs.reduce((acc, r) => {
+          let total = r.donationAmount || 0;
+          if (r.tickets) total += r.tickets.reduce((tAcc, t) => tAcc + (t.pricePerTicket * t.quantity), 0);
+          return acc + total;
+      }, 0);
+      return { itemsSold, grossRevenue };
+  };
+
+  // Filter Logic
+  const filteredEvents = events.filter(e => {
+      const matchesSearch = e.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const eventDate = new Date(e.date);
+      eventDate.setHours(23, 59, 59, 999);
+      const isPast = eventDate.getTime() < Date.now();
+
+      let matchesTab = false;
+      if (activeTab === 'all') matchesTab = true;
+      else if (activeTab === 'drafts') matchesTab = !!e.isDraft;
+      else if (activeTab === 'past') matchesTab = !e.isDraft && isPast;
+      else if (activeTab === 'upcoming') matchesTab = !e.isDraft && !isPast;
+
+      return matchesSearch && matchesTab;
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Aggregate Stats
+  const totalRevenue = registrations.filter(r => r.paymentStatus !== 'refunded').reduce((acc, r) => {
+      let total = r.donationAmount || 0;
+      if (r.tickets) total += r.tickets.reduce((tAcc, t) => tAcc + (t.pricePerTicket * t.quantity), 0);
+      return acc + total;
+  }, 0);
+  
+  const totalTicketsSold = registrations.filter(r => r.paymentStatus !== 'refunded').reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + t.quantity, 0) || 1), 0);
+
+  if (!currentUser) return null; // Don't render while redirecting
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8 pb-20 relative">
+        {/* Success Overlay */}
+        {showSuccessOverlay && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                <div className="bg-[#E0FF20] w-[65%] h-64 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(224,255,32,0.6)] animate-pulse border-4 border-black/10">
+                     <div className="text-black text-5xl md:text-7xl font-black font-display uppercase tracking-tighter drop-shadow-sm transform -rotate-1 animate-bounce">
+                        Success!
+                    </div>
+                </div>
+            </div>
+        )}
+
+        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+            <div>
+                <h1 className="text-3xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Dashboard</h1>
+                <p className="text-zinc-500">Welcome back, {currentUser?.name}</p>
+            </div>
+            
+            <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowMessages(true)} className="relative">
+                    <Bell size={18} />
+                    {userMessages.length > 0 && <span className="absolute top-0 right-0 -mt-1 -mr-1 h-3 w-3 bg-red-500 rounded-full"></span>}
+                </Button>
+                <Button onClick={() => navigate('/create')} variant="secondary" className="shadow-lg shadow-[#E0FF20]/20">
+                    <RefreshCw size={18} className="mr-2"/> Create Event
+                </Button>
+            </div>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
+                <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Total Revenue</div>
+                <div className="text-3xl font-black text-zinc-900 dark:text-white">${totalRevenue.toFixed(2)}</div>
+            </div>
+            <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
+                <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Tickets Sold</div>
+                <div className="text-3xl font-black text-zinc-900 dark:text-white">{totalTicketsSold}</div>
+            </div>
+            <div className="bg-surface border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-secondary transition-colors" onClick={() => navigate('/billing')}>
+                <div>
+                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Available Payout</div>
+                    <div className="text-3xl font-black text-zinc-900 dark:text-white">${currentUser?.availablePayout?.toFixed(2) || '0.00'}</div>
+                </div>
+                <Wallet size={24} className="text-secondary"/>
+            </div>
+            {/* Affiliate Access */}
+            <div className="bg-gradient-to-br from-[#E0FF20]/20 to-green-500/10 border border-[#E0FF20]/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-[#E0FF20] transition-colors group" onClick={() => navigate('/affiliate')}>
+                <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs font-bold text-[#E0FF20] uppercase">Partner Program</div>
+                    <ArrowRight size={16} className="text-[#E0FF20] group-hover:translate-x-1 transition-transform"/>
+                </div>
+                <div className="text-sm font-bold text-white">Earn 15% Commissions</div>
+            </div>
+        </div>
+
+        {/* Tabs & Search */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl overflow-x-auto w-full md:w-auto">
+                {['all', 'upcoming', 'drafts', 'past'].map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as any)}
+                        className={`px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${activeTab === tab ? 'bg-white dark:bg-black shadow text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'}`}
+                    >
+                        {tab === 'all' ? 'All Events' : tab}
+                    </button>
+                ))}
+            </div>
+            <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                <input 
+                    type="text" 
+                    placeholder="Search events..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 h-10 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm focus:border-primary outline-none"
+                />
+            </div>
+        </div>
+
+        {/* Events Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map(event => {
+                const stats = getEventStats(event.id);
+                const eventDate = new Date(event.date);
+                eventDate.setHours(23, 59, 59, 999);
+                const isPast = eventDate.getTime() < Date.now();
+
+                return (
+                    <div key={event.id} className={`group bg-white dark:bg-black border ${event.isDraft ? 'border-yellow-200 dark:border-yellow-900' : 'border-zinc-200 dark:border-zinc-800'} rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full relative`}>
+                        {/* Image Section */}
+                        <div className="h-48 relative overflow-hidden">
+                            <img src={event.imageUrl} alt={event.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${event.isDraft ? 'grayscale' : ''}`} />
+                            <div className="absolute top-3 left-3 flex gap-2 flex-wrap max-w-[80%]">
+                                <Badge color={event.visibility === 'public' ? 'green' : 'gray'}>{event.visibility}</Badge>
+                                {event.isDraft && <Badge color="purple">DRAFT</Badge>}
+                                {!event.isDraft && isPast && <Badge color="red">ENDED</Badge>}
+                            </div>
+                            {/* Card Menu */}
+                            <div className="absolute top-3 right-3">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === event.id ? null : event.id); }}
+                                    className="p-2 bg-black/50 hover:bg-black/70 text-white rounded-full backdrop-blur-md transition-colors"
+                                >
+                                    <MoreHorizontal size={18}/>
+                                </button>
+                                {openMenuId === event.id && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-20 animate-in fade-in zoom-in-95 origin-top-right">
+                                        <button onClick={() => navigate(`/edit/${event.id}`)} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"><Edit size={14}/> Edit Event</button>
+                                        <button onClick={() => handleDuplicate(event)} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"><Copy size={14}/> Duplicate</button>
+                                        <button onClick={() => window.open(`/#/event/${event.id}`, '_blank')} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"><ExternalLink size={14}/> View Page</button>
+                                        <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1"></div>
+                                        <button onClick={() => handleDelete(event.id)} className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"><Trash2 size={14}/> Delete</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5 flex-1 flex flex-col">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold text-zinc-900 dark:text-white line-clamp-1 mb-1" title={event.title}>{event.title}</h3>
+                                <div className="text-xs text-zinc-500 flex items-center gap-1">
+                                    <Calendar size={12}/> {new Date(event.date).toLocaleDateString()}
+                                    <span className="mx-1">•</span>
+                                    <MapPin size={12}/> {event.location?.split(',')[0]}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 mb-4 bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                <div>
+                                    <div className="text-[10px] uppercase font-bold text-zinc-400">Sold</div>
+                                    <div className="font-black text-zinc-900 dark:text-white">{stats.itemsSold} <span className="text-zinc-400 text-xs font-medium">/ {event.capacity}</span></div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] uppercase font-bold text-zinc-400">Revenue</div>
+                                    <div className="font-black text-green-600 dark:text-green-400">${stats.grossRevenue.toFixed(0)}</div>
+                                </div>
+                            </div>
+
+                            <div className="mt-auto pt-2 flex gap-2">
+                                <Button onClick={() => navigate(`/manage/${event.id}`)} className="flex-1 bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 border-none py-3 shadow-lg">
+                                    Manage
+                                </Button>
+                                <Button onClick={() => navigate(`/checkin/${event.id}`)} variant="outline" className="px-3" title="Check-In Portal">
+                                    <QrCode size={18}/>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+            
+            {filteredEvents.length === 0 && (
+                <div className="col-span-full py-20 text-center">
+                    <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                        <Calendar size={32}/>
+                    </div>
+                    <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-2">No events found</h3>
+                    <p className="text-zinc-500 mb-6">Create your first event or adjust your filters.</p>
+                    <Button onClick={() => navigate('/create')}>Create Event</Button>
+                </div>
+            )}
+        </div>
+
+        {/* Notifications Modal */}
+        {showMessages && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                <div className="bg-white dark:bg-zinc-900 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold flex items-center gap-2">
+                            <Bell size={20} className="text-primary"/> Notifications
+                        </h3>
+                        <button onClick={() => setShowMessages(false)} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><X size={20}/></button>
+                    </div>
+                    
+                    <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                        {systemNote && (
+                            <div className={`p-4 rounded-xl border ${systemNote.type === 'warning' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-blue-50 border-blue-200 text-blue-800'}`}>
+                                <div className="font-bold text-xs uppercase mb-1">System Message</div>
+                                <p>{systemNote.message}</p>
+                            </div>
+                        )}
+                        
+                        {userMessages.length === 0 && !systemNote ? (
+                            <div className="text-center py-8 text-zinc-500">No new messages.</div>
+                        ) : (
+                            userMessages.map((msg, idx) => (
+                                <div key={idx} className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h4 className="font-bold text-sm">{msg.broadcast.subject}</h4>
+                                        <span className="text-[10px] text-zinc-500">{new Date(msg.broadcast.sentAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="text-sm text-zinc-600 dark:text-zinc-300 mb-2" dangerouslySetInnerHTML={{__html: msg.broadcast.message}} />
+                                    <div className="text-[10px] text-zinc-400 font-medium">From: {msg.eventTitle}</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+  );
+};

@@ -1,0 +1,7 @@
+{
+  "name": "OpenTicket 2.0",
+  "description": "A modern, free-to-use event ticketing platform with donation support and AI-powered registration forms.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

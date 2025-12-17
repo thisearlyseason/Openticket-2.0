@@ -1,0 +1,394 @@
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { StorageService } from '../services/storageService';
+import { Button, Input, Card, Select, FileDropZone } from './UI';
+import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap } from 'lucide-react';
+
+export const Auth = () => {
+    const [searchParams] = useSearchParams();
+    const [isLogin, setIsLogin] = useState(true);
+    const [step, setStep] = useState(0); // 0 = Role Selection, 1 = Basics, 2 = Onboarding, 3 = Non-Profit (Optional)
+    const [role, setRole] = useState<'attendee' | 'organizer'>('attendee');
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Form Data
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        businessName: '',
+        businessType: '',
+        eventTypes: '',
+        nonProfitName: '',
+        nonProfitEin: '',
+        nonProfitDocUrl: ''
+    });
+
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    // Handle Redirect Param & Referral Code
+    const redirectPlan = searchParams.get('plan');
+    const referralCode = searchParams.get('ref');
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+        const { user, error: loginError } = await StorageService.login(formData.email, formData.password);
+        
+        if (loginError) {
+             setError(loginError);
+             setIsLoading(false);
+             return;
+        }
+
+        if (user) {
+            if (redirectPlan) {
+                navigate(`/pricing?select=${redirectPlan}`);
+            } else {
+                if (user.isAdmin) {
+                    navigate('/admin');
+                } else if (user.role === 'organizer') {
+                    navigate('/dashboard');
+                } else if (user.role === 'affiliate') {
+                    navigate('/affiliate');
+                } else {
+                    navigate('/browse'); // Attendee
+                }
+            }
+        } else {
+            setError('Invalid credentials');
+            setIsLoading(false);
+        }
+    };
+
+    const handleSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        
+        // Step 1: Credentials
+        if (step === 1) {
+            if (!formData.name || !formData.email || !formData.password) {
+                setError("Please fill all fields");
+                return;
+            }
+            if (role === 'organizer') {
+                setStep(2); // Go to Business Onboarding
+            } else {
+                await finalizeSignup(); // Create Attendee Account immediately
+            }
+            return;
+        }
+
+        // Step 2: Finalize for Organizer or go to Non-Profit
+        if (step === 2) {
+            if (formData.businessType === 'nonprofit') {
+                setStep(3); // Go to Non-Profit Details
+                return;
+            }
+            await finalizeSignup();
+            return;
+        }
+
+        // Step 3: Non-Profit Details
+        if (step === 3) {
+            if (!formData.nonProfitName || !formData.nonProfitEin || !formData.nonProfitDocUrl) {
+                setError("Please provide all non-profit verification details.");
+                return;
+            }
+            await finalizeSignup();
+        }
+    };
+
+    const finalizeSignup = async () => {
+        setIsLoading(true);
+        
+        // Prepare User Data, inject referral code if present
+        const userData: any = {
+            ...formData,
+            role: role,
+            nonProfitStatus: formData.businessType === 'nonprofit' ? 'pending' : undefined
+        };
+        
+        if (referralCode) {
+            userData.referredBy = referralCode;
+        }
+
+        const result = await StorageService.signup(userData);
+        if (typeof result === 'string') {
+            setError(result);
+            setIsLoading(false);
+        } else {
+            if (redirectPlan) {
+                navigate(`/pricing?select=${redirectPlan}`);
+            } else {
+                navigate(role === 'organizer' ? '/dashboard' : '/browse');
+            }
+        }
+    };
+
+    // Helper to auto-login as Admin
+    const loginAsAdmin = async () => {
+        setIsLoading(true);
+        const { user } = await StorageService.login('admin@openticket.com', 'admin');
+        if (user) {
+             navigate('/admin');
+        }
+        else {
+            setError("Admin user not found.");
+            setIsLoading(false);
+        }
+    };
+
+    // Helper for Instant Demo Login
+    const handleDemoLogin = async () => {
+        setIsLoading(true);
+        // Try to login as the default demo user created in StorageService.init
+        const { user } = await StorageService.login('demo@example.com', 'password');
+        if (user) {
+            navigate('/dashboard');
+        } else {
+            // Fallback: If for some reason demo user doesn't exist, create it on the fly
+             const demoUser = {
+                id: 'user1',
+                name: 'Demo Organizer',
+                email: 'demo@example.com',
+                password: 'password',
+                role: 'organizer' as const,
+                businessName: 'Demo Corp'
+            };
+            const result = await StorageService.signup(demoUser);
+            if (typeof result !== 'string') {
+                navigate('/dashboard');
+            } else {
+                setError("Could not initialize demo user. Please try standard signup.");
+                setIsLoading(false);
+            }
+        }
+    };
+
+    return (
+        <div className="max-w-md mx-auto py-20 px-4">
+            <Card className="p-8 shadow-[0_0_40px_rgba(224,255,32,0.2)] border-t-4 border-t-secondary">
+                <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-secondary text-black mb-4">
+                        <UserIcon size={24} />
+                    </div>
+                    <h1 className="text-2xl font-black font-display text-gray-900 dark:text-white uppercase tracking-tight">{isLogin ? 'Welcome Back' : 'Join OpenTicket'}</h1>
+                    <p className="text-gray-500 dark:text-zinc-400 mt-2">
+                        {isLogin ? 'Sign in to your account.' : step === 0 ? 'How do you want to use OpenTicket?' : 'Create your account.'}
+                    </p>
+                </div>
+
+                {/* LOGIN FORM */}
+                {isLogin && (
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <Input 
+                            label="Email Address" 
+                            type="email" 
+                            required 
+                            value={formData.email} 
+                            onChange={e => setFormData({...formData, email: e.target.value})} 
+                        />
+                        <Input 
+                            label="Password" 
+                            type="password" 
+                            required 
+                            value={formData.password} 
+                            onChange={e => setFormData({...formData, password: e.target.value})} 
+                        />
+                        {error && (
+                            <div className="text-red-500 text-sm text-center font-bold bg-red-500/10 p-3 rounded flex items-center justify-center gap-2">
+                                {error.includes("Suspended") && <Ban size={16}/>}
+                                {error}
+                            </div>
+                        )}
+                        <Button type="submit" variant="secondary" className="w-full py-4 text-lg text-black" isLoading={isLoading}>Sign In</Button>
+                        
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-zinc-200 dark:border-zinc-800"></span>
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white dark:bg-black px-2 text-zinc-500">Quick Access</span>
+                            </div>
+                        </div>
+
+                        <Button type="button" onClick={handleDemoLogin} className="w-full py-3 bg-[#E0FF20]/10 text-black dark:text-[#E0FF20] border-2 border-dashed border-[#E0FF20] hover:bg-[#E0FF20] hover:text-black" isLoading={isLoading}>
+                            <Zap size={18} className="mr-2" /> Instant Organizer Login
+                        </Button>
+                        
+                        <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 text-center">
+                            <button type="button" onClick={loginAsAdmin} className="text-xs text-zinc-500 hover:text-primary flex items-center justify-center gap-1 mx-auto">
+                                <ShieldCheck size={12}/> Log in as Super Admin
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {/* SIGNUP FLOW */}
+                {!isLogin && (
+                    <form onSubmit={handleSignup} className="space-y-4">
+                        
+                        {/* STEP 0: SELECT ROLE */}
+                        {step === 0 && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                                <div 
+                                    onClick={() => { setRole('attendee'); setStep(1); }}
+                                    className="p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:border-primary cursor-pointer transition-all flex items-center space-x-4 group"
+                                >
+                                    <div className="bg-white dark:bg-black p-3 rounded-full text-zinc-900 dark:text-white group-hover:text-primary transition-colors border border-zinc-200 dark:border-zinc-800">
+                                        <Ticket size={24} />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">I want to find events</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-400">Book tickets and manage your schedule.</p>
+                                    </div>
+                                </div>
+
+                                <div 
+                                    onClick={() => { setRole('organizer'); setStep(1); }}
+                                    className="p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 rounded-2xl hover:border-secondary cursor-pointer transition-all flex items-center space-x-4 group"
+                                >
+                                    <div className="bg-white dark:bg-black p-3 rounded-full text-zinc-900 dark:text-white group-hover:bg-secondary group-hover:text-black transition-colors border border-zinc-200 dark:border-zinc-800">
+                                        <Calendar size={24} />
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-secondary transition-colors">I want to host events</h3>
+                                        <p className="text-sm text-gray-500 dark:text-zinc-400">Create events, sell tickets, and manage attendees.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 1: BASICS */}
+                        {step === 1 && (
+                            <div className="animate-in fade-in slide-in-from-right-4">
+                                <Input 
+                                    label="Full Name" 
+                                    required 
+                                    value={formData.name} 
+                                    onChange={e => setFormData({...formData, name: e.target.value})} 
+                                />
+                                <Input 
+                                    label="Email Address" 
+                                    type="email" 
+                                    required 
+                                    value={formData.email} 
+                                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                                />
+                                <Input 
+                                    label="Password" 
+                                    type="password" 
+                                    required 
+                                    value={formData.password} 
+                                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                                />
+                                <div className="flex gap-2 mt-4">
+                                    <Button type="button" variant="ghost" onClick={() => setStep(0)} className="flex-1">Back</Button>
+                                    <Button type="submit" variant="secondary" className="flex-1" isLoading={isLoading}>
+                                        {role === 'organizer' ? 'Next Step' : 'Create Account'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 2: ORGANIZER ONBOARDING */}
+                        {step === 2 && (
+                            <div className="animate-in fade-in slide-in-from-right-4">
+                                <div className="bg-secondary/10 border border-secondary/20 p-4 rounded-xl mb-4 text-sm text-secondary-dark font-medium">
+                                    Tell us a bit about yourself so we can tailor your experience.
+                                </div>
+                                <Input 
+                                    label="Business / Organization Name" 
+                                    placeholder="e.g. Acme Events"
+                                    value={formData.businessName} 
+                                    onChange={e => setFormData({...formData, businessName: e.target.value})} 
+                                />
+                                <Select 
+                                    label="Type of Business"
+                                    value={formData.businessType}
+                                    onChange={e => setFormData({...formData, businessType: e.target.value})}
+                                    options={[
+                                        {value: '', label: 'Select...'},
+                                        {value: 'nonprofit', label: 'Non-Profit / Charity'},
+                                        {value: 'education', label: 'Education'},
+                                        {value: 'corporate', label: 'Corporate'},
+                                        {value: 'community', label: 'Community Group'},
+                                        {value: 'personal', label: 'Personal / Hobby'},
+                                        {value: 'other', label: 'Other'}
+                                    ]}
+                                />
+                                 <Input 
+                                    label="What kind of events do you host?" 
+                                    placeholder="e.g. Workshops, Concerts, Classes"
+                                    value={formData.eventTypes} 
+                                    onChange={e => setFormData({...formData, eventTypes: e.target.value})} 
+                                />
+                                <div className="flex gap-2 mt-4">
+                                    <Button type="button" variant="ghost" onClick={() => setStep(1)} className="flex-1">Back</Button>
+                                    <Button type="submit" variant="secondary" className="flex-1" isLoading={isLoading}>
+                                        {formData.businessType === 'nonprofit' ? 'Next: Verification' : 'Complete Setup'}
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 3: NON-PROFIT VERIFICATION */}
+                        {step === 3 && (
+                            <div className="animate-in fade-in slide-in-from-right-4">
+                                <div className="bg-secondary/10 border border-secondary/20 p-4 rounded-xl mb-4 text-sm dark:text-secondary text-green-700 flex items-start gap-2">
+                                    <Building2 size={20} className="shrink-0"/>
+                                    <div>
+                                        <strong>Non-Profit Verification</strong><br/>
+                                        Provide your details to receive 25% off Pro pricing and lower rates.
+                                    </div>
+                                </div>
+                                <Input 
+                                    label="Legal Non-Profit Name" 
+                                    value={formData.nonProfitName} 
+                                    onChange={e => setFormData({...formData, nonProfitName: e.target.value})} 
+                                    required
+                                />
+                                <Input 
+                                    label="EIN / Registration Number" 
+                                    value={formData.nonProfitEin} 
+                                    onChange={e => setFormData({...formData, nonProfitEin: e.target.value})} 
+                                    required
+                                />
+                                <div className="mb-4">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Upload Proof of Status (501(c)(3) Letter)</label>
+                                    <FileDropZone 
+                                        label=""
+                                        currentImage={formData.nonProfitDocUrl ? 'PDF UPLOADED' : undefined} 
+                                        onFileSelect={(b64) => setFormData({...formData, nonProfitDocUrl: b64})}
+                                        onClear={() => setFormData({...formData, nonProfitDocUrl: ''})}
+                                    />
+                                    {formData.nonProfitDocUrl && <p className="text-secondary text-xs font-bold mt-1">Document Attached</p>}
+                                </div>
+
+                                <div className="flex gap-2 mt-4">
+                                    <Button type="button" variant="ghost" onClick={() => setStep(2)} className="flex-1">Back</Button>
+                                    <Button type="submit" variant="secondary" className="flex-1" isLoading={isLoading}>Submit for Approval</Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && <p className="text-red-500 text-sm text-center font-bold bg-red-500/10 p-2 rounded">{error}</p>}
+                    </form>
+                )}
+
+                <div className="mt-6 text-center">
+                    <button 
+                        onClick={() => { setIsLogin(!isLogin); setStep(0); setError(''); }}
+                        className="text-primary hover:underline text-sm font-bold"
+                    >
+                        {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                    </button>
+                </div>
+            </Card>
+        </div>
+    );
+};
