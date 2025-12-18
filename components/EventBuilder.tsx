@@ -105,7 +105,7 @@ export const EventBuilder = () => {
                 ...prev,
                 organizer: user.businessName || user.name,
                 organizerEmail: user.email,
-                paymentConfig: { method: user.defaultPaymentMethod || 'none', link: user.defaultPaymentLink, instructions: user.defaultPaymentInstructions },
+                paymentConfig: { method: (user.defaultPaymentMethod as any) || 'none', link: user.defaultPaymentLink, instructions: user.defaultPaymentInstructions },
                 confirmationMessage: user.defaultConfirmationTemplate,
                 refundPolicy: user.defaultRefundPolicy,
                 taxRate: user.defaultTaxRate || 0,
@@ -388,10 +388,18 @@ export const EventBuilder = () => {
       }
       
       const plan = currentUser?.subscription?.plan || 'free';
-      const fee = StorageService.calculateFees(price, plan);
+      const platformFee = StorageService.calculateFees(price, plan);
+      let stripeFee = 0;
       
-      const youReceive = formData.absorbFees ? price - fee : price;
-      const attendeePays = formData.absorbFees ? price : price + fee;
+      if (mode === 'online') {
+          // Stripe Fee: 2.9% + $0.30
+          stripeFee = (price * 0.029) + 0.30;
+      }
+      
+      const totalFee = platformFee + stripeFee;
+      
+      const youReceive = formData.absorbFees ? price - totalFee : price;
+      const attendeePays = formData.absorbFees ? price : price + totalFee;
 
       if (mode === 'offline') {
           return (
@@ -403,12 +411,12 @@ export const EventBuilder = () => {
                   </div>
                   <div className="flex justify-between mb-1 text-red-500">
                       <span>Platform Fees (You Owe Later):</span>
-                      <span className="font-mono">-${fee.toFixed(2)}</span>
+                      <span className="font-mono">-${platformFee.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-zinc-300 dark:border-zinc-700 my-2 pt-2">
                       <div className="flex justify-between font-bold text-green-600 dark:text-green-400">
                           <span>Net Revenue:</span>
-                          <span>${Math.max(0, price - fee).toFixed(2)}</span>
+                          <span>${Math.max(0, price - platformFee).toFixed(2)}</span>
                       </div>
                   </div>
                   <div className="text-[10px] text-zinc-400 mt-2 italic">
@@ -421,14 +429,33 @@ export const EventBuilder = () => {
       return (
           <div className="mt-4 p-4 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm animate-in fade-in">
               <h4 className="font-bold mb-2 uppercase text-xs text-zinc-500">Online Fee Breakdown (Per Ticket)</h4>
+              
+              {/* Fee Absorption Toggle */}
+              <div className="flex items-center justify-between mb-4 p-3 bg-white dark:bg-black rounded-lg border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex items-center gap-2">
+                      <Settings size={16} className="text-zinc-400"/>
+                      <span className="font-bold text-zinc-700 dark:text-zinc-300">Absorb Fees?</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                      <span className={`text-xs ${formData.absorbFees ? 'text-zinc-400' : 'font-bold text-primary'}`}>Attendee Pays</span>
+                      <Switch checked={formData.absorbFees || false} onChange={c => setFormData({...formData, absorbFees: c})} />
+                      <span className={`text-xs ${formData.absorbFees ? 'font-bold text-primary' : 'text-zinc-400'}`}>I Pay</span>
+                  </div>
+              </div>
+
               <div className="flex justify-between mb-1">
                   <span>{priceLabel}:</span>
                   <span className="font-mono">${price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between mb-1 text-zinc-500">
-                  <span>Platform Fees ({PLANS[plan].name} Plan):</span>
-                  <span className="font-mono">${fee.toFixed(2)}</span>
+                  <span>Platform Fee ({PLANS[plan].name}):</span>
+                  <span className="font-mono">${platformFee.toFixed(2)}</span>
               </div>
+              <div className="flex justify-between mb-1 text-zinc-500">
+                  <span>Processing Fee (2.9% + 30¢):</span>
+                  <span className="font-mono">${stripeFee.toFixed(2)}</span>
+              </div>
+              
               <div className="border-t border-zinc-300 dark:border-zinc-700 my-2 pt-2">
                   <div className="flex justify-between font-bold">
                       <span>Attendee Pays:</span>
@@ -496,7 +523,6 @@ export const EventBuilder = () => {
                                 />
                             </div>
 
-                            {/* ...Rest of Step 1 same as original... */}
                             {formData.eventType !== 'online' && (
                                 <div className="space-y-4 mt-4">
                                     <Input label="Venue Name" value={formData.venueName} onChange={e => setFormData({...formData, venueName: e.target.value})} placeholder="e.g. The Grand Hall" />
@@ -512,7 +538,6 @@ export const EventBuilder = () => {
                                     </div>
                                 </div>
                             )}
-                            {/* ... */}
                         </Card>
                         {/* ... Date & Time Card ... */}
                         <Card className="p-6">

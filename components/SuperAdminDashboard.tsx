@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { User, Event, Registration, Invoice } from '../types';
 import { Card, Button, Badge, Input, RichTextarea, Tooltip } from './UI';
-import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp } from 'lucide-react';
+import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save } from 'lucide-react';
 
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
@@ -27,6 +27,8 @@ export const SuperAdminDashboard = () => {
 
     // Platform Settings State
     const [platformStripeId, setPlatformStripeId] = useState('');
+    const [platformPublishableKey, setPlatformPublishableKey] = useState('');
+    const [platformSecretKey, setPlatformSecretKey] = useState('');
 
     const currentUser = StorageService.getCurrentUser();
 
@@ -36,6 +38,8 @@ export const SuperAdminDashboard = () => {
             return;
         }
         setPlatformStripeId(currentUser.stripeConnectId || '');
+        setPlatformPublishableKey(currentUser.stripePublishableKey || '');
+        setPlatformSecretKey(currentUser.stripeSecretKey || '');
         refreshData();
     }, [navigate]);
 
@@ -132,7 +136,11 @@ export const SuperAdminDashboard = () => {
 
     const handleSavePlatformSettings = async () => {
         if (!currentUser) return;
-        await StorageService.updateUser(currentUser.id, { stripeConnectId: platformStripeId });
+        await StorageService.updateUser(currentUser.id, { 
+            stripeConnectId: platformStripeId,
+            stripePublishableKey: platformPublishableKey,
+            stripeSecretKey: platformSecretKey
+        });
         alert("Platform settings saved successfully.");
     };
 
@@ -205,7 +213,6 @@ export const SuperAdminDashboard = () => {
             </div>
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden min-h-[500px]">
-                {/* Simplified view logic for brevity, full logic in main file */}
                 {activeTab === 'users' && (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm text-zinc-400">
@@ -214,11 +221,16 @@ export const SuperAdminDashboard = () => {
                             </thead>
                             <tbody>
                                 {filteredUsers.map(u => (
-                                    <tr key={u.id} className="border-t border-zinc-800">
-                                        <td className="p-4">{u.name} ({u.email})</td>
-                                        <td className="p-4">{u.role}</td>
+                                    <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                         <td className="p-4">
-                                            <Button size="sm" variant="outline" onClick={() => handleToggleBan(u)}>{u.isBanned ? 'Unban' : 'Ban'}</Button>
+                                            <div className="font-bold text-white">{u.name}</div>
+                                            <div className="text-xs">{u.email}</div>
+                                        </td>
+                                        <td className="p-4"><Badge color={u.isAdmin ? 'purple' : 'gray'}>{u.role}</Badge></td>
+                                        <td className="p-4">
+                                            <Button size="sm" variant={u.isBanned ? 'primary' : 'outline'} onClick={() => handleToggleBan(u)}>
+                                                {u.isBanned ? 'Unban User' : 'Ban User'}
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
@@ -226,7 +238,115 @@ export const SuperAdminDashboard = () => {
                         </table>
                     </div>
                 )}
-                {/* Other tabs follow similar pattern */}
+
+                {activeTab === 'events' && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-zinc-400">
+                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                <tr><th className="p-4">Event</th><th className="p-4">Organizer</th><th className="p-4">Status</th><th className="p-4">Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {filteredEvents.map(e => (
+                                    <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                        <td className="p-4">
+                                            <div className="font-bold text-white">{e.title}</div>
+                                            <div className="text-xs">{new Date(e.date).toLocaleDateString()}</div>
+                                        </td>
+                                        <td className="p-4">{e.organizer}</td>
+                                        <td className="p-4">
+                                            {e.moderationStatus === 'rejected' ? <Badge color="red">Rejected</Badge> : <Badge color="green">Active</Badge>}
+                                        </td>
+                                        <td className="p-4 flex gap-2">
+                                            <button onClick={() => window.open(`/#/event/${e.id}`, '_blank')} className="p-2 hover:bg-zinc-700 rounded"><ExternalLink size={14}/></button>
+                                            <button onClick={() => handleRejectEvent(e)} className="p-2 hover:bg-red-900/30 text-red-500 rounded"><Ban size={14}/></button>
+                                            <button onClick={() => handleDeleteEvent(e)} className="p-2 hover:bg-red-900/30 text-red-500 rounded"><Trash2 size={14}/></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {activeTab === 'broadcast' && (
+                    <div className="p-8">
+                        <h2 className="text-xl font-bold text-white mb-4">System Broadcast</h2>
+                        <div className="max-w-2xl">
+                            <RichTextarea 
+                                label="Global Notification Message"
+                                value={broadcastMsg}
+                                onChange={(e: any) => setBroadcastMsg(e.target.value)}
+                                placeholder="Message to display on all dashboards..."
+                                className="mb-4"
+                            />
+                            <div className="flex gap-2">
+                                <Button onClick={handleSendBroadcast} disabled={!broadcastMsg}><Send size={16} className="mr-2"/> Post Broadcast</Button>
+                                <Button variant="outline" onClick={handleClearBroadcast}>Clear Active Broadcast</Button>
+                            </div>
+                        </div>
+                        {activeNotification && (
+                            <div className="mt-8 p-4 border border-zinc-700 rounded-xl bg-zinc-800/50">
+                                <div className="text-xs font-bold uppercase text-zinc-500 mb-2">Active Broadcast</div>
+                                <div dangerouslySetInnerHTML={{__html: activeNotification.message}} className="text-white"/>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'settings' && (
+                    <div className="p-8">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <Settings size={24} className="text-[#E0FF20]"/> Platform Configuration
+                        </h2>
+                        
+                        <div className="max-w-2xl space-y-6">
+                            <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                    <CreditCard size={20} className="text-blue-400"/> Stripe Connect Integration
+                                </h3>
+                                <p className="text-sm text-zinc-400 mb-6">
+                                    Configure your platform's Stripe keys here. These will be used to process payments and split fees from organizers.
+                                </p>
+                                
+                                <div className="space-y-4">
+                                    <Input 
+                                        label="Platform Account ID" 
+                                        placeholder="acct_..." 
+                                        value={platformStripeId}
+                                        onChange={e => setPlatformStripeId(e.target.value)}
+                                        className="bg-black border-zinc-700 text-white"
+                                    />
+                                    <Input 
+                                        label="Publishable Key" 
+                                        placeholder="pk_live_..." 
+                                        value={platformPublishableKey}
+                                        onChange={e => setPlatformPublishableKey(e.target.value)}
+                                        className="bg-black border-zinc-700 text-white"
+                                    />
+                                    <div className="relative">
+                                        <Input 
+                                            label="Secret Key" 
+                                            placeholder="sk_live_..." 
+                                            type="password"
+                                            value={platformSecretKey}
+                                            onChange={e => setPlatformSecretKey(e.target.value)}
+                                            className="bg-black border-zinc-700 text-white"
+                                        />
+                                        <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
+                                            <Lock size={16}/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end">
+                                    <Button onClick={handleSavePlatformSettings} className="bg-[#635BFF] hover:bg-[#534ac2] text-white border-none">
+                                        <Save size={16} className="mr-2"/> Save Configuration
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

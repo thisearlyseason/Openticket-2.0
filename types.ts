@@ -108,10 +108,15 @@ export interface User {
   bankInfo?: BankInfo;
   stripeConnectId?: string;
   stripeOnboardingComplete?: boolean;
+  
+  // Admin/Platform Config
+  stripePublishableKey?: string;
+  stripeSecretKey?: string;
 
   // Profile
   socials?: Socials;
   address?: Address;
+  notifications?: { reminder: boolean; newOrder: boolean };
   
   // Subscription
   subscription?: Subscription;

@@ -1,16 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText } from 'lucide-react';
+import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink } from 'lucide-react';
 import { Button, Card, Badge, Input, Select } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { Registration, Event } from '../types';
 
 export const Billing = () => {
   const navigate = useNavigate();
-  const [showAddMethod, setShowAddMethod] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
-  const [newMethodData, setNewMethodData] = useState({ type: 'stripe', label: '', token: '' });
+  
+  // Stripe State
+  const [stripeId, setStripeId] = useState('');
+  const [isEditingStripe, setIsEditingStripe] = useState(false);
+  
   const [newCardData, setNewCardData] = useState({ number: '', expiry: '', cvc: '', name: '' });
   
   const [payoutMode, setPayoutMode] = useState<'standard' | 'instant'>('standard');
@@ -40,6 +43,12 @@ export const Billing = () => {
           // Sort by date desc
           setLedger(mySales.sort((a,b) => b.reg.timestamp - a.reg.timestamp));
           setIsLoadingLedger(false);
+          
+          if(user.stripeConnectId) {
+              setStripeId(user.stripeConnectId);
+          } else {
+              setIsEditingStripe(true);
+          }
       };
       loadLedger();
   }, [user?.id]);
@@ -64,17 +73,23 @@ export const Billing = () => {
   const instantFee = netPayoutAvailable * 0.015;
   const instantNet = netPayoutAvailable - instantFee;
 
-  const handleAddPaymentMethod = (e: React.FormEvent) => {
-      e.preventDefault();
-      const mockToken = `tok_${Math.random().toString(36).substr(2, 8)}`;
-      StorageService.Payment.addPaymentMethod(user.id, {
-          type: newMethodData.type as any,
-          label: newMethodData.label || `${newMethodData.type} Account`,
-          isDefault: false,
-          token: mockToken,
-          connectedAccountId: `acct_${Math.random().toString(36).substr(2, 10)}`
+  const handleSaveStripeId = async () => {
+      if (!stripeId.trim()) return;
+      if (!stripeId.startsWith('acct_')) {
+          alert("Invalid Stripe Connect ID. It should start with 'acct_'.");
+          return;
+      }
+      
+      await StorageService.Payment.addPaymentMethod(user.id, {
+          type: 'stripe',
+          label: 'Stripe Connect',
+          isDefault: true,
+          connectedAccountId: stripeId
       });
-      setShowAddMethod(false);
+      
+      await StorageService.updateUser(user.id, { stripeConnectId: stripeId });
+      alert("Stripe Connected Successfully!");
+      setIsEditingStripe(false);
       window.location.reload();
   };
 
@@ -120,7 +135,9 @@ export const Billing = () => {
           return;
       }
       setIsProcessingPayout(true);
-      setTimeout(async () => {
+      
+      // Direct call without artificial delay
+      (async () => {
           const result = await StorageService.Payment.requestPayout(user.id, payoutMode);
           if (result.success) {
               if (result.deducted > 0) {
@@ -137,7 +154,7 @@ export const Billing = () => {
               alert("Payout failed.");
           }
           setIsProcessingPayout(false);
-      }, 1500);
+      })();
   };
 
   const exportLedgerCSV = () => {
@@ -235,33 +252,94 @@ export const Billing = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 md:col-span-2 border-l-4 border-l-primary">
-                <div className="flex justify-between items-start mb-4">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Current Subscription</h2>
-                        <p className="text-sm text-gray-500">Your plan and billing cycle.</p>
+            <div className="md:col-span-2 space-y-6">
+                <Card className="p-6 border-l-4 border-l-primary">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Current Subscription</h2>
+                            <p className="text-sm text-gray-500">Your plan and billing cycle.</p>
+                        </div>
+                        <Badge color={sub.plan === 'premium' ? 'purple' : sub.plan === 'pro' ? 'blue' : 'green'}>
+                            {planDetails.name} Plan
+                        </Badge>
                     </div>
-                    <Badge color={sub.plan === 'premium' ? 'purple' : sub.plan === 'pro' ? 'blue' : 'green'}>
-                        {planDetails.name} Plan
-                    </Badge>
-                </div>
-                <div className="flex items-center gap-4 text-sm mb-6">
-                    <div className="flex items-center text-gray-600 dark:text-zinc-300">
-                        <Calendar size={16} className="mr-2 text-primary" />
-                        Next billing: {new Date(sub.nextBillingDate).toLocaleDateString()}
+                    <div className="flex items-center gap-4 text-sm mb-6">
+                        <div className="flex items-center text-gray-600 dark:text-zinc-300">
+                            <Calendar size={16} className="mr-2 text-primary" />
+                            Next billing: {new Date(sub.nextBillingDate).toLocaleDateString()}
+                        </div>
+                        <div className="flex items-center text-gray-600 dark:text-zinc-300">
+                            <DollarSign size={16} className="mr-2 text-primary" />
+                            ${sub.plan === 'free' ? '0.00' : sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2)}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
+                        </div>
                     </div>
-                    <div className="flex items-center text-gray-600 dark:text-zinc-300">
-                        <DollarSign size={16} className="mr-2 text-primary" />
-                        ${sub.plan === 'free' ? '0.00' : sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2)}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => navigate('/pricing')}>Change Plan</Button>
-                    <Button size="sm" variant="ghost">View Invoices</Button>
-                </div>
-            </Card>
+                </Card>
 
-            <Card className="p-6 bg-zinc-900 text-white border-zinc-800">
+                {/* Direct Stripe Integration Card */}
+                <div className="bg-[#635BFF] p-6 rounded-3xl text-white shadow-lg shadow-[#635BFF]/30 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 className="font-bold text-xl mb-1 flex items-center gap-2">Stripe Connect</h3>
+                            <p className="text-white/80 text-sm">Automated payouts for ticket sales.</p>
+                        </div>
+                        {!isEditingStripe && user.stripeConnectId && (
+                            <button onClick={() => setIsEditingStripe(true)} className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                <Settings size={12}/> Config
+                            </button>
+                        )}
+                    </div>
+
+                    {isEditingStripe || !user.stripeConnectId ? (
+                        <div className="bg-white/10 p-4 rounded-xl backdrop-blur-sm animate-in fade-in space-y-4">
+                            <div className="text-xs text-white/80 leading-relaxed">
+                                Enter your Stripe Connect Account ID to receive payouts. You can find this in your Stripe Dashboard under Settings.
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-white/70 uppercase mb-1">Stripe Account ID</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        className="flex-1 bg-white text-black px-3 py-2 rounded-lg outline-none border-none text-sm font-mono placeholder:text-zinc-400"
+                                        placeholder="acct_..."
+                                        value={stripeId}
+                                        onChange={e => setStripeId(e.target.value.trim())}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                                {user.stripeConnectId && (
+                                    <button 
+                                        onClick={() => { setStripeId(user.stripeConnectId || ''); setIsEditingStripe(false); }}
+                                        className="text-white/70 hover:text-white px-3 py-2 text-sm font-bold"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                                <button 
+                                    onClick={handleSaveStripeId}
+                                    className="bg-white text-[#635BFF] px-6 py-2 rounded-lg font-bold text-sm hover:bg-white/90 shadow-md"
+                                    disabled={!stripeId.startsWith('acct_')}
+                                >
+                                    {user.stripeConnectId ? 'Update ID' : 'Connect Account'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-4 bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                            <div className="w-12 h-12 bg-[#00D924] rounded-full flex items-center justify-center shadow-lg">
+                                <CheckCircle2 size={24} className="text-white"/>
+                            </div>
+                            <div>
+                                <div className="font-bold text-lg leading-tight">Payouts Active</div>
+                                <div className="font-mono text-white/60 text-xs mt-1 flex items-center gap-1">
+                                    ID: {user.stripeConnectId} <ExternalLink size={10}/>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <Card className="p-6 bg-zinc-900 text-white border-zinc-800 h-fit">
                 <div className="flex justify-between items-start mb-2">
                     <div>
                         <h2 className="text-lg font-bold">Payout Balance</h2>

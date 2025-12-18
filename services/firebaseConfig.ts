@@ -3,10 +3,15 @@
 import { initializeApp } from 'firebase/app';
 // @ts-ignore
 import { getFirestore } from 'firebase/firestore';
+// @ts-ignore
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 // ------------------------------------------------------------------
 // IMPORTANT: REPLACE THIS CONFIGURATION WITH YOUR FIREBASE PROJECT SETTINGS
 // ------------------------------------------------------------------
+// The current configuration uses a placeholder or specific project ID.
+// If you see "auth/configuration-not-found", it means Google Auth is not enabled in the Firebase Console
+// for the project ID listed below. You must use your OWN Firebase project where you have enabled Authentication.
 const firebaseConfig = {
   apiKey: "AIzaSyDtnbTx4gTAC5ufD173Lt9IaiQfpZOQFyA",
   authDomain: "openticket-4f5bc.firebaseapp.com",
@@ -20,15 +25,21 @@ const firebaseConfig = {
 // Explicitly initialize with null to avoid "Missing initializer" const errors if variable type changes
 let app: any = null;
 let dbInstance: any = null;
+let authInstance: any = null;
+let googleProviderInstance: any = null;
 
 try {
   // Initialize Firebase
   app = initializeApp(firebaseConfig);
   dbInstance = getFirestore(app);
+  authInstance = getAuth(app);
+  googleProviderInstance = new GoogleAuthProvider();
   console.log("Firebase App Initialized");
 } catch (e) {
   console.error("Firebase Initialization Failed:", e);
 }
 
-// Export firestore instance
+// Export instances
 export const db = dbInstance;
+export const auth = authInstance;
+export const googleProvider = googleProviderInstance;

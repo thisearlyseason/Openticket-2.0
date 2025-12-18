@@ -4,7 +4,7 @@ import { StorageService } from '../services/storageService';
 import { GeminiService } from '../services/geminiService';
 import { User, Invoice } from '../types';
 import { Card, Button, Input, CodeBlock, Badge } from './UI';
-import { DollarSign, Users, Link2, Copy, Sparkles, Twitter, Linkedin, Instagram, ExternalLink, Download, Gift, Zap, ShieldCheck, ArrowLeft, Loader2, CheckCircle2, ChevronRight, Star, Crown, Facebook, MapPin, Music, CreditCard, Save } from 'lucide-react';
+import { DollarSign, Users, Link2, Copy, Sparkles, Twitter, Linkedin, Instagram, ExternalLink, Download, Gift, Zap, ShieldCheck, ArrowLeft, Loader2, CheckCircle2, ChevronRight, Star, Crown, Facebook, MapPin, Music, CreditCard, Save, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const AffiliateDashboard = () => {
@@ -22,6 +22,7 @@ export const AffiliateDashboard = () => {
     const [generatedContent, setGeneratedContent] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [stripeId, setStripeId] = useState('');
+    const [isEditingStripe, setIsEditingStripe] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     
     // Marketing Lab State
@@ -117,16 +118,17 @@ export const AffiliateDashboard = () => {
         setIsActivating(false);
     };
 
-    const handleSaveStripe = async () => {
-        if (!user) return;
+    const handleSaveStripeId = async () => {
+        if (!user || !stripeId) return;
         
-        if (stripeId && !stripeId.startsWith('acct_')) {
-            alert("Invalid ID. Stripe Connect Account IDs must start with 'acct_'.");
+        if (!stripeId.startsWith('acct_')) {
+            alert("Invalid ID. Must start with 'acct_'.");
             return;
         }
 
         await StorageService.updateUser(user.id, { stripeConnectId: stripeId });
-        alert("Payout settings saved successfully.");
+        setIsEditingStripe(false);
+        alert("Payout details updated successfully!");
         await refreshData(user.id);
     };
 
@@ -235,34 +237,39 @@ export const AffiliateDashboard = () => {
                     </div>
                 </Card>
                 
-                {/* Stripe Config Card */}
-                <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 relative overflow-hidden">
-                    <div className="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center gap-2">
-                        Payout Configuration 
-                        {user?.stripeConnectId && <span className="bg-green-500/20 text-green-500 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10}/> Connected</span>}
+                {/* Stripe Payout Card */}
+                <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 relative overflow-hidden flex flex-col justify-center border-l-4 border-l-[#635BFF]">
+                    <div className="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center justify-between">
+                        Payout Setup
+                        {user?.stripeConnectId && <span className="bg-green-500/20 text-green-500 text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10}/> Active</span>}
                     </div>
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <input 
-                                type="text"
-                                placeholder="acct_12345..." 
+                    
+                    {isEditingStripe || !user?.stripeConnectId ? (
+                        <div className="animate-in fade-in space-y-2">
+                            <Input 
+                                placeholder="acct_..." 
                                 value={stripeId} 
-                                onChange={e => setStripeId(e.target.value)} 
-                                className="w-full bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg pl-9 pr-3 py-2 text-xs font-mono focus:border-[#635BFF] outline-none transition-colors"
+                                onChange={e => setStripeId(e.target.value)}
+                                className="text-xs mb-0 bg-white/10 border-zinc-700"
                             />
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#635BFF]">
-                                <CreditCard size={14}/>
+                            <div className="flex gap-2">
+                                <Button size="sm" onClick={handleSaveStripeId} className="bg-[#635BFF] text-white hover:bg-[#534ac2] border-none text-xs">Save</Button>
+                                {user?.stripeConnectId && <Button size="sm" variant="ghost" onClick={() => setIsEditingStripe(false)} className="text-xs">Cancel</Button>}
                             </div>
                         </div>
-                        <button 
-                            onClick={handleSaveStripe}
-                            className="bg-[#635BFF] text-white px-3 rounded-lg hover:bg-[#534ac2] transition-colors shadow-lg shadow-[#635BFF]/20"
-                            title="Connect Stripe"
-                        >
-                            <Save size={16}/>
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-zinc-500 mt-2">Enter your Stripe Connect ID to receive auto-payouts.</p>
+                    ) : (
+                        <div>
+                            <div className="flex items-center justify-between">
+                                <div className="text-sm font-mono text-zinc-300 bg-black/20 p-2 rounded border border-zinc-700 mb-2 truncate max-w-[120px]">
+                                    {user.stripeConnectId}
+                                </div>
+                                <button onClick={() => setIsEditingStripe(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                    <Edit2 size={14}/>
+                                </button>
+                            </div>
+                            <div className="text-[10px] text-zinc-500">Payouts are automated monthly.</div>
+                        </div>
+                    )}
                 </Card>
             </div>
 

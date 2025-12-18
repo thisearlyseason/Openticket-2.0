@@ -251,11 +251,16 @@ export const Pricing = () => {
 
       </div>
       
-      {user?.businessType === 'nonprofit' && user.nonProfitStatus !== 'approved' && (
-          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center text-sm text-blue-800 dark:text-blue-200">
-              <span className="font-bold">Non-Profit Status Pending:</span> Once approved, you will see 25% off Pro pricing here.
-          </div>
-      )}
+      <div className="mt-8 text-center">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              * Standard credit card processing fees (2.9% + $0.30) apply to all paid online ticket sales via Stripe. Platform fees are separate.
+          </p>
+          {user?.businessType === 'nonprofit' && user.nonProfitStatus !== 'approved' && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center text-sm text-blue-800 dark:text-blue-200 inline-block">
+                  <span className="font-bold">Non-Profit Status Pending:</span> Once approved, you will see 25% off Pro pricing here.
+              </div>
+          )}
+      </div>
     </div>
   );
 };

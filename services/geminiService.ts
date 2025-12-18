@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question } from '../types';
 
@@ -17,13 +16,15 @@ export const GeminiService = {
     if (!ai) return "AI is currently unavailable. Please write a description manually.";
 
     try {
-      const model = 'gemini-2.5-flash';
+      // FIX: Use recommended gemini-3-flash-preview for text tasks
+      const model = 'gemini-3-flash-preview';
       const prompt = `Write a compelling, exciting event description for an event titled "${title}". 
       Basic details: ${basicInfo}. 
       Use HTML formatting (<h3> for sections, <ul> for lists, <strong> for emphasis). 
       Keep it engaging and professional. Do not wrap in markdown.`;
 
       const response = await ai.models.generateContent({ model, contents: prompt });
+      // FIX: Access .text property directly
       return response.text ?? "";
     } catch (error) {
       console.error("AI Generation Error:", error);
@@ -36,7 +37,8 @@ export const GeminiService = {
     if (!ai) return [];
 
     try {
-      const model = 'gemini-2.5-flash';
+      // FIX: Use recommended gemini-3-flash-preview for text tasks
+      const model = 'gemini-3-flash-preview';
       const prompt = `Based on this event context: "${context.substring(0, 500)}...", 
       suggest 3-5 relevant registration questions to ask attendees.`;
 
@@ -61,6 +63,7 @@ export const GeminiService = {
         }
       });
       
+      // FIX: Access .text property directly
       const jsonStr = response.text || "[]";
       
       const questions = JSON.parse(jsonStr);
@@ -79,7 +82,8 @@ export const GeminiService = {
       if (!ai) return "AI unavailable.";
 
       try {
-          const model = 'gemini-2.5-flash';
+          // FIX: Use recommended gemini-3-flash-preview for text tasks
+          const model = 'gemini-3-flash-preview';
           let prompt = "";
           const context = `Event: "${eventTitle}". When/Where: ${eventDetails}. Description: "${eventDesc.substring(0, 1000)}".`;
           
@@ -105,6 +109,7 @@ export const GeminiService = {
           }
 
           const response = await ai.models.generateContent({ model, contents: prompt });
+          // FIX: Access .text property directly
           return response.text || "Could not generate content.";
       } catch (e) {
           return "Error generating content.";
@@ -134,6 +139,7 @@ export const GeminiService = {
               }
           });
 
+          // FIX: Correctly iterate parts to find the image Part
           for (const part of response.candidates?.[0]?.content?.parts || []) {
               if (part.inlineData) {
                   return `data:image/png;base64,${part.inlineData.data}`;
@@ -151,7 +157,8 @@ export const GeminiService = {
       if (!ai) return { subject: '', body: '' };
 
       try {
-          const model = 'gemini-2.5-flash';
+          // FIX: Use recommended gemini-3-flash-preview for text tasks
+          const model = 'gemini-3-flash-preview';
           const prompt = `Write an email newsletter for an event titled "${eventTitle}". 
           The purpose of this email is: "${purpose}".
           Use an urgent but professional tone.
@@ -174,6 +181,7 @@ export const GeminiService = {
               }
           });
           
+          // FIX: Access .text property directly and clean markdown code blocks if necessary
           const text = response.text || '';
           const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
           
@@ -189,7 +197,8 @@ export const GeminiService = {
       if (!ai) return "AI Unavailable";
 
       try {
-          const model = 'gemini-2.5-flash';
+          // FIX: Use recommended gemini-3-flash-preview for text tasks
+          const model = 'gemini-3-flash-preview';
           const link = `openticket.com?ref=${referralCode}`;
           
           let platformPrompt = "";
@@ -230,6 +239,7 @@ export const GeminiService = {
           `;
 
           const response = await ai.models.generateContent({ model, contents: prompt });
+          // FIX: Access .text property directly
           return response.text?.trim() || "Could not generate.";
       } catch (e) {
           return "Error generating content.";
@@ -241,7 +251,8 @@ export const GeminiService = {
     if (!ai) return { safe: true };
 
     try {
-        const model = 'gemini-2.5-flash';
+        // FIX: Use recommended gemini-3-flash-preview for safety analysis
+        const model = 'gemini-3-flash-preview';
         const prompt = `Analyze the following event content for violations of safety policies (hate speech, illegal acts, explicit violence, sexually explicit content, scams). 
         Event Title: "${title}"
         Description: "${description.substring(0, 1000)}"
@@ -264,6 +275,7 @@ export const GeminiService = {
             }
         });
         
+        // FIX: Access .text property directly
         const result = JSON.parse(response.text || '{"flagged": false}');
         return { safe: !result.flagged, reason: result.reason };
     } catch (e) {

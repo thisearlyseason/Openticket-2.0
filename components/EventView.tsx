@@ -157,7 +157,7 @@ export const EventView = () => {
                   if (qty > 0) {
                       const tierAssignments = assignments[tier.id] || [];
                       for (let i = 0; i < qty; i++) {
-                          const assignment = tierAssignments[i] || {};
+                          const assignment = tierAssignments[i] || { name: '', email: '' };
                           tickets.push({
                               tierId: tier.id,
                               name: tier.name,
@@ -174,7 +174,7 @@ export const EventView = () => {
                if (qty > 0) {
                    const tierAssignments = assignments['general'] || [];
                    for (let i = 0; i < qty; i++) {
-                       const assignment = tierAssignments[i] || {};
+                       const assignment = tierAssignments[i] || { name: '', email: '' };
                        tickets.push({
                            tierId: 'general',
                            name: event.ticketName || 'General Admission',

@@ -33,9 +33,16 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = StorageService.getCurrentUser();
+  
+  // Role & Visibility Definitions
   const isOrganizer = user?.role === 'organizer' || user?.isAdmin;
   const isAffiliate = user?.role === 'affiliate' || user?.isAdmin;
   
+  // Strict Visibility Flags
+  const showDashboard = isOrganizer; // Only Organizers and Admins see Dashboard
+  const showCreateEvent = isOrganizer; // Only Organizers and Admins can create events
+  const showExplore = !user || (user.role !== 'affiliate' && user.role !== 'attendee') || user.isAdmin;
+
   const isOffline = StorageService.isOfflineMode();
   const isDemoMode = StorageService.isDemoMode();
   
@@ -85,12 +92,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
   };
 
   const handleLogout = () => {
-    try {
-        StorageService.logout();
-        window.location.href = '/';
-    } catch (e) {
-        window.location.href = '/';
-    }
+    StorageService.logout();
+    // Force reload to clear all states/cache/navigation history
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -124,7 +128,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
         <nav className={`fixed left-0 right-0 z-50 glass ${isOffline || isDemoMode ? 'top-6' : 'top-0'}`}>
             <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between items-center h-16">
-                <Link to={user ? "/browse" : "/"} className="flex items-center space-x-2 group">
+                <Link to={user ? (isOrganizer ? "/dashboard" : "/my-tickets") : "/"} className="flex items-center space-x-2 group">
                     <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center rotate-3 group-hover:rotate-12 transition-transform shadow-[0_0_15px_rgba(224,255,32,0.5)]">
                         <Ticket className="text-black w-5 h-5" />
                     </div>
@@ -134,7 +138,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                 </Link>
 
                 <div className="hidden md:flex items-center space-x-6">
-                <Link to="/browse" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary transition-colors">Explore</Link>
+                {showExplore && <Link to="/browse" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary transition-colors">Explore</Link>}
                 
                 <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10" aria-label="Toggle Theme">
                     {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-zinc-600" />}
@@ -142,13 +146,19 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
 
                 {user ? (
                     <>
-                        {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
+                        {showDashboard && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
+                        
                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
+                        
                         <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
+                        
                         {(isAffiliate || isOrganizer) && <Link to="/affiliate" className="text-zinc-500 dark:text-zinc-400 hover:text-secondary" title="Affiliate Program"><Gift size={20}/></Link>}
+                        
                         <Link to="/settings" className="text-zinc-500 dark:text-zinc-400 hover:text-secondary" title="Settings"><SettingsIcon size={20}/></Link>
+                        
                         <button onClick={handleLogout} className="text-zinc-500 dark:text-zinc-400 hover:text-red-500" title="Logout"><LogOut size={20}/></button>
-                        {isOrganizer && (
+                        
+                        {showCreateEvent && (
                             <button onClick={() => navigate('/create')} className="bg-secondary text-black px-4 py-2 rounded-full font-bold text-sm hover:bg-[#d2f800] transition-colors shadow-lg">
                                 + Create Event
                             </button>
@@ -179,9 +189,11 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
       {!isLanding && !isEmbed && !isAffiliateAuth && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 z-50 pb-safe">
             <div className="flex justify-around items-center h-16 text-xs font-medium">
-                <Link to="/browse" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/browse' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                    <HomeIcon size={24} strokeWidth={location.pathname === '/browse' ? 3 : 2} />
-                </Link>
+                {showExplore && (
+                    <Link to="/browse" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/browse' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                        <HomeIcon size={24} strokeWidth={location.pathname === '/browse' ? 3 : 2} />
+                    </Link>
+                )}
                 
                 {user ? (
                     <>
@@ -189,31 +201,29 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                             <Ticket size={24} strokeWidth={location.pathname === '/my-tickets' ? 3 : 2} />
                         </Link>
                         
-                        {isOrganizer ? (
+                        {showCreateEvent && (
                             <div className="relative -top-5">
                                 <button onClick={() => navigate('/create')} className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center text-black shadow-[0_0_15px_rgba(210,248,0,0.4)] border-4 border-background">
                                     <Plus size={28} strokeWidth={3} />
                                 </button>
                             </div>
-                        ) : (
-                            <div className="w-10"></div>
                         )}
 
-                        {isOrganizer ? (
+                        {showDashboard ? (
                             <Link to="/dashboard" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/dashboard' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
                                 <LayoutDashboard size={24} strokeWidth={location.pathname === '/dashboard' ? 3 : 2} />
                             </Link>
-                        ) : (
-                            <Link to="/settings" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/settings' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                                <User size={24} strokeWidth={location.pathname === '/settings' ? 3 : 2} />
+                        ) : isAffiliate ? (
+                             <Link to="/affiliate" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/affiliate' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                                <Gift size={24} strokeWidth={location.pathname === '/affiliate' ? 3 : 2} />
                             </Link>
+                        ) : (
+                            <div className="w-10"></div>
                         )}
                         
-                        {isOrganizer && (
-                            <Link to="/settings" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/settings' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                                <SettingsIcon size={24} strokeWidth={location.pathname === '/settings' ? 3 : 2} />
-                            </Link>
-                        )}
+                        <Link to="/settings" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/settings' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                            <SettingsIcon size={24} strokeWidth={location.pathname === '/settings' ? 3 : 2} />
+                        </Link>
                     </>
                 ) : (
                     <Link to="/auth" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/auth' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
