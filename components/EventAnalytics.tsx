@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { StorageService, PLANS } from '../services/storageService';
 import { Event, Registration } from '../types';
 import { Button, Card, DonutChart, SimpleChart, Badge } from './UI';
-import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar, Download, QrCode } from 'lucide-react';
 
 export const EventAnalytics = () => {
     const { id } = useParams<{ id: string }>();
@@ -21,33 +21,33 @@ export const EventAnalytics = () => {
     const loadData = async () => {
         const user = StorageService.getCurrentUser();
         if (!user || !id) return;
-        
+
         const freshUser = await StorageService.getUserById(user.id);
         const plan = freshUser?.subscription?.plan || 'free';
         setIsPro(plan === 'pro' || plan === 'premium' || freshUser?.isAdmin === true);
 
         const e = await StorageService.getEventById(id);
         const r = await StorageService.getRegistrations(id);
-        
+
         if (e) setEvent(e);
         setRegs(r.filter(reg => reg.paymentStatus !== 'refunded'));
         setIsLoading(false);
     };
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><BarChart3 className="animate-bounce"/></div>;
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><BarChart3 className="animate-bounce" /></div>;
     if (!event) return <div className="p-8">Event not found.</div>;
 
     // --- Aggregation Logic ---
     const totalSales = regs.length;
     const grossRevenue = regs.reduce((sum, r) => {
         let val = r.donationAmount || 0;
-        if(r.tickets) val += r.tickets.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0);
+        if (r.tickets) val += r.tickets.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0);
         return sum + val;
     }, 0);
 
     const ticketTypesData: Record<string, number> = {};
     regs.forEach(r => {
-        if(r.tickets) {
+        if (r.tickets) {
             r.tickets.forEach(t => {
                 ticketTypesData[t.name] = (ticketTypesData[t.name] || 0) + t.quantity;
             });
@@ -57,22 +57,69 @@ export const EventAnalytics = () => {
 
     const salesOverTime: Record<string, number> = {};
     regs.forEach(r => {
-        const date = new Date(r.timestamp).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+        const date = new Date(r.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         salesOverTime[date] = (salesOverTime[date] || 0) + 1;
     });
-    
+
     const chartData = Object.entries(salesOverTime)
-        .sort((a,b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+        .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
         .map(([label, value]) => ({ label, value }));
+
+    // Check-in Stats
+    // Check-in Stats
+    const checkInCount = regs.reduce((acc, r) => {
+        if (r.checkInStatuses) return acc + Object.values(r.checkInStatuses).filter(s => s.checkedIn).length;
+        return acc + (r.checkedIn ? 1 : 0);
+    }, 0);
+    const checkInRate = totalSales > 0 ? Math.round((checkInCount / totalSales) * 100) : 0;
+
+    const downloadCSV = () => {
+        if (!event || regs.length === 0) return alert('No data to export.');
+
+        const headers = ['Order ID', 'Date', 'Name', 'Email', 'Ticket Type', 'Price', 'Checked In'];
+        const rows = regs.flatMap(r => {
+            if (!r.tickets) return [];
+            return r.tickets.map((t, i) => {
+                const key = `${t.tierId}-${i}`;
+                const isCheckedIn = (r.checkInStatuses && r.checkInStatuses[key]?.checkedIn) || r.checkedIn || false;
+                return [
+                    r.id,
+                    new Date(r.timestamp).toISOString(),
+                    r.attendeeName,
+                    r.attendeeEmail,
+                    t.name,
+                    t.pricePerTicket,
+                    isCheckedIn ? 'Yes' : 'No'
+                ];
+            });
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + headers.join(",") + "\n"
+            + rows.map(e => e.join(",")).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${event.title}_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="max-w-6xl mx-auto py-6 px-4 pb-24 md:py-8">
             <div className="flex items-center justify-between mb-6 md:mb-8">
                 <button onClick={() => navigate(`/manage/${id}`)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center text-sm font-bold transition-colors">
-                    <ArrowLeft size={16} className="mr-2"/> Back to Event
+                    <ArrowLeft size={16} className="mr-2" /> Back to Event
                 </button>
-                <div className="text-xs md:text-sm font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Live Data
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => downloadCSV()} title="Export CSV">
+                        <Download size={14} className="mr-2" /> Export Report
+                    </Button>
+                    <div className="text-xs md:text-sm font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Live Data
+                    </div>
                 </div>
             </div>
 
@@ -85,24 +132,24 @@ export const EventAnalytics = () => {
 
             {/* BENTO GRID */}
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-[minmax(160px,auto)]">
-                
+
                 {/* Hero Stat: Total Sales */}
                 <div className="md:col-span-2 p-6 md:p-8 rounded-3xl bg-zinc-900 text-white relative overflow-hidden flex flex-col justify-between group border border-zinc-800 shadow-lg">
                     <div className="relative z-10">
                         <div className="text-zinc-400 font-bold uppercase text-xs tracking-widest mb-1 flex items-center gap-2">
-                            Total Tickets Sold <TicketIcon className="text-[#E0FF20]" size={14}/>
+                            Total Tickets Sold <TicketIcon className="text-[#E0FF20]" size={14} />
                         </div>
                         <div className="text-5xl md:text-6xl font-black tracking-tighter text-white group-hover:scale-105 transition-transform origin-left mt-2">
                             {totalSales}
                         </div>
                     </div>
                     <div className="relative z-10 w-full bg-zinc-800 h-1.5 rounded-full mt-4 overflow-hidden">
-                        <div className="bg-[#E0FF20] h-full rounded-full transition-all duration-1000 ease-out" style={{width: `${Math.min(100, (totalSales/event.capacity)*100)}%`}}></div>
+                        <div className="bg-[#E0FF20] h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${Math.min(100, (totalSales / event.capacity) * 100)}%` }}></div>
                     </div>
                     <div className="relative z-10 mt-2 text-xs font-mono text-[#E0FF20] text-right">
-                        {Math.round((totalSales/event.capacity)*100)}% Capacity Reached
+                        {Math.round((totalSales / event.capacity) * 100)}% Capacity Reached
                     </div>
-                    
+
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#E0FF20]/10 rounded-full blur-[80px] pointer-events-none"></div>
                 </div>
 
@@ -110,7 +157,7 @@ export const EventAnalytics = () => {
                 <div className="md:col-span-1 lg:col-span-2 p-6 md:p-8 rounded-3xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between hover:border-green-500 transition-colors shadow-sm">
                     <div>
                         <div className="text-zinc-500 font-bold uppercase text-xs tracking-widest mb-1 flex items-center gap-2">
-                            Gross Revenue <DollarSign size={14}/>
+                            Gross Revenue <DollarSign size={14} />
                         </div>
                         <div className="text-4xl md:text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-green-400 to-emerald-600 mt-2 truncate">
                             ${grossRevenue.toLocaleString()}
@@ -124,10 +171,10 @@ export const EventAnalytics = () => {
                 {/* Ticket Types Breakdown (Donut) - REQUIRES PRO */}
                 <div className="md:col-span-2 row-span-2 rounded-3xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-4 md:p-6 relative overflow-hidden flex flex-col">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-lg flex items-center gap-2">Ticket Mix <TicketIcon size={16} className="text-purple-500"/></h3>
-                        {!isPro && <Lock size={16} className="text-zinc-400"/>}
+                        <h3 className="font-bold text-lg flex items-center gap-2">Ticket Mix <TicketIcon size={16} className="text-purple-500" /></h3>
+                        {!isPro && <Lock size={16} className="text-zinc-400" />}
                     </div>
-                    
+
                     {/* Content or Blur */}
                     <div className={`flex-1 flex flex-col justify-center items-center relative ${!isPro ? 'filter blur-md opacity-50' : ''}`}>
                         <div className="w-full overflow-x-auto overflow-y-hidden">
@@ -138,7 +185,7 @@ export const EventAnalytics = () => {
                     {!isPro && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/10 dark:bg-black/10 backdrop-blur-sm">
                             <Button onClick={() => navigate('/pricing')} className="bg-purple-600 hover:bg-purple-700 text-white border-none shadow-xl scale-100 hover:scale-105 transition-transform">
-                                <Crown size={16} className="mr-2"/> Unlock Deep Dive
+                                <Crown size={16} className="mr-2" /> Unlock Deep Dive
                             </Button>
                         </div>
                     )}
@@ -146,14 +193,14 @@ export const EventAnalytics = () => {
 
                 {/* Sales Velocity Chart */}
                 <div className="md:col-span-1 lg:col-span-2 row-span-2 rounded-3xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 relative overflow-hidden">
-                    <h3 className="font-bold text-lg mb-6 flex items-center gap-2">Sales Velocity <TrendingUp size={16} className="text-blue-500"/></h3>
+                    <h3 className="font-bold text-lg mb-6 flex items-center gap-2">Sales Velocity <TrendingUp size={16} className="text-blue-500" /></h3>
                     <div className="h-48 flex items-end justify-between gap-2 overflow-x-auto">
                         {isPro ? (
                             <SimpleChart label="Last 7 Days" data={chartData.slice(-7)} />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800">
                                 <div className="text-center">
-                                    <BarChart3 className="mx-auto text-zinc-300 mb-2" size={32}/>
+                                    <BarChart3 className="mx-auto text-zinc-300 mb-2" size={32} />
                                     <p className="text-xs font-bold text-zinc-400">Trend data locked</p>
                                 </div>
                             </div>
@@ -163,16 +210,34 @@ export const EventAnalytics = () => {
 
                 {/* Time Until Event */}
                 <div className="md:col-span-1 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
-                    <Clock size={32} className="text-zinc-300 mb-2"/>
+                    <Clock size={32} className="text-zinc-300 mb-2" />
                     <div className="text-xs font-bold uppercase text-zinc-500 mb-1">Days Until Event</div>
                     <div className="text-3xl font-black text-zinc-900 dark:text-white">
                         {Math.max(0, Math.ceil((new Date(event.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}
                     </div>
                 </div>
 
-                 {/* Views Count (Mock) */}
-                 <div className="md:col-span-1 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
-                    <Users size={32} className="text-zinc-300 mb-2"/>
+                {/* Check-in Status */}
+                <div className="md:col-span-1 p-6 rounded-3xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
+                    <div>
+                        <div className="text-zinc-500 font-bold uppercase text-xs tracking-widest mb-1 flex items-center gap-2">
+                            Check-ins <QrCode size={14} className="text-primary" />
+                        </div>
+                        <div className="text-3xl font-black text-zinc-900 dark:text-white mt-1">
+                            {checkInCount} <span className="text-base text-zinc-400 font-medium">/ {totalSales}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden mb-2">
+                            <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${checkInRate}%` }}></div>
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500">{checkInRate}% Arrived</div>
+                    </div>
+                </div>
+
+                {/* Views Count (Mock) */}
+                <div className="md:col-span-1 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
+                    <Users size={32} className="text-zinc-300 mb-2" />
                     <div className="text-xs font-bold uppercase text-zinc-500 mb-1">Page Views</div>
                     <div className="text-3xl font-black text-zinc-900 dark:text-white">
                         {isPro ? (1240 + totalSales * 5) : <span className="blur-sm select-none">1240</span>}
@@ -185,6 +250,6 @@ export const EventAnalytics = () => {
 };
 
 // Helper Icon for local usage
-const TicketIcon = ({size, className}:{size?:number, className?:string}) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size||24} height={size||24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+const TicketIcon = ({ size, className }: { size?: number, className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size || 24} height={size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M13 5v2" /><path d="M13 17v2" /><path d="M13 11v2" /></svg>
 );

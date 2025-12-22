@@ -11,7 +11,7 @@ export const HotelCTA = ({ location }: { location?: string }) => {
             {/* Neon Background Effects */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#E0FF20] rounded-full mix-blend-overlay filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary rounded-full mix-blend-overlay filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-            
+
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div>
                     <div className="inline-block bg-[#E0FF20] text-black text-xs font-black uppercase px-3 py-1 rounded-full mb-3 transform -rotate-2">
@@ -21,12 +21,12 @@ export const HotelCTA = ({ location }: { location?: string }) => {
                         BUT YOU STILL NEED A BED.
                     </h3>
                     <p className="text-zinc-400 font-medium max-w-md">
-                        Don't be the one sleeping in your car. Find a sick spot to crash near the venue.
+                        Don't be the one sleeping in your car. Find a awesome spot to crash near the venue.
                     </p>
                 </div>
-                
-                <Button 
-                    onClick={() => window.open(searchUrl, '_blank')} 
+
+                <Button
+                    onClick={() => window.open(searchUrl, '_blank')}
                     className="bg-white text-black dark:text-black hover:bg-[#E0FF20] border-none shadow-[0_0_20px_rgba(255,255,255,0.2)] h-14 px-8 text-lg font-black uppercase"
                 >
                     <Bed size={24} className="mr-2" /> Find Hotels

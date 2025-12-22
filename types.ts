@@ -31,7 +31,7 @@ export interface PayoutSettings {
 // STRIPE_ONLY_PAYOUTS: Enforce Stripe only
 export interface PaymentMethod {
   id: string;
-  type: 'stripe'; 
+  type: 'stripe';
   label: string;
   isDefault: boolean;
   token?: string;
@@ -93,12 +93,14 @@ export interface User {
   isAdmin?: boolean;
   isBanned?: boolean;
   businessName?: string;
+  organizerSubtitle?: string;
+  useBusinessName?: boolean;
   businessType?: string;
   eventTypes?: string;
   logoUrl?: string;
   headerImageUrl?: string;
   primaryColor?: string;
-  
+
   // Financials
   balanceDue: number;
   availablePayout: number;
@@ -108,7 +110,7 @@ export interface User {
   bankInfo?: BankInfo;
   stripeConnectId?: string;
   stripeOnboardingComplete?: boolean;
-  
+
   // Admin/Platform Config
   stripePublishableKey?: string;
   stripeSecretKey?: string;
@@ -117,19 +119,19 @@ export interface User {
   socials?: Socials;
   address?: Address;
   notifications?: { reminder: boolean; newOrder: boolean };
-  
+
   // Subscription
   subscription?: Subscription;
-  
+
   // Affiliate
   affiliateCode?: string;
-  
+
   // Team
   teamMembers?: TeamMember[];
-  
+
   // Analytics
   trackingPixels?: TrackingPixels;
-  
+
   // Admin/Legal
   nonProfitStatus?: 'pending' | 'approved' | 'rejected';
   nonProfitName?: string;
@@ -141,8 +143,27 @@ export interface User {
   defaultPaymentMethod?: string;
   defaultPaymentLink?: string;
   defaultPaymentInstructions?: string;
+
+  // Affiliate
+  commissionRate?: number; // percent
+
+  // Email Marketing
+  gmailConfig?: {
+    connected: boolean;
+    email?: string;
+    lastSynced?: number;
+  };
+  emailTemplates?: EmailTemplate[];
+
   defaultConfirmationTemplate?: string;
+  defaultWaiver?: {
+    enabled?: boolean;
+    text?: string;
+    pdfUrl?: string;
+    fileName?: string;
+  };
   defaultRefundPolicy?: string;
+  defaultRefundPolicyEnabled?: boolean;
   defaultTaxRate?: number;
 }
 
@@ -194,6 +215,17 @@ export interface PromoCode {
   value: number;
   usageCount: number;
   maxUsage?: number;
+  expiryDate?: number;
+  applicableTiers?: string[];
+  minOrderQty?: number;
+}
+
+export interface EmailTemplate {
+  id: string;
+  type: 'confirmation' | 'waitlist' | 'reminder' | 'broadcast';
+  name: string;
+  subject: string;
+  body: string;
 }
 
 export interface Broadcast {
@@ -201,6 +233,7 @@ export interface Broadcast {
   subject: string;
   message: string;
   sentAt: number;
+  templateId?: string;
 }
 
 export interface PaymentConfig {
@@ -208,7 +241,7 @@ export interface PaymentConfig {
   link?: string;
   instructions?: string;
   // STRIPE_ONLY_PAYOUTS: Removed legacy providers
-  stripePublishableKey?: string; 
+  stripePublishableKey?: string;
   stripeAccountId?: string;
 }
 
@@ -225,6 +258,25 @@ export interface RecurringDate {
   capacity?: number;
 }
 
+export interface SEOConfig {
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogImageUrl?: string;
+  keywords?: string[];
+  noIndex?: boolean;
+}
+
+export interface TicketDesign {
+  logoUrl?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  showCoverImage?: boolean;
+  customMessage?: string;
+  orientation?: 'portrait' | 'landscape';
+}
+
 export interface CustomFee {
   name: string;
   amount: number;
@@ -239,7 +291,7 @@ export interface Event {
   description: string;
   category: string;
   eventType: 'in_person' | 'online' | 'hybrid';
-  
+
   // Date & Time
   date: string;
   time: string;
@@ -272,12 +324,28 @@ export interface Event {
   taxRate?: number;
   absorbFees?: boolean;
   customFees?: CustomFee[];
-  
+
   // Registration & Policies
   questions?: Question[];
   requiresApproval?: boolean;
   confirmationMessage?: string;
   refundPolicy?: string;
+
+  // Waiver & Schedule
+  waiverConfig?: {
+    enabled: boolean;
+    text?: string;
+    pdfUrl?: string;
+    fileName?: string;
+  };
+  scheduleConfig?: {
+    enabled: boolean;
+    text?: string;
+    pdfUrl?: string;
+    fileName?: string;
+  };
+
+  // Deprecated/Legacy (keep for migration but use new configs preferrably)
   specificWaiverText?: string;
   specificWaiverPdfUrl?: string;
   schedulePdfUrl?: string;
@@ -285,14 +353,29 @@ export interface Event {
   paymentTimeLimit?: number;
   waitlistConfig?: WaitlistConfig;
   rsvpMode?: boolean;
+  collectGuestInfo?: boolean;
 
   // Marketing & Tools
   tags?: string[];
   affiliates?: AffiliateLink[];
   trackingPixels?: TrackingPixels;
   remarketing?: boolean;
+  seo?: SEOConfig;
+
+  // Design
+  ticketDesign?: TicketDesign;
+
+  // Email Configuration (New)
+  emailSettings?: {
+    enabled: boolean;
+    confirmationTemplateId?: string;
+    reminderEnabled?: boolean;
+    reminderTemplateId?: string;
+    reminderHoursBefore?: number;
+  };
+
   notifications?: { reminder: boolean; newOrder: boolean };
-  reminders?: any[]; 
+  reminders?: any[];
   broadcasts?: Broadcast[];
 
   // Settings
@@ -303,7 +386,7 @@ export interface Event {
   organizerWebsite?: string;
   visibility: 'public' | 'hidden' | 'private';
   isDraft: boolean;
-  
+
   // System
   createdAt: number;
   registeredCount: number;
@@ -316,7 +399,7 @@ export interface PurchasedTicket {
   name: string;
   pricePerTicket: number;
   quantity: number;
-  date?: string; 
+  date?: string;
   status?: 'valid' | 'refunded' | 'used';
   attendeeName?: string;
   attendeeEmail?: string;
@@ -352,36 +435,48 @@ export interface Registration {
   eventId: string;
   attendeeName: string;
   attendeeEmail: string;
-  phoneNumber?: string; 
+  phoneNumber?: string;
   donationAmount: number;
   platformDonationAmount?: number;
   serviceFee?: number;
   taxAmount?: number;
-  customFeesAmount?: number; 
+  customFeesAmount?: number;
   answers: Record<string, string | string[]>;
   selectedDates?: string[];
   tickets?: PurchasedTicket[];
-  addOns?: PurchasedAddOn[]; 
+  addOns?: PurchasedAddOn[];
   promoCodeUsed?: string;
-  affiliateCode?: string; 
+  affiliateCode?: string;
   discountAmount?: number;
   timestamp: number;
   paymentStatus: 'pending' | 'completed' | 'offline_pending' | 'refunded';
   approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
-  checkedIn?: boolean; 
+  checkedIn?: boolean;
   checkInTime?: number;
-  checkInStatuses?: Record<string, { checkedIn: boolean, timestamp: number }>; 
+  checkInStatuses?: Record<string, { checkedIn: boolean, timestamp: number }>;
   waiverAgreed?: boolean;
-  
+
   refundedAmount?: number;
   refundReason?: string;
   source?: 'online' | 'manual';
-  
-  hiddenForAttendee?: boolean; 
-  hiddenTicketKeys?: string[]; 
-  internalNotes?: string; 
+
+  hiddenForAttendee?: boolean;
+  hiddenTicketKeys?: string[];
+  internalNotes?: string;
 
   stripePaymentIntentId?: string;
   stripeTransferId?: string;
-  stripeFee?: number; 
+  stripeFee?: number;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  eventId: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  dateJoined: number;
+  status: 'pending' | 'promoted' | 'expired';
+  promotedAt?: number;
 }

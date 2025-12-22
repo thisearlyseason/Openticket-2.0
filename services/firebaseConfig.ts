@@ -5,6 +5,8 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 // @ts-ignore
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+// @ts-ignore
+import { getStorage } from 'firebase/storage';
 
 // ------------------------------------------------------------------
 // IMPORTANT: REPLACE THIS CONFIGURATION WITH YOUR FIREBASE PROJECT SETTINGS
@@ -27,12 +29,14 @@ let app: any = null;
 let dbInstance: any = null;
 let authInstance: any = null;
 let googleProviderInstance: any = null;
+let storageInstance: any = null;
 
 try {
   // Initialize Firebase
   app = initializeApp(firebaseConfig);
   dbInstance = getFirestore(app);
   authInstance = getAuth(app);
+  storageInstance = getStorage(app);
   googleProviderInstance = new GoogleAuthProvider();
   console.log("Firebase App Initialized");
 } catch (e) {
@@ -42,4 +46,5 @@ try {
 // Export instances
 export const db = dbInstance;
 export const auth = authInstance;
+export const storage = storageInstance;
 export const googleProvider = googleProviderInstance;

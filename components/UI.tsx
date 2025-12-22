@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Upload, Image as ImageIcon, X, Trash2, Calendar, Clock, ChevronDown, Check, Copy, Facebook, Twitter, Linkedin, Link2, Share2, ZoomIn, ChevronLeft, ChevronRight, Eye, Info, FileText, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Link as LinkIcon, Printer } from 'lucide-react';
+import { Loader2, Upload, Image as ImageIcon, X, Trash2, Calendar, Clock, ChevronDown, Check, Copy, Facebook, Twitter, Linkedin, Instagram, Link2, Share2, ZoomIn, ChevronLeft, ChevronRight, Eye, Info, FileText, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Link as LinkIcon, Printer, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Registration, Event, User } from '../types';
 
 // --- Utilities ---
@@ -50,26 +50,26 @@ export const formatTime = (time: string | null | undefined, format?: '12h' | '24
 // --- Base Components ---
 
 const getButtonStyles = (variant: string = 'primary', className: string = '') => {
-  const baseStyle = "px-6 py-3 rounded-full font-bold transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed select-none tracking-wide text-sm active:scale-95";
-  const variants: Record<string, string> = {
-    primary: "bg-primary text-white hover:bg-pink-500 shadow-[0_0_20px_rgba(255,77,140,0.4)] hover:shadow-[0_0_30px_rgba(255,77,140,0.6)] border border-transparent",
-    secondary: "bg-secondary text-secondary-fg hover:opacity-90 shadow-[0_0_20px_rgba(224,255,32,0.3)] hover:shadow-[0_0_30px_rgba(224,255,32,0.5)] border border-black/10 dark:border-transparent",
-    outline: "bg-transparent border-2 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white hover:border-primary hover:bg-primary/10 hover:text-primary",
-    ghost: "text-zinc-600 dark:text-zinc-400 hover:text-primary hover:bg-zinc-200 dark:hover:bg-zinc-800/50",
-    danger: "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/50",
-    white: "bg-white text-black hover:bg-zinc-200 border border-transparent shadow-lg"
-  };
-  return `${baseStyle} ${variants[variant] || variants.primary} ${className}`;
+    const baseStyle = "px-6 py-3 rounded-full font-bold transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed select-none tracking-wide text-sm active:scale-95";
+    const variants: Record<string, string> = {
+        primary: "bg-primary text-primary-fg hover:opacity-90 shadow-lg shadow-primary/20 border border-transparent",
+        secondary: "bg-secondary text-secondary-fg hover:opacity-90 shadow-lg shadow-secondary/20 border border-black/10 dark:border-transparent",
+        outline: "bg-transparent border-2 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white hover:border-primary hover:bg-primary/10 hover:text-primary",
+        ghost: "text-zinc-600 dark:text-zinc-400 hover:text-primary hover:bg-zinc-200 dark:hover:bg-zinc-800/50",
+        danger: "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/50",
+        white: "bg-white text-black hover:bg-zinc-200 border border-transparent shadow-lg"
+    };
+    return `${baseStyle} ${variants[variant] || variants.primary} ${className}`;
 };
 
 export const Button = ({ children, variant = 'primary', className = '', isLoading, type = "button", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'white', isLoading?: boolean, size?: 'sm' | 'md' | 'lg' }) => {
     let sizeClasses = "";
     if (props.size === 'sm') sizeClasses = "!px-4 !py-2 !text-xs";
-    
+
     return (
         <button type={type} className={`${getButtonStyles(variant, className)} ${sizeClasses}`} disabled={isLoading || props.disabled} {...props}>
-        {isLoading && <Loader2 className="animate-spin mr-2" size={18} />}
-        {children}
+            {isLoading && <Loader2 className="animate-spin mr-2" size={18} />}
+            {children}
         </button>
     );
 };
@@ -79,7 +79,7 @@ export const AnchorButton = ({ children, variant = 'primary', className = '', hr
 );
 
 export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
-  <div className={`bg-surface border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl overflow-hidden text-zinc-900 dark:text-white ${className}`} {...props}>{children}</div>
+    <div className={`bg-surface border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-xl overflow-hidden text-zinc-900 dark:text-white ${className}`} {...props}>{children}</div>
 );
 
 export const Badge = ({ children, color = 'blue', className = '' }: { children?: React.ReactNode, color?: string, className?: string }) => {
@@ -87,7 +87,9 @@ export const Badge = ({ children, color = 'blue', className = '' }: { children?:
         blue: 'bg-blue-600 text-white border-blue-400',
         green: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
         purple: 'bg-accent text-white border-transparent',
-        red: 'bg-primary text-white border-transparent',
+        red: 'bg-red-500 text-white border-transparent',
+        primary: 'bg-primary text-white border-transparent',
+        secondary: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
         orange: 'bg-orange-500 text-white border-orange-400',
         gray: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700',
         yellow: 'bg-[#E0FF20] text-black border-transparent'
@@ -106,7 +108,7 @@ export const Input = ({ label, error, required, className = '', containerClassNa
                     </div>
                 )}
                 <input
-                    className={`w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 ${Icon ? 'pl-11' : ''} ${className}`}
+                    className={`w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 shadow-inner ${Icon ? 'pl-11' : ''} ${className}`}
                     {...props}
                 />
             </div>
@@ -119,7 +121,7 @@ export const Textarea = ({ label, error, required, className = '', ...props }: R
     <div className="mb-4">
         {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
         <textarea
-            className={`w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 min-h-[100px] resize-y ${className}`}
+            className={`w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 min-h-[100px] resize-y shadow-inner ${className}`}
             {...props}
         />
         {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
@@ -154,12 +156,12 @@ export const RichTextarea = ({ label, value, onChange, placeholder, name, classN
     // to prevent cursor jumping or conflicts with user input.
     useEffect(() => {
         if (editorRef.current && !isFocused) {
-             const currentHTML = editorRef.current.innerHTML;
-             const newValue = value || '';
-             // Only update if significantly different to avoid unnecessary reflows
-             if (currentHTML !== newValue) {
+            const currentHTML = editorRef.current.innerHTML;
+            const newValue = value || '';
+            // Only update if significantly different to avoid unnecessary reflows
+            if (currentHTML !== newValue) {
                 editorRef.current.innerHTML = newValue;
-             }
+            }
         }
     }, [value, isFocused]);
 
@@ -201,26 +203,26 @@ export const RichTextarea = ({ label, value, onChange, placeholder, name, classN
     return (
         <div className={`mb-4 ${className}`}>
             {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
-            <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
+            <div className="relative border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
                 <div className="flex flex-wrap gap-1 p-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/50 items-center">
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('bold')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Bold"><Bold size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('italic')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Italic"><Italic size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('underline')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Underline"><Underline size={16}/></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('bold') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Bold"><Bold size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('italic') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Italic"><Italic size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('underline') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Underline"><Underline size={16} /></button>
                     <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center"></div>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('formatBlock', 'H2')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Heading 1"><Heading1 size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('formatBlock', 'H3')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Heading 2"><Heading2 size={16}/></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'H2') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Heading 1"><Heading1 size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('formatBlock', 'H3') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Heading 2"><Heading2 size={16} /></button>
                     <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center"></div>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('justifyLeft')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Left"><AlignLeft size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('justifyCenter')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Center"><AlignCenter size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('justifyRight')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Right"><AlignRight size={16}/></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('justifyLeft') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Left"><AlignLeft size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('justifyCenter') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Center"><AlignCenter size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('justifyRight') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Align Right"><AlignRight size={16} /></button>
                     <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center"></div>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('insertUnorderedList')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Bullet List"><List size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); execCmd('insertOrderedList')}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Numbered List"><ListOrdered size={16}/></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('insertUnorderedList') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Bullet List"><List size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('insertOrderedList') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Numbered List"><ListOrdered size={16} /></button>
                     <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1 self-center"></div>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); handleLink()}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Insert Link"><LinkIcon size={16}/></button>
-                    <button type="button" onMouseDown={(e) => {e.preventDefault(); handleImageUpload()}} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Insert Image"><ImageIcon size={16}/></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); handleLink() }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Insert Link"><LinkIcon size={16} /></button>
+                    <button type="button" onMouseDown={(e) => { e.preventDefault(); handleImageUpload() }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Insert Image"><ImageIcon size={16} /></button>
                 </div>
-                
+
                 <style>{`
                     .rich-text-editor img {
                         resize: both;
@@ -235,20 +237,22 @@ export const RichTextarea = ({ label, value, onChange, placeholder, name, classN
                         outline: 2px dashed var(--color-primary);
                     }
                 `}</style>
-                <div 
-                    ref={editorRef}
-                    className="p-4 min-h-[150px] outline-none text-zinc-900 dark:text-white text-sm rich-text-editor font-sans text-left"
-                    contentEditable
-                    suppressContentEditableWarning={true}
-                    dir="ltr"
-                    onInput={handleInput}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    style={{ whiteSpace: 'pre-wrap' }}
-                />
-                {!value && !isFocused && (
-                    <div className="absolute top-[52px] left-4 text-zinc-400 text-sm pointer-events-none">{placeholder}</div>
-                )}
+                <div className="relative">
+                    <div
+                        ref={editorRef}
+                        className="p-4 min-h-[150px] outline-none text-zinc-900 dark:text-white text-sm rich-text-editor font-sans text-left"
+                        contentEditable
+                        suppressContentEditableWarning={true}
+                        dir="ltr"
+                        onInput={handleInput}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        style={{ whiteSpace: 'pre-wrap' }}
+                    />
+                    {!value && !isFocused && (
+                        <div className="absolute top-4 left-4 text-zinc-400 text-sm pointer-events-none">{placeholder}</div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -316,12 +320,20 @@ export const Tooltip = ({ text, children }: { text: string, children?: React.Rea
     </div>
 );
 
-export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multiple = false, imageStyle }: { label?: string, currentImage?: string | null, onFileSelect: (base64: string | string[]) => void, onClear: () => void, multiple?: boolean, imageStyle?: React.CSSProperties }) => {
+export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multiple = false, imageStyle, accept = "image/*,application/pdf" }: { label?: string, currentImage?: string | null, onFileSelect: (base64: string | string[], name?: string) => void, onClear: () => void, multiple?: boolean, imageStyle?: React.CSSProperties, accept?: string }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleFile = async (files: FileList | null) => {
         if (!files || files.length === 0) return;
-        
+
+        // Check for file size limit (10MB)
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].size > 10 * 1024 * 1024) {
+                alert(`File "${files[i].name}" is too large. Maximum size is 10MB.`);
+                return;
+            }
+        }
+
         if (multiple) {
             const promises: Promise<string>[] = [];
             for (let i = 0; i < files.length; i++) {
@@ -335,13 +347,13 @@ export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multi
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const dataUrl = e.target?.result as string;
-                        onFileSelect(dataUrl); 
+                        onFileSelect(dataUrl, files[0].name);
                     };
                     reader.readAsDataURL(files[0]);
                     return;
                 }
                 const resized = await resizeImage(files[0], 800);
-                onFileSelect(resized);
+                onFileSelect(resized, files[0].name);
             } catch (e) {
                 console.error(e);
                 alert("Error processing file.");
@@ -354,13 +366,13 @@ export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multi
             {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
             {currentImage && !multiple ? (
                 <div className="relative rounded-xl overflow-hidden group border border-zinc-200 dark:border-zinc-800">
-                    {currentImage.startsWith('data:application/pdf') || currentImage === 'PDF UPLOADED' ? (
+                    {currentImage.startsWith('data:application/pdf') || currentImage === 'PDF UPLOADED' || currentImage === 'PDF_UPLOADED' || currentImage.endsWith('.pdf') ? (
                         <div className="h-48 bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center flex-col text-zinc-500">
-                            <FileText size={48} className="mb-2"/>
+                            <FileText size={48} className="mb-2" />
                             <span className="font-bold">PDF Document Uploaded</span>
                         </div>
                     ) : (
-                        <img src={currentImage} alt="Preview" className="w-full h-48 object-cover" style={imageStyle} />
+                        currentImage && <img src={currentImage} alt="Preview" className="w-full h-48 object-cover" style={imageStyle} />
                     )}
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={onClear} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600">
@@ -369,19 +381,19 @@ export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multi
                     </div>
                 </div>
             ) : (
-                <div 
+                <div
                     onClick={() => inputRef.current?.click()}
                     className="h-32 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center text-zinc-500 hover:border-primary hover:bg-primary/5 cursor-pointer transition-all"
                 >
                     <Upload size={24} className="mb-2" />
                     <span className="text-xs font-bold uppercase">{multiple ? "Click to Upload Images" : "Click to Upload Image or PDF"}</span>
-                    <input 
-                        ref={inputRef} 
-                        type="file" 
-                        accept="image/*,application/pdf" 
-                        className="hidden" 
+                    <input
+                        ref={inputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
                         multiple={multiple}
-                        onChange={(e) => handleFile(e.target.files)} 
+                        onChange={(e) => handleFile(e.target.files)}
                     />
                 </div>
             )}
@@ -395,11 +407,11 @@ export const CodeBlock = ({ label, code }: { label: string, code: string }) => {
         <div className="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800">
             <div className="bg-zinc-800 px-4 py-2 flex justify-between items-center">
                 <span className="text-xs font-bold text-zinc-400 uppercase">{label}</span>
-                <button 
-                    onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }} 
+                <button
+                    onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                     className="text-xs text-zinc-300 hover:text-white flex items-center gap-1"
                 >
-                    {copied ? <Check size={12}/> : <Copy size={12}/>} {copied ? 'Copied' : 'Copy'}
+                    {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy'}
                 </button>
             </div>
             <pre className="p-4 text-xs text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
@@ -409,8 +421,8 @@ export const CodeBlock = ({ label, code }: { label: string, code: string }) => {
     );
 };
 
-export const SimpleChart = ({ label, data }: { label: string, data: {label: string, value: number}[] }) => {
-    if(!data || data.length === 0) return <div className="text-center text-zinc-500 py-10">No data available</div>;
+export const SimpleChart = ({ label, data }: { label: string, data: { label: string, value: number }[] }) => {
+    if (!data || data.length === 0) return <div className="text-center text-zinc-500 py-10">No data available</div>;
     const max = Math.max(...data.map(d => d.value));
     return (
         <div>
@@ -419,7 +431,7 @@ export const SimpleChart = ({ label, data }: { label: string, data: {label: stri
                 {data.map((d, i) => (
                     <div key={i} className="flex-1 flex flex-col justify-end items-center group">
                         <div className="text-[10px] font-bold mb-1 opacity-0 group-hover:opacity-100 transition-opacity">{d.value}</div>
-                        <div 
+                        <div
                             className="w-full bg-primary/20 hover:bg-primary rounded-t-sm transition-all relative"
                             style={{ height: `${max > 0 ? (d.value / max) * 100 : 0}%` }}
                         ></div>
@@ -431,11 +443,11 @@ export const SimpleChart = ({ label, data }: { label: string, data: {label: stri
     );
 };
 
-export const DonutChart = ({ data }: { data: {label: string, value: number, color?: string}[] }) => {
-    if(!data || data.length === 0) return <div className="text-center text-zinc-500 py-10">No data available</div>;
+export const DonutChart = ({ data }: { data: { label: string, value: number, color?: string }[] }) => {
+    if (!data || data.length === 0) return <div className="text-center text-zinc-500 py-10">No data available</div>;
     const total = data.reduce((acc, d) => acc + d.value, 0);
     let currentAngle = 0;
-    
+
     const colors = ['#ec4899', '#E0FF20', '#00ff9d', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
     return (
@@ -449,11 +461,11 @@ export const DonutChart = ({ data }: { data: {label: string, value: number, colo
                         const x2 = 50 + 50 * Math.cos(Math.PI * (currentAngle + sliceAngle) / 180);
                         const y2 = 50 + 50 * Math.sin(Math.PI * (currentAngle + sliceAngle) / 180);
                         const largeArc = sliceAngle > 180 ? 1 : 0;
-                        
-                        const pathData = total === d.value 
-                            ? `M 50 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0` 
+
+                        const pathData = total === d.value
+                            ? `M 50 50 m -50, 0 a 50,50 0 1,0 100,0 a 50,50 0 1,0 -100,0`
                             : `M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                        
+
                         currentAngle += sliceAngle;
                         return (
                             <path key={i} d={pathData} fill={d.color || colors[i % colors.length]} />
@@ -466,7 +478,7 @@ export const DonutChart = ({ data }: { data: {label: string, value: number, colo
                 {data.map((d, i) => (
                     <div key={i} className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full" style={{backgroundColor: d.color || colors[i % colors.length]}}></div>
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color || colors[i % colors.length] }}></div>
                             <span className="text-zinc-600 dark:text-zinc-300">{d.label}</span>
                         </div>
                         <span className="font-bold">{d.value}</span>
@@ -481,20 +493,58 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
     const encodedUrl = encodeURIComponent(url);
     const encodedTitle = encodeURIComponent(title);
 
+    const handleNativeShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, url });
+            } catch (err) {
+                console.log('Error sharing:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+        }
+    };
+
+    const shareInstagram = () => {
+        navigator.clipboard.writeText(url);
+        if (confirm("Instagram doesn't allow direct link sharing from websites. \n\nWe've copied the event link to your clipboard. Would you like to open Instagram now to paste it in your Bio or Story?")) {
+            window.open('https://www.instagram.com/', '_blank');
+        }
+    };
+
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
     return (
-        <div className="grid grid-cols-2 gap-2">
-            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#1877F2] text-white p-2 rounded-lg text-sm font-bold hover:bg-[#166fe5]">
-                <Facebook size={16}/> Facebook
-            </a>
-            <a href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-black text-white p-2 rounded-lg text-sm font-bold hover:bg-zinc-800">
-                <Twitter size={16}/> X (Twitter)
-            </a>
-            <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0A66C2] text-white p-2 rounded-lg text-sm font-bold hover:bg-[#0958a8]">
-                <Linkedin size={16}/> LinkedIn
-            </a>
-            <button onClick={() => { navigator.clipboard.writeText(url); alert("Link Copied!"); }} className="flex items-center justify-center gap-2 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg text-sm font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700">
-                <Link2 size={16}/> Copy Link
-            </button>
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+                <button onClick={handleNativeShare} className="col-span-2 flex items-center justify-center gap-2 bg-primary text-white p-3 rounded-lg text-sm font-bold hover:opacity-90 md:hidden mb-1">
+                    <Share2 size={18} /> Share via Apps
+                </button>
+
+                <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#1877F2] text-white p-2.5 rounded-lg text-xs font-bold hover:bg-[#166fe5]">
+                    <Facebook size={16} /> Facebook
+                </a>
+                <a href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-black text-white p-2.5 rounded-lg text-xs font-bold hover:bg-zinc-800">
+                    <Twitter size={16} /> X / Twitter
+                </a>
+                <button onClick={shareInstagram} className="flex items-center justify-center gap-2 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white p-2.5 rounded-lg text-xs font-bold hover:opacity-90">
+                    <Instagram size={16} /> Instagram
+                </button>
+                <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0A66C2] text-white p-2.5 rounded-lg text-xs font-bold hover:bg-[#0958a8]">
+                    <Linkedin size={16} /> LinkedIn
+                </a>
+                <button onClick={() => { navigator.clipboard.writeText(url); alert("Link Copied!"); }} className="col-span-2 flex items-center justify-center gap-2 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white p-2.5 rounded-lg text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 mt-1">
+                    <Link2 size={16} /> Copy Direct Link
+                </button>
+            </div>
+
+            {isLocalhost && (
+                <div className="p-3 bg-zinc-100 dark:bg-black/40 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 text-[10px] text-zinc-500 leading-tight">
+                    <span className="font-bold text-zinc-700 dark:text-zinc-300 block mb-1">Developer Tip:</span>
+                    Facebook and LinkedIn cannot preview "localhost" links. The share button will work once your site is deployed to a public URL.
+                </div>
+            )}
         </div>
     );
 };
@@ -505,11 +555,11 @@ export const Lightbox = ({ images, currentIndex, onClose, onChangeIndex }: { ima
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col justify-center animate-in fade-in">
-            <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"><X size={32}/></button>
+            <button onClick={onClose} className="absolute top-4 right-4 text-white hover:text-gray-300 p-2"><X size={32} /></button>
             <div className="flex-1 flex items-center justify-center relative">
-                <button onClick={() => onChangeIndex((currentIndex - 1 + images.length) % images.length)} className="absolute left-4 p-4 text-white hover:bg-white/10 rounded-full"><ChevronLeft size={32}/></button>
+                <button onClick={() => onChangeIndex((currentIndex - 1 + images.length) % images.length)} className="absolute left-4 p-4 text-white hover:bg-white/10 rounded-full"><ChevronLeft size={32} /></button>
                 <img src={current.url} className="max-h-[80vh] max-w-[90vw] object-contain shadow-2xl" />
-                <button onClick={() => onChangeIndex((currentIndex + 1) % images.length)} className="absolute right-4 p-4 text-white hover:bg-white/10 rounded-full"><ChevronRight size={32}/></button>
+                <button onClick={() => onChangeIndex((currentIndex + 1) % images.length)} className="absolute right-4 p-4 text-white hover:bg-white/10 rounded-full"><ChevronRight size={32} /></button>
             </div>
             {current.caption && (
                 <div className="text-center text-white pb-8 px-4 font-medium text-lg">
@@ -531,7 +581,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
     const totalTickets = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.quantity), 0) || 0;
     const ticketCost = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.pricePerTicket * t.quantity), 0) || 0;
     const addOnCost = registration.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
-    
+
     // Calculate totals
     const subtotal = ticketCost + addOnCost;
     const fees = (registration.serviceFee || 0) + (registration.customFeesAmount || 0);
@@ -542,7 +592,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
     const refunded = registration.refundedAmount || 0;
 
     const hasBranding = organizer && (organizer.subscription?.plan === 'pro' || organizer.subscription?.plan === 'premium') && organizer.logoUrl;
-    
+
     const handlePrint = () => {
         window.print();
     };
@@ -579,7 +629,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                         {/* BRANDING HEADER */}
                         {hasBranding ? (
                             <div className="mb-4 flex flex-col items-center">
-                                <img src={organizer!.logoUrl} alt="Logo" className="h-16 w-auto object-contain mb-2"/>
+                                <img src={organizer!.logoUrl} alt="Logo" className="h-16 w-auto object-contain mb-2" />
                                 {organizer!.socials?.website && <a href={organizer!.socials.website} className="text-xs text-gray-500 no-underline">{organizer!.socials.website}</a>}
                             </div>
                         ) : (
@@ -687,5 +737,70 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                 </div>
             </div>
         </div>
+    );
+};
+
+export const ErrorModal = ({ isOpen, onClose, title = "Action Required", message, actionLabel = "I understand and will fix this" }: { isOpen: boolean, onClose: () => void, title?: string, message: string, actionLabel?: string }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col p-6 animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-500/20 flex items-center justify-center text-red-600 dark:text-red-500 shrink-0">
+                        <AlertCircle size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black text-zinc-900 dark:text-white leading-none">{title}</h3>
+                        <p className="text-xs font-bold text-red-500 uppercase mt-1">Validation Error</p>
+                    </div>
+                </div>
+
+                <div className="bg-zinc-50 dark:bg-black/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 mb-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
+                    {message}
+                </div>
+
+                <button
+                    onClick={onClose}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                >
+                    <CheckCircle2 size={18} />
+                    {actionLabel}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export const PriceDisplay = ({ amount, currency = 'USD', className = '' }: { amount: number, currency?: string, className?: string }) => {
+    // In a real app, this would use a context or hook to get the global selected currency
+    // For now, we detect it once or default to USD
+    const [userCurrency, setUserCurrency] = React.useState('USD');
+
+    React.useEffect(() => {
+        // Simple client-side detection
+        const detected = typeof navigator !== 'undefined' ? (
+            navigator.language?.includes('GB') ? 'GBP' :
+                navigator.language?.includes('DE') || navigator.language?.includes('FR') ? 'EUR' :
+                    navigator.language?.includes('CA') ? 'CAD' : 'USD'
+        ) : 'USD';
+        setUserCurrency(detected);
+    }, []);
+
+    const displayCurrency = currency !== 'USD' ? currency : userCurrency;
+
+    // Rough static rates for demo
+    const rates: Record<string, number> = { 'USD': 1, 'EUR': 0.92, 'GBP': 0.78, 'CAD': 1.36 };
+    const rate = rates[displayCurrency] || 1;
+    const converted = amount * rate;
+    const symbol = displayCurrency === 'EUR' ? '€' : displayCurrency === 'GBP' ? '£' : '$';
+
+    if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
+
+    return (
+        <span className={`font-mono ${className}`} title={`Approx. ${symbol}${converted.toFixed(2)}`}>
+            {displayCurrency !== 'USD' && <span className="text-xs text-zinc-400 mr-1">~</span>}
+            {symbol}{converted.toFixed(2)}
+        </span>
     );
 };

@@ -1,0 +1,156 @@
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { StorageService } from '../services/storageService';
+import { Registration, Event, PurchasedAddOn } from '../types';
+import { Button, Input, Card, Badge } from './UI';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Ticket, User, ExternalLink, Calendar } from 'lucide-react';
+
+interface AddOnItem {
+    id: string; // registration id
+    attendeeName: string;
+    attendeeEmail: string;
+    addOn: PurchasedAddOn;
+    timestamp: number;
+}
+
+export const AddOnManager = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [event, setEvent] = useState<Event | null>(null);
+    const [addOnItems, setAddOnItems] = useState<AddOnItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        loadData();
+    }, [id]);
+
+    const loadData = async () => {
+        if (!id) return;
+        const [evt, regs] = await Promise.all([
+            StorageService.getEventById(id),
+            StorageService.getRegistrations()
+        ]);
+
+        if (evt) setEvent(evt);
+
+        const eventRegs = regs.filter(r => r.eventId === id && r.paymentStatus !== 'refunded');
+        const items: AddOnItem[] = [];
+
+        eventRegs.forEach(reg => {
+            if (reg.addOns && reg.addOns.length > 0) {
+                reg.addOns.forEach(addon => {
+                    items.push({
+                        id: reg.id,
+                        attendeeName: reg.attendeeName,
+                        attendeeEmail: reg.attendeeEmail,
+                        addOn: addon,
+                        timestamp: reg.timestamp
+                    });
+                });
+            }
+        });
+
+        setAddOnItems(items.sort((a, b) => b.timestamp - a.timestamp));
+        setIsLoading(false);
+    };
+
+    const filteredItems = addOnItems.filter(item =>
+        item.attendeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.addOn.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (isLoading) return <div className="p-8 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div></div>;
+
+    return (
+        <div className="max-w-6xl mx-auto py-8 px-4 pb-24">
+            <div className="flex items-center justify-between mb-8">
+                <button onClick={() => navigate(`/manage/${id}`)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center text-sm font-bold transition-colors">
+                    <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
+                </button>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 className="text-3xl font-black text-zinc-900 dark:text-white uppercase tracking-tight flex items-center gap-3">
+                        <ShoppingBag className="text-emerald-500" /> Add-ons & Products
+                    </h1>
+                    <p className="text-zinc-500">{event?.title} • {addOnItems.length} items sold</p>
+                </div>
+                <div className="relative w-full md:w-96">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+                    <Input
+                        placeholder="Search by name or product..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+            </div>
+
+            <Card className="overflow-hidden border-zinc-200 dark:border-zinc-800">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Attendee</th>
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Product / Add-on</th>
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Qty</th>
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Cost</th>
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                            {filteredItems.map((item, idx) => (
+                                <tr key={`${item.id}-${idx}`} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+                                                <User size={14} />
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-sm">{item.attendeeName}</div>
+                                                <div className="text-xs text-zinc-500">{item.attendeeEmail}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-bold text-sm text-zinc-900 dark:text-white">{item.addOn.name}</div>
+                                        {item.addOn.answer && (
+                                            <div className="text-xs text-emerald-500 font-medium mt-0.5">Note: {item.addOn.answer}</div>
+                                        )}
+                                    </td>
+                                    <td className="p-4">
+                                        <Badge color="zinc" className="font-mono">x{item.addOn.quantity}</Badge>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-bold text-sm text-zinc-900 dark:text-white">${(item.addOn.price * item.addOn.quantity).toFixed(2)}</div>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <Button size="sm" variant="outline" className="h-8 text-[10px] uppercase font-bold" onClick={() => navigate(`/manage/${id}/attendees?search=${encodeURIComponent(item.attendeeEmail)}`)}>
+                                                <Ticket size={12} className="mr-1" /> View Ticket
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {filteredItems.length === 0 && (
+                    <div className="p-20 text-center">
+                        <ShoppingBag className="mx-auto text-zinc-300 mb-4" size={48} />
+                        <h3 className="text-lg font-bold text-zinc-400">No add-on purchases found</h3>
+                        <p className="text-sm text-zinc-500">When attendees buy extras, they will appear here.</p>
+                    </div>
+                )}
+            </Card>
+
+            <div className="mt-8 text-center text-xs text-zinc-500">
+                All prices include applicable taxes and service fees processed at time of purchase.
+            </div>
+        </div>
+    );
+};

@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
-import { Event, Registration } from '../types';
+import { EmailService } from '../services/emailService';
+import { Event, Registration, WaitlistEntry } from '../types';
 import { Button, Input, Select, Card, Badge } from './UI';
-import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2 } from 'lucide-react';
+import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2, Hourglass, DollarSign } from 'lucide-react';
 
 interface AttendeeItem {
-    id: string; 
+    id: string;
     regId: string;
     tierId: string;
     ticketIndex: number;
@@ -16,12 +17,14 @@ interface AttendeeItem {
     ticketType: string;
     orderDate: number;
     status: 'paid' | 'pending' | 'refunded' | 'comp';
+    approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
     checkedIn: boolean;
 }
 
 export const AttendeeManager = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [event, setEvent] = useState<Event | null>(null);
     const [attendees, setAttendees] = useState<AttendeeItem[]>([]);
     const [filteredAttendees, setFilteredAttendees] = useState<AttendeeItem[]>([]);
@@ -29,7 +32,10 @@ export const AttendeeManager = () => {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
-    
+    // Waitlist Support
+    const [activeTab, setActiveTab] = useState<'attendees' | 'waitlist'>('attendees');
+    const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+
     // Dropdown State
     const [dropdownState, setDropdownState] = useState<{
         isOpen: boolean;
@@ -41,13 +47,24 @@ export const AttendeeManager = () => {
     // Modal States
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState<AttendeeItem | null>(null);
-    const [newGuestData, setNewGuestData] = useState({ name: '', email: '', tierId: '', quantity: 1, type: 'comp' });
+    const [newGuestData, setNewGuestData] = useState({ name: '', email: '', tierId: '', quantity: 1, type: 'comp', waitlistId: '' });
     const [editGuestData, setEditGuestData] = useState({ name: '', email: '' });
+
+    // Refund Modal State
+    const [showRefundModal, setShowRefundModal] = useState<AttendeeItem | null>(null);
+    const [refundAmount, setRefundAmount] = useState(0);
+    const [refundReason, setRefundReason] = useState('');
+    const [refundMode, setRefundMode] = useState<'ticket' | 'order'>('ticket'); // ticket = single, order = full reg
 
     useEffect(() => {
         if (!id) return;
         loadData();
-    }, [id]);
+
+        // Support URL search parameter
+        const params = new URLSearchParams(location.search);
+        const search = params.get('search');
+        if (search) setSearchTerm(search);
+    }, [id, location.search]);
 
     // Close dropdown on scroll or click outside
     useEffect(() => {
@@ -69,6 +86,8 @@ export const AttendeeManager = () => {
             if (!e) throw new Error("Event not found");
             setEvent(e);
             const regs = await StorageService.getRegistrations(id);
+            const wl = await StorageService.getWaitlist(id);
+            setWaitlist(wl);
             processAttendees(regs, e);
         } catch (err: any) {
             console.error("Failed to load attendees:", err);
@@ -89,10 +108,10 @@ export const AttendeeManager = () => {
                 if (reg.tickets && Array.isArray(reg.tickets) && reg.tickets.length > 0) {
                     reg.tickets.forEach((t, tIdx) => {
                         if (!t) return;
-                        for(let i=0; i<t.quantity; i++) {
+                        for (let i = 0; i < t.quantity; i++) {
                             const ticketKey = `${t.tierId}-${i}`;
                             const isCheckedIn = (reg.checkInStatuses && reg.checkInStatuses[ticketKey]?.checkedIn) || reg.checkedIn || false;
-                            
+
                             // Check specific ticket status (if individual refund logic exists) or fallback to order status
                             const status = t.status === 'refunded' ? 'refunded' : (isOrderRefunded ? 'refunded' : (isPaid ? 'paid' : 'pending'));
 
@@ -106,6 +125,7 @@ export const AttendeeManager = () => {
                                 ticketType: t.name,
                                 orderDate: reg.timestamp,
                                 status: status,
+                                approvalStatus: reg.approvalStatus || 'approved',
                                 checkedIn: isCheckedIn
                             });
                         }
@@ -122,12 +142,13 @@ export const AttendeeManager = () => {
                             ticketType: evt?.ticketName || 'General Admission',
                             orderDate: reg.timestamp,
                             status: isPaid ? 'paid' : 'pending',
+                            approvalStatus: reg.approvalStatus || 'approved',
                             checkedIn: reg.checkedIn || false
                         });
                     }
                 }
             });
-            const sorted = list.sort((a,b) => b.orderDate - a.orderDate);
+            const sorted = list.sort((a, b) => b.orderDate - a.orderDate);
             setAttendees(sorted);
             setFilteredAttendees(sorted);
         } catch (e) {
@@ -144,6 +165,7 @@ export const AttendeeManager = () => {
         if (filterStatus !== 'all') {
             if (filterStatus === 'checkedIn') res = res.filter(a => a.checkedIn);
             else if (filterStatus === 'notCheckedIn') res = res.filter(a => !a.checkedIn);
+            else if (filterStatus === 'approvalPending') res = res.filter(a => a.approvalStatus === 'pending');
             else res = res.filter(a => a.status === filterStatus);
         }
         setFilteredAttendees(res);
@@ -162,7 +184,7 @@ export const AttendeeManager = () => {
             const statuses = reg.checkInStatuses || {};
             statuses[ticketKey] = { checkedIn: newStatus, timestamp: Date.now() };
             await StorageService.updateRegistration(reg.id, { checkInStatuses: statuses, checkedIn: Object.values(statuses).some((s: any) => s.checkedIn) });
-            
+
             // Optimistic update
             setAttendees(prev => prev.map(a => a.id === item.id ? { ...a, checkedIn: newStatus } : a));
         } catch (e) { console.error(e); }
@@ -170,19 +192,19 @@ export const AttendeeManager = () => {
 
     const handleDeleteGuest = async (item: AttendeeItem) => {
         if (!confirm(`Are you sure you want to remove ${item.name}?\n\nThis will mark their specific ticket as Refunded/Deleted.`)) return;
-        
+
         if (!event) return;
         try {
             const regList = await StorageService.getRegistrations(event.id);
             const reg = regList.find(r => r.id === item.regId);
-            
+
             if (!reg) return;
 
             // Scenario 1: Multi-ticket order (using tickets array)
             if (reg.tickets && reg.tickets.length > 0) {
                 const updatedTickets = [...reg.tickets];
                 const targetTicket = updatedTickets[item.ticketIndex];
-                
+
                 if (targetTicket) {
                     if (targetTicket.quantity > 1) {
                         // Split ticket logic: Decrease quantity of active, add new refunded entry
@@ -192,11 +214,11 @@ export const AttendeeManager = () => {
                         // Single quantity, just mark as refunded
                         updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
                     }
-                    
+
                     // Check if ALL tickets are now refunded to update main status
                     const allRefunded = updatedTickets.every(t => t.status === 'refunded');
-                    
-                    await StorageService.updateRegistration(reg.id, { 
+
+                    await StorageService.updateRegistration(reg.id, {
                         tickets: updatedTickets,
                         paymentStatus: allRefunded ? 'refunded' : reg.paymentStatus,
                         approvalStatus: allRefunded ? 'rejected' : reg.approvalStatus
@@ -204,17 +226,28 @@ export const AttendeeManager = () => {
                 }
             } else {
                 // Scenario 2: Simple/Legacy order (mark whole reg)
-                await StorageService.updateRegistration(reg.id, { 
+                await StorageService.updateRegistration(reg.id, {
                     paymentStatus: 'refunded',
                     approvalStatus: 'rejected',
                     refundReason: 'Deleted by Organizer'
                 });
             }
-            
+
             await loadData(); // Reload UI
         } catch (e: any) {
             alert("Failed to delete guest: " + e.message);
         }
+    };
+
+    const handleApproveAttendee = async (item: AttendeeItem) => {
+        if (!event) return;
+        try {
+            await StorageService.updateRegistration(item.regId, { approvalStatus: 'approved' });
+            if (event.ownerId) {
+                EmailService.sendEmail(event.ownerId, item.email, `Approved: ${event.title}`, `Hi ${item.name}, your registration for ${event.title} has been approved!`).catch(console.error);
+            }
+            await loadData();
+        } catch (e: any) { alert("Approval failed: " + e.message); }
     };
 
     const handleAddGuest = async () => {
@@ -236,10 +269,28 @@ export const AttendeeManager = () => {
                 internalNotes: newGuestData.type === 'comp' ? 'Manual Comp' : 'Manual Paid Entry'
             };
             await StorageService.saveRegistration(newReg);
+
+            // Handle Waitlist Promotion
+            if (newGuestData.waitlistId) {
+                await StorageService.updateWaitlistEntry(newGuestData.waitlistId, 'promoted');
+            }
+
             await loadData();
             setShowAddModal(false);
-            setNewGuestData({ name: '', email: '', tierId: '', quantity: 1, type: 'comp' });
+            setNewGuestData({ name: '', email: '', tierId: '', quantity: 1, type: 'comp', waitlistId: '' });
         } catch (e: any) { alert("Failed to add guest: " + e.message); }
+    };
+
+    const handlePromoteWaitlist = (entry: WaitlistEntry) => {
+        setNewGuestData({
+            name: entry.name,
+            email: entry.email,
+            tierId: '',
+            quantity: 1,
+            type: 'comp',
+            waitlistId: entry.id
+        });
+        setShowAddModal(true);
     };
 
     const handleSaveEdit = async () => {
@@ -258,6 +309,99 @@ export const AttendeeManager = () => {
                 }
             }
         } catch (e: any) { alert("Failed to save: " + e.message); }
+    };
+
+    const handleResendEmail = async (item: AttendeeItem) => {
+        if (!event || !item.email) return alert("No email address for this attendee.");
+        if (!confirm(`Resend confirmation email to ${item.email}?`)) return;
+
+        try {
+            const regList = await StorageService.getRegistrations(event.id);
+            const reg = regList.find(r => r.id === item.regId);
+            if (!reg) throw new Error("Registration not found");
+
+            const organizerUser = await StorageService.getUserById(event.ownerId);
+            const templateId = event.emailSettings?.confirmationTemplateId;
+            let subject = `Confirmation: ${event.title}`;
+            let body = `Hi ${item.name},<br><br>Here is your ticket for ${event.title}.<br><br>Date: ${new Date(event.date).toLocaleDateString()}<br>Location: ${event.location}<br><br>Thanks,<br>${event.organizer}`;
+
+            if (organizerUser && templateId) {
+                const template = organizerUser.emailTemplates?.find((t: any) => t.id === templateId);
+                if (template) {
+                    subject = template.subject;
+                    body = template.body
+                        .replace(/{{name}}/g, item.name)
+                        .replace(/{{event}}/g, event.title)
+                        .replace(/{{date}}/g, new Date(event.date).toLocaleDateString())
+                        .replace(/{{location}}/g, event.location);
+                }
+            }
+
+            await EmailService.sendEmail(event.ownerId, item.email, subject, body);
+            alert("Email sent successfully!");
+        } catch (e: any) {
+            alert("Failed to send email: " + e.message);
+        }
+    };
+
+    const handleOpenRefundModal = (item: AttendeeItem) => {
+        if (item.status === 'refunded') return alert("This ticket is already refunded.");
+        // Calculate amount - find the event tier price
+        const tier = event?.ticketTiers?.find(t => t.id === item.tierId);
+        // Fallback or override if store in reg
+        // For accurate amount we should look at Reg data ideally, but simplifying to Tier Price for now
+        const price = tier ? tier.price : (event?.price || 0);
+
+        setRefundAmount(price);
+        setRefundReason('Requested by attendee');
+        setRefundMode('ticket'); // Default to single ticket
+        setShowRefundModal(item);
+    };
+
+    const processRefund = async () => {
+        if (!showRefundModal || !event) return;
+        try {
+            const item = showRefundModal;
+            const regList = await StorageService.getRegistrations(event.id);
+            const reg = regList.find(r => r.id === item.regId);
+            if (!reg) return;
+
+            // Scenario 1: Full Order Refund
+            if (refundMode === 'order') {
+                if (!confirm(`Refund entire order for ${reg.attendeeName}? This will invalidate ALL tickets in this order.`)) return;
+                await StorageService.refundRegistration(reg.id, [], refundReason); // Empty array = full refund signal
+            }
+            // Scenario 2: Single Ticket Refund
+            else {
+                // Logic to split the specific ticket if needed
+                if (!reg.tickets) return;
+
+                const updatedTickets = [...reg.tickets];
+                const targetTicket = updatedTickets[item.ticketIndex];
+
+                if (targetTicket) {
+                    // Split logic similar to delete
+                    if (targetTicket.quantity > 1) {
+                        updatedTickets[item.ticketIndex] = { ...targetTicket, quantity: targetTicket.quantity - 1 };
+                        updatedTickets.push({ ...targetTicket, quantity: 1, status: 'refunded' });
+                    } else {
+                        updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
+                    }
+
+                    // Check if all are now refunded
+                    const allRefunded = updatedTickets.every(t => t.status === 'refunded');
+                    const newStatus = allRefunded ? 'refunded' : reg.paymentStatus;
+
+                    await StorageService.updateRegistrationTickets(reg.id, updatedTickets, newStatus, refundReason);
+                }
+            }
+
+            alert("Refund processed successfully!");
+            setShowRefundModal(null);
+            loadData();
+        } catch (e: any) {
+            alert("Refund failed: " + e.message);
+        }
     };
 
     const handlePrintBadge = (item: AttendeeItem) => {
@@ -287,7 +431,7 @@ export const AttendeeManager = () => {
         // Position dropdown to the right of the button, and align top
         setDropdownState({
             isOpen: true,
-            x: rect.right, 
+            x: rect.right,
             y: rect.bottom,
             item
         });
@@ -304,7 +448,7 @@ export const AttendeeManager = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div className="w-full md:w-auto">
                     <button onClick={() => navigate(`/manage/${id}`)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center text-sm mb-2 transition-colors">
-                        <ArrowLeft size={16} className="mr-1"/> Back to Event
+                        <ArrowLeft size={16} className="mr-1" /> Back to Event
                     </button>
                     <div className="flex items-center justify-between">
                         <div>
@@ -316,13 +460,13 @@ export const AttendeeManager = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex gap-2 w-full md:w-auto">
                     <Button variant="outline" onClick={exportCSV} className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 flex-1 md:flex-none justify-center">
-                        <Download size={16} className="mr-2"/> Export
+                        <Download size={16} className="mr-2" /> Export
                     </Button>
                     <Button onClick={() => setShowAddModal(true)} className="shadow-lg shadow-primary/20 flex-1 md:flex-none justify-center">
-                        <Plus size={16} className="mr-2"/> Add Guest
+                        <Plus size={16} className="mr-2" /> Add Guest
                     </Button>
                 </div>
             </div>
@@ -335,7 +479,7 @@ export const AttendeeManager = () => {
                         {checkInCount} <span className="text-sm font-medium text-zinc-400 mb-1">/ {attendees.length}</span>
                     </div>
                     <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div className="bg-green-500 h-full rounded-full transition-all" style={{width: `${attendees.length > 0 ? (checkInCount/attendees.length)*100 : 0}%`}}></div>
+                        <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${attendees.length > 0 ? (checkInCount / attendees.length) * 100 : 0}%` }}></div>
                     </div>
                 </div>
                 <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
@@ -345,128 +489,201 @@ export const AttendeeManager = () => {
             </div>
 
             {/* Main Content Card */}
-            <Card className="p-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl h-auto">
-                
-                {/* Toolbar */}
-                <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col gap-3">
-                    <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                        <input 
-                            type="text" 
-                            placeholder="Search name, email, order ID..." 
-                            value={searchTerm} 
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 h-12 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                        />
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                        {['all', 'checkedIn', 'notCheckedIn', 'paid', 'pending'].map(f => (
-                            <button
-                                key={f}
-                                onClick={() => setFilterStatus(f)}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap border ${
-                                    filterStatus === f 
-                                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent' 
-                                    : 'bg-white dark:bg-black text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
-                                }`}
-                            >
-                                {f === 'checkedIn' ? 'Checked In' : f === 'notCheckedIn' ? 'Not In' : f}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="flex gap-6 mb-4 border-b border-zinc-200 dark:border-zinc-800">
+                <button
+                    onClick={() => setActiveTab('attendees')}
+                    className={`pb-3 px-2 font-bold text-sm transition-colors relative ${activeTab === 'attendees' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                >
+                    Attendee List
+                    {activeTab === 'attendees' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900 dark:bg-white rounded-t-full" />}
+                </button>
+                <button
+                    onClick={() => setActiveTab('waitlist')}
+                    className={`pb-3 px-2 font-bold text-sm transition-colors relative ${activeTab === 'waitlist' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-700'}`}
+                >
+                    Waitlist
+                    {waitlist.length > 0 && <Badge color="gray" className="ml-2 scale-75">{waitlist.filter(w => w.status === 'pending').length}</Badge>}
+                    {activeTab === 'waitlist' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-900 dark:bg-white rounded-t-full" />}
+                </button>
+            </div>
 
-                {/* List View */}
-                <div className="divide-y divide-zinc-100 dark:divide-zinc-900 max-h-[600px] overflow-y-auto">
-                    {filteredAttendees.length === 0 ? (
-                        <div className="p-12 text-center text-zinc-500">
-                            <User className="mx-auto h-12 w-12 opacity-20 mb-3"/>
-                            <p>No attendees found matching your filters.</p>
-                        </div>
-                    ) : (
-                        filteredAttendees.map(item => (
-                            <div 
-                                key={item.id} 
-                                className={`group p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors ${item.checkedIn ? 'bg-green-50/30 dark:bg-green-900/5' : ''}`}
-                            >
-                                {/* Top Row Mobile / Left Desktop */}
-                                <div className="flex items-center gap-3 w-full md:w-auto">
-                                    <div onClick={() => handleCheckInToggle(item)} className="cursor-pointer shrink-0">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                                            item.checkedIn 
-                                            ? 'bg-green-500 text-white shadow-md shadow-green-500/30' 
-                                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 group-hover:border-2 group-hover:border-zinc-300'
-                                        }`}>
-                                            {item.checkedIn ? <Check size={18} strokeWidth={3}/> : <User size={18}/>}
-                                        </div>
-                                    </div>
+            <Card className="p-0 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black shadow-xl h-auto min-h-[400px]">
 
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <h3 className={`font-bold text-sm md:text-base truncate ${item.checkedIn ? 'text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'}`}>
-                                                    {item.name}
-                                                </h3>
-                                                {item.status !== 'paid' && <Badge color={item.status === 'refunded' ? 'red' : 'yellow'} className="text-[10px] px-1.5 py-0 h-4">{item.status}</Badge>}
-                                            </div>
-                                            <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                <span className="flex items-center gap-1 truncate max-w-[120px]"><Ticket size={10}/> {item.ticketType}</span>
-                                                <span className="hidden md:inline w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
-                                                <span className="flex items-center gap-1 truncate max-w-[150px]"><Mail size={10}/> {item.email}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Mobile Menu Trigger */}
-                                    <div className="md:hidden relative">
-                                        <button onClick={(e) => openDropdown(e, item)} className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
-                                            <MoreHorizontal size={24}/>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Desktop Actions */}
-                                <div className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto items-center">
-                                    <button onClick={() => handleCheckInToggle(item)} className="px-3 py-1.5 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap">
-                                        {item.checkedIn ? 'Undo Check-in' : 'Check In'}
-                                    </button>
-                                    <button onClick={() => { setEditGuestData({name: item.name, email: item.email}); setShowEditModal(item); }} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Edit">
-                                        <Edit size={16}/>
-                                    </button>
-                                    <button onClick={() => handlePrintBadge(item)} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Print">
-                                        <Printer size={16}/>
-                                    </button>
-                                    <button onClick={() => handleDeleteGuest(item)} className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors" title="Delete">
-                                        <Trash2 size={16}/>
-                                    </button>
-                                </div>
+                {activeTab === 'attendees' ? (
+                    <>
+                        {/* Toolbar */}
+                        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col gap-3">
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search name, email, order ID..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="w-full pl-10 h-12 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                />
                             </div>
-                        ))
-                    )}
-                </div>
+                            <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                                {['all', 'approvalPending', 'checkedIn', 'notCheckedIn', 'paid', 'pending'].map(f => (
+                                    <button
+                                        key={f}
+                                        onClick={() => setFilterStatus(f)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap border ${filterStatus === f
+                                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-black border-transparent'
+                                            : 'bg-white dark:bg-black text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
+                                            }`}
+                                    >
+                                        {f === 'checkedIn' ? 'Checked In' : f === 'notCheckedIn' ? 'Not In' : f === 'approvalPending' ? 'Needs Approval' : f}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* List View */}
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-900 max-h-[600px] overflow-y-auto">
+                            {filteredAttendees.length === 0 ? (
+                                <div className="p-12 text-center text-zinc-500">
+                                    <User className="mx-auto h-12 w-12 opacity-20 mb-3" />
+                                    <p>No attendees found matching your filters.</p>
+                                </div>
+                            ) : (
+                                filteredAttendees.map(item => (
+                                    <div
+                                        key={item.id}
+                                        className={`group p-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors ${item.checkedIn ? 'bg-green-50/30 dark:bg-green-900/5' : item.approvalStatus === 'pending' ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''}`}
+                                    >
+                                        {/* Top Row Mobile / Left Desktop */}
+                                        <div className="flex items-center gap-3 w-full md:w-auto">
+                                            <div onClick={() => handleCheckInToggle(item)} className="cursor-pointer shrink-0">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.checkedIn
+                                                    ? 'bg-green-500 text-white shadow-md shadow-green-500/30'
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 group-hover:border-2 group-hover:border-zinc-300'
+                                                    }`}>
+                                                    {item.checkedIn ? <Check size={18} strokeWidth={3} /> : <User size={18} />}
+                                                </div>
+                                            </div>
+
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex flex-col">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <h3 className={`font-bold text-sm md:text-base truncate ${item.checkedIn ? 'text-zinc-900 dark:text-white' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                                                            {item.name}
+                                                        </h3>
+                                                        {item.approvalStatus === 'pending' && <Badge color="yellow" className="text-[10px] px-1.5 py-0 h-4">Pending Approval</Badge>}
+                                                        {item.status !== 'paid' && <Badge color={item.status === 'refunded' ? 'red' : 'yellow'} className="text-[10px] px-1.5 py-0 h-4">{item.status}</Badge>}
+                                                    </div>
+                                                    <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                        <span className="flex items-center gap-1 truncate max-w-[120px]"><Ticket size={10} /> {item.ticketType}</span>
+                                                        <span className="hidden md:inline w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+                                                        <span className="flex items-center gap-1 truncate max-w-[150px]"><Mail size={10} /> {item.email}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Mobile Menu Trigger */}
+                                            <div className="md:hidden relative">
+                                                <button onClick={(e) => openDropdown(e, item)} className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                                                    <MoreHorizontal size={24} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop Actions */}
+                                        <div className="hidden md:flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity ml-auto items-center">
+                                            {item.approvalStatus === 'pending' && (
+                                                <Button size="sm" variant="secondary" onClick={() => handleApproveAttendee(item)} className="h-8 px-3 text-[10px] font-black uppercase">Approve</Button>
+                                            )}
+                                            <button onClick={() => handleCheckInToggle(item)} className="px-3 py-1.5 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap">
+                                                {item.checkedIn ? 'Undo Check-in' : 'Check In'}
+                                            </button>
+                                            <button onClick={() => { setEditGuestData({ name: item.name, email: item.email }); setShowEditModal(item); }} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Edit">
+                                                <Edit size={16} />
+                                            </button>
+                                            <button onClick={() => handleResendEmail(item)} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Resend Email">
+                                                <Mail size={16} />
+                                            </button>
+                                            <button onClick={() => handlePrintBadge(item)} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Print">
+                                                <Printer size={16} />
+                                            </button>
+                                            <button onClick={() => handleDeleteGuest(item)} className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors" title="Delete">
+                                                <Trash2 size={16} />
+                                            </button>
+                                            {item.status === 'paid' && (
+                                                <button onClick={() => handleOpenRefundModal(item)} className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors" title="Refund">
+                                                    <DollarSign size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    // Waitlist Logic
+                    <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                        {waitlist.length === 0 ? (
+                            <div className="p-12 text-center text-zinc-500">
+                                <Hourglass className="mx-auto h-12 w-12 opacity-20 mb-3" />
+                                <p>Waitlist is empty.</p>
+                            </div>
+                        ) : (
+                            waitlist.map(w => (
+                                <div key={w.id} className="p-4 flex justify-between items-center hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                                    <div className="flex gap-4 items-center">
+                                        <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                                            <Hourglass size={18} />
+                                        </div>
+                                        <div>
+                                            <div className="font-bold flex items-center gap-2">
+                                                {w.name}
+                                                {w.status === 'promoted' && <Badge color="green" className="text-xs">Promoted</Badge>}
+                                                {w.status === 'expired' && <Badge color="red" className="text-xs">Expired</Badge>}
+                                            </div>
+                                            <div className="text-sm text-zinc-500">{w.email} • Joined {new Date(w.dateJoined).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        {w.status === 'pending' && (
+                                            <Button size="sm" onClick={() => handlePromoteWaitlist(w)}>Promote to Guest</Button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
             </Card>
 
             {/* Global Fixed Dropdown - Renders outside of overflow containers */}
             {dropdownState.isOpen && dropdownState.item && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setDropdownState({ ...dropdownState, isOpen: false })}></div>
-                    <div 
-                        style={{ top: dropdownState.y + 5, left: Math.min(window.innerWidth - 200, dropdownState.x - 180) }} 
+                    <div
+                        style={{ top: dropdownState.y + 5, left: Math.min(window.innerWidth - 200, dropdownState.x - 180) }}
                         className="fixed w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xl rounded-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95"
                     >
-                        <button onClick={() => { handleCheckInToggle(dropdownState.item!); setDropdownState(prev => ({...prev, isOpen: false})); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 font-bold flex items-center gap-2">
-                            <Check size={16}/> {dropdownState.item.checkedIn ? 'Undo Check-in' : 'Check In'}
+                        <button onClick={() => { handleCheckInToggle(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 font-bold flex items-center gap-2">
+                            <Check size={16} /> {dropdownState.item.checkedIn ? 'Undo Check-in' : 'Check In'}
                         </button>
-                        <button onClick={() => { setEditGuestData({name: dropdownState.item!.name, email: dropdownState.item!.email}); setShowEditModal(dropdownState.item); setDropdownState(prev => ({...prev, isOpen: false})); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
-                            <Edit size={16}/> Edit Details
+                        <button onClick={() => { setEditGuestData({ name: dropdownState.item!.name, email: dropdownState.item!.email }); setShowEditModal(dropdownState.item); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
+                            <Edit size={16} /> Edit Details
                         </button>
-                        <button onClick={() => { handlePrintBadge(dropdownState.item!); setDropdownState(prev => ({...prev, isOpen: false})); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
-                            <Printer size={16}/> Print Badge
+                        <button onClick={() => { handleResendEmail(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
+                            <Mail size={16} /> Resend Email
                         </button>
-                        <button onClick={() => { handleDeleteGuest(dropdownState.item!); setDropdownState(prev => ({...prev, isOpen: false})); }} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 font-bold flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-700">
-                            <Trash2 size={16}/> Remove Guest
+                        <button onClick={() => { handlePrintBadge(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
+                            <Printer size={16} /> Print Badge
                         </button>
+                        <button onClick={() => { handleDeleteGuest(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 font-bold flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-700">
+                            <Trash2 size={16} /> Remove Guest
+                        </button>
+                        {dropdownState.item?.status === 'paid' && (
+                            <button onClick={() => { handleOpenRefundModal(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 font-bold flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-700">
+                                <DollarSign size={16} /> Refund
+                            </button>
+                        )}
                     </div>
                 </>
             )}
@@ -477,13 +694,13 @@ export const AttendeeManager = () => {
                     <Card className="w-full max-w-md p-6">
                         <h3 className="text-xl font-bold mb-4">Add Guest Manually</h3>
                         <div className="space-y-4">
-                            <Input label="Name" value={newGuestData.name} onChange={e => setNewGuestData({...newGuestData, name: e.target.value})} />
-                            <Input label="Email" value={newGuestData.email} onChange={e => setNewGuestData({...newGuestData, email: e.target.value})} />
-                            <Select 
+                            <Input label="Name" value={newGuestData.name} onChange={e => setNewGuestData({ ...newGuestData, name: e.target.value })} />
+                            <Input label="Email" value={newGuestData.email} onChange={e => setNewGuestData({ ...newGuestData, email: e.target.value })} />
+                            <Select
                                 label="Ticket Type"
                                 value={newGuestData.tierId}
-                                onChange={e => setNewGuestData({...newGuestData, tierId: e.target.value})}
-                                options={event?.ticketTiers?.map(t => ({value: t.id, label: `${t.name} ($${t.price})`})) || [{value: 'general', label: 'General'}]}
+                                onChange={e => setNewGuestData({ ...newGuestData, tierId: e.target.value })}
+                                options={event?.ticketTiers?.map(t => ({ value: t.id, label: `${t.name} ($${t.price})` })) || [{ value: 'general', label: 'General' }]}
                             />
                             <div className="flex gap-2 justify-end mt-6">
                                 <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancel</Button>
@@ -499,11 +716,72 @@ export const AttendeeManager = () => {
                     <Card className="w-full max-w-md p-6">
                         <h3 className="text-xl font-bold mb-4">Edit Attendee</h3>
                         <div className="space-y-4">
-                            <Input label="Name" value={editGuestData.name} onChange={e => setEditGuestData({...editGuestData, name: e.target.value})} />
-                            <Input label="Email" value={editGuestData.email} onChange={e => setEditGuestData({...editGuestData, email: e.target.value})} />
+                            <Input label="Name" value={editGuestData.name} onChange={e => setEditGuestData({ ...editGuestData, name: e.target.value })} />
+                            <Input label="Email" value={editGuestData.email} onChange={e => setEditGuestData({ ...editGuestData, email: e.target.value })} />
                             <div className="flex gap-2 justify-end mt-6">
                                 <Button variant="ghost" onClick={() => setShowEditModal(null)}>Cancel</Button>
                                 <Button onClick={handleSaveEdit}>Save Changes</Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* Refund Modal */}
+            {showRefundModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <Card className="w-full max-w-md p-6">
+                        <div className="flex items-center gap-3 mb-4 text-red-500">
+                            <AlertTriangle size={24} />
+                            <h3 className="text-xl font-bold text-black dark:text-white">Issue Refund</h3>
+                        </div>
+                        <p className="text-zinc-500 mb-6 text-sm">
+                            This will process a refund via Stripe Connect (if configured) and invalidate the ticket(s).
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Refund Scope</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => setRefundMode('ticket')}
+                                        className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'ticket' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
+                                    >
+                                        This Ticket Only
+                                    </button>
+                                    <button
+                                        onClick={() => setRefundMode('order')}
+                                        className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'order' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
+                                    >
+                                        Full Order
+                                    </button>
+                                </div>
+                            </div>
+
+                            <Input
+                                label="Refund Amount ($)"
+                                type="number"
+                                value={refundAmount}
+                                onChange={e => setRefundAmount(parseFloat(e.target.value))}
+                                disabled={refundMode === 'order'} // Auto-calc full amount if order
+                            />
+
+                            <Input
+                                label="Reason (Optional)"
+                                value={refundReason}
+                                onChange={e => setRefundReason(e.target.value)}
+                                placeholder="e.g. Duplicate order, Customer request"
+                            />
+
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-xs text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50">
+                                <strong>Note:</strong> Platform fees are generally non-refundable. The customer will receive this amount back to their card.
+                            </div>
+
+                            <div className="flex gap-2 justify-end mt-6">
+                                <Button variant="ghost" onClick={() => setShowRefundModal(null)}>Cancel</Button>
+                                <Button onClick={processRefund} className="bg-red-500 text-white hover:bg-red-600 border-none">
+                                    Confirm Refund
+                                </Button>
                             </div>
                         </div>
                     </Card>

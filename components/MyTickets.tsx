@@ -7,7 +7,7 @@ import { Calendar, MapPin, Clock, Ticket as TicketIcon, Printer, ArrowLeft, Send
 
 export const MyTickets = () => {
     interface DisplayTicket {
-        reg: Registration; 
+        reg: Registration;
         event: Event;
         ticketInfo: { name: string, quantity: number, date?: string };
         uniqueIndex: number;
@@ -34,7 +34,7 @@ export const MyTickets = () => {
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const navigate = useNavigate();
-    
+
     // Derived State
     const selectedGroup = eventGroups.find(g => g.eventId === selectedGroupId) || null;
 
@@ -90,11 +90,11 @@ export const MyTickets = () => {
                         if (activeTab !== 'archived' && isTicketHidden) continue;
 
                         ticketList.push({
-                            reg, event, 
+                            reg, event,
                             ticketInfo: { name: t.name, quantity: t.quantity, date: t.date },
                             uniqueIndex: i,
                             uniqueQrData: `TICKET:${reg.id}:${t.tierId}:${i}`,
-                            ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0,3).toUpperCase()}-${i + 1}`,
+                            ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0, 3).toUpperCase()}-${i + 1}`,
                             ticketKey: key,
                             status: isTicketHidden ? 'hidden' : baseStatus,
                             hostName: event.organizer,
@@ -123,13 +123,13 @@ export const MyTickets = () => {
             if (reg.addOns && reg.addOns.length > 0) {
                 reg.addOns.forEach(addon => {
                     for (let i = 0; i < addon.quantity; i++) {
-                         ticketList.push({
-                            reg, event, 
-                            ticketInfo: { name: addon.name, quantity: addon.quantity }, 
+                        ticketList.push({
+                            reg, event,
+                            ticketInfo: { name: addon.name, quantity: addon.quantity },
                             uniqueIndex: i,
                             uniqueQrData: `ADDON:${reg.id}:${addon.id}:${i}`,
                             ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-ADD-${i + 1}`,
-                            ticketKey: `${addon.id}-${i}`, 
+                            ticketKey: `${addon.id}-${i}`,
                             status: baseStatus,
                             hostName: event.organizer,
                             isAddOn: true,
@@ -148,16 +148,16 @@ export const MyTickets = () => {
                 eventId,
                 event: g.event,
                 totalTickets: g.tickets.length,
-                tickets: g.tickets.sort((a,b) => b.timestamp - a.timestamp),
+                tickets: g.tickets.sort((a, b) => b.timestamp - a.timestamp),
                 mostRecentTimestamp: g.timestamp
             }));
-        
-        setEventGroups(result.sort((a,b) => b.mostRecentTimestamp - a.mostRecentTimestamp));
+
+        setEventGroups(result.sort((a, b) => b.mostRecentTimestamp - a.mostRecentTimestamp));
     };
 
     const handlePrint = async (ticketsToPrint: DisplayTicket[] | undefined = undefined) => {
         if (!selectedGroup && !ticketsToPrint) return;
-        
+
         const tickets = ticketsToPrint || selectedGroup?.tickets;
         if (!tickets || tickets.length === 0) return;
 
@@ -168,8 +168,8 @@ export const MyTickets = () => {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(ticket.uniqueQrData)}`;
             const dateDisplay = new Date(ticket.event.date).toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
             const timeDisplay = formatTime(ticket.event.time, ticket.event.timeFormat);
-            
-            const addOns = ticket.reg.addOns?.map(a => 
+
+            const addOns = ticket.reg.addOns?.map(a =>
                 `<li class="addon-item"><strong>${a.quantity}x</strong> ${a.name}</li>`
             ).join('') || '';
 
@@ -262,7 +262,7 @@ export const MyTickets = () => {
                         .info-group label { display: block; font-size: 10px; font-weight: 800; color: #a1a1aa; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
                         .info-group .value { font-size: 14px; font-weight: 700; color: #18181b; }
                         .highlight-row .value { font-size: 16px; }
-                        .badge { display: inline-block; background: #18181b; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px !important; text-transform: uppercase; }
+                        .badge { display: inline-block; background: #18181b; color: white !important; padding: 4px 10px; border-radius: 6px; font-size: 12px !important; text-transform: uppercase; }
                         
                         .extras-section { background: #f4f4f5; padding: 10px 15px; border-radius: 8px; margin-top: auto; }
                         .extras-section label { font-size: 9px; font-weight: 800; color: #a1a1aa; text-transform: uppercase; }
@@ -290,7 +290,7 @@ export const MyTickets = () => {
     return (
         <div className="max-w-4xl mx-auto py-12 px-4">
             <h1 className="text-4xl font-black text-zinc-900 dark:text-white mb-8 font-display uppercase tracking-tight">Your Tickets</h1>
-            
+
             <div className="flex gap-2 mb-8 border-b border-zinc-200 dark:border-zinc-800 pb-1 overflow-x-auto">
                 {['active', 'past', 'archived'].map((tab) => (
                     <button
@@ -323,11 +323,11 @@ export const MyTickets = () => {
                                 <div className="p-6 flex-1 flex flex-col justify-center">
                                     <h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-2 line-clamp-1">{group.event.title}</h3>
                                     <div className="flex items-center gap-4 text-sm text-zinc-500 mb-4">
-                                        <div className="flex items-center gap-1"><Calendar size={14}/> {new Date(group.event.date).toLocaleDateString()}</div>
-                                        <div className="flex items-center gap-1"><Clock size={14}/> {formatTime(group.event.time, group.event.timeFormat)}</div>
+                                        <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(group.event.date).toLocaleDateString()}</div>
+                                        <div className="flex items-center gap-1"><Clock size={14} /> {formatTime(group.event.time, group.event.timeFormat)}</div>
                                     </div>
                                     <div className="flex items-center gap-1 text-primary font-bold text-sm mt-auto">
-                                        View Tickets <ArrowLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform"/>
+                                        View Tickets <ArrowLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </div>
                             </div>
@@ -339,10 +339,10 @@ export const MyTickets = () => {
                 <div className="animate-in fade-in slide-in-from-right-4">
                     <div className="flex justify-between items-center mb-6">
                         <Button variant="ghost" onClick={() => setSelectedGroupId(null)} className="pl-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
-                            <ArrowLeft size={18} className="mr-2"/> Back to Events
+                            <ArrowLeft size={18} className="mr-2" /> Back to Events
                         </Button>
                         <Button onClick={() => handlePrint()} variant="outline" size="sm">
-                            <Printer size={16} className="mr-2"/> Print All
+                            <Printer size={16} className="mr-2" /> Print All
                         </Button>
                     </div>
 
@@ -383,7 +383,7 @@ export const MyTickets = () => {
                                     {/* Add-ons Display */}
                                     {ticket.reg.addOns && ticket.reg.addOns.length > 0 && !ticket.isAddOn && (
                                         <div className="bg-zinc-50 dark:bg-zinc-900/50 p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                                            <div className="text-[10px] font-bold text-zinc-400 uppercase mb-2 flex items-center gap-1"><ShoppingBag size={10}/> Included Extras</div>
+                                            <div className="text-[10px] font-bold text-zinc-400 uppercase mb-2 flex items-center gap-1"><ShoppingBag size={10} /> Included Extras</div>
                                             <div className="flex flex-wrap gap-2">
                                                 {ticket.reg.addOns.map((addon, idx) => (
                                                     <span key={idx} className="text-xs font-bold bg-white dark:bg-black px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
@@ -399,8 +399,8 @@ export const MyTickets = () => {
                                 <div className="bg-zinc-100 dark:bg-zinc-900 p-8 flex flex-col items-center justify-center border-l border-zinc-200 dark:border-zinc-800 border-dashed relative w-full md:w-64">
                                     <div className="absolute -left-3 top-1/2 w-6 h-6 bg-white dark:bg-black rounded-full -translate-y-1/2 hidden md:block"></div>
                                     <div className="bg-white p-2 rounded-xl shadow-sm mb-4">
-                                        <img 
-                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticket.uniqueQrData)}`} 
+                                        <img
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticket.uniqueQrData)}`}
                                             className={`w-32 h-32 ${ticket.status !== 'valid' && ticket.status !== 'pay_at_door' ? 'opacity-20 blur-sm' : ''}`}
                                         />
                                     </div>
@@ -408,7 +408,7 @@ export const MyTickets = () => {
                                         <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">Order ID</div>
                                         <div className="font-mono text-sm font-bold tracking-wider mb-2">{ticket.ticketIdDisplay}</div>
                                         <button onClick={() => handlePrint([ticket])} className="text-xs text-primary hover:underline flex items-center justify-center gap-1">
-                                            <Printer size={12}/> Print Ticket
+                                            <Printer size={12} /> Print Ticket
                                         </button>
                                     </div>
                                 </div>

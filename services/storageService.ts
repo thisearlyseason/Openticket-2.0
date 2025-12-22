@@ -1,6 +1,8 @@
 import { Event, Registration, User, PlanType, PaymentMethod, Invoice, ContactSubmission, DebitCard, SystemNotification, AuditLog, Broadcast } from '../types';
-import { db, auth, googleProvider } from './firebaseConfig';
+import { db, auth, storage, googleProvider } from './firebaseConfig';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, addDoc, limit, disableNetwork } from 'firebase/firestore';
+// @ts-ignore
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 // @ts-ignore
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup } from 'firebase/auth';
 
@@ -11,10 +13,11 @@ const SYSTEM_NOTE_KEY = 'openticket_system_notification';
 const LS_EVENTS_KEY = 'openticket_events_data';
 const LS_USERS_KEY = 'openticket_users_data';
 const LS_REGS_KEY = 'openticket_registrations_data';
+const LS_WAITLIST_KEY = 'openticket_waitlist_data';
 const LS_AUDIT_KEY = 'openticket_audit_logs';
 
 // Internal State
-let isOffline = true;
+let isOffline = false;
 let isDemoMode = false;
 let initError: Error | null = null;
 
@@ -43,7 +46,7 @@ export const PLANS = {
     pro: {
         name: 'Pro',
         priceMonthly: 39,
-        priceYearly: 390, 
+        priceYearly: 390,
         feePercent: 0.015, // 1.5%
         feeFixed: 0.75, // $0.75
         ticketLimit: 250,
@@ -100,21 +103,27 @@ const sanitizeInput = (input: any): any => {
 };
 
 const sanitizeForFirestore = (obj: any, seen = new WeakSet()): any => {
-    if (obj === undefined) return null; 
+    if (obj === undefined) return null;
     if (obj === null) return null;
     if (typeof obj !== 'object') return obj;
     if (obj instanceof Date) return obj.toISOString();
     if (seen.has(obj)) return null;
+
     seen.add(obj);
+
     if (Array.isArray(obj)) {
-        return obj.map(v => sanitizeForFirestore(v, seen));
+        return obj.map(v => sanitizeForFirestore(v, seen)).filter(v => v !== undefined);
     }
+
     const newObj: any = {};
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             const val = sanitizeForFirestore(obj[key], seen);
-            if (val !== undefined) {
+            if (val !== undefined && val !== null) {
                 newObj[key] = val;
+            } else if (val === null) {
+                // Firestore allows null, but we prefer to just omit undefined
+                newObj[key] = null;
             }
         }
     }
@@ -190,7 +199,7 @@ const populateDummyData = () => {
     const events = getLocal<Event>(LS_EVENTS_KEY);
     const now = Date.now();
     const day = 86400000;
-    
+
     const requiredEvents: Event[] = [
         {
             id: 'demo-evt-1',
@@ -268,7 +277,7 @@ const populateDummyData = () => {
         subscription: { plan: 'pro', cycle: 'monthly', status: 'active', nextBillingDate: now + day * 20 },
         businessName: 'Neon Events Co.'
     };
-    
+
     const adminUser: User = {
         id: 'super-admin',
         name: 'Super Admin',
@@ -297,9 +306,9 @@ const StripeService = {
     processSubscriptionPayment: async (amount: number, userId: string, planName: string): Promise<boolean> => {
         const admin = await StorageService.getSuperAdmin();
         if (admin) {
-             const newAdminBalance = (admin.availablePayout || 0) + amount;
-             const adminInvoice: Invoice = { id: `inv-inc-${Date.now()}`, date: Date.now(), amount: amount, status: 'paid', description: `Subscription Income: ${planName} from ${userId}`, items: [{ desc: 'Subscription Fee', amount }], type: 'subscription' };
-             await StorageService.updateUser(admin.id, { availablePayout: newAdminBalance, invoices: [...(admin.invoices || []), adminInvoice] });
+            const newAdminBalance = (admin.availablePayout || 0) + amount;
+            const adminInvoice: Invoice = { id: `inv-inc-${Date.now()}`, date: Date.now(), amount: amount, status: 'paid', description: `Subscription Income: ${planName} from ${userId}`, items: [{ desc: 'Subscription Fee', amount }], type: 'subscription' };
+            await StorageService.updateUser(admin.id, { availablePayout: newAdminBalance, invoices: [...(admin.invoices || []), adminInvoice] });
         }
         logAuditEvent('STRIPE_SUBSCRIPTION', `Collected $${amount} for ${planName}`, 'system');
         return true;
@@ -308,258 +317,486 @@ const StripeService = {
 };
 
 export const StorageService = {
-  isOfflineMode: () => isOffline,
-  isDemoMode: () => isDemoMode,
-  getLastError: () => initError,
-  Stripe: StripeService,
+    isOfflineMode: () => isOffline,
+    isDemoMode: () => isDemoMode,
+    getLastError: () => initError,
+    Stripe: StripeService,
 
-  init: async () => {
-    try {
-        if (!db) throw new Error("Firebase DB not initialized.");
-        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Connection Timeout")), 4000));
-        const connectionPromise = (async () => {
-            try {
-                const q = query(collection(db, 'events'), limit(1));
-                await getDocs(q);
-                return true;
-            } catch (err) { throw err; }
-        })();
-        await Promise.race([connectionPromise, timeout]);
-        isOffline = false;
-        console.log("Firebase Connected");
-    } catch (e: any) {
-        initError = e;
-        isOffline = true;
-        isDemoMode = (e.code === 'permission-denied' || e.message?.includes('permission-denied'));
-        try { if (db) await disableNetwork(db); } catch {}
-        populateDummyData();
-    }
-  },
-
-  setSystemNotification: (message: string, type: 'info' | 'warning' | 'success' = 'info') => {
-      const currentUser = StorageService.getCurrentUser();
-      if (!currentUser?.isAdmin) return;
-      const note: SystemNotification = { id: `note-${Date.now()}`, message, type, active: true, timestamp: Date.now() };
-      localStorage.setItem(SYSTEM_NOTE_KEY, safeStringify(note));
-  },
-
-  getSystemNotification: (): SystemNotification | null => {
-      const data = localStorage.getItem(SYSTEM_NOTE_KEY);
-      if (!data) return null;
-      try { const note = JSON.parse(data); return note.active ? note : null; } catch { return null; }
-  },
-
-  clearSystemNotification: () => {
-      const currentUser = StorageService.getCurrentUser();
-      if (!currentUser?.isAdmin) return;
-      localStorage.removeItem(SYSTEM_NOTE_KEY);
-  },
-
-  saveContactMessage: async (data: any) => {
-    if (isOffline) return true;
-    try { await addDoc(collection(db, 'contacts'), { timestamp: Date.now(), ...sanitizeInput(data) }); return true; } catch { return false; }
-  },
-
-  calculateFees: (subtotal: number, planType: PlanType = 'free') => {
-      if (subtotal <= 0) return 0;
-      const plan = PLANS[planType];
-      return (subtotal * plan.feePercent) + plan.feeFixed;
-  },
-
-  getUserById: async (id: string): Promise<User | undefined> => {
-      if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.id === id);
-      try { const docSnap = await getDoc(doc(db, 'users', id)); return docSnap.exists() ? docSnap.data() as User : undefined; } catch { return undefined; }
-  },
-
-  getSuperAdmin: async (): Promise<User | undefined> => {
-      if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.isAdmin);
-      try { const q = query(collection(db, 'users'), where('isAdmin', '==', true), limit(1)); const snap = await getDocs(q); return !snap.empty ? snap.docs[0].data() as User : undefined; } catch { return undefined; }
-  },
-
-  checkAffiliateCodeUnique: async (code: string) => {
-    const cleanCode = code.trim().toUpperCase();
-    if (isOffline) return !getLocal<User>(LS_USERS_KEY).some(u => u.affiliateCode === cleanCode);
-    try { const q = query(collection(db, 'users'), where('affiliateCode', '==', cleanCode)); const snap = await getDocs(q); return snap.empty; } catch { return true; }
-  },
-
-  login: async (email: string, password: string): Promise<{ user: User | null, error?: string }> => {
-    if (isOffline) {
-        const user = getLocal<User>(LS_USERS_KEY).find(u => u.email === email && u.password === password);
-        if (user) {
-            if (user.isBanned) return { user: null, error: "Account Suspended." };
-            localStorage.setItem(CURRENT_USER_KEY, safeStringify(user));
-            return { user };
+    init: async () => {
+        try {
+            if (!db) throw new Error("Firebase DB not initialized.");
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Connection Timeout")), 4000));
+            const connectionPromise = (async () => {
+                try {
+                    const q = query(collection(db, 'events'), limit(1));
+                    await getDocs(q);
+                    return true;
+                } catch (err) { throw err; }
+            })();
+            await Promise.race([connectionPromise, timeout]);
+            isOffline = false;
+            console.log("Firebase Connected");
+        } catch (e: any) {
+            initError = e;
+            isOffline = true;
+            isDemoMode = (e.code === 'permission-denied' || e.message?.includes('permission-denied'));
+            try { if (db) await disableNetwork(db); } catch { }
+            populateDummyData();
         }
-        return { user: null, error: "Invalid credentials" };
-    }
-    try {
-        if (!auth) return { user: null, error: "Auth not initialized." };
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-        if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            if (userData.isBanned) return { user: null, error: "Account Suspended." };
+    },
+
+    setSystemNotification: (message: string, type: 'info' | 'warning' | 'success' = 'info') => {
+        const currentUser = StorageService.getCurrentUser();
+        if (!currentUser?.isAdmin) return;
+        const note: SystemNotification = { id: `note-${Date.now()}`, message, type, active: true, timestamp: Date.now() };
+        localStorage.setItem(SYSTEM_NOTE_KEY, safeStringify(note));
+    },
+
+    getSystemNotification: (): SystemNotification | null => {
+        const data = localStorage.getItem(SYSTEM_NOTE_KEY);
+        if (!data) return null;
+        try { const note = JSON.parse(data); return note.active ? note : null; } catch { return null; }
+    },
+
+    clearSystemNotification: () => {
+        const currentUser = StorageService.getCurrentUser();
+        if (!currentUser?.isAdmin) return;
+        localStorage.removeItem(SYSTEM_NOTE_KEY);
+    },
+
+    saveContactMessage: async (data: any) => {
+        if (isOffline) return true;
+        try { await addDoc(collection(db, 'contacts'), { timestamp: Date.now(), ...sanitizeInput(data) }); return true; } catch { return false; }
+    },
+
+    uploadFile: async (base64Data: string, path: string): Promise<string> => {
+        if (isOffline || !storage) {
+            // Mock upload in offline mode - return the base64 itself (fallback) or a mock URL
+            // Returning base64 is bad for storage but fine for local demo
+            return base64Data;
+        }
+        try {
+            const storageRef = ref(storage, path);
+            await uploadString(storageRef, base64Data, 'data_url');
+            const url = await getDownloadURL(storageRef);
+            return url;
+        } catch (e: any) {
+            console.error("Upload failed", e);
+            if (e.message?.includes('CORS') || e.code === 'storage/retry-limit-exceeded' || !window.navigator.onLine) {
+                const bucketName = storageInstance?.app?.options?.storageBucket || 'your bucket';
+                throw new Error(`CORS/Upload Error: Please ensure you've set the CORS policy for gs://${bucketName} in your terminal. See CORS_FIX.md in your braindump folder.`);
+            }
+            throw new Error(`Upload failed: ${e.message}`);
+        }
+    },
+
+    calculateFees: (subtotal: number, planType: PlanType = 'free') => {
+        if (subtotal <= 0) return 0;
+        const plan = PLANS[planType];
+        return (subtotal * plan.feePercent) + plan.feeFixed;
+    },
+
+    getUserById: async (id: string): Promise<User | undefined> => {
+        if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.id === id);
+        try { const docSnap = await getDoc(doc(db, 'users', id)); return docSnap.exists() ? docSnap.data() as User : undefined; } catch { return undefined; }
+    },
+
+    getSuperAdmin: async (): Promise<User | undefined> => {
+        if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.isAdmin);
+        try { const q = query(collection(db, 'users'), where('isAdmin', '==', true), limit(1)); const snap = await getDocs(q); return !snap.empty ? snap.docs[0].data() as User : undefined; } catch { return undefined; }
+    },
+
+    checkAffiliateCodeUnique: async (code: string) => {
+        const cleanCode = code.trim().toUpperCase();
+        if (isOffline) return !getLocal<User>(LS_USERS_KEY).some(u => u.affiliateCode === cleanCode);
+        try { const q = query(collection(db, 'users'), where('affiliateCode', '==', cleanCode)); const snap = await getDocs(q); return snap.empty; } catch { return true; }
+    },
+
+    login: async (email: string, password: string): Promise<{ user: User | null, error?: string }> => {
+        if (isOffline) {
+            const user = getLocal<User>(LS_USERS_KEY).find(u => u.email === email && u.password === password);
+            if (user) {
+                if (user.isBanned) return { user: null, error: "Account Suspended." };
+                localStorage.setItem(CURRENT_USER_KEY, safeStringify(user));
+                return { user };
+            }
+            return { user: null, error: "Invalid credentials" };
+        }
+        try {
+            if (!auth) return { user: null, error: "Auth not initialized." };
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+            if (userDoc.exists()) {
+                const userData = userDoc.data() as User;
+                if (userData.isBanned) return { user: null, error: "Account Suspended." };
+                localStorage.setItem(CURRENT_USER_KEY, safeStringify(userData));
+                return { user: userData };
+            }
+            return { user: null, error: "User profile not found." };
+        } catch (e: any) { return { user: null, error: `Login Error: ${e.message || e.code}` }; }
+    },
+
+    loginWithGoogle: async (desiredRole: 'attendee' | 'organizer' | 'affiliate' = 'attendee'): Promise<{ user: User | null, error?: string }> => {
+        if (isOffline || isDemoMode) return StorageService.login('demo@example.com', 'password');
+        try {
+            if (!auth) throw new Error("Auth not initialized");
+            const result = await signInWithPopup(auth, googleProvider);
+            const uid = result.user.uid;
+            const userDoc = await getDoc(doc(db, 'users', uid));
+            let userData: User;
+            if (userDoc.exists()) {
+                userData = userDoc.data() as User;
+                if (userData.isBanned) return { user: null, error: "Account Suspended." };
+
+                // Check if we need to upgrade the role (e.g. Attendee -> Organizer)
+                // Only upgrade if currently 'attendee' to avoid demoting Admins or switching established roles unexpectedly
+                if (userData.role === 'attendee' && desiredRole !== 'attendee' && desiredRole !== undefined) {
+                    userData.role = desiredRole;
+                    await setDoc(doc(db, 'users', uid), { role: desiredRole }, { merge: true });
+                }
+            } else {
+                userData = { id: uid, name: result.user.displayName || 'User', email: result.user.email || '', role: desiredRole, balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, logoUrl: result.user.photoURL || undefined };
+                await setDoc(doc(db, 'users', uid), userData);
+            }
             localStorage.setItem(CURRENT_USER_KEY, safeStringify(userData));
             return { user: userData };
+        } catch (e: any) {
+            if (e.code === 'auth/unauthorized-domain' || e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
+                console.warn(`[Auth Fallback] Domain restricted: ${e.code}. Using Guest Session.`);
+                const mockUser: User = { id: `mock-${Date.now()}`, name: 'Guest Tester', email: 'guest@openticket.dev', role: desiredRole, balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, logoUrl: 'https://ui-avatars.com/api/?name=Guest+User' };
+                const users = getLocal<User>(LS_USERS_KEY); users.push(mockUser); setLocal(LS_USERS_KEY, users);
+                localStorage.setItem(CURRENT_USER_KEY, safeStringify(mockUser));
+                return { user: mockUser };
+            }
+            return { user: null, error: e.message || "Google Login Failed" };
         }
-        return { user: null, error: "User profile not found." };
-    } catch (e: any) { return { user: null, error: `Login Error: ${e.message || e.code}` }; }
-  },
+    },
 
-  loginWithGoogle: async (): Promise<{ user: User | null, error?: string }> => {
-      if (isOffline || isDemoMode) return StorageService.login('demo@example.com', 'password');
-      try {
-          if (!auth) throw new Error("Auth not initialized");
-          const result = await signInWithPopup(auth, googleProvider);
-          const uid = result.user.uid;
-          const userDoc = await getDoc(doc(db, 'users', uid));
-          let userData: User;
-          if (userDoc.exists()) {
-              userData = userDoc.data() as User;
-              if (userData.isBanned) return { user: null, error: "Account Suspended." };
-          } else {
-              userData = { id: uid, name: result.user.displayName || 'User', email: result.user.email || '', role: 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, logoUrl: result.user.photoURL || undefined };
-              await setDoc(doc(db, 'users', uid), userData);
-          }
-          localStorage.setItem(CURRENT_USER_KEY, safeStringify(userData));
-          return { user: userData };
-      } catch (e: any) {
-          if (e.code === 'auth/unauthorized-domain' || e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed') {
-              console.warn(`[Auth Fallback] Domain restricted: ${e.code}. Using Guest Session.`);
-              const mockUser: User = { id: `mock-${Date.now()}`, name: 'Guest Tester', email: 'guest@openticket.dev', role: 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, logoUrl: 'https://ui-avatars.com/api/?name=Guest+User' };
-              const users = getLocal<User>(LS_USERS_KEY); users.push(mockUser); setLocal(LS_USERS_KEY, users);
-              localStorage.setItem(CURRENT_USER_KEY, safeStringify(mockUser));
-              return { user: mockUser };
-          }
-          return { user: null, error: e.message || "Google Login Failed" };
-      }
-  },
+    signup: async (userData: Partial<User>) => {
+        const cleanData = sanitizeInput(userData);
+        if (isOffline) {
+            const users = getLocal<User>(LS_USERS_KEY);
+            if (users.some(u => u.email === cleanData.email)) return "Email exists";
+            const newUser: User = { id: `u-${Date.now()}`, isAdmin: false, role: cleanData.role || 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, ...cleanData as User };
+            users.push(newUser); setLocal(LS_USERS_KEY, users); localStorage.setItem(CURRENT_USER_KEY, safeStringify(newUser));
+            return newUser;
+        }
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, cleanData.email, cleanData.password);
+            const { password, ...safeData } = cleanData;
+            const newUser: User = { id: userCredential.user.uid, isAdmin: false, role: safeData.role || 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, ...safeData as User };
+            await setDoc(doc(db, 'users', newUser.id), newUser); localStorage.setItem(CURRENT_USER_KEY, safeStringify(newUser));
+            return newUser;
+        } catch (e: any) { return e.message || "Signup failed"; }
+    },
 
-  signup: async (userData: Partial<User>) => {
-    const cleanData = sanitizeInput(userData);
-    if (isOffline) {
-        const users = getLocal<User>(LS_USERS_KEY);
-        if (users.some(u => u.email === cleanData.email)) return "Email exists";
-        const newUser: User = { id: `u-${Date.now()}`, isAdmin: false, role: cleanData.role || 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, ...cleanData as User };
-        users.push(newUser); setLocal(LS_USERS_KEY, users); localStorage.setItem(CURRENT_USER_KEY, safeStringify(newUser));
-        return newUser;
+    updateUser: async (userId: string, updates: Partial<User>) => {
+        const currentUser = StorageService.getCurrentUser();
+        if (!currentUser || (currentUser.id !== userId && !currentUser.isAdmin)) return null;
+        const cleanUpdates = sanitizeForFirestore(sanitizeInput(updates));
+        if (isOffline) {
+            const users = getLocal<User>(LS_USERS_KEY);
+            const idx = users.findIndex(u => u.id === userId);
+            if (idx !== -1) { users[idx] = { ...users[idx], ...cleanUpdates }; setLocal(LS_USERS_KEY, users); if (currentUser.id === userId) localStorage.setItem(CURRENT_USER_KEY, safeStringify(users[idx])); return users[idx]; }
+            return null;
+        }
+        try {
+            await setDoc(doc(db, 'users', userId), cleanUpdates, { merge: true });
+            const snap = await getDoc(doc(db, 'users', userId));
+            if (snap.exists()) { const updated = snap.data() as User; if (currentUser.id === userId) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated)); return updated; }
+            return null;
+        } catch { return null; }
+    },
+
+    deleteEvent: async (id: string) => {
+        const event = await StorageService.getEventById(id);
+        if (!event || !(await verifyOrganizerAccess(event.ownerId))) return;
+        clearCache('events');
+        if (isOffline) setLocal(LS_EVENTS_KEY, getLocal<Event>(LS_EVENTS_KEY).filter(e => e.id !== id));
+        else await deleteDoc(doc(db, 'events', id));
+    },
+
+    logout: async () => { if (!isOffline && auth) await signOut(auth); localStorage.removeItem(CURRENT_USER_KEY); },
+    getCurrentUser: (): User | null => { try { const data = localStorage.getItem(CURRENT_USER_KEY); return data ? JSON.parse(data) : null; } catch { return null; } },
+
+    getEvents: async (): Promise<Event[]> => {
+        if (!isOffline && _eventsCache && Date.now() - _eventsCache.timestamp < CACHE_TTL) return _eventsCache.data;
+        let events = isOffline ? getLocal<Event>(LS_EVENTS_KEY) : [];
+        if (!isOffline) try { const snap = await getDocs(collection(db, 'events')); snap.forEach(doc => events.push(doc.data() as Event)); } catch { return []; }
+        const regs = await StorageService.getRegistrations();
+        const processed = events.map(e => ({ ...e, registeredCount: calculateRealRegisteredCount(e, regs) }));
+        _eventsCache = { data: processed, timestamp: Date.now() }; return processed;
+    },
+
+    getEventById: async (id: string) => {
+        const all = await StorageService.getEvents(); return all.find(e => e.id === id);
+    },
+
+    saveEvent: async (event: Event) => {
+        const clean = sanitizeForFirestore(sanitizeInput(event)); clearCache('events');
+        if (isOffline) { const list = getLocal<Event>(LS_EVENTS_KEY); const idx = list.findIndex(e => e.id === clean.id); if (idx >= 0) list[idx] = clean; else list.push(clean); setLocal(LS_EVENTS_KEY, list); }
+        else await setDoc(doc(db, 'events', clean.id), clean);
+    },
+
+    getRegistrations: async (eventId?: string): Promise<Registration[]> => {
+        if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); return eventId ? list.filter(r => r.eventId === eventId) : list; }
+        try { const q = eventId ? query(collection(db, 'registrations'), where('eventId', '==', eventId)) : collection(db, 'registrations'); const snap = await getDocs(q); const list: Registration[] = []; snap.forEach(doc => list.push(doc.data() as Registration)); return list; } catch { return []; }
+    },
+
+    getRegistrationsByEmail: async (email: string) => {
+        const allRegs = await StorageService.getRegistrations();
+        const userRegs = allRegs.filter(r => r.attendeeEmail === email);
+        const allEvents = await StorageService.getEvents();
+        return userRegs.map(reg => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter(x => x.event);
+    },
+
+    saveRegistration: async (reg: Registration) => {
+        const clean = sanitizeForFirestore(sanitizeInput(reg)); clearCache('all');
+        if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); list.push(clean); setLocal(LS_REGS_KEY, list); return { success: true }; }
+        try { await setDoc(doc(db, 'registrations', clean.id), clean); return { success: true }; } catch { throw new Error("Save failed"); }
+    },
+
+    updateRegistration: async (id: string, updates: Partial<Registration>) => {
+        const clean = sanitizeForFirestore(sanitizeInput(updates)); clearCache('regs');
+        if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); const idx = list.findIndex(r => r.id === id); if (idx >= 0) { list[idx] = { ...list[idx], ...clean }; setLocal(LS_REGS_KEY, list); } }
+        else await setDoc(doc(db, 'registrations', id), clean, { merge: true });
+    },
+
+    trackAffiliateClick: async (eventId: string, code: string) => {
+        const e = await StorageService.getEventById(eventId);
+        if (e && e.affiliates) { const idx = e.affiliates.findIndex(a => a.code === code); if (idx !== -1) { e.affiliates[idx].clicks++; await StorageService.saveEvent(e); } }
+    },
+
+    trackAffiliateConversion: async (eventId: string, code: string) => {
+        const e = await StorageService.getEventById(eventId);
+        if (e && e.affiliates) { const idx = e.affiliates.findIndex(a => a.code === code); if (idx !== -1) { e.affiliates[idx].conversions++; await StorageService.saveEvent(e); } }
+    },
+
+    Payment: {
+        addPaymentMethod: async (uid: string, m: any) => { const u = await StorageService.getUserById(uid); if (u) await StorageService.updateUser(uid, { paymentMethods: [...u.paymentMethods, { id: `pm-${Date.now()}`, ...m }] }); },
+        // FIX: Added missing addInstantCard method for manual debit card entry
+        addInstantCard: async (uid: string, card: DebitCard) => { const u = await StorageService.getUserById(uid); if (u) await StorageService.updateUser(uid, { payoutSettings: { ...u.payoutSettings, instantCard: card } }); },
+        payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
+        requestPayout: async (uid: string, mode: string) => { const u = await StorageService.getUserById(uid); if (!u || u.availablePayout <= 0) return { success: false, amount: 0, fee: 0, deducted: 0 }; const bal = u.balanceDue || 0; const net = u.availablePayout - bal; if (net <= 0) { await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: bal - u.availablePayout }); return { success: true, amount: 0, fee: 0, deducted: u.availablePayout }; } let amt = net; let fee = mode === 'instant' ? amt * 0.015 : 0; amt -= fee; await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: 0 }); return { success: true, amount: amt, fee, deducted: bal }; }
+    },
+
+    logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
+        // In a real app, you would verify quotas here before logging
+        const log: AuditLog = {
+            id: `ai-log-${Date.now()}`,
+            action: 'AI_GENERATION',
+            details: `Generated ${type} content (~${tokens} tokens)`,
+            timestamp: Date.now(),
+            ip: 'system'
+        };
+        // We just log to audit for now
+        const logs = getLocal<AuditLog>(LS_AUDIT_KEY);
+        logs.push(log);
+        setLocal(LS_AUDIT_KEY, logs);
+    },
+
+    // Simulated Stripe Connect Flow
+    connectStripeAccount: async (userId: string, type: 'standard' | 'express') => {
+        // specific delay to simulate OAuth
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Mock Stripe Account ID
+        const mockStripeId = `acct_1M${Math.random().toString(36).substr(2, 8)}`;
+
+        // Update user
+        await StorageService.updateUser(userId, {
+            stripeConnectId: mockStripeId,
+            stripeOnboardingComplete: true
+        });
+
+        return { success: true, stripeId: mockStripeId };
+    },
+
+    // FIX: Added missing sendEventBroadcast method to support attendee notifications
+    sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
+        const event = await StorageService.getEventById(eventId);
+        if (!event) throw new Error("Event not found");
+
+        const broadcast: Broadcast = {
+            id: `br-${Date.now()}`,
+            subject,
+            message,
+            sentAt: Date.now(),
+            templateId
+        };
+
+        const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
+        await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
+
+        const registrations = await StorageService.getRegistrations(eventId);
+        // In a real app, this would trigger an actual email service (SendGrid, SES, etc.)
+        return registrations.length;
+    },
+
+    // --- Waitlist Methods ---
+    joinWaitlist: async (eventId: string, name: string, email: string) => {
+        if (isOffline || isDemoMode) {
+            const list = getLocal<any>(LS_WAITLIST_KEY);
+            // Check if already on waitlist
+            if (list.some((w: any) => w.eventId === eventId && w.email === email && w.status !== 'expired')) {
+                throw new Error("You are already on the waitlist for this event.");
+            }
+            const entry = {
+                id: `wl-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                eventId,
+                name,
+                email,
+                dateJoined: Date.now(),
+                status: 'pending'
+            };
+            list.push(entry);
+            setLocal(LS_WAITLIST_KEY, list);
+            return entry;
+        }
+        // Firestore logic would go here
+    },
+
+    getWaitlist: async (eventId: string) => {
+        if (isOffline || isDemoMode) {
+            const list = getLocal<any>(LS_WAITLIST_KEY);
+            return list.filter((w: any) => w.eventId === eventId).sort((a: any, b: any) => a.dateJoined - b.dateJoined);
+        }
+        return [];
+    },
+
+    updateWaitlistEntry: async (id: string, status: 'promoted' | 'expired' | 'pending') => {
+        if (isOffline || isDemoMode) {
+            const list = getLocal<any>(LS_WAITLIST_KEY);
+            const idx = list.findIndex((w: any) => w.id === id);
+            if (idx === -1) throw new Error("Entry not found");
+            list[idx].status = status;
+            if (status === 'promoted') {
+                list[idx].promotedAt = Date.now();
+            }
+            setLocal(LS_WAITLIST_KEY, list);
+            return list[idx];
+        }
+        // Firestore logic would go here
+        // For now, we'll just return the updated entry if it were to be updated
+        return null; // Or throw an error if not implemented
+    },
+
+    refundRegistration: async (regId: string, ticketKeys: string[], refundReason: string) => {
+        // ticketKey format: "tierId-cardIndex" matching the logic in AttendeeManager
+        if (isOffline) {
+            const list = getLocal<Registration>(LS_REGS_KEY);
+            const idx = list.findIndex(r => r.id === regId);
+            if (idx >= 0) {
+                const reg = list[idx];
+                let allRefunded = true;
+
+                // Update specific tickets
+                if (reg.tickets) {
+                    const newTickets = [...reg.tickets];
+                    reg.tickets.forEach((t, i) => {
+                        // Simple matching for now assuming index alignment or we need smarter logic if keys are complex
+                        // Ideally we map the UI keys back to these indices. Use simple logic:
+                        // if ticketKeys contains `${t.tierId}-${i}` then mark refunded
+                        // Note: The UI generates ID as `${reg.id}-${t.tierId}-${i}` but passes keys differently?
+                        // Let's assume ticketKeys passed here are indices or unique identifiers
+                    });
+
+                    // For now, in offline mode, just mark the whole thing if keys are empty (full refund)
+                    if (ticketKeys.length === 0) {
+                        reg.paymentStatus = 'refunded';
+                        reg.approvalStatus = 'rejected';
+                        reg.refundReason = refundReason;
+                    }
+                }
+
+                list[idx] = reg;
+                setLocal(LS_REGS_KEY, list);
+            }
+        } else {
+            const regRef = doc(db, 'registrations', regId);
+            const regSnap = await getDoc(regRef);
+            if (!regSnap.exists()) throw new Error("Registration not found");
+
+            const reg = regSnap.data() as Registration;
+
+            // Full Refund Logic (if no specific tickets specified)
+            if (!ticketKeys || ticketKeys.length === 0) {
+                await updateDoc(regRef, {
+                    paymentStatus: 'refunded',
+                    approvalStatus: 'rejected',
+                    refundReason: refundReason,
+                    refundedAmount: reg.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0
+                });
+                return;
+            }
+
+            // Partial Refund Logic
+            // We need to update the specific tickets array
+            if (reg.tickets) {
+                const updatedTickets = [...reg.tickets];
+                let refundAmount = 0;
+
+                ticketKeys.forEach(key => {
+                    // key format expected: tierId-index (of the expanded list) OR just index in the tickets array?
+                    // In AttendeeManager, we used tickets[i] which might have quantity > 1.
+                    // To simplify, we will assume strict 1-to-1 mapping if we flattened it, but currently the DB stores aggregate.
+                    // Complex Case: Ticket A (Qty 2). If we refund 1, we need to split.
+
+                    // PARSE KEY: "tierId-index" 
+                    // But wait, the key passed from UI is "regId-tierId-index".
+                    // Let's assume the caller passes the index of the TICKET GROUP in the array, and we might need to split.
+
+                    // REVISIT AttendeeManager logic:
+                    // id: `${reg.id}-${t.tierId}-${i}` where i is 0..quantity-1
+                    // ticketIndex is tIdx (index in reg.tickets array)
+
+                    // So we need to find the ticket group in reg.tickets that matches tierId
+                    // And potentially decrease quantity and add a new "refunded" item.
+
+                    // FINDING THE RIGHT ELEMENT:
+                    // A better strategy for the UI is to pass the `ticketIndex` (index in reg.tickets array) and `subTypeIndex`?
+                    // Actually, let's rely on the caller to handle the array manipulation logic if it's complex, 
+                    // OR we just mark the status if the structure supports it.
+                    // Our `PurchasedTicket` interface has `status`.
+
+                    // SIMPLIFIED APPROACH:
+                    // The caller (AttendeeManager) has already done the logic of identifying which ticket.
+                    // But `updateDoc` needs the WHOLE array.
+                    // Implementation choice: Logic resides in Service to ensure consistency? 
+                    // Or let Client construct new array? 
+                    // Let's do: Client constructs the new tickets array, Service just saves it.
+                    // BUT for security, Service normally should do it.
+                    // Given the constraint of specific ticket splitting, let's make this method accept `updatedTickets`.
+                });
+            }
+        }
+    },
+
+    // Helper to update tickets directly (used for partial refunds calculated by UI)
+    updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
+        if (isOffline) {
+            const list = getLocal<Registration>(LS_REGS_KEY);
+            const idx = list.findIndex(r => r.id === regId);
+            if (idx >= 0) {
+                const reg = list[idx];
+                reg.tickets = updatedTickets;
+                if (newStatus) {
+                    reg.paymentStatus = newStatus;
+                    if (newStatus === 'refunded') reg.approvalStatus = 'rejected';
+                }
+                if (refundReason) reg.refundReason = refundReason;
+                list[idx] = reg;
+                setLocal(LS_REGS_KEY, list);
+            }
+        } else {
+            const updates: any = { tickets: updatedTickets };
+            if (newStatus) {
+                updates.paymentStatus = newStatus;
+                if (newStatus === 'refunded') updates.approvalStatus = 'rejected';
+            }
+            if (refundReason) updates.refundReason = refundReason;
+
+            await updateDoc(doc(db, 'registrations', regId), updates);
+        }
     }
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, cleanData.email, cleanData.password);
-        const { password, ...safeData } = cleanData;
-        const newUser: User = { id: userCredential.user.uid, isAdmin: false, role: safeData.role || 'attendee', balanceDue: 0, availablePayout: 0, paymentMethods: [], invoices: [], subscription: { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() + 2592000000 }, ...safeData as User };
-        await setDoc(doc(db, 'users', newUser.id), newUser); localStorage.setItem(CURRENT_USER_KEY, safeStringify(newUser));
-        return newUser;
-    } catch (e: any) { return e.message || "Signup failed"; }
-  },
-
-  updateUser: async (userId: string, updates: Partial<User>) => {
-    const currentUser = StorageService.getCurrentUser();
-    if (!currentUser || (currentUser.id !== userId && !currentUser.isAdmin)) return null;
-    const cleanUpdates = sanitizeForFirestore(sanitizeInput(updates));
-    if (isOffline) {
-        const users = getLocal<User>(LS_USERS_KEY);
-        const idx = users.findIndex(u => u.id === userId);
-        if (idx !== -1) { users[idx] = { ...users[idx], ...cleanUpdates }; setLocal(LS_USERS_KEY, users); if (currentUser.id === userId) localStorage.setItem(CURRENT_USER_KEY, safeStringify(users[idx])); return users[idx]; }
-        return null;
-    }
-    try {
-        await setDoc(doc(db, 'users', userId), cleanUpdates, { merge: true });
-        const snap = await getDoc(doc(db, 'users', userId));
-        if (snap.exists()) { const updated = snap.data() as User; if (currentUser.id === userId) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated)); return updated; }
-        return null;
-    } catch { return null; }
-  },
-
-  deleteEvent: async (id: string) => {
-      const event = await StorageService.getEventById(id);
-      if (!event || !(await verifyOrganizerAccess(event.ownerId))) return;
-      clearCache('events');
-      if (isOffline) setLocal(LS_EVENTS_KEY, getLocal<Event>(LS_EVENTS_KEY).filter(e => e.id !== id));
-      else await deleteDoc(doc(db, 'events', id));
-  },
-
-  logout: async () => { if (!isOffline && auth) await signOut(auth); localStorage.removeItem(CURRENT_USER_KEY); },
-  getCurrentUser: (): User | null => { try { const data = localStorage.getItem(CURRENT_USER_KEY); return data ? JSON.parse(data) : null; } catch { return null; } },
-
-  getEvents: async (): Promise<Event[]> => {
-    if (!isOffline && _eventsCache && Date.now() - _eventsCache.timestamp < CACHE_TTL) return _eventsCache.data;
-    let events = isOffline ? getLocal<Event>(LS_EVENTS_KEY) : [];
-    if (!isOffline) try { const snap = await getDocs(collection(db, 'events')); snap.forEach(doc => events.push(doc.data() as Event)); } catch { return []; }
-    const regs = await StorageService.getRegistrations();
-    const processed = events.map(e => ({ ...e, registeredCount: calculateRealRegisteredCount(e, regs) }));
-    _eventsCache = { data: processed, timestamp: Date.now() }; return processed;
-  },
-
-  getEventById: async (id: string) => {
-    const all = await StorageService.getEvents(); return all.find(e => e.id === id);
-  },
-
-  saveEvent: async (event: Event) => {
-    const clean = sanitizeForFirestore(sanitizeInput(event)); clearCache('events');
-    if (isOffline) { const list = getLocal<Event>(LS_EVENTS_KEY); const idx = list.findIndex(e => e.id === clean.id); if (idx >= 0) list[idx] = clean; else list.push(clean); setLocal(LS_EVENTS_KEY, list); }
-    else await setDoc(doc(db, 'events', clean.id), clean);
-  },
-
-  getRegistrations: async (eventId?: string): Promise<Registration[]> => {
-    if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); return eventId ? list.filter(r => r.eventId === eventId) : list; }
-    try { const q = eventId ? query(collection(db, 'registrations'), where('eventId', '==', eventId)) : collection(db, 'registrations'); const snap = await getDocs(q); const list: Registration[] = []; snap.forEach(doc => list.push(doc.data() as Registration)); return list; } catch { return []; }
-  },
-
-  getRegistrationsByEmail: async (email: string) => {
-      const allRegs = await StorageService.getRegistrations();
-      const userRegs = allRegs.filter(r => r.attendeeEmail === email);
-      const allEvents = await StorageService.getEvents();
-      return userRegs.map(reg => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter(x => x.event);
-  },
-
-  saveRegistration: async (reg: Registration) => {
-    const clean = sanitizeForFirestore(sanitizeInput(reg)); clearCache('all');
-    if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); list.push(clean); setLocal(LS_REGS_KEY, list); return { success: true }; }
-    try { await setDoc(doc(db, 'registrations', clean.id), clean); return { success: true }; } catch { throw new Error("Save failed"); }
-  },
-
-  updateRegistration: async (id: string, updates: Partial<Registration>) => {
-    const clean = sanitizeForFirestore(sanitizeInput(updates)); clearCache('regs');
-    if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); const idx = list.findIndex(r => r.id === id); if (idx >= 0) { list[idx] = { ...list[idx], ...clean }; setLocal(LS_REGS_KEY, list); } }
-    else await setDoc(doc(db, 'registrations', id), clean, { merge: true });
-  },
-
-  trackAffiliateClick: async (eventId: string, code: string) => {
-      const e = await StorageService.getEventById(eventId);
-      if (e && e.affiliates) { const idx = e.affiliates.findIndex(a => a.code === code); if (idx !== -1) { e.affiliates[idx].clicks++; await StorageService.saveEvent(e); } }
-  },
-
-  trackAffiliateConversion: async (eventId: string, code: string) => {
-      const e = await StorageService.getEventById(eventId);
-      if (e && e.affiliates) { const idx = e.affiliates.findIndex(a => a.code === code); if (idx !== -1) { e.affiliates[idx].conversions++; await StorageService.saveEvent(e); } }
-  },
-  
-  Payment: {
-      addPaymentMethod: async (uid: string, m: any) => { const u = await StorageService.getUserById(uid); if (u) await StorageService.updateUser(uid, { paymentMethods: [...u.paymentMethods, { id: `pm-${Date.now()}`, ...m }] }); },
-      // FIX: Added missing addInstantCard method for manual debit card entry
-      addInstantCard: async (uid: string, card: DebitCard) => { const u = await StorageService.getUserById(uid); if (u) await StorageService.updateUser(uid, { payoutSettings: { ...u.payoutSettings, instantCard: card } }); },
-      payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
-      requestPayout: async (uid: string, mode: string) => { const u = await StorageService.getUserById(uid); if (!u || u.availablePayout <= 0) return { success: false, amount: 0, fee: 0, deducted: 0 }; const bal = u.balanceDue || 0; const net = u.availablePayout - bal; if (net <= 0) { await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: bal - u.availablePayout }); return { success: true, amount: 0, fee: 0, deducted: u.availablePayout }; } let amt = net; let fee = mode === 'instant' ? amt * 0.015 : 0; amt -= fee; await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: 0 }); return { success: true, amount: amt, fee, deducted: bal }; }
-  },
-
-  // FIX: Added missing sendEventBroadcast method to support attendee notifications
-  sendEventBroadcast: async (eventId: string, subject: string, message: string) => {
-      const event = await StorageService.getEventById(eventId);
-      if (!event) throw new Error("Event not found");
-      
-      const broadcast: Broadcast = {
-          id: `br-${Date.now()}`,
-          subject,
-          message,
-          sentAt: Date.now()
-      };
-      
-      const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
-      await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
-      
-      const registrations = await StorageService.getRegistrations(eventId);
-      // In a real app, this would trigger an actual email service (SendGrid, SES, etc.)
-      return registrations.length;
-  }
 };
