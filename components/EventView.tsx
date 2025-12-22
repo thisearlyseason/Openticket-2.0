@@ -6,7 +6,6 @@ import { EmailService } from '../services/emailService';
 import { Event, Registration, PurchasedTicket, PurchasedAddOn, PromoCode, User } from '../types';
 import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay } from './UI';
 import { Calendar, MapPin, Clock, Share2, Ticket, Check, AlertCircle, Info, Lock, Users, Printer, FileText, Download, Gift, Hourglass, CheckCircle, ArrowRight, Target, Image as ImageIcon, QrCode } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 
 export const EventView = () => {
     const { id } = useParams<{ id: string }>();
@@ -311,10 +310,6 @@ export const EventView = () => {
 
     return (
         <>
-            <Helmet>
-                <title>{metaTitle} | Openticket</title>
-                <meta name="description" content={metaDesc} />
-            </Helmet>
 
             <div className={`min-h-screen ${isWidget ? 'bg-transparent' : 'pb-20'}`}>
                 {!isWidget && (
