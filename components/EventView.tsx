@@ -1064,18 +1064,18 @@ export const EventView = () => {
 
                 {/* Sticky Mobile Order Bar */}
                 {getTotalTickets() > 0 && !isSuccess && (
-                    <div className="fixed bottom-0 left-0 w-full p-4 z-50 animate-in slide-in-from-bottom-20 duration-500">
+                    <div className="fixed bottom-0 left-0 w-full p-4 z-[100] animate-in slide-in-from-bottom-20 duration-500 pb-24 md:pb-4">
                         <div className="max-w-4xl mx-auto">
-                            <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-4 border-2">
-                                <div className="pl-6">
-                                    <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Your Selection</div>
-                                    <div className="text-3xl font-black flex items-center gap-3 tracking-tighter">
+                            <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-2 border-2">
+                                <div className="pl-4 shrink-0">
+                                    <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Total</div>
+                                    <div className="text-2xl md:text-3xl font-black flex items-center gap-2 tracking-tighter">
                                         ${calculateTotal().toFixed(2)}
-                                        <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-2 h-5">{getTotalTickets()} TIX</Badge>
+                                        <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
                                     </div>
                                 </div>
-                                <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-16 px-10 rounded-2xl font-black uppercase tracking-tighter text-xl shadow-2xl flex items-center gap-3 active:scale-95 transition-all">
-                                    Checkout <ArrowRight size={24} />
+                                <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-ellipsis whitespace-nowrap overflow-hidden">
+                                    Checkout <ArrowRight size={18} className="md:w-6 md:h-6" />
                                 </Button>
                             </Card>
                         </div>

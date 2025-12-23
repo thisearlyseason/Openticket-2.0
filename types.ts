@@ -97,6 +97,7 @@ export interface User {
   useBusinessName?: boolean;
   businessType?: string;
   eventTypes?: string;
+  onboardingStep?: number;
   logoUrl?: string;
   headerImageUrl?: string;
   primaryColor?: string;
