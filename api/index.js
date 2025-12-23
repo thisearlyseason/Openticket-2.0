@@ -38,6 +38,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-    console.log(`Openticket Backend running on port ${PORT}`);
-});
+// Export for Vercel Serverless
+module.exports = app;
+
+// Only listen if run directly (local dev)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Openticket Backend running on port ${PORT}`);
+    });
+}
