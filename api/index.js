@@ -23,10 +23,11 @@ app.use((req, res, next) => {
 });
 
 // --- ROUTES ---
-const authRoutes = require('./routes/authRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const registrationRoutes = require('./routes/registrationRoutes');
-const stripeRoutes = require('./routes/stripeRoutes');
+// --- ROUTES ---
+const authRoutes = require('../backend/routes/authRoutes');
+const eventRoutes = require('../backend/routes/eventRoutes');
+const registrationRoutes = require('../backend/routes/registrationRoutes');
+const stripeRoutes = require('../backend/routes/stripeRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
