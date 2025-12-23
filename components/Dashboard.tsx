@@ -32,6 +32,7 @@ export const Dashboard = () => {
 
     // Menu State for Cards
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         const user = StorageService.getCurrentUser();
@@ -133,11 +134,17 @@ export const Dashboard = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Delete this event? This cannot be undone.")) return;
+    const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setEventToDelete(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!eventToDelete) return;
         try {
-            await StorageService.deleteEvent(id);
-            setEvents(prev => prev.filter(e => e.id !== id));
+            await StorageService.deleteEvent(eventToDelete);
+            setEvents(prev => prev.filter(e => e.id !== eventToDelete));
+            setEventToDelete(null);
         } catch (e: any) {
             alert(`Failed to delete: ${e.message}`);
         }
@@ -345,7 +352,7 @@ export const Dashboard = () => {
                                             <button onClick={() => handleDuplicate(event)} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"><Copy size={14} /> Duplicate</button>
                                             <button onClick={() => window.open(`/#/event/${event.id}`, '_blank')} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"><ExternalLink size={14} /> View Page</button>
                                             <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1"></div>
-                                            <button onClick={() => handleDelete(event.id)} className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"><Trash2 size={14} /> Delete</button>
+                                            <button onClick={(e) => handleDeleteClick(event.id, e)} className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2"><Trash2 size={14} /> Delete</button>
                                         </div>
                                     )}
                                 </div>
@@ -379,6 +386,9 @@ export const Dashboard = () => {
                                     </Button>
                                     <Button onClick={() => navigate(`/checkin/${event.id}`)} variant="outline" className="px-3" title="Check-In Portal">
                                         <QrCode size={18} />
+                                    </Button>
+                                    <Button onClick={(e) => handleDeleteClick(event.id, e)} variant="outline" className="px-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30" title="Delete Event">
+                                        <Trash2 size={18} />
                                     </Button>
                                 </div>
                             </div>
@@ -431,6 +441,27 @@ export const Dashboard = () => {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {eventToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in zoom-in-95">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                                <Trash2 size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Delete Event?</h3>
+                            <p className="text-zinc-500 text-sm">
+                                Are you sure you want to delete this event? This action cannot be undone and all data will be lost.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button onClick={() => setEventToDelete(null)} variant="outline" className="flex-1">Cancel</Button>
+                            <Button onClick={confirmDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white border-none">Delete</Button>
                         </div>
                     </div>
                 </div>

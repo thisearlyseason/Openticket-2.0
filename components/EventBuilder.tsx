@@ -118,7 +118,7 @@ export const EventBuilder = () => {
                         fileName: updatedUser.defaultWaiver.fileName || ''
                     } : undefined,
                     taxRate: updatedUser?.defaultTaxRate || user.defaultTaxRate || 0,
-                    customFees: [],
+                    customFees: updatedUser?.defaultCustomFees || user.defaultCustomFees || [],
                     trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' }
                 }));
             }
@@ -463,36 +463,65 @@ export const EventBuilder = () => {
             }
         }
 
+        // Calculate Tax & Custom Fees
+        const taxAmount = price * ((formData.taxRate || 0) / 100);
+        let customFeesTotal = 0;
+        if (formData.customFees) {
+            customFeesTotal = formData.customFees.reduce((acc, fee) => {
+                if (fee.type === 'percent') return acc + (price * (fee.amount / 100));
+                return acc + fee.amount;
+            }, 0);
+        }
+
+        const subtotal = price + taxAmount + customFeesTotal;
+
         const plan = currentUser?.subscription?.plan || 'free';
         const platformFee = StorageService.calculateFees(price, plan);
         let stripeFee = 0;
 
         if (mode === 'online') {
-            // Stripe Fee: 2.9% + $0.30
-            stripeFee = (price * 0.029) + 0.30;
+            // Stripe Fee: 2.9% + $0.30 on the amount processed
+            // If absorbing fees, we process 'subtotal'. If passing on, we process 'subtotal + platformFee + stripeFee' (recursive, approximated here)
+            // standard approx:
+            stripeFee = (subtotal * 0.029) + 0.30;
         }
 
         const totalFee = platformFee + stripeFee;
 
-        const youReceive = formData.absorbFees ? price - totalFee : price;
-        const attendeePays = formData.absorbFees ? price : price + totalFee;
+        const attendeePays = formData.absorbFees ? subtotal : subtotal + totalFee;
+        const youReceive = formData.absorbFees ? subtotal - totalFee : subtotal;
 
         if (mode === 'offline') {
             return (
                 <div className="mt-4 p-4 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 text-sm animate-in fade-in">
                     <h4 className="font-bold mb-2 uppercase text-xs text-zinc-500">Offline Payment Cost Analysis (Per Ticket)</h4>
-                    <div className="flex justify-between mb-1">
-                        <span>{priceLabel} (You Collect):</span>
-                        <span className="font-mono font-bold">${price.toFixed(2)}</span>
+                    <div className="space-y-1 mb-2">
+                        <div className="flex justify-between">
+                            <span>{priceLabel}:</span>
+                            <span className="font-mono font-bold">${price.toFixed(2)}</span>
+                        </div>
+                        {taxAmount > 0 && (
+                            <div className="flex justify-between text-zinc-500">
+                                <span>Tax ({formData.taxRate}%):</span>
+                                <span className="font-mono">${taxAmount.toFixed(2)}</span>
+                            </div>
+                        )}
+                        {customFeesTotal > 0 && (
+                            <div className="flex justify-between text-zinc-500">
+                                <span>Custom Fees:</span>
+                                <span className="font-mono">${customFeesTotal.toFixed(2)}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="flex justify-between mb-1 text-red-500">
+
+                    <div className="flex justify-between mb-1 text-red-500 pt-2 border-t border-zinc-200 dark:border-zinc-700">
                         <span>Platform Fees (You Owe Later):</span>
                         <span className="font-mono">-${platformFee.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-zinc-300 dark:border-zinc-700 my-2 pt-2">
                         <div className="flex justify-between font-bold text-green-600 dark:text-green-400">
                             <span>Net Revenue:</span>
-                            <span>${Math.max(0, price - platformFee).toFixed(2)}</span>
+                            <span>${Math.max(0, subtotal - platformFee).toFixed(2)}</span>
                         </div>
                     </div>
                     <div className="text-[10px] text-zinc-400 mt-2 italic">
@@ -519,17 +548,34 @@ export const EventBuilder = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-between mb-1">
-                    <span>{priceLabel}:</span>
-                    <span className="font-mono">${price.toFixed(2)}</span>
+                <div className="space-y-1 mb-2">
+                    <div className="flex justify-between">
+                        <span>{priceLabel}:</span>
+                        <span className="font-mono">${price.toFixed(2)}</span>
+                    </div>
+                    {taxAmount > 0 && (
+                        <div className="flex justify-between text-zinc-500">
+                            <span>Tax ({formData.taxRate}%):</span>
+                            <span className="font-mono">${taxAmount.toFixed(2)}</span>
+                        </div>
+                    )}
+                    {customFeesTotal > 0 && (
+                        <div className="flex justify-between text-zinc-500">
+                            <span>Custom Fees:</span>
+                            <span className="font-mono">${customFeesTotal.toFixed(2)}</span>
+                        </div>
+                    )}
                 </div>
-                <div className="flex justify-between mb-1 text-zinc-500">
-                    <span>Platform Fee ({PLANS[plan].name}):</span>
-                    <span className="font-mono">${platformFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between mb-1 text-zinc-500">
-                    <span>Stripe Processing Fee (2.9% + 30¢):</span>
-                    <span className="font-mono">${stripeFee.toFixed(2)}</span>
+
+                <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700 space-y-1 mb-2">
+                    <div className="flex justify-between text-zinc-500">
+                        <span>Platform Fee ({PLANS[plan].name}):</span>
+                        <span className="font-mono">${platformFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-500">
+                        <span>Stripe Processing Fee (2.9% + 30¢):</span>
+                        <span className="font-mono">${stripeFee.toFixed(2)}</span>
+                    </div>
                 </div>
 
                 <div className="border-t border-zinc-300 dark:border-zinc-700 my-2 pt-2">
@@ -1085,6 +1131,74 @@ export const EventBuilder = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div onClick={() => setFormData({ ...formData, paymentConfig: { ...formData.paymentConfig, method: 'online' } as any })} className={`p-4 rounded-xl border-2 cursor-pointer ${formData.paymentConfig?.method === 'online' ? 'border-primary' : 'border-zinc-200'}`}>Online</div>
                                         <div onClick={() => setFormData({ ...formData, paymentConfig: { ...formData.paymentConfig, method: 'offline' } as any })} className={`p-4 rounded-xl border-2 cursor-pointer ${formData.paymentConfig?.method === 'offline' ? 'border-primary' : 'border-zinc-200'}`}>Offline</div>
+                                    </div>
+
+                                    <div className="mb-6 p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                        <h3 className="font-bold text-sm text-zinc-900 dark:text-white mb-4">Tax & Custom Fees</h3>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Tax Rate (%)</label>
+                                                <Input
+                                                    type="number"
+                                                    value={formData.taxRate}
+                                                    onChange={e => setFormData({ ...formData, taxRate: Number(e.target.value) })}
+                                                    placeholder="0.00"
+                                                    className="max-w-[150px]"
+                                                    containerClassName="mb-0"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Custom Fees</label>
+                                                {formData.customFees?.map((fee, index) => (
+                                                    <div key={index} className="flex gap-2 mb-2">
+                                                        <Input
+                                                            placeholder="Name"
+                                                            value={fee.name}
+                                                            onChange={e => {
+                                                                const newFees = [...(formData.customFees || [])];
+                                                                newFees[index].name = e.target.value;
+                                                                setFormData({ ...formData, customFees: newFees });
+                                                            }}
+                                                            className="flex-1"
+                                                            containerClassName="mb-0"
+                                                        />
+                                                        <div className="w-24">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Amount"
+                                                                value={fee.amount}
+                                                                onChange={e => {
+                                                                    const newFees = [...(formData.customFees || [])];
+                                                                    newFees[index].amount = Number(e.target.value);
+                                                                    setFormData({ ...formData, customFees: newFees });
+                                                                }}
+                                                                containerClassName="mb-0"
+                                                            />
+                                                        </div>
+                                                        <select
+                                                            className="bg-white dark:bg-black rounded-lg text-sm px-2 border border-zinc-300 dark:border-zinc-700 h-10"
+                                                            value={fee.type}
+                                                            onChange={e => {
+                                                                const newFees = [...(formData.customFees || [])];
+                                                                newFees[index].type = e.target.value as 'fixed' | 'percent';
+                                                                setFormData({ ...formData, customFees: newFees });
+                                                            }}
+                                                        >
+                                                            <option value="fixed">$</option>
+                                                            <option value="percent">%</option>
+                                                        </select>
+                                                        <Button variant="danger" size="sm" onClick={() => setFormData({ ...formData, customFees: formData.customFees?.filter((_, i) => i !== index) })} className="h-10 w-10 p-0 flex items-center justify-center">
+                                                            <Trash2 size={16} />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                                <Button size="sm" variant="outline" onClick={() => setFormData({ ...formData, customFees: [...(formData.customFees || []), { name: '', amount: 0, type: 'fixed' }] })}>
+                                                    <Plus size={14} className="mr-1" /> Add Fee
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </div>
                                     {renderFeeBreakdown(formData.paymentConfig?.method as any)}
                                 </Card>

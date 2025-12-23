@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Event } from '../types';
 import { Button, Input, Card, Switch, RichTextarea, Select } from './UI';
-import { ArrowLeft, Save, Globe, Lock, Search, Users, AlertTriangle, Eye, Shield } from 'lucide-react';
+import { ArrowLeft, Save, Globe, Lock, Search, Users, AlertTriangle, Eye, Shield, Plus, Trash2, DollarSign } from 'lucide-react';
 
 export const EventSettings = () => {
     const { id } = useParams<{ id: string }>();
@@ -168,7 +168,73 @@ export const EventSettings = () => {
                     </div>
                 </Card>
 
-                {/* 3. SEO Settings */}
+                {/* 3. Taxes & Fees */}
+                <Card className="p-6">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><DollarSign className="text-primary" /> Tax & Fees</h2>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Tax Rate (%)</label>
+                            <Input
+                                type="number"
+                                value={formData.taxRate}
+                                onChange={e => setFormData({ ...formData, taxRate: Number(e.target.value) })}
+                                placeholder="0.00"
+                                className="max-w-[150px]"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Custom Fees</label>
+                            {formData.customFees?.map((fee, index) => (
+                                <div key={index} className="flex gap-2 mb-2">
+                                    <Input
+                                        placeholder="Name"
+                                        value={fee.name}
+                                        onChange={e => {
+                                            const newFees = [...(formData.customFees || [])];
+                                            newFees[index].name = e.target.value;
+                                            setFormData({ ...formData, customFees: newFees });
+                                        }}
+                                        className="flex-1"
+                                    />
+                                    <div className="w-24">
+                                        <Input
+                                            type="number"
+                                            placeholder="Amount"
+                                            value={fee.amount}
+                                            onChange={e => {
+                                                const newFees = [...(formData.customFees || [])];
+                                                newFees[index].amount = Number(e.target.value);
+                                                setFormData({ ...formData, customFees: newFees });
+                                            }}
+                                        />
+                                    </div>
+                                    <select
+                                        className="bg-zinc-50 dark:bg-zinc-900 rounded-lg text-sm px-2 border border-zinc-200 dark:border-zinc-800 h-10"
+                                        value={fee.type}
+                                        onChange={e => {
+                                            const newFees = [...(formData.customFees || [])];
+                                            newFees[index].type = e.target.value as 'fixed' | 'percent';
+                                            setFormData({ ...formData, customFees: newFees });
+                                        }}
+                                    >
+                                        <option value="fixed">$</option>
+                                        <option value="percent">%</option>
+                                    </select>
+                                    <Button variant="danger" size="sm" onClick={() => setFormData({ ...formData, customFees: formData.customFees?.filter((_, i) => i !== index) })} className="h-10 w-10 p-0 flex items-center justify-center">
+                                        <Trash2 size={16} />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button size="sm" variant="outline" onClick={() => setFormData({ ...formData, customFees: [...(formData.customFees || []), { name: '', amount: 0, type: 'fixed' }] })}>
+                                <Plus size={14} className="mr-1" /> Add Fee
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* 4. SEO Settings */}
                 <Card className="p-6">
                     <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Search className="text-primary" /> SEO & Social Sharing</h2>
                     <div className="space-y-4">
@@ -194,7 +260,7 @@ export const EventSettings = () => {
                     </div>
                 </Card>
 
-                {/* 4. Danger Zone */}
+                {/* 5. Danger Zone */}
                 <Card className="p-6 border-red-200 dark:border-red-900/30">
                     <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-red-500"><AlertTriangle /> Danger Zone</h2>
                     <div className="flex items-center justify-between">

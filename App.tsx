@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Ticket, User, LayoutDashboard, Settings as SettingsIcon, Home as HomeIcon, Search, Sun, Moon, LogOut, Gift, Loader2, WifiOff, Info } from 'lucide-react';
+import { Plus, Ticket, User, LayoutDashboard, Settings as SettingsIcon, Home as HomeIcon, Search, Sun, Moon, LogOut, Gift, Loader2, WifiOff, Info, Bell } from 'lucide-react';
 import { EventBuilder } from './components/EventBuilder';
 import { EventView } from './components/EventView';
 import { Dashboard } from './components/Dashboard';
@@ -29,6 +29,9 @@ import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { Terms } from './components/Terms';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
+import { NotificationService } from './services/notificationService';
+import { UserNotification } from './types';
 
 const Layout = ({ children }: { children?: React.ReactNode }) => {
     const navigate = useNavigate();
@@ -66,6 +69,32 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
             document.documentElement.classList.add('light');
         }
     }, [isDark]);
+
+    // Global UI & Notifications
+    const { showAlert } = useGlobalUI();
+    const [notifications, setNotifications] = useState<UserNotification[]>([]);
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+    useEffect(() => {
+        // Override window.alert
+        // const originalAlert = window.alert; 
+        // We override it on the window object. Note: browser might block if called too early, but usually fine in effects.
+        window.alert = (msg) => showAlert({ title: "Reference", message: String(msg) });
+        // Restore? No, we want it permanent for the session lifespan in React
+        // return () => { window.alert = originalAlert; };
+    }, [showAlert]);
+
+    useEffect(() => {
+        if (user) {
+            NotificationService.getNotifications(user.id).then(setNotifications);
+            const interval = setInterval(() => {
+                NotificationService.getNotifications(user.id).then(setNotifications);
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [user, location.pathname]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     const toggleTheme = () => {
         const newTheme = !isDark;
@@ -131,6 +160,49 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
 
                                 {user ? (
                                     <>
+                                        {/* Notification Bell */}
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                                                className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white relative"
+                                            >
+                                                <Bell size={20} />
+                                                {unreadCount > 0 && (
+                                                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-black"></span>
+                                                )}
+                                            </button>
+
+                                            {showNotifDropdown && (
+                                                <>
+                                                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifDropdown(false)}></div>
+                                                    <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 z-40 overflow-hidden animate-in fade-in zoom-in-95">
+                                                        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+                                                            <span className="text-xs font-bold uppercase text-zinc-500">Notifications</span>
+                                                            {unreadCount > 0 && <span className="text-xs font-bold text-red-500">{unreadCount} new</span>}
+                                                        </div>
+                                                        <div className="max-h-64 overflow-y-auto">
+                                                            {notifications.length === 0 ? (
+                                                                <div className="p-8 text-center text-zinc-400 text-xs">No notifications</div>
+                                                            ) : (
+                                                                notifications.map(n => (
+                                                                    <div key={n.id} onClick={async () => {
+                                                                        if (!n.read) {
+                                                                            await NotificationService.markAsRead(n.id);
+                                                                            setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+                                                                        }
+                                                                    }} className={`p-3 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors ${!n.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                                                        <div className="font-bold text-sm mb-1">{n.title}</div>
+                                                                        <div className="text-xs text-zinc-500">{n.message}</div>
+                                                                        <div className="text-[10px] text-zinc-400 mt-2">{new Date(n.timestamp).toLocaleDateString()}</div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
                                         {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
                                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
                                         <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
@@ -280,9 +352,11 @@ const App = () => {
 
     return (
         <ErrorBoundary>
-            <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <MainContent />
-            </HashRouter>
+            <GlobalUIProvider>
+                <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <MainContent />
+                </HashRouter>
+            </GlobalUIProvider>
         </ErrorBoundary>
     );
 };

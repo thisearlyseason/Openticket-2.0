@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
-import { User, EmailTemplate, Socials } from '../types';
+import { User, EmailTemplate, Socials, CustomFee } from '../types';
 import { Button, Input, Card, Switch, FileDropZone, Badge, RichTextarea } from './UI';
 import { User as UserIcon, Settings as SettingsIcon, LogOut, Camera, Bell, ChevronRight, Palette, CreditCard, Shield, Mail, CheckCircle, XCircle, Plus, Trash2, LayoutTemplate, Globe, Instagram, Facebook, Twitter, Youtube, Smartphone } from 'lucide-react';
 
@@ -29,6 +29,8 @@ export const Settings = () => {
     const [defaultRefundPolicy, setDefaultRefundPolicy] = useState('');
     const [defaultRefundPolicyEnabled, setDefaultRefundPolicyEnabled] = useState(false);
     const [defaultWaiver, setDefaultWaiver] = useState<{ enabled?: boolean, text?: string, pdfUrl?: string, fileName?: string }>({});
+    const [defaultTaxRate, setDefaultTaxRate] = useState<number>(0);
+    const [defaultCustomFees, setDefaultCustomFees] = useState<CustomFee[]>([]);
 
     // Email Marketing State
     const [gmailConfig, setGmailConfig] = useState<{ connected: boolean, email?: string, lastSynced?: number }>({ connected: false });
@@ -39,6 +41,7 @@ export const Settings = () => {
     // Preferences State
     const [desktopCamera, setDesktopCamera] = useState(false);
     const [notifications, setNotifications] = useState({ newOrder: true, reminder: true });
+    const [geminiApiKey, setGeminiApiKey] = useState('');
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -58,6 +61,8 @@ export const Settings = () => {
             setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
             setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
             setDefaultWaiver(currentUser.defaultWaiver || {});
+            setDefaultTaxRate(currentUser.defaultTaxRate || 0);
+            setDefaultCustomFees(currentUser.defaultCustomFees || []);
 
             // Email State
             setGmailConfig(currentUser.gmailConfig || { connected: false });
@@ -70,6 +75,7 @@ export const Settings = () => {
             if (currentUser.notifications) {
                 setNotifications(currentUser.notifications);
             }
+            setGeminiApiKey(currentUser.geminiApiKey || '');
         }
     }, []);
 
@@ -176,9 +182,12 @@ export const Settings = () => {
                 defaultRefundPolicy,
                 defaultRefundPolicyEnabled,
                 defaultWaiver: finalDefaultWaiver,
-                emailTemplates: emailTemplates,
                 headerImageUrl: finalHeaderImageUrl,
-                socials: socials
+                emailTemplates: emailTemplates,
+                socials: socials,
+                defaultTaxRate: Number(defaultTaxRate),
+                defaultCustomFees: defaultCustomFees,
+                geminiApiKey: geminiApiKey
             });
 
             if (updatedUser) {
@@ -514,6 +523,30 @@ export const Settings = () => {
                                     </div>
                                     <Switch checked={notifications.newOrder} onChange={c => setNotifications({ ...notifications, newOrder: c })} />
                                 </div>
+
+                                <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                    <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white">
+                                            <Smartphone size={16} />
+                                        </div>
+                                        Gemini AI
+                                    </h2>
+                                    <div className="p-6 bg-zinc-900 rounded-2xl border border-zinc-800">
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-bold text-zinc-400 uppercase mb-2">Google Gemini API Key</label>
+                                            <Input
+                                                value={geminiApiKey}
+                                                onChange={e => setGeminiApiKey(e.target.value)}
+                                                placeholder="AIzaSy..."
+                                                className="bg-black border-zinc-800 text-white font-mono"
+                                                type="password"
+                                            />
+                                            <p className="text-xs text-zinc-500 mt-2">
+                                                Required for Magic Write and Marketing Lab features. <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-primary underline">Get a key here</a>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -570,6 +603,72 @@ export const Settings = () => {
                                                 </div>
                                             </>
                                         )}
+                                    </div>
+
+                                    <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                        <h3 className="font-bold text-sm text-zinc-900 dark:text-white mb-4">Tax & Custom Fees</h3>
+                                        <p className="text-xs text-zinc-500 mb-4">These fees will automatically apply to all new events you create.</p>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Default Tax Rate (%)</label>
+                                                <Input
+                                                    type="number"
+                                                    value={defaultTaxRate}
+                                                    onChange={e => setDefaultTaxRate(Number(e.target.value))}
+                                                    placeholder="0.00"
+                                                    className="max-w-[150px]"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Custom Fees (e.g. Facility Fee)</label>
+                                                {defaultCustomFees.map((fee, index) => (
+                                                    <div key={index} className="flex gap-2 mb-2">
+                                                        <Input
+                                                            placeholder="Name"
+                                                            value={fee.name}
+                                                            onChange={e => {
+                                                                const newFees = [...defaultCustomFees];
+                                                                newFees[index].name = e.target.value;
+                                                                setDefaultCustomFees(newFees);
+                                                            }}
+                                                            className="flex-1"
+                                                        />
+                                                        <div className="w-24">
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="Amount"
+                                                                value={fee.amount}
+                                                                onChange={e => {
+                                                                    const newFees = [...defaultCustomFees];
+                                                                    newFees[index].amount = Number(e.target.value);
+                                                                    setDefaultCustomFees(newFees);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <select
+                                                            className="bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm px-2 border-none cursor-pointer"
+                                                            value={fee.type}
+                                                            onChange={e => {
+                                                                const newFees = [...defaultCustomFees];
+                                                                newFees[index].type = e.target.value as 'fixed' | 'percent';
+                                                                setDefaultCustomFees(newFees);
+                                                            }}
+                                                        >
+                                                            <option value="fixed">$</option>
+                                                            <option value="percent">%</option>
+                                                        </select>
+                                                        <Button variant="danger" onClick={() => setDefaultCustomFees(prev => prev.filter((_, i) => i !== index))}>
+                                                            <Trash2 size={16} />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                                <Button size="sm" variant="outline" onClick={() => setDefaultCustomFees([...defaultCustomFees, { name: '', amount: 0, type: 'fixed' }])}>
+                                                    <Plus size={14} className="mr-1" /> Add Fee
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

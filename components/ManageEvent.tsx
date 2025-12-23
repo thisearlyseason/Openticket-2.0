@@ -11,7 +11,7 @@ import {
     ArrowLeft, Eye, Mail, Send, Sparkles,
     AlertTriangle, Check, List, BarChart3, Megaphone, ShoppingBag,
     Wallet, Settings, DollarSign, ExternalLink, Share2, Copy, Download, X,
-    TrendingUp
+    TrendingUp, Trash2
 } from 'lucide-react';
 import { ShareButtons } from './UI';
 
@@ -29,6 +29,8 @@ export const ManageEvent = () => {
     const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
     const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -64,9 +66,13 @@ export const ManageEvent = () => {
         setIsGeneratingDraft(false);
     };
 
-    const handleSendBroadcast = async () => {
+    const handleSendBroadcast = () => {
         if (!event || !broadcastSubject || !broadcastBody) return;
-        if (!confirm(`Send to all active attendees?`)) return;
+        setShowBroadcastModal(true);
+    };
+
+    const executeBroadcast = async () => {
+        if (!event) return;
 
         setIsSendingBroadcast(true);
         try {
@@ -108,6 +114,7 @@ export const ManageEvent = () => {
             alert("Error sending broadcast: " + e.message);
         } finally {
             setIsSendingBroadcast(false);
+            setShowBroadcastModal(false);
         }
     };
 
@@ -128,6 +135,16 @@ export const ManageEvent = () => {
         } catch (e) {
             console.error('Error downloading QR:', e);
             window.open(qrUrl, '_blank');
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!event) return;
+        try {
+            await StorageService.deleteEvent(event.id);
+            navigate('/dashboard');
+        } catch (e: any) {
+            alert("Error deleting event: " + e.message);
         }
     };
 
@@ -303,6 +320,18 @@ export const ManageEvent = () => {
                             <p className="text-xs text-zinc-500">Socials, Links & QR Codes</p>
                         </Card>
                     </div>
+
+                    <div onClick={() => setShowDeleteModal(true)} className="block group cursor-pointer">
+                        <Card className="p-6 transition-all hover:-translate-y-1 h-full border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-red-500">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-red-500/10 text-red-500 rounded-xl group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                    <Trash2 size={24} />
+                                </div>
+                            </div>
+                            <h3 className="font-bold text-lg text-red-500">Delete Event</h3>
+                            <p className="text-xs text-zinc-500">Permanently remove</p>
+                        </Card>
+                    </div>
                 </div>
 
 
@@ -457,6 +486,51 @@ export const ManageEvent = () => {
                     </div>
                 )
             }
+
+            {/* Broadcast Confirmation Modal */}
+            {showBroadcastModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in zoom-in-95">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+                                <Megaphone size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Send Broadcast?</h3>
+                            <p className="text-zinc-500 text-sm">
+                                This will send an email to all active attendees. <br />
+                                <strong>Subject:</strong> {broadcastSubject}
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button onClick={() => setShowBroadcastModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                            <Button onClick={executeBroadcast} isLoading={isSendingBroadcast} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none">
+                                Yes, Send
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in zoom-in-95">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                                <Trash2 size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2">Delete Event?</h3>
+                            <p className="text-zinc-500 text-sm">
+                                Are you sure you want to delete this event? This action cannot be undone and all data will be lost.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <Button onClick={() => setShowDeleteModal(false)} variant="outline" className="flex-1">Cancel</Button>
+                            <Button onClick={confirmDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white border-none">Delete</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

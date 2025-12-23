@@ -108,7 +108,7 @@ export const Input = ({ label, error, required, className = '', containerClassNa
                     </div>
                 )}
                 <input
-                    className={`w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 shadow-inner ${Icon ? 'pl-11' : ''} ${className}`}
+                    className={`w-full bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 focus:border-primary dark:focus:border-primary text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm ${Icon ? 'pl-11' : ''} ${className}`}
                     {...props}
                 />
             </div>
@@ -121,7 +121,7 @@ export const Textarea = ({ label, error, required, className = '', ...props }: R
     <div className="mb-4">
         {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
         <textarea
-            className={`w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 min-h-[100px] resize-y shadow-inner ${className}`}
+            className={`w-full bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 focus:border-primary dark:focus:border-primary text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 min-h-[100px] resize-y shadow-sm ${className}`}
             {...props}
         />
         {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
@@ -203,8 +203,8 @@ export const RichTextarea = ({ label, value, onChange, placeholder, name, classN
     return (
         <div className={`mb-4 ${className}`}>
             {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
-            <div className="relative border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
-                <div className="flex flex-wrap gap-1 p-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/50 items-center">
+            <div className="relative border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-900/30 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
+                <div className="flex flex-wrap gap-1 p-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 items-center">
                     <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('bold') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Bold"><Bold size={16} /></button>
                     <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('italic') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Italic"><Italic size={16} /></button>
                     <button type="button" onMouseDown={(e) => { e.preventDefault(); execCmd('underline') }} className="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400" title="Underline"><Underline size={16} /></button>

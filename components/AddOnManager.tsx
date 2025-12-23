@@ -12,6 +12,7 @@ interface AddOnItem {
     attendeeEmail: string;
     addOn: PurchasedAddOn;
     timestamp: number;
+    fulfilled: boolean;
 }
 
 export const AddOnManager = () => {
@@ -46,7 +47,8 @@ export const AddOnManager = () => {
                         attendeeName: reg.attendeeName,
                         attendeeEmail: reg.attendeeEmail,
                         addOn: addon,
-                        timestamp: reg.timestamp
+                        timestamp: reg.timestamp,
+                        fulfilled: addon.fulfilled || false
                     });
                 });
             }
@@ -54,6 +56,27 @@ export const AddOnManager = () => {
 
         setAddOnItems(items.sort((a, b) => b.timestamp - a.timestamp));
         setIsLoading(false);
+    };
+
+    const toggleFulfillment = async (item: AddOnItem) => {
+        try {
+            const regList = await StorageService.getRegistrations(id!);
+            const reg = regList.find(r => r.id === item.id);
+            if (!reg || !reg.addOns) return;
+
+            // Find index of add-on. We match strictly by reference or content since ID might be missing on addon object itself?
+            // PurchasedAddOn has `id` property from type definition.
+            const idx = reg.addOns.findIndex(a => a.id === item.addOn.id);
+            if (idx === -1) return;
+
+            const updatedAddOns = [...reg.addOns];
+            updatedAddOns[idx] = { ...updatedAddOns[idx], fulfilled: !item.fulfilled };
+
+            await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
+
+            // Optimistic Update
+            setAddOnItems(prev => prev.map(p => p === item ? { ...p, fulfilled: !item.fulfilled } : p));
+        } catch (e) { console.error(e); }
     };
 
     const filteredItems = addOnItems.filter(item =>
@@ -98,6 +121,7 @@ export const AddOnManager = () => {
                                 <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Product / Add-on</th>
                                 <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Qty</th>
                                 <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Cost</th>
+                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-center">Received?</th>
                                 <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-right">Actions</th>
                             </tr>
                         </thead>
@@ -126,6 +150,12 @@ export const AddOnManager = () => {
                                     </td>
                                     <td className="p-4">
                                         <div className="font-bold text-sm text-zinc-900 dark:text-white">${(item.addOn.price * item.addOn.quantity).toFixed(2)}</div>
+                                    </td>
+                                    <td className="p-4 text-center">
+                                        <div onClick={() => toggleFulfillment(item)} className={`cursor-pointer inline-flex items-center justify-center p-2 rounded-lg transition-all ${item.fulfilled ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 font-bold' : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800'}`}>
+                                            {item.fulfilled ? <Receipt size={16} className="mr-1" /> : <div className="w-4 h-4 border-2 border-zinc-300 rounded-md mr-1" />}
+                                            {item.fulfilled ? 'Received' : 'Mark'}
+                                        </div>
                                     </td>
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2">

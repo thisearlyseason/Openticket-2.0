@@ -4,7 +4,8 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
 import { Event, Registration, PurchasedTicket, PurchasedAddOn, PromoCode, User } from '../types';
-import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay } from './UI';
+import stripePromise from '../services/stripe';
+import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay, ReceiptModal } from './UI';
 import { Calendar, MapPin, Clock, Share2, Ticket, Check, AlertCircle, Info, Lock, Users, Printer, FileText, Download, Gift, Hourglass, CheckCircle, ArrowRight, Target, Image as ImageIcon, QrCode } from 'lucide-react';
 
 export const EventView = () => {
@@ -15,9 +16,13 @@ export const EventView = () => {
     const hideImage = searchParams.get('hideImage') === 'true';
     const hideDetails = searchParams.get('hideDetails') === 'true';
 
+    // UI State
+    const [showReceipt, setShowReceipt] = useState(false);
+
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
     const [organizerUser, setOrganizerUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     // Registration State
     const [ticketSelection, setTicketSelection] = useState<Record<string, number>>({});
@@ -58,6 +63,76 @@ export const EventView = () => {
             });
         }
     }, [id]);
+
+    useEffect(() => {
+        const user = StorageService.getCurrentUser();
+        if (user) {
+            setCurrentUser(user);
+            setRegData(prev => ({ ...prev, name: user.name, email: user.email }));
+        }
+    }, []);
+
+    useEffect(() => {
+        const checkSuccess = async () => {
+            const success = searchParams.get('success');
+            if (success === 'true' && event && !isSuccess) {
+                const pendingKey = `pending_reg_${event.id}`;
+                const savedReg = localStorage.getItem(pendingKey);
+
+                if (savedReg) {
+                    try {
+                        setIsProcessingPayment(true);
+                        const { regData, tickets, purchasedAddOns, appliedPromo, paymentStatus, serviceFee, total } = JSON.parse(savedReg);
+
+                        const newReg: Registration = {
+                            id: `reg-${Date.now()}`,
+                            eventId: event.id,
+                            attendeeName: regData.name,
+                            attendeeEmail: regData.email.trim(),
+                            phoneNumber: regData.phoneNumber,
+                            donationAmount: Number(regData.donation) || 0,
+                            serviceFee,
+                            answers: regData.answers,
+                            tickets: tickets,
+                            addOns: purchasedAddOns,
+                            timestamp: Date.now(),
+                            paymentStatus: 'completed', // Assume completed if redirected back with success
+                            approvalStatus: event.requiresApproval ? 'pending' : 'approved',
+                            promoCodeUsed: appliedPromo?.code,
+                            waiverAgreed: regData.waiverAgreed,
+                            stripePaymentIntentId: 'stripe_checkout' // Placeholder or parse from session
+                        };
+
+                        const result: any = await StorageService.saveRegistration(newReg);
+                        setNewCredentials(result.newAccount);
+                        setCompletedRegistration(newReg);
+                        setIsSuccess(true);
+                        localStorage.removeItem(pendingKey);
+                        window.scrollTo(0, 0);
+
+                        // Send Confirmation Email
+                        if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
+                            const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
+                            const body = event.requiresApproval
+                                ? `Hi ${newReg.attendeeName}, we've received your registration for ${event.title}. This event requires manual approval by the organizer. We'll notify you once your request has been reviewed.`
+                                : `Hi ${newReg.attendeeName}, you are registered for ${event.title}.`;
+                            EmailService.sendEmail(organizerUser.id, newReg.attendeeEmail, subject, body).catch(console.error);
+                        }
+
+                    } catch (e) {
+                        console.error("Failed to finalize registration:", e);
+                        alert("There was an error saving your registration. Please contact support.");
+                    } finally {
+                        setIsProcessingPayment(false);
+                    }
+                }
+            }
+        };
+
+        if (event) {
+            checkSuccess();
+        }
+    }, [searchParams, event, isSuccess, organizerUser]);
 
     if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black uppercase tracking-widest text-xl">Loading Experience...</div>;
     if (!event) return <div className="p-20 text-center font-black uppercase text-red-500">Event not found.</div>;
@@ -139,10 +214,27 @@ export const EventView = () => {
             else total -= appliedPromo.value;
         }
 
-        if (event.taxRate) total += total * (event.taxRate / 100);
+        // Snapshot base before fees
+        const basePrice = Math.max(0, total);
+
+        // Tax
+        if (event.taxRate) total += basePrice * (event.taxRate / 100);
+
+        // Custom Fees
+        if (event.customFees) {
+            event.customFees.forEach(fee => {
+                if (fee.type === 'percent') total += basePrice * (fee.amount / 100);
+                else total += fee.amount;
+            });
+        }
 
         if (!event.absorbFees && event.priceType !== 'free' && event.priceType !== 'donation') {
             const plan = organizerUser?.subscription?.plan || 'free';
+            // Calculate platform fee on the base price (standard practice) or total? 
+            // Existing code used 'total' (which included tax). 
+            // Let's use 'total' (inclusive of tax/custom fees) to ensure we cover costs, 
+            // OR stick to basePrice if that's the policy. 
+            // Assuming platform fee is on the transaction volume:
             total += StorageService.calculateFees(total, plan);
         }
 
@@ -215,33 +307,95 @@ export const EventView = () => {
                 }
             });
 
-            const total = calculateTotal();
+
+            // Let's do a precise breakdown calculation to save correct snapshots
+            let breakdownTotal = 0;
+            // 1. Base Ticket Price
+            if (event.priceType === 'fixed') breakdownTotal += (ticketSelection['general'] || 0) * event.price;
+            else if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => breakdownTotal += (ticketSelection[t.id] || 0) * t.price);
+            else if (event.priceType === 'donation') breakdownTotal += Number(regData.donation) || 0;
+            event.addOns?.forEach(a => { if (addOnSelection[a.id]) breakdownTotal += addOnSelection[a.id].qty * a.price; });
+
+            // 2. Discounts
+            if (appliedPromo) {
+                if (appliedPromo.type === 'percent') breakdownTotal -= breakdownTotal * (appliedPromo.value / 100);
+                else breakdownTotal -= appliedPromo.value;
+            }
+            const basePrice = Math.max(0, breakdownTotal);
+
+            // 3. Tax
+            let taxAmount = 0;
+            if (event.taxRate) taxAmount = basePrice * (event.taxRate / 100);
+
+            // 4. Custom Fees
+            let customFeesAmount = 0;
+            if (event.customFees) {
+                event.customFees.forEach(fee => {
+                    if (fee.type === 'percent') customFeesAmount += basePrice * (fee.amount / 100);
+                    else customFeesAmount += fee.amount;
+                });
+            }
+
+            // 5. Total
+            const total = basePrice + taxAmount + customFeesAmount;
+
+            // 6. Platform Fees (on the gross total usually, or base? Logic in calculateFees matches EventView logic implies total)
             const plan = organizerUser?.subscription?.plan || 'free';
             let serviceFee = 0;
             if (!event.absorbFees && event.priceType !== 'free' && event.priceType !== 'donation') {
+                // If calculateFees adds on top, we use 'total' (which includes tax/fees)
                 serviceFee = StorageService.calculateFees(total, plan);
             }
+
+            const finalTotal = total + serviceFee;
 
             let paymentStatus: any = event.paymentConfig.method === 'online' ? 'pending' : 'offline_pending';
             let paymentIntentId = undefined;
 
-            if (event.paymentConfig.method === 'online' && total > 0) {
+            if (event.paymentConfig.method === 'online' && finalTotal > 0) {
                 if (!organizerUser?.stripeConnectId) throw new Error("Online payments not connected by organizer.");
 
-                // --- SIMULATED PAYMENT TRANSFER ---
+                // --- REAL STRIPE CHECKOUT ---
                 setIsProcessingPayment(true);
-                // Simulate redirect/checkout delay
-                await new Promise(resolve => setTimeout(resolve, 2500));
 
-                const payResult = await StorageService.Stripe.processSplitPayment(total, serviceFee, organizerUser.stripeConnectId);
-                if (payResult.success) {
-                    paymentStatus = 'completed';
-                    paymentIntentId = payResult.paymentIntentId;
-                } else {
-                    setIsProcessingPayment(false);
-                    throw new Error("Payment declined.");
+                const response = await fetch('http://127.0.0.1:5001/api/stripe/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: event.id,
+                        eventTitle: event.title,
+                        tickets: tickets,
+                        addOns: purchasedAddOns,
+                        promoCode: appliedPromo?.code,
+                        customerEmail: regData.email.trim(),
+                        customerName: regData.name,
+                        successUrl: `${window.location.origin}/#/event/${event.id}?success=true`,
+                        cancelUrl: `${window.location.origin}/#/event/${event.id}?canceled=true`,
+                        organizerStripeId: organizerUser.stripeConnectId,
+                        applicationFee: serviceFee
+                    }),
+                });
+
+                const sessionData = await response.json();
+                if (sessionData.error) throw new Error(sessionData.error);
+
+                if (sessionData.url) {
+                    // Save state before redirect
+                    const pendingData = {
+                        regData,
+                        tickets,
+                        purchasedAddOns,
+                        appliedPromo,
+                        paymentStatus,
+                        serviceFee,
+                        total
+                    };
+                    localStorage.setItem(`pending_reg_${event.id}`, JSON.stringify(pendingData));
+
+                    window.location.href = sessionData.url;
+                    return;
                 }
-                setIsProcessingPayment(false);
+                return; // Redirect happens here
             } else if (total === 0) {
                 paymentStatus = 'completed';
             }
@@ -262,8 +416,9 @@ export const EventView = () => {
                 approvalStatus: event.requiresApproval ? 'pending' : 'approved',
                 promoCodeUsed: appliedPromo?.code,
                 waiverAgreed: regData.waiverAgreed,
-                // @ts-ignore
-                paymentIntentId
+                taxAmount,
+                customFeesAmount,
+                stripePaymentIntentId: paymentIntentId
             };
 
             const result: any = await StorageService.saveRegistration(newReg);
@@ -327,7 +482,7 @@ export const EventView = () => {
                             <div className="absolute bottom-0 left-0 w-full p-6 md:p-12">
                                 <div className="max-w-7xl mx-auto">
                                     <Badge color="primary" className="mb-6 px-4 py-1.5 shadow-lg animate-in fade-in slide-in-from-left-4">{event.category || 'Event'}</Badge>
-                                    <h1 className="text-6xl md:text-9xl font-black font-display text-white uppercase leading-[0.85] tracking-tighter mb-8 drop-shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                    <h1 className="text-5xl lg:text-8xl font-black font-display text-white uppercase leading-[0.85] tracking-tighter mb-8 drop-shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-5xl">
                                         {event.title}
                                     </h1>
                                     <div className="flex flex-wrap gap-6 items-center text-white/90 font-bold bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-fit animate-in fade-in zoom-in-95 duration-1000">
@@ -410,7 +565,7 @@ export const EventView = () => {
                                                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">Ticket Summary</h3>
                                                 <div className="bg-zinc-50 dark:bg-black p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
                                                     {completedRegistration?.tickets?.map((ticket, idx) => (
-                                                        <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0">
+                                                        <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 transform transition-all hover:scale-[1.01]">
                                                             <div>
                                                                 <div className="font-black text-zinc-900 dark:text-white">{ticket.name}</div>
                                                                 <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
@@ -419,17 +574,33 @@ export const EventView = () => {
                                                         </div>
                                                     ))}
                                                     {completedRegistration?.addOns?.map((addon, idx) => (
-                                                        <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 border-t mt-3 pt-3">
+                                                        <div key={`addon-${idx}`} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 border-t mt-3 pt-3">
                                                             <div>
                                                                 <div className="font-black text-zinc-900 dark:text-white">{addon.name} x{addon.quantity}</div>
                                                             </div>
                                                             <div className="font-black text-zinc-900 dark:text-white"><PriceDisplay amount={addon.price * addon.quantity} /></div>
                                                         </div>
                                                     ))}
+
+                                                    {/* Fees Breakdown */}
+                                                    {(completedRegistration?.serviceFee || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                            <span>Platform & Service Fees</span>
+                                                            <span><PriceDisplay amount={completedRegistration?.serviceFee || 0} /></span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Total Calculation based on saved registration data, NOT current state */}
                                                     <div className="mt-6 flex justify-between items-center pt-6 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
                                                         <div className="text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Amount</div>
                                                         <div className="text-3xl font-black text-secondary">
-                                                            <PriceDisplay amount={calculateTotal()} />
+                                                            {/* Recalculate total from the registration object to be safe */}
+                                                            <PriceDisplay amount={
+                                                                (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
+                                                                (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
+                                                                (completedRegistration?.serviceFee || 0) +
+                                                                (completedRegistration?.donationAmount || 0)
+                                                            } />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -469,13 +640,24 @@ export const EventView = () => {
 
                                     {/* Action Buttons */}
                                     <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8 print:hidden">
-                                        <Button onClick={() => window.print()} variant="secondary" className="h-20 px-12 rounded-3xl flex items-center gap-4 text-xl font-black shadow-2xl hover:scale-110 active:scale-95 transition-all">
-                                            <Printer size={24} /> Print Receipt
-                                        </Button>
-                                        <Button onClick={() => navigate('/my-tickets')} variant="outline" className="h-20 px-12 rounded-3xl flex items-center gap-4 text-xl font-black border-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
-                                            <Ticket size={24} /> My Tickets
-                                        </Button>
+                                        <div className="flex flex-col sm:flex-row gap-6 justify-center pt-8 print:hidden">
+                                            <Button onClick={() => setShowReceipt(true)} variant="secondary" className="h-20 px-12 rounded-3xl flex items-center gap-4 text-xl font-black shadow-2xl hover:scale-110 active:scale-95 transition-all">
+                                                <Printer size={24} /> View Receipt
+                                            </Button>
+                                            <Button onClick={() => navigate('/my-tickets')} variant="outline" className="h-20 px-12 rounded-3xl flex items-center gap-4 text-xl font-black border-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all">
+                                                <Ticket size={24} /> My Tickets
+                                            </Button>
+                                        </div>
                                     </div>
+                                    {completedRegistration && event && (
+                                        <ReceiptModal
+                                            isOpen={showReceipt}
+                                            onClose={() => setShowReceipt(false)}
+                                            registration={completedRegistration}
+                                            event={event}
+                                            organizer={organizerUser || undefined}
+                                        />
+                                    )}
                                 </div>
                             </section>
                         ) : (
@@ -680,14 +862,14 @@ export const EventView = () => {
                                                 <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800">
                                                     <h3 className="text-2xl font-black uppercase tracking-tighter mb-8">Ready to roll?</h3>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                                                        <Input label="Your Name" value={regData.name} onChange={e => setRegData({ ...regData, name: e.target.value })} required className="h-14 rounded-2xl text-lg" />
-                                                        <Input label="Your Email" type="email" value={regData.email} onChange={e => setRegData({ ...regData, email: e.target.value })} required className="h-14 rounded-2xl text-lg" />
+                                                        <Input label="Your Name" value={regData.name} onChange={e => setRegData({ ...regData, name: e.target.value })} required className="h-14 rounded-2xl text-lg" disabled={!!currentUser} />
+                                                        <Input label="Your Email" type="email" value={regData.email} onChange={e => setRegData({ ...regData, email: e.target.value })} required className="h-14 rounded-2xl text-lg" disabled={!!currentUser} />
                                                     </div>
 
                                                     {((event.waiverConfig?.enabled) || (event.specificWaiverText || event.specificWaiverPdfUrl)) && (
                                                         <div className="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 mb-8">
                                                             <h3 className="font-black mb-4 text-xs uppercase tracking-widest text-zinc-400">Waiver & Release</h3>
-                                                            <div className="h-40 overflow-y-auto bg-white dark:bg-black p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-600 dark:text-zinc-400 mb-6 rich-text-content font-medium" dangerouslySetInnerHTML={{ __html: event.waiverConfig?.text || event.specificWaiverText || (organizerUser?.defaultWaiver?.text) || "No waiver text provided." }} />
+                                                            <div className="h-40 overflow-y-auto bg-white dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-200 mb-6 rich-text-content font-medium opacity-90" dangerouslySetInnerHTML={{ __html: event.waiverConfig?.text || event.specificWaiverText || (organizerUser?.defaultWaiver?.text) || "No waiver text provided." }} />
                                                             <label className="flex items-start gap-4 cursor-pointer group">
                                                                 <div className="relative pt-1">
                                                                     <input type="checkbox" className="peer sr-only" checked={regData.waiverAgreed} onChange={e => setRegData({ ...regData, waiverAgreed: e.target.checked })} />
@@ -696,6 +878,117 @@ export const EventView = () => {
                                                                 </div>
                                                                 <span className="text-lg font-black tracking-tight leading-tight">I agree to the waiver and release of liability. <span className="text-primary">*</span></span>
                                                             </label>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Order Summary with Fees */}
+                                                    {(getTotalTickets() > 0 || getTotalAddOns() > 0) && (
+                                                        <div className="mb-8 p-6 bg-zinc-100 dark:bg-zinc-800/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
+                                                            <h4 className="font-black uppercase tracking-widest text-xs text-zinc-500 mb-4">Order Summary</h4>
+                                                            <div className="space-y-2 text-sm font-medium">
+                                                                <div className="flex justify-between">
+                                                                    <span>Subtotal</span>
+                                                                    <span>
+                                                                        {(() => {
+                                                                            let sub = 0;
+                                                                            if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
+                                                                            if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
+                                                                            if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                            event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
+                                                                            if (appliedPromo) {
+                                                                                if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
+                                                                                else sub -= appliedPromo.value;
+                                                                            }
+                                                                            return <PriceDisplay amount={Math.max(0, sub)} />;
+                                                                        })()}
+                                                                    </span>
+                                                                </div>
+
+                                                                {event.taxRate && event.taxRate > 0 && (
+                                                                    <div className="flex justify-between text-zinc-500">
+                                                                        <span>Tax ({event.taxRate}%)</span>
+                                                                        <span>
+                                                                            {(() => {
+                                                                                let sub = 0;
+                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
+                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
+                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
+                                                                                if (appliedPromo) {
+                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
+                                                                                    else sub -= appliedPromo.value;
+                                                                                }
+                                                                                const tax = Math.max(0, sub) * (event.taxRate / 100);
+                                                                                return <PriceDisplay amount={tax} />;
+                                                                            })()}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
+                                                                {event.customFees?.map((fee, idx) => (
+                                                                    <div key={idx} className="flex justify-between text-zinc-500">
+                                                                        <span>{fee.name}</span>
+                                                                        <span>
+                                                                            {(() => {
+                                                                                let sub = 0;
+                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
+                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
+                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
+                                                                                if (appliedPromo) {
+                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
+                                                                                    else sub -= appliedPromo.value;
+                                                                                }
+                                                                                const amount = fee.type === 'percent' ? Math.max(0, sub) * (fee.amount / 100) : fee.amount;
+                                                                                return <PriceDisplay amount={amount} />;
+                                                                            })()}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+
+                                                                {!event.absorbFees && event.priceType !== 'free' && event.priceType !== 'donation' && (
+                                                                    <div className="flex justify-between text-zinc-500">
+                                                                        <span>Service Fees</span>
+                                                                        <span>
+                                                                            {(() => {
+                                                                                // Recalc total for fee logic... simpler to approximate or reuse calculateTotal difference?
+                                                                                // Let's reuse calculateTotal() - subtotal - tax - fees? 
+                                                                                // Easier to just recalc platform fee on TOTAL processed.
+                                                                                const total = calculateTotal();
+                                                                                // BUT calculateTotal includes platform fee.
+                                                                                // So we can find platform fee by deduecting others?
+                                                                                // Or just use StorageService.calculateFees(total, plan) logic again.
+                                                                                // Wait, calculateTotal loops everything.
+                                                                                // Let's just trust calculateTotal() is the final.
+                                                                                // And display 'Fees' as Difference?
+                                                                                // No, that's messy.
+                                                                                // Let's just calculate it.
+                                                                                let sub = 0;
+                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
+                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
+                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
+                                                                                if (appliedPromo) {
+                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
+                                                                                    else sub -= appliedPromo.value;
+                                                                                }
+                                                                                const base = Math.max(0, sub);
+                                                                                let runningTotal = base;
+                                                                                if (event.taxRate) runningTotal += base * (event.taxRate / 100);
+                                                                                if (event.customFees) event.customFees.forEach(f => runningTotal += (f.type === 'percent' ? base * (f.amount / 100) : f.amount));
+
+                                                                                const plan = organizerUser?.subscription?.plan || 'free';
+                                                                                const fee = StorageService.calculateFees(runningTotal, plan);
+                                                                                return <PriceDisplay amount={fee} />;
+                                                                            })()}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center text-xl font-black">
+                                                                <span>Total</span>
+                                                                <span><PriceDisplay amount={calculateTotal()} /></span>
+                                                            </div>
                                                         </div>
                                                     )}
 

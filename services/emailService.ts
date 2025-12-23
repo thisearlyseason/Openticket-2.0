@@ -1,7 +1,7 @@
-import { auth, db } from './firebaseConfig';
+import { auth } from './firebaseConfig';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { User, EmailTemplate } from '../types';
+import { StorageService } from './storageService';
 
 // Specific provider for Gmail Scopes
 const gmailProvider = new GoogleAuthProvider();
@@ -29,9 +29,8 @@ export const EmailService = {
             // In production, you'd send the authorizationCode to a backend to exchange for a Refresh Token and store encrypted.
             sessionStorage.setItem(`gmail_token_${userId}`, token);
 
-            // Update User Profile
-            const userRef = doc(db, 'users', userId);
-            await updateDoc(userRef, {
+            // Update User Profile via StorageService (Backend)
+            await StorageService.updateUser(userId, {
                 gmailConfig: {
                     connected: true,
                     email: user.email || 'connected',
@@ -47,8 +46,7 @@ export const EmailService = {
     },
 
     disconnectGmail: async (userId: string) => {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
+        await StorageService.updateUser(userId, {
             gmailConfig: {
                 connected: false,
                 email: null,
@@ -104,11 +102,9 @@ export const EmailService = {
 
     // Template Management
     saveTemplate: async (userId: string, template: EmailTemplate) => {
-        const userRef = doc(db, 'users', userId);
-        const snap = await getDoc(userRef);
-        if (snap.exists()) {
-            const data = snap.data() as User;
-            const templates = data.emailTemplates || [];
+        const user = await StorageService.getUserById(userId);
+        if (user) {
+            const templates = user.emailTemplates || [];
             const existingIdx = templates.findIndex(t => t.id === template.id);
 
             let newTemplates = [...templates];
@@ -118,18 +114,16 @@ export const EmailService = {
                 newTemplates.push(template);
             }
 
-            await updateDoc(userRef, { emailTemplates: newTemplates });
+            await StorageService.updateUser(userId, { emailTemplates: newTemplates });
         }
     },
 
     deleteTemplate: async (userId: string, templateId: string) => {
-        const userRef = doc(db, 'users', userId);
-        const snap = await getDoc(userRef);
-        if (snap.exists()) {
-            const data = snap.data() as User;
-            const templates = data.emailTemplates || [];
+        const user = await StorageService.getUserById(userId);
+        if (user) {
+            const templates = user.emailTemplates || [];
             const newTemplates = templates.filter(t => t.id !== templateId);
-            await updateDoc(userRef, { emailTemplates: newTemplates });
+            await StorageService.updateUser(userId, { emailTemplates: newTemplates });
         }
     }
 };

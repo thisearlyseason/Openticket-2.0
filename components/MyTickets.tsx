@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Registration, Event, User } from '../types';
-import { Badge, formatTime, Button, Input } from './UI';
+import { Badge, formatTime, Button, Input, ReceiptModal } from './UI';
 import { Calendar, MapPin, Clock, Ticket as TicketIcon, Printer, ArrowLeft, Send, Archive, RotateCcw, Trash2, Ghost, ShoppingBag } from 'lucide-react';
 
 export const MyTickets = () => {
@@ -14,6 +14,7 @@ export const MyTickets = () => {
         uniqueQrData: string;
         ticketIdDisplay: string;
         ticketKey: string;
+        ticketArrayIndex: number; // Index in reg.tickets array
         status: 'valid' | 'expired' | 'pay_at_door' | 'pending' | 'refunded' | 'hidden';
         hostName: string;
         isAddOn: boolean;
@@ -33,6 +34,8 @@ export const MyTickets = () => {
     const [eventGroups, setEventGroups] = useState<EventGroup[]>([]);
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [transferModal, setTransferModal] = useState<{ isOpen: boolean, ticket: DisplayTicket | null, name: string, email: string }>({ isOpen: false, ticket: null, name: '', email: '' });
+    const [receiptModal, setReceiptModal] = useState<{ isOpen: boolean, reg: Registration | null, event: Event | null }>({ isOpen: false, reg: null, event: null });
     const navigate = useNavigate();
 
     // Derived State
@@ -83,7 +86,7 @@ export const MyTickets = () => {
 
             // Process Tickets
             if (reg.tickets && reg.tickets.length > 0) {
-                reg.tickets.forEach(t => {
+                reg.tickets.forEach((t, tIdx) => {
                     for (let i = 0; i < t.quantity; i++) {
                         const key = `${t.tierId}-${i}`;
                         const isTicketHidden = reg.hiddenTicketKeys?.includes(key);
@@ -96,6 +99,7 @@ export const MyTickets = () => {
                             uniqueQrData: `TICKET:${reg.id}:${t.tierId}:${i}`,
                             ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0, 3).toUpperCase()}-${i + 1}`,
                             ticketKey: key,
+                            ticketArrayIndex: tIdx,
                             status: isTicketHidden ? 'hidden' : baseStatus,
                             hostName: event.organizer,
                             isAddOn: false,
@@ -115,7 +119,8 @@ export const MyTickets = () => {
                     status: baseStatus,
                     hostName: event.organizer,
                     isAddOn: false,
-                    timestamp: reg.timestamp
+                    timestamp: reg.timestamp,
+                    ticketArrayIndex: 0 // Fallback
                 });
             }
 
@@ -134,7 +139,8 @@ export const MyTickets = () => {
                             hostName: event.organizer,
                             isAddOn: true,
                             addOnAnswer: addon.answer,
-                            timestamp: reg.timestamp
+                            timestamp: reg.timestamp,
+                            ticketArrayIndex: -1 // Add-ons are not in tickets array
                         });
                     }
                 });
@@ -209,7 +215,8 @@ export const MyTickets = () => {
                                 <div class="info-row highlight-row">
                                     <div class="info-group">
                                         <label>TICKET TYPE</label>
-                                        <div class="value badge">${ticket.isAddOn ? 'ADD-ON' : ticket.ticketInfo.name}</div>
+                                        <div class="value badge" style="${ticket.isAddOn ? 'background: #ec4899 !important;' : ''}">${ticket.isAddOn ? 'ADD-ON: ' + ticket.ticketInfo.name : ticket.ticketInfo.name}</div>
+                                        ${ticket.addOnAnswer ? `<div class="value" style="font-size: 10px; margin-top: 4px; color: #666;">${ticket.addOnAnswer}</div>` : ''}
                                     </div>
                                     <div class="info-group">
                                         <label>ATTENDEE</label>
@@ -344,11 +351,14 @@ export const MyTickets = () => {
                         <Button onClick={() => handlePrint()} variant="outline" size="sm">
                             <Printer size={16} className="mr-2" /> Print All
                         </Button>
+                        <Button onClick={() => setReceiptModal({ isOpen: true, reg: selectedGroup.tickets[0].reg, event: selectedGroup.event })} variant="secondary" size="sm" className="ml-2 font-black shadow-lg shadow-primary/10">
+                            <Printer size={16} className="mr-2" /> View Receipt
+                        </Button>
                     </div>
 
                     <div className="space-y-6">
                         {selectedGroup.tickets.map((ticket, i) => (
-                            <div key={i} className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden shadow-lg flex flex-col md:flex-row relative">
+                            <div key={i} className={`rounded-3xl overflow-hidden shadow-lg flex flex-col md:flex-row relative transition-all hover:shadow-xl ${ticket.isAddOn ? 'bg-zinc-50 dark:bg-zinc-900/40 border-2 border-dashed border-zinc-200 dark:border-zinc-800' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800'}`}>
                                 {/* Status Banner */}
                                 {ticket.status === 'refunded' && <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase z-10">Refunded</div>}
                                 {ticket.status === 'pay_at_door' && <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black uppercase z-10">Pay at Door</div>}
@@ -356,8 +366,13 @@ export const MyTickets = () => {
                                 <div className="flex-1 p-6 md:p-8">
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
-                                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1 tracking-wider">{ticket.isAddOn ? 'Add-On Item' : ticket.ticketInfo.name}</div>
-                                            <h2 className="text-3xl font-black text-zinc-900 dark:text-white leading-none">{ticket.event.title}</h2>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className={`text-xs font-bold uppercase tracking-wider ${ticket.isAddOn ? 'text-pink-500' : 'text-zinc-500'}`}>{ticket.isAddOn ? 'Add-On Item' : ticket.ticketInfo.name}</div>
+                                                {ticket.isAddOn && <Badge className="bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-[10px]">EXTRA</Badge>}
+                                            </div>
+                                            <h2 className="text-3xl font-black text-zinc-900 dark:text-white leading-none mb-1">{ticket.event.title}</h2>
+                                            {ticket.isAddOn && <div className="text-lg font-bold text-zinc-900 dark:text-white mt-2">{ticket.ticketInfo.name}</div>}
+                                            {ticket.addOnAnswer && <div className="text-sm font-medium text-zinc-500 mt-1">Option: <span className="text-zinc-900 dark:text-white font-bold">{ticket.addOnAnswer}</span></div>}
                                         </div>
                                     </div>
 
@@ -407,9 +422,16 @@ export const MyTickets = () => {
                                     <div className="text-center">
                                         <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">Order ID</div>
                                         <div className="font-mono text-sm font-bold tracking-wider mb-2">{ticket.ticketIdDisplay}</div>
-                                        <button onClick={() => handlePrint([ticket])} className="text-xs text-primary hover:underline flex items-center justify-center gap-1">
-                                            <Printer size={12} /> Print Ticket
-                                        </button>
+                                        <div className="flex flex-col gap-2">
+                                            <button onClick={() => handlePrint([ticket])} className="text-xs text-primary hover:underline flex items-center justify-center gap-1">
+                                                <Printer size={12} /> Print Ticket
+                                            </button>
+                                            {!ticket.isAddOn && (
+                                                <button onClick={() => setTransferModal({ isOpen: true, ticket: ticket, name: '', email: '' })} className="text-xs text-secondary hover:underline flex items-center justify-center gap-1">
+                                                    <Send size={12} /> Transfer Ticket
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -417,6 +439,51 @@ export const MyTickets = () => {
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* Transfer Modal */}
+            {transferModal.isOpen && transferModal.ticket && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl space-y-6">
+                        <div className="text-center">
+                            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Transfer Ticket</h3>
+                            <p className="text-zinc-500 font-bold text-sm">Send this ticket to a friend.</p>
+                        </div>
+                        <div className="space-y-4">
+                            <Input label="New Holder Name" value={transferModal.name} onChange={e => setTransferModal({ ...transferModal, name: e.target.value })} placeholder="Enter full name" />
+                            <Input label="New Holder Email" type="email" value={transferModal.email} onChange={e => setTransferModal({ ...transferModal, email: e.target.value })} placeholder="Enter email address" />
+                        </div>
+                        <div className="flex gap-4">
+                            <Button variant="outline" onClick={() => setTransferModal({ ...transferModal, isOpen: false })} className="flex-1 rounded-xl font-black">Cancel</Button>
+                            <Button className="flex-1 rounded-xl font-black" onClick={async () => {
+                                if (!transferModal.name || !transferModal.email) return alert("Please fill in all details");
+                                if (confirm("Transfer this ticket? This action cannot be undone.")) {
+                                    try {
+                                        await StorageService.updateTicketHolder(transferModal.ticket!.reg.id, transferModal.ticket!.ticketArrayIndex!, transferModal.name, transferModal.email);
+                                        alert("Ticket transferred successfully!");
+                                        setTransferModal({ ...transferModal, isOpen: false });
+                                        if (user) loadTickets(user.email); // Reload
+                                    } catch (e: any) {
+                                        alert("Transfer failed: " + e.message);
+                                    }
+                                }
+                            }}>Confirm Transfer</Button>
+                        </div>
+                    </div>
+                </div>
+            )
+            }
+
+            {
+                receiptModal.isOpen && receiptModal.reg && receiptModal.event && (
+                    <ReceiptModal
+                        isOpen={receiptModal.isOpen}
+                        onClose={() => setReceiptModal({ ...receiptModal, isOpen: false })}
+                        registration={receiptModal.reg}
+                        event={receiptModal.event}
+                        organizer={undefined} // We don't have organizer user obj here easily, but receipt modal handles undefined with defaults
+                    />
+                )
+            }
+        </div >
     );
 };

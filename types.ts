@@ -114,6 +114,7 @@ export interface User {
   // Admin/Platform Config
   stripePublishableKey?: string;
   stripeSecretKey?: string;
+  geminiApiKey?: string;
 
   // Profile
   socials?: Socials;
@@ -165,6 +166,7 @@ export interface User {
   defaultRefundPolicy?: string;
   defaultRefundPolicyEnabled?: boolean;
   defaultTaxRate?: number;
+  defaultCustomFees?: CustomFee[];
 }
 
 export interface TicketTier {
@@ -411,6 +413,18 @@ export interface PurchasedAddOn {
   price: number;
   quantity: number;
   answer?: string;
+  fulfilled?: boolean;
+}
+
+export interface UserNotification {
+  id: string;
+  userId: string;
+  type: 'message' | 'alert' | 'update';
+  title: string;
+  message: string;
+  read: boolean;
+  timestamp: number;
+  data?: any; // link to event or order
 }
 
 export interface ContactSubmission {

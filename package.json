@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
+    "@stripe/stripe-js": "^8.6.0",
+    "@types/stripe": "^8.0.416",
     "firebase": "^12.6.0",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "stripe": "^20.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
