@@ -4,7 +4,7 @@ import { StorageService } from './storageService';
 import { getAuthToken } from './firebaseConfig';
 
 const isOffline = StorageService.isOfflineMode();
-const SUPABASE_API_BASE = 'http://127.0.0.1:5001/api';
+const SUPABASE_API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const fetchSupabase = async (endpoint: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', body?: any) => {
     const headers: any = { 'Content-Type': 'application/json' };

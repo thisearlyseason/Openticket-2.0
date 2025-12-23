@@ -1,0 +1,18 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/openticket-backend/index.js"
+        }
+    ],
+    "builds": [
+        {
+            "src": "openticket-backend/index.js",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "package.json",
+            "use": "@vercel/vite"
+        }
+    ]
+}

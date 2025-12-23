@@ -24,7 +24,10 @@ let isDemoMode = false;
 let initError: Error | null = null;
 
 // Backend Configuration
-const SUPABASE_API_BASE = 'http://127.0.0.1:5001/api';
+// Backend Configuration
+// Use relative path for Vercel deployment (rewrites handle /api -> backend)
+// For local dev, Vite proxy can handle this, or we fallback.
+const SUPABASE_API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const fetchSupabase = async (endpoint: string, authenticated = true): Promise<any> => {
     const headers: any = { 'Content-Type': 'application/json' };
