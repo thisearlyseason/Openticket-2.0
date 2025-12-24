@@ -92,7 +92,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
             }, 30000);
             return () => clearInterval(interval);
         }
-    }, [user, location.pathname]);
+    }, [user?.id, location.pathname]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
