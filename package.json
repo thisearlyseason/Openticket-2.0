@@ -12,8 +12,13 @@
   "dependencies": {
     "@google/genai": "^1.30.0",
     "@stripe/stripe-js": "^8.6.0",
+    "@supabase/supabase-js": "^2.89.0",
     "@types/stripe": "^8.0.416",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
