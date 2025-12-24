@@ -1,15 +1,10 @@
 import admin from 'firebase-admin';
-
 import dotenv from 'dotenv';
 dotenv.config();
 
 if (!process.env.FIREBASE_PRIVATE_KEY) {
     console.error('CRITICAL: FIREBASE_PRIVATE_KEY is missing');
 }
-
-admin.initializeApp({
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-};
 
 const rawKey = process.env.FIREBASE_PRIVATE_KEY;
 if (rawKey) {
@@ -30,7 +25,6 @@ admin.initializeApp({
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey: processedKey,
     })
-});
 });
 
 export default admin;
