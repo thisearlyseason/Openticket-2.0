@@ -246,7 +246,7 @@ export const Settings = () => {
             <div className="flex justify-between items-end mb-8">
                 <h1 className="text-3xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Settings</h1>
                 {!isPro && (
-                    <div className="hidden md:block">
+                    <div>
                         <Button onClick={() => navigate('/pricing')} className="bg-gradient-to-r from-pink-500 to-purple-600 border-none text-white hover:opacity-90 shadow-lg">
                             Upgrade to Pro
                         </Button>

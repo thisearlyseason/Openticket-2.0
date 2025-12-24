@@ -189,7 +189,7 @@ export const Pricing = () => {
                 </Card>
 
                 {/* PRO PLAN */}
-                <Card className="p-8 border-primary relative shadow-[0_0_30px_rgba(236,72,153,0.15)] scale-105 z-10 bg-white dark:bg-zinc-900">
+                <Card className="p-8 border-primary relative shadow-[0_0_30px_rgba(236,72,153,0.15)] md:scale-105 z-10 bg-white dark:bg-zinc-900">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm">
                         MOST POPULAR
                     </div>

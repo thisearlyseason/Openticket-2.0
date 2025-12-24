@@ -362,8 +362,8 @@ export const StorageService = {
         return (subtotal * plan.feePercent) + plan.feeFixed;
     },
 
-    getUserById: async (id: string): Promise<User | undefined> => {
-        if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.id === id);
+    getUserById: async (id: string): Promise<User | null> => {
+        if (isOffline) return getLocal<User>(LS_USERS_KEY).find(u => u.id === id) || null;
         try {
             const { profile } = await fetchSupabase(`/auth/profiles/${id}`);
             if (profile) {
@@ -378,10 +378,15 @@ export const StorageService = {
                     teamMembers: profile.team_members
                 } as User;
             }
-        } catch (e) {
+            return null;
+        } catch (e: any) {
+            // Check if it's a 404 (Not Found)
+            if (e.message && e.message.includes('404')) {
+                return null;
+            }
             console.error("Frontend: Supabase profile read failed", e);
+            throw e; // Re-throw real errors to prevent accidental overwrite
         }
-        return undefined;
     },
 
     getSuperAdmin: async (): Promise<User | undefined> => {
@@ -437,7 +442,14 @@ export const StorageService = {
             const uid = result.user.uid;
 
             // Check if user exists first to avoid overwriting role (CRITICAL FIX)
-            const existingUser = await StorageService.getUserById(uid);
+            let existingUser = null;
+            try {
+                existingUser = await StorageService.getUserById(uid);
+            } catch (err) {
+                // If checking user fails (network error), ABORT. Do not overwrite.
+                return { user: null, error: "Login failed: Unable to verify account status. Please check connection." };
+            }
+
             if (existingUser) {
                 // If user exists, log them in without overwriting their data
                 localStorage.setItem(CURRENT_USER_KEY, safeStringify(existingUser));
