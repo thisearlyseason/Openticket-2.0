@@ -1054,92 +1054,91 @@ export const EventView = () => {
                                     </Button>
                                 </div>
                             </div>
-                    </div>
-                </Card>
+                        </Card>
 
-                {/* Location Mini Map */}
-                <Card className="p-1 rounded-[3rem] overflow-hidden border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black/40">
-                    <div className="h-48 bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center rounded-[2.8rem] relative overflow-hidden group">
-                        <MapPin size={48} className="text-primary animate-bounce relative z-10" />
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 group-hover:scale-125 transition-transform duration-1000"></div>
-                    </div>
-                    <div className="p-6 text-center">
-                        <h4 className="font-black uppercase tracking-tighter text-xl mb-1">{event.location?.split(',')[0]}</h4>
-                        <p className="text-zinc-500 font-bold text-sm mb-6">{event.location}</p>
-                        <AnchorButton href={`https://maps.google.com/?q=${encodeURIComponent(event.location)}`} target="_blank" variant="outline" className="w-full rounded-2xl h-12 uppercase font-black text-xs tracking-widest">Open in Maps</AnchorButton>
-                    </div>
-                </Card>
+                        {/* Location Mini Map */}
+                        <Card className="p-1 rounded-[3rem] overflow-hidden border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black/40">
+                            <div className="h-48 bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center rounded-[2.8rem] relative overflow-hidden group">
+                                <MapPin size={48} className="text-primary animate-bounce relative z-10" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 group-hover:scale-125 transition-transform duration-1000"></div>
+                            </div>
+                            <div className="p-6 text-center">
+                                <h4 className="font-black uppercase tracking-tighter text-xl mb-1">{event.location?.split(',')[0]}</h4>
+                                <p className="text-zinc-500 font-bold text-sm mb-6">{event.location}</p>
+                                <AnchorButton href={`https://maps.google.com/?q=${encodeURIComponent(event.location)}`} target="_blank" variant="outline" className="w-full rounded-2xl h-12 uppercase font-black text-xs tracking-widest">Open in Maps</AnchorButton>
+                            </div>
+                        </Card>
 
-                {/* Share Card */}
-                <Card className="p-8 bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-[3rem] text-center">
-                    <div className="w-16 h-16 bg-white dark:bg-black rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-xl">
-                        <Share2 size={32} className="text-primary" />
+                        {/* Share Card */}
+                        <Card className="p-8 bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-[3rem] text-center">
+                            <div className="w-16 h-16 bg-white dark:bg-black rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-xl">
+                                <Share2 size={32} className="text-primary" />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Tell your friends</h3>
+                            <p className="text-zinc-500 font-bold mb-8">This event is better with a crew. Share the vibe!</p>
+                            <Button onClick={() => { navigator.clipboard.writeText(shareUrl); alert("Link copied!"); }} className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all flex items-center justify-center gap-3">
+                                <CheckCircle size={16} /> Copy Magic Link
+                            </Button>
+                        </Card>
                     </div>
-                    <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Tell your friends</h3>
-                    <p className="text-zinc-500 font-bold mb-8">This event is better with a crew. Share the vibe!</p>
-                    <Button onClick={() => { navigator.clipboard.writeText(shareUrl); alert("Link copied!"); }} className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all flex items-center justify-center gap-3">
-                        <CheckCircle size={16} /> Copy Magic Link
-                    </Button>
-                </Card>
-            </div>
-        </div >
+                </div >
 
-            {/* Sticky Mobile Order Bar */ }
-    {
-        getTotalTickets() > 0 && !isSuccess && (
-            <div className="fixed bottom-0 left-0 w-full p-4 z-[100] animate-in slide-in-from-bottom-20 duration-500 pb-24 md:pb-4">
-                <div className="max-w-4xl mx-auto">
-                    <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-2 border-2">
-                        <div className="pl-4 shrink-0">
-                            <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Total</div>
-                            <div className="text-2xl md:text-3xl font-black flex items-center gap-2 tracking-tighter">
-                                ${calculateTotal().toFixed(2)}
-                                <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
+                {/* Sticky Mobile Order Bar */}
+                {
+                    getTotalTickets() > 0 && !isSuccess && (
+                        <div className="fixed bottom-0 left-0 w-full p-4 z-[100] animate-in slide-in-from-bottom-20 duration-500 pb-24 md:pb-4">
+                            <div className="max-w-4xl mx-auto">
+                                <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-2 border-2">
+                                    <div className="pl-4 shrink-0">
+                                        <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Total</div>
+                                        <div className="text-2xl md:text-3xl font-black flex items-center gap-2 tracking-tighter">
+                                            ${calculateTotal().toFixed(2)}
+                                            <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
+                                        </div>
+                                    </div>
+                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-ellipsis whitespace-nowrap overflow-hidden">
+                                        Checkout <ArrowRight size={18} className="md:w-6 md:h-6" />
+                                    </Button>
+                                </Card>
                             </div>
                         </div>
-                        <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-ellipsis whitespace-nowrap overflow-hidden">
-                            Checkout <ArrowRight size={18} className="md:w-6 md:h-6" />
-                        </Button>
-                    </Card>
-                </div>
-            </div>
-        )
-    }
+                    )
+                }
             </div >
 
-    {/* Simulated Payment Overlay */ }
-{
-    isProcessingPayment && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-            <div className="max-w-md w-full bg-zinc-900 border border-white/10 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(224,255,32,0.15)] relative overflow-hidden">
-                {/* Animated gradient ring */}
-                <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent"></div>
+            {/* Simulated Payment Overlay */}
+            {
+                isProcessingPayment && (
+                    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-500">
+                        <div className="max-w-md w-full bg-zinc-900 border border-white/10 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(224,255,32,0.15)] relative overflow-hidden">
+                            {/* Animated gradient ring */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent"></div>
 
-                <div className="relative">
-                    <div className="w-24 h-24 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(224,255,32,0.2)]"></div>
-                    <div className="absolute inset-0 flex items-center justify-center mb-8">
-                        <Lock size={32} className="text-secondary animate-pulse" />
+                            <div className="relative">
+                                <div className="w-24 h-24 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(224,255,32,0.2)]"></div>
+                                <div className="absolute inset-0 flex items-center justify-center mb-8">
+                                    <Lock size={32} className="text-secondary animate-pulse" />
+                                </div>
+
+                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 animate-pulse">
+                                    Secure Checkout
+                                </h2>
+                                <p className="text-zinc-400 font-bold mb-8">
+                                    Transferring to our secure payment processor...
+                                </p>
+
+                                <div className="flex items-center justify-center gap-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Encrypted</span>
+                                    <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Validated</span>
+                                    <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Stripe Verified</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 animate-pulse">
-                        Secure Checkout
-                    </h2>
-                    <p className="text-zinc-400 font-bold mb-8">
-                        Transferring to our secure payment processor...
-                    </p>
-
-                    <div className="flex items-center justify-center gap-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
-                        <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Encrypted</span>
-                        <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Validated</span>
-                        <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
-                        <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Stripe Verified</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
+                )
+            }
         </>
     );
 };
