@@ -897,6 +897,40 @@ export const EventView = () => {
                                                         <div className="mb-8 p-6 bg-zinc-100 dark:bg-zinc-800/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
                                                             <h4 className="font-black uppercase tracking-widest text-xs text-zinc-500 mb-4">Order Summary</h4>
                                                             <div className="space-y-2 text-sm font-medium">
+                                                                {/* Itemization */}
+                                                                {event.priceType === 'tiered' ? (
+                                                                    event.ticketTiers?.map(tier => {
+                                                                        const qty = ticketSelection[tier.id] || 0;
+                                                                        if (qty === 0) return null;
+                                                                        return (
+                                                                            <div key={tier.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                                                                                <span>{qty} x {tier.name}</span>
+                                                                                <span>{tier.price === 0 ? 'FREE' : <PriceDisplay amount={tier.price * qty} />}</span>
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                ) : (
+                                                                    (ticketSelection['general'] || 0) > 0 && (
+                                                                        <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                                                                            <span>{(ticketSelection['general'] || 0)} x {event.ticketName || 'Tickets'}</span>
+                                                                            <span>{event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? <PriceDisplay amount={Number(regData.donation) || 0} /> : <PriceDisplay amount={event.price * (ticketSelection['general'] || 0)} />}</span>
+                                                                        </div>
+                                                                    )
+                                                                )}
+
+                                                                {event.addOns?.map(addon => {
+                                                                    const qty = addOnSelection[addon.id]?.qty || 0;
+                                                                    if (qty === 0) return null;
+                                                                    return (
+                                                                        <div key={addon.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
+                                                                            <span>{qty} x {addon.name}</span>
+                                                                            <span><PriceDisplay amount={addon.price * qty} /></span>
+                                                                        </div>
+                                                                    )
+                                                                })}
+
+                                                                <div className="border-t border-zinc-200 dark:border-zinc-700 my-2"></div>
+
                                                                 <div className="flex justify-between">
                                                                     <span>Subtotal</span>
                                                                     <span>

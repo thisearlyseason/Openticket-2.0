@@ -25,6 +25,9 @@ export const createCheckoutSession = async (req, res) => {
         } = req.body;
 
 
+
+        const line_items = [];
+
         // Add Tickets
         if (tickets && Array.isArray(tickets)) {
             tickets.forEach((ticket) => {
