@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { createClient } = require('@supabase/supabase-js');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -23,10 +23,11 @@ app.use((req, res, next) => {
 });
 
 // --- ROUTES ---
-const authRoutes = require('../backend/routes/authRoutes');
-const eventRoutes = require('../backend/routes/eventRoutes');
-const registrationRoutes = require('../backend/routes/registrationRoutes');
-const stripeRoutes = require('../backend/routes/stripeRoutes');
+// --- ROUTES ---
+import authRoutes from '../backend/routes/authRoutes.js';
+import eventRoutes from '../backend/routes/eventRoutes.js';
+import registrationRoutes from '../backend/routes/registrationRoutes.js';
+import stripeRoutes from '../backend/routes/stripeRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -39,10 +40,11 @@ app.get('/health', (req, res) => {
 });
 
 // Export for Vercel Serverless
-module.exports = app;
+export default app;
 
 // Only listen if run directly (local dev)
-if (require.main === module) {
+// @ts-ignore
+if (import.meta.url === `file://${process.argv[1]}`) {
     app.listen(PORT, () => {
         console.log(`Openticket Backend running on port ${PORT}`);
     });

@@ -1,6 +1,6 @@
-const Stripe = require('stripe');
+import Stripe from 'stripe';
 
-exports.createCheckoutSession = async (req, res) => {
+export const createCheckoutSession = async (req, res) => {
     try {
         if (!process.env.STRIPE_SECRET_KEY) {
             throw new Error('STRIPE_SECRET_KEY is missing in the backend .env file');

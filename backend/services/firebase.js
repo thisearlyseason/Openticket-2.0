@@ -1,7 +1,7 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 admin.initializeApp({
     projectId: 'openticket-4f5bc',
 });
 
-module.exports = admin;
+export default admin;

@@ -1,6 +1,6 @@
-const supabase = require('../services/supabase');
+import supabase from '../services/supabase.js';
 
-exports.createRegistration = async (req, res) => {
+export const createRegistration = async (req, res) => {
     try {
         const registrationData = req.body;
         const { data, error } = await supabase
@@ -15,7 +15,7 @@ exports.createRegistration = async (req, res) => {
     }
 };
 
-exports.getRegistrationsByEvent = async (req, res) => {
+export const getRegistrationsByEvent = async (req, res) => {
     try {
         const { eventId } = req.params;
         const owner_id = req.user.uid;
@@ -43,7 +43,7 @@ exports.getRegistrationsByEvent = async (req, res) => {
     }
 };
 
-exports.updateRegistration = async (req, res) => {
+export const updateRegistration = async (req, res) => {
     try {
         const { id } = req.params;
         const owner_id = req.user.uid;

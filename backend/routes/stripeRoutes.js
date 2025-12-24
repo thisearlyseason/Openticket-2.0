@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const stripeController = require('../controllers/stripeController');
+import * as stripeController from '../controllers/stripeController.js';
 
 router.post('/create-order', stripeController.createCheckoutSession);
 
-module.exports = router;
+export default router;

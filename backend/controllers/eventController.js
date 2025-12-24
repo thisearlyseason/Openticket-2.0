@@ -1,6 +1,6 @@
-const supabase = require('../services/supabase');
+import supabase from '../services/supabase.js';
 
-exports.createEvent = async (req, res) => {
+export const createEvent = async (req, res) => {
     try {
         const eventData = req.body;
         // Auth Bridge: Use verified Firebase UID
@@ -18,7 +18,7 @@ exports.createEvent = async (req, res) => {
     }
 };
 
-exports.getEvents = async (req, res) => {
+export const getEvents = async (req, res) => {
     try {
         const owner_id = req.user.uid;
         const { data, error } = await supabase
@@ -33,7 +33,7 @@ exports.getEvents = async (req, res) => {
     }
 };
 
-exports.getEventById = async (req, res) => {
+export const getEventById = async (req, res) => {
     try {
         const { id } = req.params;
         const { data, error } = await supabase
@@ -49,7 +49,7 @@ exports.getEventById = async (req, res) => {
     }
 };
 
-exports.updateEvent = async (req, res) => {
+export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
         const owner_id = req.user.uid;
@@ -69,7 +69,7 @@ exports.updateEvent = async (req, res) => {
     }
 };
 
-exports.deleteEvent = async (req, res) => {
+export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
         const owner_id = req.user.uid;
@@ -87,7 +87,7 @@ exports.deleteEvent = async (req, res) => {
     }
 };
 
-exports.getPublicEvents = async (req, res) => {
+export const getPublicEvents = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('events')

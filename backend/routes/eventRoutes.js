@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const eventController = require('../controllers/eventController');
-const verifyToken = require('../middlewares/authMiddleware');
+import * as eventController from '../controllers/eventController.js';
+import verifyToken from '../middlewares/authMiddleware.js';
 
 router.get('/public', eventController.getPublicEvents);
 router.post('/', verifyToken, eventController.createEvent);
@@ -10,4 +10,4 @@ router.get('/:id', eventController.getEventById);
 router.put('/:id', verifyToken, eventController.updateEvent);
 router.delete('/:id', verifyToken, eventController.deleteEvent);
 
-module.exports = router;
+export default router;

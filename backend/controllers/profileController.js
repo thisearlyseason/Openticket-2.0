@@ -1,6 +1,6 @@
-const supabase = require('../services/supabase');
+import supabase from '../services/supabase.js';
 
-exports.syncProfile = async (req, res) => {
+export const syncProfile = async (req, res) => {
     try {
         const { uid } = req.user;
         const updates = req.body;
@@ -24,7 +24,7 @@ exports.syncProfile = async (req, res) => {
     }
 };
 
-exports.getProfile = async (req, res) => {
+export const getProfile = async (req, res) => {
     try {
         const { uid } = req.user;
         const { data, error } = await supabase
@@ -40,7 +40,7 @@ exports.getProfile = async (req, res) => {
     }
 };
 
-exports.getProfileById = async (req, res) => {
+export const getProfileById = async (req, res) => {
     try {
         const { id } = req.params;
         const { data, error } = await supabase
