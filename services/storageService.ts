@@ -623,7 +623,7 @@ export const StorageService = {
         if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).filter(e => e.ownerId === StorageService.getCurrentUser()?.id);
         try {
             const { events } = await fetchSupabase('/events', true);
-            return events || [];
+            return (events || []).map(normalizeEvent);
         } catch (e) { console.warn("My Events read failed", e); return []; }
     },
 
