@@ -38,7 +38,17 @@ const fetchSupabase = async (endpoint: string, authenticated = true): Promise<an
         if (token) headers['Authorization'] = `Bearer ${token}`;
     }
     const res = await fetch(`${SUPABASE_API_BASE}${endpoint}`, { headers });
-    if (!res.ok) throw new Error(`Backend API error: ${res.statusText}`);
+    if (!res.ok) {
+        let errorMsg = `Backend API error: ${res.status} ${res.statusText}`;
+        try {
+            const errorBody = await res.json();
+            if (errorBody.error) errorMsg += ` - ${errorBody.error}`;
+        } catch (e) {
+            // ignore json parse error
+        }
+        console.error(errorMsg);
+        throw new Error(errorMsg);
+    }
     return res.json();
 };
 
