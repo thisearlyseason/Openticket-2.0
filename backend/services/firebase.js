@@ -19,12 +19,17 @@ const processedKey = rawKey
     ? rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
     : undefined;
 
-admin.initializeApp({
-    credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: processedKey,
-    })
-});
+try {
+    admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: processedKey,
+        })
+    });
+    console.log('Firebase Admin Initialized Successfully');
+} catch (error) {
+    console.error('FIREBASE INIT ERROR:', error);
+}
 
 export default admin;
