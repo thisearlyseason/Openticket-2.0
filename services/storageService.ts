@@ -436,7 +436,15 @@ export const StorageService = {
             const result = await signInWithPopup(auth, googleProvider);
             const uid = result.user.uid;
 
-            // Sync user to Backend
+            // Check if user exists first to avoid overwriting role (CRITICAL FIX)
+            const existingUser = await StorageService.getUserById(uid);
+            if (existingUser) {
+                // If user exists, log them in without overwriting their data
+                localStorage.setItem(CURRENT_USER_KEY, safeStringify(existingUser));
+                return { user: existingUser };
+            }
+
+            // Sync user to Backend (Create new)
             const payload = {
                 id: uid,
                 email: result.user.email,
@@ -515,22 +523,8 @@ export const StorageService = {
         if (updates.paymentMethods) payload.payment_methods = updates.paymentMethods; // API handles this?
 
         try {
-            // We use the sync endpoint or a specific UPDATE endpoint if available?
-            // Actually reusing sync for basic fields might check existence, but simpler to just PUT /auth/profiles/:id if we had it,
-            // or we use /auth/sync which does UPSERT.
-            // Let's assume we use sync for simplicity or create a dedicated update.
-            // But we already defined /auth/sync in backend as handling updates too.
-            // Ensure email is always included for Upsert (CREATE) operations
-            let email = updates.email;
-            if (!email) {
-                const currentUser = StorageService.getCurrentUser();
-                if (currentUser && currentUser.id === userId) {
-                    email = currentUser.email;
-                }
-            }
-            // If still no email, we might fail if the profile doesn't exist, but we do our best.
-
-            await postSupabase('/auth/sync', 'POST', { id: userId, email, ...payload });
+            // Use dedicated Update endpoint for robustness
+            await postSupabase(`/auth/profiles/${userId}`, 'PUT', payload);
 
             // Update local storage
             const updated = await StorageService.getUserById(userId);

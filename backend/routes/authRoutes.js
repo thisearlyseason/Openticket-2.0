@@ -5,6 +5,7 @@ import verifyToken from '../middlewares/authMiddleware.js';
 
 router.post('/sync', verifyToken, profileController.syncProfile);
 router.get('/me', verifyToken, profileController.getProfile);
+router.put('/profiles/:id', verifyToken, profileController.updateProfile);
 router.get('/profiles/:id', profileController.getProfileById);
 
 export default router;
