@@ -30,12 +30,10 @@ export const Home = () => {
 
     useEffect(() => {
         const loadEvents = async () => {
-            // Filter out drafts and hidden events strictly
-            const rawEvents = await StorageService.getEvents();
-            const allEvents = rawEvents.filter(e =>
-                !e.isDraft &&
-                e.visibility !== 'hidden'
-            ).sort((a, b) => b.createdAt - a.createdAt);
+            // Use dedicated Public Events endpoint
+            const rawEvents = await StorageService.getPublicEvents();
+            // Backend already filters draft/visibility, but client sort is good
+            const allEvents = rawEvents.sort((a, b) => b.createdAt - a.createdAt);
 
             setEvents(allEvents);
             setFilteredEvents(allEvents);
@@ -50,6 +48,8 @@ export const Home = () => {
             results = results.filter(e =>
                 e.title.toLowerCase().includes(lower) ||
                 e.location.toLowerCase().includes(lower) ||
+                (e.organizer && e.organizer.toLowerCase().includes(lower)) || // Search by Organizer Name
+                (e.category && e.category.toLowerCase().includes(lower)) ||
                 e.tags?.some(tag => tag.toLowerCase().includes(lower))
             );
         }

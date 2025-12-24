@@ -561,24 +561,28 @@ export const StorageService = {
     logout: async () => { if (!isOffline && auth) await signOut(auth); localStorage.removeItem(CURRENT_USER_KEY); },
     getCurrentUser: (): User | null => { try { const data = localStorage.getItem(CURRENT_USER_KEY); return data ? JSON.parse(data) : null; } catch { return null; } },
 
-    getEvents: async (): Promise<Event[]> => {
-        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY);
-
-        // Check cache
-        if (_eventsCache && Date.now() - _eventsCache.timestamp < CACHE_TTL) return _eventsCache.data;
-
+    // For Dashboard/Manage
+    getMyEvents: async (): Promise<Event[]> => {
+        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).filter(e => e.ownerId === StorageService.getCurrentUser()?.id);
         try {
-            const currentUser = StorageService.getCurrentUser();
-            const endpoint = currentUser ? '/events' : '/events/public';
-            const { events } = await fetchSupabase(endpoint, !!currentUser);
+            const { events } = await fetchSupabase('/events', true);
+            return events || [];
+        } catch (e) { console.warn("My Events read failed", e); return []; }
+    },
 
-            // Hydrate registered count if needed, or trust API
-            _eventsCache = { data: events, timestamp: Date.now() };
-            return events;
-        } catch (e) {
-            console.warn("Backend read failed", e);
-            return [];
-        }
+    // For Explore Page
+    getPublicEvents: async (): Promise<Event[]> => {
+        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).filter(e => !e.isDraft && e.visibility === 'public');
+        try {
+            // Always hit public endpoint
+            const { events } = await fetchSupabase('/events/public', false);
+            return events || [];
+        } catch (e) { console.warn("Public Events read failed", e); return []; }
+    },
+
+    // DEPRECATED: Use getMyEvents or getPublicEvents
+    getEvents: async (): Promise<Event[]> => {
+        return StorageService.getMyEvents();
     },
 
     getEventById: async (id: string) => {
