@@ -893,7 +893,7 @@ export const EventView = () => {
                                                     )}
 
                                                     {/* Order Summary with Fees */}
-                                                    {(getTotalTickets() > 0 || getTotalAddOns() > 0) && (
+                                                    {(getTotalTickets() > 0 || getTotalAddOns() > 0) && calculateTotal() > 0 && (
                                                         <div className="mb-8 p-6 bg-zinc-100 dark:bg-zinc-800/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
                                                             <h4 className="font-black uppercase tracking-widest text-xs text-zinc-500 mb-4">Order Summary</h4>
                                                             <div className="space-y-2 text-sm font-medium">
