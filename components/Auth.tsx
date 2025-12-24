@@ -255,24 +255,7 @@ export const Auth = () => {
                             <Button type="submit" variant="secondary" className="w-full py-4 text-lg text-black" isLoading={isLoading}>Sign In</Button>
                         </form>
 
-                        <div className="relative my-6">
-                            <div className="absolute inset-0 flex items-center">
-                                <span className="w-full border-t border-zinc-200 dark:border-zinc-800"></span>
-                            </div>
-                            <div className="relative flex justify-center text-xs uppercase">
-                                <span className="bg-white dark:bg-black px-2 text-zinc-500">Demo</span>
-                            </div>
-                        </div>
 
-                        <Button type="button" onClick={handleDemoLogin} className="w-full py-3 bg-[#E0FF20]/10 text-black dark:text-[#E0FF20] border-2 border-dashed border-[#E0FF20] hover:bg-[#E0FF20] hover:text-black" isLoading={isLoading}>
-                            <Zap size={18} className="mr-2" /> Instant Organizer Login
-                        </Button>
-
-                        <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 text-center">
-                            <button type="button" onClick={loginAsAdmin} className="text-xs text-zinc-500 hover:text-primary flex items-center justify-center gap-1 mx-auto">
-                                <ShieldCheck size={12} /> Log in as Super Admin
-                            </button>
-                        </div>
                     </div>
                 )}
 
