@@ -1,3 +1,4 @@
+```javascript
 import supabase from '../services/supabase.js';
 
 export const syncProfile = async (req, res) => {
@@ -16,7 +17,12 @@ export const syncProfile = async (req, res) => {
             .upsert([profileData])
             .select();
 
-        if (error) throw error;
+        if (error) {
+            throw error;
+        } else {
+            // No fs logging here
+        }
+
         res.json({ profile: data[0] });
     } catch (error) {
         console.error('Profile Sync Error:', error);

@@ -14,6 +14,7 @@ CREATE TABLE public.profiles (
     id TEXT PRIMARY KEY, -- Firebase UID
     name TEXT,
     email TEXT UNIQUE NOT NULL,
+    image_url TEXT,
     role TEXT DEFAULT 'attendee',
     is_admin BOOLEAN DEFAULT FALSE,
     business_name TEXT,

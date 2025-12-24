@@ -225,6 +225,22 @@ export const Settings = () => {
 
     const isPro = user.subscription?.plan === 'pro' || user.subscription?.plan === 'premium';
 
+    const getAccountLabel = () => {
+        if (!user) return null;
+        if (user.role === 'attendee') return { label: 'Attendee', color: 'gray' };
+        if (user.role === 'affiliate') return { label: 'Affiliate', color: 'green' };
+        if (user.role === 'admin') return { label: 'Admin', color: 'red' };
+        if (user.role === 'organizer') {
+            const plan = user.subscription?.plan || 'free';
+            if (plan === 'premium') return { label: 'Organizer (PREMIUM)', color: 'purple' };
+            if (plan === 'pro') return { label: 'Organizer (PRO)', color: 'blue' };
+            return { label: 'Organizer (FREE PLAN)', color: 'gray' };
+        }
+        return { label: user.role, color: 'gray' };
+    };
+
+    const accountType = getAccountLabel();
+
     return (
         <div className="max-w-5xl mx-auto py-12 px-4 pb-24">
             <div className="flex justify-between items-end mb-8">
@@ -300,7 +316,12 @@ export const Settings = () => {
 
                         {activeTab === 'profile' && (
                             <div className="space-y-6 animate-in fade-in">
-                                <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white">Profile Settings</h2>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Profile Settings</h2>
+                                    {accountType && (
+                                        <Badge color={accountType.color as any}>{accountType.label}</Badge>
+                                    )}
+                                </div>
 
                                 <div className="flex flex-col items-center md:flex-row gap-6 mb-6">
                                     <div className="w-24 h-24 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative group shrink-0 border-2 border-zinc-200 dark:border-zinc-700">
@@ -336,6 +357,62 @@ export const Settings = () => {
                                     disabled
                                     className="opacity-60 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800"
                                 />
+
+                                {/* Organizer Upgrade */}
+                                {user.role === 'attendee' && (
+                                    <div className="mt-8 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 bg-white dark:bg-purple-900/50 rounded-xl shadow-sm hidden sm:block">
+                                                <LayoutTemplate className="text-purple-600 dark:text-purple-400" size={24} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-bold text-purple-900 dark:text-purple-100">Start Organizing Events</h3>
+                                                <p className="text-sm text-purple-700 dark:text-purple-300 mt-1 mb-4">
+                                                    Upgrade your account to create events, sell tickets, and manage attendees. You can start for free!
+                                                </p>
+                                                <Button
+                                                    onClick={() => navigate('/pricing')}
+                                                    className="bg-purple-600 hover:bg-purple-700 border-none text-white shadow-lg shadow-purple-200 dark:shadow-none"
+                                                >
+                                                    View Organizer Plans
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Affiliate Upgrade */}
+                                {user.role === 'attendee' && (
+                                    <div className="mt-8 p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border border-green-100 dark:border-green-800/30">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 bg-white dark:bg-green-900/50 rounded-xl shadow-sm hidden sm:block">
+                                                <Shield className="text-green-600 dark:text-green-400" size={24} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-bold text-green-900 dark:text-green-100">Become an Affiliate</h3>
+                                                <p className="text-sm text-green-700 dark:text-green-300 mt-1 mb-4">
+                                                    Join our affiliate program to earn commissions by promoting events. You'll get access to unique tracking links and a dashboard to monitor your earnings.
+                                                </p>
+                                                <Button
+                                                    onClick={async () => {
+                                                        if (confirm("Join the Affiliate Program?")) {
+                                                            const updated = await StorageService.updateUser(user.id, { role: 'affiliate' });
+                                                            if (updated) {
+                                                                setUser(updated);
+                                                                alert("Welcome to the Affiliate Program!");
+                                                            } else {
+                                                                alert("Failed to join Affiliate Program. Please try again.");
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="bg-green-600 hover:bg-green-700 border-none text-white shadow-lg shadow-green-200 dark:shadow-none"
+                                                >
+                                                    Activate Affiliate Account
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

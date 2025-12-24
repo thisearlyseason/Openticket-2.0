@@ -48,5 +48,5 @@ export const googleProvider = googleProviderInstance;
 
 export const getAuthToken = async () => {
   if (!authInstance?.currentUser) return null;
-  return await authInstance.currentUser.getIdToken(true);
+  return await authInstance.currentUser.getIdToken();
 };

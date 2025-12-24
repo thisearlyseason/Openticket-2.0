@@ -520,13 +520,26 @@ export const StorageService = {
             // or we use /auth/sync which does UPSERT.
             // Let's assume we use sync for simplicity or create a dedicated update.
             // But we already defined /auth/sync in backend as handling updates too.
-            await postSupabase('/auth/sync', 'POST', { id: userId, ...payload });
+            // Ensure email is always included for Upsert (CREATE) operations
+            let email = updates.email;
+            if (!email) {
+                const currentUser = StorageService.getCurrentUser();
+                if (currentUser && currentUser.id === userId) {
+                    email = currentUser.email;
+                }
+            }
+            // If still no email, we might fail if the profile doesn't exist, but we do our best.
+
+            await postSupabase('/auth/sync', 'POST', { id: userId, email, ...payload });
 
             // Update local storage
             const updated = await StorageService.getUserById(userId);
             if (updated) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated));
             return updated;
-        } catch { return null; }
+        } catch (e) {
+            console.error("StorageService.updateUser failed:", e);
+            return null;
+        }
     },
 
     deleteEvent: async (id: string) => {

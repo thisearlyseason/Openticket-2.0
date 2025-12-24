@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // 1. Enable CORS for all routes (this also handles preflight)
 app.use(cors());
@@ -32,7 +32,14 @@ import stripeRoutes from '../backend/routes/stripeRoutes.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
+app.use('/api/registrations', registrationRoutes);
 app.use('/api/stripe', stripeRoutes);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled Error:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+});
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -43,8 +50,10 @@ app.get('/health', (req, res) => {
 export default app;
 
 // Only listen if run directly (local dev)
-// @ts-ignore
-if (import.meta.url === `file://${process.argv[1]}`) {
+import { fileURLToPath } from 'url';
+
+// Only listen if run directly (local dev)
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     app.listen(PORT, () => {
         console.log(`Openticket Backend running on port ${PORT}`);
     });
