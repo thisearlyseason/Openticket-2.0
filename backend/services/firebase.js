@@ -8,14 +8,29 @@ if (!process.env.FIREBASE_PRIVATE_KEY) {
 }
 
 admin.initializeApp({
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+};
+
+const rawKey = process.env.FIREBASE_PRIVATE_KEY;
+if (rawKey) {
+    console.log(`[DEBUG] Raw Key Length: ${rawKey.length}`);
+    console.log(`[DEBUG] Raw Key Start: ${JSON.stringify(rawKey.substring(0, 50))}`);
+    console.log(`[DEBUG] Raw Key End: ${JSON.stringify(rawKey.substring(rawKey.length - 50))}`);
+} else {
+    console.log('[DEBUG] FIREBASE_PRIVATE_KEY is undefined/empty');
+}
+
+const processedKey = rawKey
+    ? rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
+    : undefined;
+
+admin.initializeApp({
     credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Handle Vercel's handling of newlines in env vars
-        privateKey: process.env.FIREBASE_PRIVATE_KEY
-            ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"|"$/g, '')
-            : undefined,
+        privateKey: processedKey,
     })
+});
 });
 
 export default admin;
