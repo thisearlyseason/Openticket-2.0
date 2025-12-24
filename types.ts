@@ -168,6 +168,9 @@ export interface User {
   defaultRefundPolicyEnabled?: boolean;
   defaultTaxRate?: number;
   defaultCustomFees?: CustomFee[];
+
+  // Favorites
+  favoriteOrganizers?: string[];
 }
 
 export interface TicketTier {

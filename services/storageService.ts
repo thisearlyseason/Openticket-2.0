@@ -525,6 +525,7 @@ export const StorageService = {
         if (updates.onboardingStep !== undefined) payload.onboarding_step = updates.onboardingStep;
         if (updates.socials) payload.socials = updates.socials;
         if (updates.address) payload.address = updates.address;
+        if (updates.favoriteOrganizers) payload.favorite_organizers = updates.favoriteOrganizers;
 
         // Settings Overrides
         if (updates.defaultTaxRate !== undefined) payload.default_tax_rate = updates.defaultTaxRate;
@@ -542,10 +543,31 @@ export const StorageService = {
             const updated = await StorageService.getUserById(userId);
             if (updated) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated));
             return updated;
+            if (updated) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated));
+            return updated;
         } catch (e) {
             console.error("StorageService.updateUser failed:", e);
             return null;
         }
+    },
+
+    toggleFavoriteOrganizer: async (organizerId: string) => {
+        const user = StorageService.getCurrentUser();
+        if (!user) return null;
+
+        const currentFavorites = user.favoriteOrganizers || [];
+        const isFavorited = currentFavorites.includes(organizerId);
+
+        let newFavorites: string[];
+        if (isFavorited) {
+            newFavorites = currentFavorites.filter(id => id !== organizerId);
+        } else {
+            newFavorites = [...currentFavorites, organizerId];
+        }
+
+        // Optimistic update locally? 
+        // We'll let updateUser handle the state update via response
+        return await StorageService.updateUser(user.id, { favoriteOrganizers: newFavorites });
     },
 
     deleteEvent: async (id: string) => {
