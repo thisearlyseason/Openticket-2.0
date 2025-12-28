@@ -779,66 +779,61 @@ export const StorageService = {
     getEvents: async (): Promise<Event[]> => {
         return StorageService.getMyEvents();
     },
+    saveEvent: async (event: Event) => {
+        const clean = sanitizeInput(event);
+        if (isOffline) {
+            const list = getLocal<Event>(LS_EVENTS_KEY);
+            const idx = list.findIndex(e => e.id === clean.id);
+            if (idx >= 0) list[idx] = clean; else list.push(clean);
+            setLocal(LS_EVENTS_KEY, list);
+            return;
+        }
 
-}
+        // Use POST (create) or PUT (update)
+        // Check if event exists? Or rely on ID.
+        // Usually POST is for new (no ID or ignored ID), PUT for existing.
+        // Map to snake_case
+        const payload = {
+            id: clean.id,
+            title: clean.title,
+            description: clean.description,
+            category: clean.category,
+            event_type: clean.eventType,
+            date: clean.date,
+            time: clean.time,
+            location: clean.location,
+            venue_name: clean.venueName,
+            image_url: clean.imageUrl,
+            price: clean.price,
+            price_type: clean.priceType,
+            capacity: clean.capacity,
+            is_draft: clean.isDraft,
+            visibility: clean.visibility,
+            payment_config: clean.paymentConfig,
+            waiver_config: clean.waiverConfig,
+            questions: clean.questions,
+            ticket_tiers: clean.ticketTiers,
+            add_ons: clean.addOns,
+            custom_fees: clean.customFees,
+            absorb_fees: clean.absorbFees
+        };
+
+        // Determine if update or create.
+        // We can try to fetch it first, or just hit PUT if we have an ID?
+        // Backend /events POST likely creates.
+        // Backend /events/:id PUT updates.
+
+        // Helper: Check if known in cache
+        const all = await StorageService.getEvents();
+        const exists = all.some(e => e.id === clean.id);
+
+        if (exists) {
+            await postSupabase(`/events/${clean.id}`, 'PUT', payload);
+        } else {
+            await postSupabase('/events', 'POST', payload);
+        }
+        clearCache('events');
     },
-
-
-saveEvent: async (event: Event) => {
-    const clean = sanitizeInput(event);
-    if (isOffline) {
-        const list = getLocal<Event>(LS_EVENTS_KEY);
-        const idx = list.findIndex(e => e.id === clean.id);
-        if (idx >= 0) list[idx] = clean; else list.push(clean);
-        setLocal(LS_EVENTS_KEY, list);
-        return;
-    }
-
-    // Use POST (create) or PUT (update)
-    // Check if event exists? Or rely on ID.
-    // Usually POST is for new (no ID or ignored ID), PUT for existing.
-    // Map to snake_case
-    const payload = {
-        id: clean.id,
-        title: clean.title,
-        description: clean.description,
-        category: clean.category,
-        event_type: clean.eventType,
-        date: clean.date,
-        time: clean.time,
-        location: clean.location,
-        venue_name: clean.venueName,
-        image_url: clean.imageUrl,
-        price: clean.price,
-        price_type: clean.priceType,
-        capacity: clean.capacity,
-        is_draft: clean.isDraft,
-        visibility: clean.visibility,
-        payment_config: clean.paymentConfig,
-        waiver_config: clean.waiverConfig,
-        questions: clean.questions,
-        ticket_tiers: clean.ticketTiers,
-        add_ons: clean.addOns,
-        custom_fees: clean.customFees,
-        absorb_fees: clean.absorbFees
-    };
-
-    // Determine if update or create.
-    // We can try to fetch it first, or just hit PUT if we have an ID?
-    // Backend /events POST likely creates.
-    // Backend /events/:id PUT updates.
-
-    // Helper: Check if known in cache
-    const all = await StorageService.getEvents();
-    const exists = all.some(e => e.id === clean.id);
-
-    if (exists) {
-        await postSupabase(`/events/${clean.id}`, 'PUT', payload);
-    } else {
-        await postSupabase('/events', 'POST', payload);
-    }
-    clearCache('events');
-},
 
     getRegistrations: async (eventId?: string): Promise<Registration[]> => {
         if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); return eventId ? list.filter(r => r.eventId === eventId) : list; }
@@ -859,141 +854,141 @@ saveEvent: async (event: Event) => {
         }
     },
 
-        getRegistrationBySessionId: async (sessionId: string): Promise<Registration | null> => {
-            try {
-                console.log(`[StorageService] Fetching registration by session ID: ${sessionId}`);
-                // ALWAYS try network first, regardless of isOffline state, because this is a server-side confirmation.
-                // If the user is in "offline mode" (demo), they wouldn't have a Stripe Session ID anyway.
+    getRegistrationBySessionId: async (sessionId: string): Promise<Registration | null> => {
+        try {
+            console.log(`[StorageService] Fetching registration by session ID: ${sessionId}`);
+            // ALWAYS try network first, regardless of isOffline state, because this is a server-side confirmation.
+            // If the user is in "offline mode" (demo), they wouldn't have a Stripe Session ID anyway.
 
-                const response = await fetchSupabase(`/registrations?stripe_checkout_session_id=${sessionId}`, false);
-                console.log('[StorageService] Polling Response:', response);
+            const response = await fetchSupabase(`/registrations?stripe_checkout_session_id=${sessionId}`, false);
+            console.log('[StorageService] Polling Response:', response);
 
-                const list = response.registrations || (Array.isArray(response) ? response : []);
+            const list = response.registrations || (Array.isArray(response) ? response : []);
 
-                if (Array.isArray(list) && list.length > 0) {
-                    const reg = normalizeRegistration(list[0]);
-                    console.log(`[StorageService] Matched Reg: ${reg.id}, Status: ${reg.paymentStatus}`);
-                    return reg;
-                }
-                return null;
-            } catch (e) {
-                console.error('[StorageService] Get Reg By Session Failed:', e);
-                // Fallback to local storage ONLY if network/backend fails significantly
-                const local = getLocal<Registration>(LS_REGS_KEY).find(r => r.stripePaymentIntentId === sessionId || (r as any).stripeCheckoutSessionId === sessionId);
-                if (local) return local;
-
-                return null;
+            if (Array.isArray(list) && list.length > 0) {
+                const reg = normalizeRegistration(list[0]);
+                console.log(`[StorageService] Matched Reg: ${reg.id}, Status: ${reg.paymentStatus}`);
+                return reg;
             }
-        },
+            return null;
+        } catch (e) {
+            console.error('[StorageService] Get Reg By Session Failed:', e);
+            // Fallback to local storage ONLY if network/backend fails significantly
+            const local = getLocal<Registration>(LS_REGS_KEY).find(r => r.stripePaymentIntentId === sessionId || (r as any).stripeCheckoutSessionId === sessionId);
+            if (local) return local;
 
-            getRegistrationsByEmail: async (email: string) => {
-                console.log(`[StorageService] Fetching registrations for email: ${email}`);
-
-                try {
-                    // Use backend filtering secure endpoint
-                    const { registrations } = await fetchSupabase(`/registrations?email=${encodeURIComponent(email)}`, true);
-
-                    const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
-                    console.log(`[StorageService] Found ${userRegs.length} matches for ${email}`);
-
-                    const allEvents = await StorageService.getEvents();
-                    return userRegs.map((reg: Registration) => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter((x: any) => x.event);
-                } catch (e) {
-                    console.error('[StorageService] Fetch by email failed:', e);
-                    return [];
-                }
-            },
-
-                saveRegistration: async (reg: Registration) => {
-                    try {
-                        // This is primarily used for manual registration creation by organizer or offline
-                        // Public registration goes through /orders/create usually?
-                        // If we use this, map fields:
-                        const payload = {
-                            id: reg.id,
-                            event_id: reg.eventId,
-                            attendee_name: reg.attendeeName,
-                            attendee_email: reg.attendeeEmail,
-                            payment_status: reg.paymentStatus,
-                            approval_status: reg.approvalStatus,
-                            tickets: reg.tickets, // Backend logic to handle json
-                            answers: reg.answers,
-                            promo_code_used: reg.promoCodeUsed
-                        };
-                        await postSupabase('/registrations', 'POST', payload);
-                        return { success: true };
-                    } catch (e: any) {
-                        console.error("Save registration failed:", e);
-                        throw new Error(`Failed to save registration: ${e.message}`);
-                    }
-                },
-
-                    updateTicketHolder: async (regId: string, ticketIndex: number, name: string, email: string) => {
-                        try {
-                            await postSupabase(`/registrations/${regId}/transfer`, 'POST', { ticketIndex, name, email });
-                            return { success: true };
-                        } catch (e) {
-                            console.error("Transfer failed:", e);
-                            throw e;
-                        }
-                    },
-
-                        updateRegistration: async (id: string, updates: Partial<Registration>) => {
-                            if (isOffline) return;
-
-                            const payload: any = {};
-                            if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
-                            if (updates.approvalStatus) payload.approval_status = updates.approvalStatus;
-                            if (updates.tickets) payload.tickets = updates.tickets;
-                            if (updates.addOns) payload.add_ons = updates.addOns;
-
-                            await postSupabase(`/registrations/${id}`, 'PUT', payload);
-                            clearCache('regs'); // We need cache clearing
-                        },
-
-                            trackAffiliateClick: async (eventId: string, code: string) => {
-                                // Skip for now or implement backend endpoint
-                            },
-
-                                trackAffiliateConversion: async (eventId: string, code: string) => {
-                                    // Skip for now
-                                },
-
-                                    Payment: {
-    addPaymentMethod: async (uid: string, m: any) => {
-        // Map to update user
-        const user = await StorageService.getUserById(uid);
-        if (user) {
-            const current = user.paymentMethods || [];
-            // This should technically update a payment_methods table via backend
-            // For now, update user profile JSON/array
-            await StorageService.updateUser(uid, { paymentMethods: [...current, { id: `pm-${Date.now()}`, ...m }] });
+            return null;
         }
     },
+
+    getRegistrationsByEmail: async (email: string) => {
+        console.log(`[StorageService] Fetching registrations for email: ${email}`);
+
+        try {
+            // Use backend filtering secure endpoint
+            const { registrations } = await fetchSupabase(`/registrations?email=${encodeURIComponent(email)}`, true);
+
+            const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
+            console.log(`[StorageService] Found ${userRegs.length} matches for ${email}`);
+
+            const allEvents = await StorageService.getEvents();
+            return userRegs.map((reg: Registration) => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter((x: any) => x.event);
+        } catch (e) {
+            console.error('[StorageService] Fetch by email failed:', e);
+            return [];
+        }
+    },
+
+    saveRegistration: async (reg: Registration) => {
+        try {
+            // This is primarily used for manual registration creation by organizer or offline
+            // Public registration goes through /orders/create usually?
+            // If we use this, map fields:
+            const payload = {
+                id: reg.id,
+                event_id: reg.eventId,
+                attendee_name: reg.attendeeName,
+                attendee_email: reg.attendeeEmail,
+                payment_status: reg.paymentStatus,
+                approval_status: reg.approvalStatus,
+                tickets: reg.tickets, // Backend logic to handle json
+                answers: reg.answers,
+                promo_code_used: reg.promoCodeUsed
+            };
+            await postSupabase('/registrations', 'POST', payload);
+            return { success: true };
+        } catch (e: any) {
+            console.error("Save registration failed:", e);
+            throw new Error(`Failed to save registration: ${e.message}`);
+        }
+    },
+
+    updateTicketHolder: async (regId: string, ticketIndex: number, name: string, email: string) => {
+        try {
+            await postSupabase(`/registrations/${regId}/transfer`, 'POST', { ticketIndex, name, email });
+            return { success: true };
+        } catch (e) {
+            console.error("Transfer failed:", e);
+            throw e;
+        }
+    },
+
+    updateRegistration: async (id: string, updates: Partial<Registration>) => {
+        if (isOffline) return;
+
+        const payload: any = {};
+        if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
+        if (updates.approvalStatus) payload.approval_status = updates.approvalStatus;
+        if (updates.tickets) payload.tickets = updates.tickets;
+        if (updates.addOns) payload.add_ons = updates.addOns;
+
+        await postSupabase(`/registrations/${id}`, 'PUT', payload);
+        clearCache('regs'); // We need cache clearing
+    },
+
+    trackAffiliateClick: async (eventId: string, code: string) => {
+        // Skip for now or implement backend endpoint
+    },
+
+    trackAffiliateConversion: async (eventId: string, code: string) => {
+        // Skip for now
+    },
+
+    Payment: {
+        addPaymentMethod: async (uid: string, m: any) => {
+            // Map to update user
+            const user = await StorageService.getUserById(uid);
+            if (user) {
+                const current = user.paymentMethods || [];
+                // This should technically update a payment_methods table via backend
+                // For now, update user profile JSON/array
+                await StorageService.updateUser(uid, { paymentMethods: [...current, { id: `pm-${Date.now()}`, ...m }] });
+            }
+        },
         addInstantCard: async (uid: string, card: DebitCard) => {
             const user = await StorageService.getUserById(uid);
             if (user) {
                 await StorageService.updateUser(uid, { payoutSettings: { ...user.payoutSettings, instantCard: card } });
             }
         },
-            payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
-                requestPayout: async (uid: string, mode: string) => {
-                    try {
-                        const res = await postSupabase('/stripe/request-payout', 'POST', { mode });
-                        if (res.success) {
-                            return { success: true, amount: res.amount, fee: res.fee, deducted: 0 };
-                        }
-                        return { success: false, amount: 0, fee: 0, deducted: 0 };
-                    } catch (e) {
-                        console.error("Payout Request Failed:", e);
-                        return { success: false, amount: 0, fee: 0, deducted: 0 };
-                    }
+        payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
+        requestPayout: async (uid: string, mode: string) => {
+            try {
+                const res = await postSupabase('/stripe/request-payout', 'POST', { mode });
+                if (res.success) {
+                    return { success: true, amount: res.amount, fee: res.fee, deducted: 0 };
                 }
-},
+                return { success: false, amount: 0, fee: 0, deducted: 0 };
+            } catch (e) {
+                console.error("Payout Request Failed:", e);
+                return { success: false, amount: 0, fee: 0, deducted: 0 };
+            }
+        }
+    },
 
-logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
-    logAuditEvent('AI_GENERATION', `Generated ${type}`, 'system');
-},
+    logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
+        logAuditEvent('AI_GENERATION', `Generated ${type}`, 'system');
+    },
 
     connectStripeAccount: async (userId: string, type: 'standard' | 'express') => {
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -1011,60 +1006,60 @@ logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
         return { success: true, stripeId: mockStripeId };
     },
 
-        sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
-            const event = await StorageService.getEventById(eventId);
-            if (!event) throw new Error("Event not found");
+    sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
+        const event = await StorageService.getEventById(eventId);
+        if (!event) throw new Error("Event not found");
 
-            // We can just update the event broadcasts array for now
-            // Ideally backend handles email sending
-            const broadcast: Broadcast = { id: `br-${Date.now()}`, subject, message, sentAt: Date.now(), templateId };
-            const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
+        // We can just update the event broadcasts array for now
+        // Ideally backend handles email sending
+        const broadcast: Broadcast = { id: `br-${Date.now()}`, subject, message, sentAt: Date.now(), templateId };
+        const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
 
-            await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
+        await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
 
-            // Mock return
-            return 10;
-        },
+        // Mock return
+        return 10;
+    },
 
-            // --- Waitlist Methods ---
-            joinWaitlist: async (eventId: string, name: string, email: string) => {
-                // Implement via backend
-                await postSupabase('/waitlist', 'POST', { event_id: eventId, name, email });
-                return { success: true };
-            },
+    // --- Waitlist Methods ---
+    joinWaitlist: async (eventId: string, name: string, email: string) => {
+        // Implement via backend
+        await postSupabase('/waitlist', 'POST', { event_id: eventId, name, email });
+        return { success: true };
+    },
 
-                getWaitlist: async (eventId: string) => {
-                    try {
-                        // Assuming endpoint exists
-                        const { waitlist } = await fetchSupabase(`/waitlist/${eventId}`, true);
-                        return waitlist || [];
-                    } catch { return []; }
-                },
+    getWaitlist: async (eventId: string) => {
+        try {
+            // Assuming endpoint exists
+            const { waitlist } = await fetchSupabase(`/waitlist/${eventId}`, true);
+            return waitlist || [];
+        } catch { return []; }
+    },
 
-                    updateWaitlistEntry: async (id: string, status: 'promoted' | 'expired' | 'pending') => {
-                        await postSupabase(`/waitlist/${id}`, 'PUT', { status });
-                    },
+    updateWaitlistEntry: async (id: string, status: 'promoted' | 'expired' | 'pending') => {
+        await postSupabase(`/waitlist/${id}`, 'PUT', { status });
+    },
 
-                        refundRegistration: async (id: string, updatedTickets: PurchasedTicket[], reason: string) => {
-                            if (isOffline) return;
-                            await postSupabase(`/registrations/${id}/refund`, 'POST', { tickets: updatedTickets, reason });
-                            clearCache('regs');
-                        },
+    refundRegistration: async (id: string, updatedTickets: PurchasedTicket[], reason: string) => {
+        if (isOffline) return;
+        await postSupabase(`/registrations/${id}/refund`, 'POST', { tickets: updatedTickets, reason });
+        clearCache('regs');
+    },
 
-                            refundAddon: async (id: string, addonIndex: number, reason: string) => {
-                                if (isOffline) return;
-                                await postSupabase(`/registrations/${id}/refund-addon`, 'POST', { addonIndex, reason });
-                                clearCache('regs');
-                            },
+    refundAddon: async (id: string, addonIndex: number, reason: string) => {
+        if (isOffline) return;
+        await postSupabase(`/registrations/${id}/refund-addon`, 'POST', { addonIndex, reason });
+        clearCache('regs');
+    },
 
-                                updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
-                                    const updates: any = { tickets: updatedTickets };
-                                    if (newStatus) {
-                                        updates.paymentStatus = newStatus;
-                                        if (newStatus === 'refunded') updates.approvalStatus = 'rejected';
-                                    }
-                                    if (refundReason) updates.refundReason = refundReason;
+    updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
+        const updates: any = { tickets: updatedTickets };
+        if (newStatus) {
+            updates.paymentStatus = newStatus;
+            if (newStatus === 'refunded') updates.approvalStatus = 'rejected';
+        }
+        if (refundReason) updates.refundReason = refundReason;
 
-                                    await StorageService.updateRegistration(regId, updates);
-                                }
+        await StorageService.updateRegistration(regId, updates);
+    }
 };
