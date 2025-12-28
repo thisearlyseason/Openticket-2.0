@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
-import stripeRoutes from '../backend/routes/stripeRoutes.js';
+import paymentRoutes from '../backend/routes/paymentRoutes.js';
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
@@ -20,17 +20,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// 1. Enable CORS for all routes (this also handles preflight)
-app.use(cors());
+// CORS configuration - Allow all for now during debug
+app.use(cors({ origin: true, credentials: true }));
 
-// Use JSON parser for all routes EXCEPT Stripe Webhook (needs raw buffer)
-app.use((req, res, next) => {
-    if (req.originalUrl.includes('/webhook')) {
-        next();
-    } else {
-        express.json()(req, res, next);
-    }
-});
+// Webhook parsing needs RAW body, handled in specific route or before global JSON
+// For simplicity in Vercel, we might need to rely on the specific route handler to parse raw.
+app.use(express.json());
 
 // Request logger
 app.use((req, res, next) => {
@@ -74,7 +69,7 @@ app.get('/api/debug', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
-app.use('/api/stripe', stripeRoutes);
+app.use('/api/payments', paymentRoutes); // New Route
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
