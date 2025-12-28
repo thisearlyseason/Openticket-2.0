@@ -5,8 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 
 // Routes - PARTIALLY UNCOMMENTED FOR DEBUGGING
-// Routes - DEEP ISOLATION MODE
-// import authRoutes from '../backend/routes/authRoutes.js';
+// Routes - PARTIALLY UNCOMMENTED FOR DEBUGGING
+import authRoutes from '../backend/routes/authRoutes.js';
 // import eventRoutes from '../backend/routes/eventRoutes.js';
 // import registrationRoutes from '../backend/routes/registrationRoutes.js';
 // import adminRoutes from '../backend/routes/adminRoutes.js';
@@ -66,7 +66,7 @@ app.get('/api/debug', (req, res) => {
     }
 });
 
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/events', eventRoutes);
 // app.use('/api/registrations', registrationRoutes);
 
