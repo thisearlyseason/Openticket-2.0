@@ -39,6 +39,22 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/debug', (req, res) => {
+    res.json({
+        env: {
+            SUPABASE_URL: !!process.env.SUPABASE_URL,
+            SUPABASE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+            FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+            FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
+            FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
+            NODE_ENV: process.env.NODE_ENV,
+            VITE_API_URL: process.env.VITE_API_URL
+        },
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
@@ -60,7 +76,12 @@ app.use('/api/notifications', notificationRoutes);
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);
-    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    // Ensure we always return JSON
+    res.status(500).set('Content-Type', 'application/json').json({
+        error: 'Internal Server Error',
+        details: err.message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
 });
 
 
