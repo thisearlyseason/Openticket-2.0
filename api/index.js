@@ -30,15 +30,17 @@ app.use((req, res, next) => {
 });
 
 // --- ROUTES ---
-// --- ROUTES ---
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
 import stripeRoutes from '../backend/routes/stripeRoutes.js';
 
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
-app.use('/api/registrations', registrationRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/stripe', stripeRoutes);
 
@@ -61,10 +63,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error', details: err.message });
 });
 
-// Health Check
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Export for Vercel Serverless
 export default app;

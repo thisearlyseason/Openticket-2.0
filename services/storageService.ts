@@ -24,10 +24,9 @@ let isDemoMode = false;
 let initError: Error | null = null;
 
 // Backend Configuration
-// Backend Configuration
 // Use relative path for Vercel deployment (rewrites handle /api -> backend)
-// For local dev, Vite proxy can handle this, or we fallback.
-const SUPABASE_API_BASE = import.meta.env.VITE_API_URL || '/api';
+// We prefer relative paths in production to avoid hardcoding local dev URLs.
+const SUPABASE_API_BASE = (import.meta.env.MODE === 'production') ? '/api' : (import.meta.env.VITE_API_URL || '/api');
 
 const fetchSupabase = async (endpoint: string, authenticated = true): Promise<any> => {
     const headers: any = { 'Content-Type': 'application/json' };
@@ -288,7 +287,7 @@ const StripeService = {
     processSubscriptionPayment: async (amount: number, userId: string, planName: string, cycle: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
         try {
             const user = StorageService.getCurrentUser();
-            const res = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/subscription/create-checkout`, {
+            const res = await fetch(`${SUPABASE_API_BASE}/subscription/create-checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

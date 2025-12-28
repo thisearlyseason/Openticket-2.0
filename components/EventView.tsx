@@ -422,7 +422,7 @@ export const EventView = () => {
                     if (val.qty > 0) simpleAddOns[id] = val.qty;
                 });
 
-                const response = await fetch('http://127.0.0.1:5001/api/stripe/create-order', {
+                const response = await fetch('/api/stripe/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
