@@ -7,15 +7,7 @@ const require = createRequire(import.meta.url);
 
 export const createRegistration = async (req, res) => {
     try {
-        // Lazy Load Stripe using createRequire with Safety Catch
-        let stripe;
-        try {
-            const Stripe = require('stripe');
-            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
-        } catch (loaderError) {
-            console.error("Stripe Load Failed:", loaderError);
-            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
-        }
+        // Stripe is NOT used in createRegistration. Removed to fix Vercel crash.
 
         const registrationData = req.body;
         // 1. Validate Capacity
