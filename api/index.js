@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
-import billingRoutes from '../backend/routes/billingRoutes.js';
+// import paymentRoutes from '../backend/routes/paymentRoutes.js'; 
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
