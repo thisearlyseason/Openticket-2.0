@@ -14,19 +14,20 @@ const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 if (!admin.apps.length) {
     try {
         if (!rawKey || !projectId || !clientEmail) {
-            throw new Error('Missing Firebase configuration (PRIVATE_KEY, PROJECT_ID, or CLIENT_EMAIL)');
+            console.warn('WARNING: Missing Firebase configuration. Firebase functionality will be disabled.');
+            // Do not throw, return a mock or just let calls fail gracefully later
+        } else {
+            const processedKey = rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
+
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId,
+                    clientEmail,
+                    privateKey: processedKey,
+                })
+            });
+            console.log('Firebase Admin Initialized Successfully');
         }
-
-        const processedKey = rawKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
-
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId,
-                clientEmail,
-                privateKey: processedKey,
-            })
-        });
-        console.log('Firebase Admin Initialized Successfully');
     } catch (error) {
         console.error('FIREBASE INIT ERROR:', error.message);
     }

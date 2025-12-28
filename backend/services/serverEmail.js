@@ -1,12 +1,22 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD
+let transporter;
+
+try {
+    if (process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD) {
+        transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_APP_PASSWORD
+            }
+        });
+    } else {
+        console.warn("[EmailService] Missing credentials - Emails disabled.");
     }
-});
+} catch (e) {
+    console.warn("[EmailService] Init Failed:", e.message);
+}
 
 export const EmailService = {
     sendConfirmation: async (to, tickets, eventDetails) => {
