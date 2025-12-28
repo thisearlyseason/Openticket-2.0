@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
-import paymentRoutes from '../backend/routes/paymentRoutes.js';
+// import paymentRoutes from '../backend/routes/paymentRoutes.js'; // Commented out to test inline
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
@@ -69,7 +69,13 @@ app.get('/api/debug', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
-app.use('/api/payments', paymentRoutes); // New Route
+
+// INLINE ROUTER - Testing if imports are the crash cause
+const inlinePaymentRouter = express.Router();
+inlinePaymentRouter.get('/ping', (req, res) => res.json({ status: 'Inline Payment Route Active' }));
+app.use('/api/payments', inlinePaymentRouter);
+
+// app.use('/api/payments', paymentRoutes); // New Route
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
