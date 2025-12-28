@@ -4,16 +4,16 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 
-// Routes
-import authRoutes from '../backend/routes/authRoutes.js';
-import eventRoutes from '../backend/routes/eventRoutes.js';
-import registrationRoutes from '../backend/routes/registrationRoutes.js';
-import stripeRoutes from '../backend/routes/stripeRoutes.js';
-import adminRoutes from '../backend/routes/adminRoutes.js';
-import notificationRoutes from '../backend/routes/notificationRoutes.js';
+// Routes - COMMENTED OUT FOR DEBUGGING
+// import authRoutes from '../backend/routes/authRoutes.js';
+// import eventRoutes from '../backend/routes/eventRoutes.js';
+// import registrationRoutes from '../backend/routes/registrationRoutes.js';
+// import stripeRoutes from '../backend/routes/stripeRoutes.js';
+// import adminRoutes from '../backend/routes/adminRoutes.js';
+// import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
 // Controllers
-import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
+// import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
 
 dotenv.config();
 
@@ -71,15 +71,15 @@ app.get('/api/debug', (req, res) => {
     }
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/events', eventRoutes);
-app.use('/api/registrations', registrationRoutes);
-app.use('/api/stripe', stripeRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/notifications', notificationRoutes);
+// app.use('/api/auth', authRoutes);
+// app.use('/api/events', eventRoutes);
+// app.use('/api/registrations', registrationRoutes);
+// app.use('/api/stripe', stripeRoutes);
+// app.use('/api/admin', adminRoutes);
+// app.use('/api/notifications', notificationRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
-app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+// app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
