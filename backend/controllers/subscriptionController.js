@@ -5,13 +5,13 @@ import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const DOMAIN = process.env.VITE_API_URL ? process.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5173';
 
 // Helper: Ensure Products Exist
-const ensureStripeProducts = async () => {
+const ensureStripeProducts = async (stripe) => {
     // We expect products named "Pro Plan" and "Premium Plan"
     // We check if they exist, if not create them.
     // This allows the system to auto-bootstrap.
@@ -72,13 +72,14 @@ const ensureStripeProducts = async () => {
 
 export const createSubscriptionCheckout = async (req, res) => {
     try {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
         const { planName, cycle, userId, userEmail } = req.body;
 
         if (!['Pro Plan', 'Premium Plan'].includes(planName)) {
             return res.status(400).json({ error: "Invalid Plan" });
         }
 
-        const prices = await ensureStripeProducts();
+        const prices = await ensureStripeProducts(stripe);
         const priceId = prices[`${planName}_${cycle}`];
 
         if (!priceId) throw new Error("Price not found");
