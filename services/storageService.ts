@@ -795,6 +795,17 @@ export const StorageService = {
     getEvents: async (): Promise<Event[]> => {
         return StorageService.getMyEvents();
     },
+
+    getEventById: async (id: string): Promise<Event | null> => {
+        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id) || null;
+        try {
+            const { event } = await fetchSupabase(`/events/${id}`, false);
+            return event ? normalizeEvent(event) : null;
+        } catch (e) {
+            console.warn("Get Event By ID failed", e);
+            return null;
+        }
+    },
     saveEvent: async (event: Event) => {
         const clean = sanitizeInput(event);
         if (isOffline) {
