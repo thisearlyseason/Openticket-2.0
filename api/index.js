@@ -2,6 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { fileURLToPath } from 'url';
+
+// Routes
+import authRoutes from '../backend/routes/authRoutes.js';
+import eventRoutes from '../backend/routes/eventRoutes.js';
+import registrationRoutes from '../backend/routes/registrationRoutes.js';
+import stripeRoutes from '../backend/routes/stripeRoutes.js';
+import adminRoutes from '../backend/routes/adminRoutes.js';
+import notificationRoutes from '../backend/routes/notificationRoutes.js';
+
+// Controllers
+import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
 
 dotenv.config();
 
@@ -29,11 +41,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- ROUTES ---
-import authRoutes from '../backend/routes/authRoutes.js';
-import eventRoutes from '../backend/routes/eventRoutes.js';
-import registrationRoutes from '../backend/routes/registrationRoutes.js';
-import stripeRoutes from '../backend/routes/stripeRoutes.js';
+// --- API ROUTES ---
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -59,19 +67,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/stripe', stripeRoutes);
-
-import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
-// ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
-// We use express.raw because the controller needs the raw body for signature verification.
-// IMPORTANT: This must match the CLI forward-to URL.
-app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
-
-
-import adminRoutes from '../backend/routes/adminRoutes.js';
 app.use('/api/admin', adminRoutes);
-
-import notificationRoutes from '../backend/routes/notificationRoutes.js';
 app.use('/api/notifications', notificationRoutes);
+
+// ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -84,12 +84,8 @@ app.use((err, req, res, next) => {
     });
 });
 
-
 // Export for Vercel Serverless
 export default app;
-
-// Only listen if run directly (local dev)
-import { fileURLToPath } from 'url';
 
 // Only listen if run directly (local dev)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
