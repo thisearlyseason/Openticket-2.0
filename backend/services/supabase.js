@@ -5,10 +5,22 @@ dotenv.config();
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('CRITICAL: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env');
-}
+let supabase;
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+try {
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing');
+    }
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase Service Initialized');
+} catch (error) {
+    console.error('CRITICAL: Supabase initialization failed:', error.message);
+    // Create a mock or proxy that throws on use to avoid total module failure
+    supabase = new Proxy({}, {
+        get: (target, prop) => {
+            throw new Error(`Supabase client not initialized: ${error.message}`);
+        }
+    });
+}
 
 export default supabase;

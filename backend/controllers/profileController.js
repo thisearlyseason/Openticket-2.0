@@ -125,9 +125,20 @@ export const getProfileById = async (req, res) => {
             .eq('id', id)
             .single();
 
-        if (error) throw error;
+        if (error) {
+            // Handle 'No rows returned' as a 404
+            if (error.code === 'PGRST116') {
+                return res.status(404).json({ error: 'Profile not found' });
+            }
+            throw error;
+        }
         res.json({ profile: data });
     } catch (error) {
-        res.status(404).json({ error: 'Profile not found' });
+        console.error('getProfileById error:', error);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            details: error.message,
+            code: error.code || 'UNKNOWN'
+        });
     }
 };
