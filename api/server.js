@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
-import registrationRoutes from '../backend/routes/registrationRoutes.js';
+// import registrationRoutes from '../backend/routes/registrationRoutes.js';
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
@@ -67,7 +67,7 @@ app.get('/api/debug', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
-app.use('/api/registrations', registrationRoutes);
+// app.use('/api/registrations', registrationRoutes);
 
 app.get('/api/check', (req, res) => {
     res.json({ status: 'Check Route Active' });

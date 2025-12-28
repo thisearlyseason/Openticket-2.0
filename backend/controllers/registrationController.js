@@ -148,6 +148,8 @@ export const refundRegistration = async (req, res) => {
         const owner_id = req.user.uid;
         const { tickets, reason } = req.body; // tickets: [] means full order refund
 
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
             .from('registrations')
@@ -246,6 +248,7 @@ export const refundAddOn = async (req, res) => {
         const { id } = req.params;
         const owner_id = req.user.uid;
         const { addonIndex, reason } = req.body; // We expect index or ID? StorageService sends index.
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
