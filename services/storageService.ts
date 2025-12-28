@@ -38,12 +38,18 @@ const fetchSupabase = async (endpoint: string, authenticated = true): Promise<an
     }
     const res = await fetch(`${SUPABASE_API_BASE}${endpoint}`, { headers });
     if (!res.ok) {
-        let errorMsg = `Backend API error: ${res.status} ${res.statusText}`;
+        let errorMsg = `Backend API error: ${res.status} ${res.statusText || 'No status text'}`;
         try {
             const errorBody = await res.json();
             if (errorBody.error) errorMsg += ` - ${errorBody.error}`;
+            if (errorBody.details) errorMsg += ` (${errorBody.details})`;
+            if (errorBody.code) errorMsg += ` [${errorBody.code}]`;
         } catch (e) {
-            // ignore json parse error
+            // If not JSON, try to get text body
+            try {
+                const text = await res.text();
+                if (text) errorMsg += ` - ${text.substring(0, 100)}`;
+            } catch (e2) { }
         }
         console.error(errorMsg);
         throw new Error(errorMsg);
@@ -69,8 +75,18 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
     // DELETE operations might return 204 No Content
     if (res.status === 204) return null;
     if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Backend API error: ${res.statusText}`);
+        let errorMsg = `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+        try {
+            const errorBody = await res.json();
+            if (errorBody.error) errorMsg += ` - ${errorBody.error}`;
+            if (errorBody.details) errorMsg += ` (${errorBody.details})`;
+        } catch (e) {
+            try {
+                const text = await res.text();
+                if (text) errorMsg += ` - ${text.substring(0, 100)}`;
+            } catch (e2) { }
+        }
+        throw new Error(errorMsg);
     }
     return res.json().catch(() => ({}));
 };
