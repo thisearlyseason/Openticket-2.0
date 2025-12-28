@@ -7,9 +7,15 @@ const require = createRequire(import.meta.url);
 
 export const createRegistration = async (req, res) => {
     try {
-        // Lazy Load Stripe using createRequire
-        const Stripe = require('stripe');
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // Lazy Load Stripe using createRequire with Safety Catch
+        let stripe;
+        try {
+            const Stripe = require('stripe');
+            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        } catch (loaderError) {
+            console.error("Stripe Load Failed:", loaderError);
+            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
+        }
 
         const registrationData = req.body;
         // 1. Validate Capacity
@@ -149,9 +155,15 @@ export const refundRegistration = async (req, res) => {
         const owner_id = req.user.uid;
         const { tickets, reason } = req.body; // tickets: [] means full order refund
 
-        // Lazy Load Stripe using createRequire
-        const Stripe = require('stripe');
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // Lazy Load Stripe using createRequire with Safety Catch
+        let stripe;
+        try {
+            const Stripe = require('stripe');
+            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        } catch (loaderError) {
+            console.error("Stripe Load Failed:", loaderError);
+            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
+        }
 
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
@@ -240,9 +252,15 @@ export const refundAddOn = async (req, res) => {
         const owner_id = req.user.uid;
         const { addonIndex, reason } = req.body;
 
-        // Lazy Load Stripe using createRequire
-        const Stripe = require('stripe');
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // Lazy Load Stripe using createRequire with Safety Catch
+        let stripe;
+        try {
+            const Stripe = require('stripe');
+            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        } catch (loaderError) {
+            console.error("Stripe Load Failed:", loaderError);
+            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
+        }
 
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
