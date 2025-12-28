@@ -3,7 +3,7 @@ const router = express.Router();
 // import * as stripeWebhookController from '../controllers/stripeWebhookController.js';
 // import * as stripeController from '../controllers/stripeController.js';
 
-import verifyToken from '../middlewares/authMiddleware.js';
+// import verifyToken from '../middlewares/authMiddleware.js';
 
 router.get('/ping', (req, res) => res.json({ status: 'Stripe Route Active' }));
 
