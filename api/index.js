@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
-// import paymentRoutes from '../backend/routes/paymentRoutes.js'; // Commented out to test inline
+import billingRoutes from '../backend/routes/billingRoutes.js';
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
@@ -73,6 +73,8 @@ app.use('/api/registrations', registrationRoutes);
 app.get('/api/payments/ping', (req, res) => {
     res.json({ status: 'Direct Payment Route Active' });
 });
+
+app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE
 
 // app.use('/api/payments', inlinePaymentRouter);
 
