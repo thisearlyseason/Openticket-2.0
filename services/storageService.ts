@@ -25,8 +25,8 @@ let initError: Error | null = null;
 
 // Backend Configuration
 // Use relative path for Vercel deployment (rewrites handle /api -> backend)
-// We prefer relative paths in production to avoid hardcoding local dev URLs.
-const SUPABASE_API_BASE = (import.meta.env.MODE === 'production') ? '/api' : (import.meta.env.VITE_API_URL || '/api');
+const isProduction = import.meta.env.PROD || window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const SUPABASE_API_BASE = isProduction ? '/api' : (import.meta.env.VITE_API_URL || '/api');
 
 const fetchSupabase = async (endpoint: string, authenticated = true): Promise<any> => {
     const headers: any = { 'Content-Type': 'application/json' };
@@ -599,9 +599,10 @@ export const StorageService = {
             let existingUser = null;
             try {
                 existingUser = await StorageService.getUserById(uid);
-            } catch (err) {
+            } catch (err: any) {
+                console.error("Critical Login Error:", err);
                 // If checking user fails (network error), ABORT. Do not overwrite.
-                return { user: null, error: "Login failed: Unable to verify account status. Please check connection." };
+                return { user: null, error: `Login failed: Unable to verify account status (${err.message || "Connection Error"}). Please check connection.` };
             }
 
             if (existingUser) {
