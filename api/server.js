@@ -104,4 +104,4 @@ app.use((err, req, res, next) => {
 // Export for Vercel Serverless
 export default app;
 
-// FORCE REBUILD: 2025-12-28
+// FORCE REBUILD: 2025-12-28 - Lazy Load Fix v2

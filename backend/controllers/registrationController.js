@@ -1,11 +1,14 @@
 import supabase from '../services/supabase.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
-// DYNAMIC IMPORT HELPER: Stripe is loaded lazily to prevent server startup crashes.
-// import Stripe from 'stripe'; // REMOVED to prevent top-level crash.
+// LAZY LOADING HELPER: We use 'require' inside functions to prevent top-level loading crash.
+// import Stripe from 'stripe'; // REMOVED
 
 export const createRegistration = async (req, res) => {
     try {
-        const { default: Stripe } = await import('stripe');
+        // Lazy Load Stripe using createRequire
+        const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         const registrationData = req.body;
@@ -146,8 +149,8 @@ export const refundRegistration = async (req, res) => {
         const owner_id = req.user.uid;
         const { tickets, reason } = req.body; // tickets: [] means full order refund
 
-        // DYNAMIC IMPORT for Safety
-        const { default: Stripe } = await import('stripe');
+        // Lazy Load Stripe using createRequire
+        const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         // 1. Verify Ownership
@@ -237,8 +240,8 @@ export const refundAddOn = async (req, res) => {
         const owner_id = req.user.uid;
         const { addonIndex, reason } = req.body;
 
-        // DYNAMIC IMPORT
-        const { default: Stripe } = await import('stripe');
+        // Lazy Load Stripe using createRequire
+        const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         // 1. Verify Ownership
