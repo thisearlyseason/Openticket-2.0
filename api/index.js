@@ -70,10 +70,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 
-// INLINE ROUTER - Testing if imports are the crash cause
-const inlinePaymentRouter = express.Router();
-inlinePaymentRouter.get('/ping', (req, res) => res.json({ status: 'Inline Payment Route Active' }));
-app.use('/api/payments', inlinePaymentRouter);
+app.get('/api/payments/ping', (req, res) => {
+    res.json({ status: 'Direct Payment Route Active' });
+});
+
+// app.use('/api/payments', inlinePaymentRouter);
 
 // app.use('/api/payments', paymentRoutes); // New Route
 app.use('/api/admin', adminRoutes);
