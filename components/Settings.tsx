@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
 import { User, EmailTemplate, Socials, CustomFee } from '../types';
@@ -42,6 +43,7 @@ export const Settings = () => {
     const [desktopCamera, setDesktopCamera] = useState(false);
     const [notifications, setNotifications] = useState({ newOrder: true, reminder: true });
     const [geminiApiKey, setGeminiApiKey] = useState('');
+    const { showToast, showConfirm, showAlert } = useGlobalUI();
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -85,9 +87,9 @@ export const Settings = () => {
         try {
             const email = await EmailService.connectGmail(user.id);
             setGmailConfig({ connected: true, email: email, lastSynced: Date.now() });
-            alert("Gmail connected successfully!");
+            showToast("Gmail connected successfully!", "success");
         } catch (e: any) {
-            alert("Failed to connect Gmail: " + e.message);
+            showToast("Failed to connect Gmail: " + e.message, "error");
         } finally {
             setIsConnectingGmail(false);
         }
@@ -95,10 +97,17 @@ export const Settings = () => {
 
     const handleDisconnectGmail = async () => {
         if (!user) return;
-        if (confirm("Disconnect Gmail? You will no longer be able to send broadcasts.")) {
-            await EmailService.disconnectGmail(user.id);
-            setGmailConfig({ connected: false });
-        }
+        showConfirm({
+            title: "Disconnect Gmail",
+            message: "Disconnect Gmail? You will no longer be able to send broadcasts.",
+            confirmText: "Disconnect",
+            variant: "danger",
+            onConfirm: async () => {
+                await EmailService.disconnectGmail(user.id);
+                setGmailConfig({ connected: false });
+                showToast("Gmail disconnected", "info");
+            }
+        });
     };
 
     const handleSaveTemplate = async (template: EmailTemplate) => {
@@ -112,42 +121,56 @@ export const Settings = () => {
     };
 
     const handleLoadDefaults = async () => {
-        if (!confirm("Load default templates? This will add examples for Confirmation, Reminder, and Broadcast.")) return;
-        const defaults: EmailTemplate[] = [
-            {
-                id: `tmpl-def-1`,
-                type: 'confirmation',
-                name: 'Default Confirmation',
-                subject: 'Order Confirmation: {{event_title}}',
-                body: `<p>Hi {{attendee_name}},</p><p>Thank you for your order! We are excited to see you at <strong>{{event_title}}</strong>.</p><p><strong>Event Details:</strong><br>Date: {{event_date}}<br>Location: {{event_location}}</p><p>Your tickets are attached to this email. Please present the QR code at the entrance.</p><p>See you there!</p>`
-            },
-            {
-                id: `tmpl-def-2`,
-                type: 'reminder',
-                name: 'Standard Reminder',
-                subject: 'Reminder: {{event_title}} is coming up!',
-                body: `<p>Hi {{attendee_name}},</p><p>Just a quick reminder that <strong>{{event_title}}</strong> is happening soon!</p><p><strong>When:</strong> {{event_date}}<br><strong>Where:</strong> {{event_location}}</p><p>Don't forget to bring your ticket (QR code) for smooth entry.</p><p>We look forward to hosting you!</p>`
-            },
-            {
-                id: `tmpl-def-3`,
-                type: 'broadcast',
-                name: 'Thank You Message',
-                subject: 'Thank you for attending {{event_title}}',
-                body: `<p>Hi {{attendee_name}},</p><p>Thank you for joining us at <strong>{{event_title}}</strong>! We hope you had a great time.</p><p>Stay tuned for our upcoming events.</p><p>Best regards,<br>The Organizers</p>`
-            }
-        ];
+        showConfirm({
+            title: "Load Defaults",
+            message: "Load default templates? This will add examples for Confirmation, Reminder, and Broadcast.",
+            confirmText: "Load Templates",
+            onConfirm: async () => {
+                const defaults: EmailTemplate[] = [
+                    {
+                        id: `tmpl-def-1`,
+                        type: 'confirmation',
+                        name: 'Default Confirmation',
+                        subject: 'Order Confirmation: {{event_title}}',
+                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for your order! We are excited to see you at <strong>{{event_title}}</strong>.</p><p><strong>Event Details:</strong><br>Date: {{event_date}}<br>Location: {{event_location}}</p><p>Your tickets are attached to this email. Please present the QR code at the entrance.</p><p>See you there!</p>`
+                    },
+                    {
+                        id: `tmpl-def-2`,
+                        type: 'reminder',
+                        name: 'Standard Reminder',
+                        subject: 'Reminder: {{event_title}} is coming up!',
+                        body: `<p>Hi {{attendee_name}},</p><p>Just a quick reminder that <strong>{{event_title}}</strong> is happening soon!</p><p><strong>When:</strong> {{event_date}}<br><strong>Where:</strong> {{event_location}}</p><p>Don't forget to bring your ticket (QR code) for smooth entry.</p><p>We look forward to hosting you!</p>`
+                    },
+                    {
+                        id: `tmpl-def-3`,
+                        type: 'broadcast',
+                        name: 'Thank You Message',
+                        subject: 'Thank you for attending {{event_title}}',
+                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for joining us at <strong>{{event_title}}</strong>! We hope you had a great time.</p><p>Stay tuned for our upcoming events.</p><p>Best regards,<br>The Organizers</p>`
+                    }
+                ];
 
-        const updated = [...emailTemplates, ...defaults];
-        setEmailTemplates(updated);
-        if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
+                const updated = [...emailTemplates, ...defaults];
+                setEmailTemplates(updated);
+                if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
+                showToast("Default templates loaded", "success");
+            }
+        });
     };
 
     const handleDeleteTemplate = async (id: string) => {
-        if (confirm("Delete this template?")) {
-            const updated = emailTemplates.filter(t => t.id !== id);
-            setEmailTemplates(updated);
-            if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
-        }
+        showConfirm({
+            title: "Delete Template",
+            message: "Are you sure you want to delete this template?",
+            confirmText: "Delete",
+            variant: "danger",
+            onConfirm: async () => {
+                const updated = emailTemplates.filter(t => t.id !== id);
+                setEmailTemplates(updated);
+                if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
+                showToast("Template deleted", "info");
+            }
+        });
     };
 
     const handleSave = async () => {
@@ -202,23 +225,29 @@ export const Settings = () => {
             // Save local preferences
             localStorage.setItem('openticket_desktop_camera', String(desktopCamera));
 
-            alert("Settings saved successfully!");
-        } catch (e) {
+            showToast("Settings saved successfully!", "success");
+        } catch (e: any) {
             console.error(e);
-            alert("Failed to save settings.");
+            showToast("Failed to save settings: " + e.message, "error");
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleLogout = async () => {
-        if (confirm("Are you sure you want to log out?")) {
-            try {
-                await StorageService.logout();
-            } finally {
-                navigate('/');
+        showConfirm({
+            title: "Log Out",
+            message: "Are you sure you want to log out?",
+            confirmText: "Log Out",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await StorageService.logout();
+                } finally {
+                    navigate('/');
+                }
             }
-        }
+        });
     };
 
     if (!user) return <div className="p-8 text-center text-zinc-500">Loading settings...</div>;
@@ -395,15 +424,20 @@ export const Settings = () => {
                                                 </p>
                                                 <Button
                                                     onClick={async () => {
-                                                        if (confirm("Join the Affiliate Program?")) {
-                                                            const updated = await StorageService.updateUser(user.id, { role: 'affiliate' });
-                                                            if (updated) {
-                                                                setUser(updated);
-                                                                alert("Welcome to the Affiliate Program!");
-                                                            } else {
-                                                                alert("Failed to join Affiliate Program. Please try again.");
+                                                        showConfirm({
+                                                            title: "Join Affiliate Program",
+                                                            message: "Join the Affiliate Program and start earning commissions?",
+                                                            confirmText: "Join Now",
+                                                            onConfirm: async () => {
+                                                                const updated = await StorageService.updateUser(user.id, { role: 'affiliate' });
+                                                                if (updated) {
+                                                                    setUser(updated);
+                                                                    showToast("Welcome to the Affiliate Program!", "success");
+                                                                } else {
+                                                                    showToast("Failed to join Affiliate Program.", "error");
+                                                                }
                                                             }
-                                                        }
+                                                        });
                                                     }}
                                                     className="bg-green-600 hover:bg-green-700 border-none text-white shadow-lg shadow-green-200 dark:shadow-none"
                                                 >

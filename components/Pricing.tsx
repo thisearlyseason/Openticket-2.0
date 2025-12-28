@@ -44,46 +44,9 @@ export const Pricing = () => {
 
         if (confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} CAD`)) {
             // --- STRIPE_INTEGRATION: Process Subscription Fee ---
-            // This simulates charging the user's card and sending the funds to the Platform (Super Admin)
-            const success = await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name);
-
-            if (success) {
-                // Generate Invoice
-                const invoice: Invoice = {
-                    id: `inv-sub-${Date.now()}`,
-                    date: Date.now(),
-                    amount: price,
-                    status: 'paid',
-                    description: `${PLANS[plan].name} Subscription (${billingCycle})`,
-                    items: [{ desc: `${PLANS[plan].name} Plan - ${billingCycle}`, amount: price }],
-                    type: 'subscription'
-                };
-
-                try {
-                    const updatedUser = await StorageService.updateUser(user.id, {
-                        subscription: {
-                            plan: plan,
-                            cycle: billingCycle,
-                            status: 'active',
-                            nextBillingDate: Date.now() + (billingCycle === 'monthly' ? 2592000000 : 31536000000)
-                        },
-                        role: 'organizer', // Ensure role is promoted
-                        invoices: [...(user.invoices || []), invoice]
-                    });
-
-                    if (updatedUser) {
-                        alert("Success! Your plan has been updated.");
-                        window.location.reload();
-                    } else {
-                        throw new Error("Failed to update user profile");
-                    }
-                } catch (e: any) {
-                    console.error("Upgrade failed", e);
-                    alert("Upgrade failed: Please check your internet connection or try again later.");
-                }
-            } else {
-                alert("Payment processing failed. Please try again.");
-            }
+            // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
+            await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
+            // No code after this, as we expect redirect.
         }
     };
 

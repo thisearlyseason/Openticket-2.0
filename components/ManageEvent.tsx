@@ -39,7 +39,7 @@ export const ManageEvent = () => {
             setCurrentUser(user);
 
             if (id) {
-                const e = await StorageService.getEventById(id);
+                const e = await StorageService.getEventFull(id);
                 if (e) {
                     if (e.ownerId !== user.id && !user.isAdmin) {
                         alert("Unauthorized");
@@ -107,7 +107,7 @@ export const ManageEvent = () => {
             setBroadcastSubject('');
             setBroadcastBody('');
             setSelectedTemplateId('');
-            const e = await StorageService.getEventById(event.id); // Refresh
+            const e = await StorageService.getEventFull(event.id); // Refresh
             if (e) setEvent(e);
         } catch (e: any) {
             console.error(e);

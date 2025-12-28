@@ -32,8 +32,24 @@ export const Home = () => {
         const loadEvents = async () => {
             // Use dedicated Public Events endpoint
             const rawEvents = await StorageService.getPublicEvents();
-            // Backend already filters draft/visibility, but client sort is good
-            const allEvents = rawEvents.sort((a, b) => b.createdAt - a.createdAt);
+            // Backend already filters draft/visibility, but client sort and extra date check is good
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const allEvents = rawEvents
+                .filter(e => {
+                    if (!e.date) return false;
+                    // Handle ISO strings or YYYY-MM-DD
+                    const eventDate = new Date(e.date);
+                    // Adjust to local? Or just simplified comparison. 
+                    // e.date is usually YYYY-MM-DD string from backend.
+                    // new Date("2024-01-01") is UTC. 
+                    // Let's stick to string comparison for YYYY-MM-DD if possible or standard date obj.
+                    // Safest is to set eventDate to midnight local time effectively.
+                    // Actually, let's just use the timestamp comparison.
+                    return eventDate >= today;
+                })
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by nearest date, not created at
 
             setEvents(allEvents);
             setFilteredEvents(allEvents);

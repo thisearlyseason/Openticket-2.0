@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
 import { Event } from '../types';
 import { Button, Input, Card, Switch, RichTextarea, Select } from './UI';
@@ -12,6 +13,7 @@ export const EventSettings = () => {
     const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const { showToast, showConfirm } = useGlobalUI();
 
     // Form State
     const [formData, setFormData] = useState<Partial<Event>>({});
@@ -22,7 +24,7 @@ export const EventSettings = () => {
 
     const loadEvent = async () => {
         if (!id) return;
-        const e = await StorageService.getEventById(id);
+        const e = await StorageService.getEventFull(id);
         if (e) {
             setEvent(e);
             setFormData(e);
@@ -35,15 +37,15 @@ export const EventSettings = () => {
         setIsSaving(true);
         try {
             await StorageService.saveEvent({ ...event, ...formData });
-            alert("Settings saved successfully!");
+            showToast("Settings saved successfully!", "success");
             // Refresh to ensure sync
-            const fresh = await StorageService.getEventById(event.id);
+            const fresh = await StorageService.getEventFull(event.id);
             if (fresh) {
                 setEvent(fresh);
                 setFormData(fresh);
             }
-        } catch (e) {
-            alert("Error saving settings");
+        } catch (e: any) {
+            showToast(e.message || "Error saving settings", "error");
             console.error(e);
         } finally {
             setIsSaving(false);
@@ -269,9 +271,21 @@ export const EventSettings = () => {
                             <div className="text-sm text-zinc-500">This action cannot be undone. All data will be lost.</div>
                         </div>
                         <Button variant="danger" onClick={() => {
-                            if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-                                StorageService.deleteEvent(event.id).then(() => navigate('/dashboard'));
-                            }
+                            showConfirm({
+                                title: "Delete Event",
+                                message: `Are you sure you want to delete "${event.title}"? This action cannot be undone.`,
+                                confirmText: "Delete Permanently",
+                                variant: "danger",
+                                onConfirm: async () => {
+                                    try {
+                                        await StorageService.deleteEvent(event.id);
+                                        showToast("Event deleted", "info");
+                                        navigate('/dashboard');
+                                    } catch (e: any) {
+                                        showToast("Failed to delete event", "error");
+                                    }
+                                }
+                            });
                         }}>Delete Event</Button>
                     </div>
                 </Card>

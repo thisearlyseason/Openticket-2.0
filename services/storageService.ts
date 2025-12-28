@@ -285,10 +285,32 @@ const StripeService = {
     processSplitPayment: async (amount: number, fee: number, organizerConnectId: string) => {
         return { paymentIntentId: `pi_${Math.random().toString(36).substr(2, 20)}`, transferId: `tr_${Math.random().toString(36).substr(2, 20)}`, success: true };
     },
-    processSubscriptionPayment: async (amount: number, userId: string, planName: string): Promise<boolean> => {
-        // Mock
-        logAuditEvent('STRIPE_SUBSCRIPTION', `Collected $${amount} for ${planName}`, 'system');
-        return true;
+    processSubscriptionPayment: async (amount: number, userId: string, planName: string, cycle: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
+        try {
+            const user = StorageService.getCurrentUser();
+            const res = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/subscription/create-checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    userEmail: user?.email,
+                    planName,
+                    cycle,
+                    amount
+                })
+            });
+
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+                return true; // Will redirect
+            } else {
+                throw new Error(data.error || "Failed to initiate checkout");
+            }
+        } catch (e: any) {
+            console.error("Subscription Checkout Failed", e);
+            throw new Error(`Subscription initialization failed: ${e.message}`);
+        }
     },
     refundSplitPayment: async (paymentIntentId: string) => true
 };
@@ -328,6 +350,29 @@ const normalizeEvent = (raw: any): Event => {
     };
 };
 
+const normalizeRegistration = (r: any): Registration => {
+    return {
+        id: r.id,
+        eventId: r.event_id,
+        attendeeName: r.attendee_name,
+        attendeeEmail: r.attendee_email,
+        paymentStatus: r.payment_status,
+        approvalStatus: r.approval_status,
+        tickets: r.tickets || [], // Ensure this is not a string
+        answers: r.answers || {},
+        serviceFee: r.service_fee || 0,
+        donationAmount: r.donation_amount || 0,
+        addOns: r.add_ons || [],
+        promoCodeUsed: r.promo_code_used,
+        timestamp: new Date(r.created_at || Date.now()).getTime(),
+        taxAmount: r.tax_amount || 0,
+        customFeesAmount: r.custom_fees_amount || 0,
+        stripePaymentIntentId: r.stripe_payment_intent_id,
+        // Map joined financial data
+        stripeFee: (r.financial_transactions && r.financial_transactions.length > 0) ? r.financial_transactions[0].stripe_fee : 0
+    };
+};
+
 export const StorageService = {
     isOfflineMode: () => isOffline,
     isDemoMode: () => isDemoMode,
@@ -335,16 +380,43 @@ export const StorageService = {
     Stripe: StripeService,
 
     init: async () => {
-        // Minimal init for Auth
-        try {
-            await new Promise(r => setTimeout(r, 100)); // Tick
-            if (!auth) throw new Error("Firebase Auth not initialized");
-            console.log("StorageService Initialized (Supabase Backend Mode)");
-        } catch (e: any) {
-            initError = e;
-            isOffline = true;
-            populateDummyData();
-        }
+        // Wait for Firebase Auth to initialize before rendering app
+        return new Promise<void>((resolve) => {
+            console.log("StorageService: Waiting for Auth...");
+            const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+                unsubscribe(); // Run once
+
+                if (firebaseUser) {
+                    console.log("StorageService: Auth Restored for", firebaseUser.email);
+                    // Sync: Ensure LocalStorage matches Firebase Auth
+                    const localUser = StorageService.getCurrentUser();
+                    if (!localUser || localUser.id !== firebaseUser.uid) {
+                        try {
+                            console.log("StorageService: Syncing Profile from Backend...");
+                            const profile = await StorageService.getUserById(firebaseUser.uid);
+                            if (profile) {
+                                localStorage.setItem(CURRENT_USER_KEY, safeStringify(profile));
+                            }
+                        } catch (e) {
+                            console.error("StorageService: Profile Sync Failed", e);
+                        }
+                    }
+                } else {
+                    console.log("StorageService: No Active Session");
+                }
+                resolve();
+            });
+
+            // Fallback: If Firebase hangs, verify offline mode
+            setTimeout(() => {
+                if (!auth) {
+                    console.warn("StorageService: Auth Timed Out, falling back to offline");
+                    isOffline = true;
+                    populateDummyData();
+                }
+                resolve();
+            }, 4000);
+        });
     },
 
     setSystemNotification: (message: string, type: 'info' | 'warning' | 'success' = 'info') => {
@@ -392,9 +464,11 @@ export const StorageService = {
     },
 
     calculateFees: (subtotal: number, planType: PlanType = 'free') => {
-        if (subtotal <= 0) return 0;
-        const plan = PLANS[planType];
-        return (subtotal * plan.feePercent) + plan.feeFixed;
+        if (subtotal <= 0) return 0; // Fix: No fees on free events
+        const plan = PLANS[planType] || PLANS.free;
+        const fixed = plan.feeFixed;
+        const percent = subtotal * plan.feePercent;
+        return Math.round((fixed + percent) * 100) / 100;
     },
 
     getUserById: async (id: string): Promise<User | null> => {
@@ -410,7 +484,11 @@ export const StorageService = {
                     availablePayout: profile.available_payout,
                     balanceDue: profile.balance_due,
                     affiliateCode: profile.affiliate_code,
-                    teamMembers: profile.team_members
+                    teamMembers: profile.team_members,
+                    stripeConnectId: profile.stripe_connect_id,
+                    stripeOnboardingComplete: profile.stripe_onboarding_complete,
+                    stripePublishableKey: profile.stripe_publishable_key,
+                    stripeSecretKey: profile.stripe_secret_key
                 } as User;
             }
             return null;
@@ -424,10 +502,52 @@ export const StorageService = {
         }
     },
 
+    // --- ADMIN METHODS ---
+    getAllEventsAdmin: async (): Promise<Event[]> => {
+        try {
+            const events = await fetchSupabase('/admin/events');
+            return (events || []).map(normalizeEvent);
+        } catch (e) {
+            console.error("Admin fetch events failed", e);
+            throw e;
+        }
+    },
+
+    getAllRegistrationsAdmin: async (): Promise<Registration[]> => {
+        try {
+            const regs = await fetchSupabase('/admin/registrations');
+            return regs || [];
+        } catch (e) {
+            console.error("Admin fetch registrations failed", e);
+            throw e;
+        }
+    },
+
+    getAllUsersAdmin: async (): Promise<User[]> => {
+        try {
+            const users = await fetchSupabase('/admin/users');
+            // Normalize if needed, mostly consistent
+            return users || [];
+        } catch (e) {
+            console.error("Admin fetch users failed", e);
+            throw e;
+        }
+    },
+
+    getAdminFinancials: async (): Promise<{ totalVolume: number, platformFees: number, organizerNet: number, recentTransactions: any[] }> => {
+        try {
+            return await fetchSupabase('/admin/financials');
+        } catch (e) {
+            console.error("Admin fetch financials failed", e);
+            // Return zeroed structure on failure to prevent dashboard crash
+            return { totalVolume: 0, platformFees: 0, organizerNet: 0, recentTransactions: [] };
+        }
+    },
+
     getSuperAdmin: async (): Promise<User | undefined> => {
-        // In real SQL, accessing superadmin might be restricted or we look for a specific role
-        // For now, return undefined to disable admin-specific logic on client if not auth'd
-        return undefined;
+        // Return current user if admin
+        const u = StorageService.getCurrentUser();
+        return u?.isAdmin ? u : undefined;
     },
 
     checkAffiliateCodeUnique: async (code: string) => {
@@ -561,6 +681,10 @@ export const StorageService = {
         if (updates.socials) payload.socials = updates.socials;
         if (updates.address) payload.address = updates.address;
         if (updates.favoriteOrganizers) payload.favorite_organizers = updates.favoriteOrganizers;
+        if (updates.stripeConnectId !== undefined) payload.stripe_connect_id = updates.stripeConnectId;
+        if (updates.stripeOnboardingComplete !== undefined) payload.stripe_onboarding_complete = updates.stripeOnboardingComplete;
+        if (updates.stripePublishableKey !== undefined) payload.stripe_publishable_key = updates.stripePublishableKey;
+        if (updates.stripeSecretKey !== undefined) payload.stripe_secret_key = updates.stripeSecretKey;
 
         // Settings Overrides
         if (updates.defaultTaxRate !== undefined) payload.default_tax_rate = updates.defaultTaxRate;
@@ -570,6 +694,22 @@ export const StorageService = {
         // Payment methods usually handled separately, but if passed:
         if (updates.paymentMethods) payload.payment_methods = updates.paymentMethods; // API handles this?
 
+        // Missing Fields
+        if (updates.notifications) payload.notifications = updates.notifications;
+        if (updates.emailTemplates) payload.email_templates = updates.emailTemplates;
+        if (updates.defaultConfirmationTemplate) payload.default_confirmation_template = updates.defaultConfirmationTemplate;
+        if (updates.defaultWaiver) payload.default_waiver = updates.defaultWaiver;
+        if (updates.defaultRefundPolicy) payload.default_refund_policy = updates.defaultRefundPolicy;
+        if (updates.defaultRefundPolicyEnabled !== undefined) payload.default_refund_policy_enabled = updates.defaultRefundPolicyEnabled;
+        if (updates.logoUrl) payload.logo_url = updates.logoUrl;
+        if (updates.headerImageUrl) payload.header_image_url = updates.headerImageUrl;
+        if (updates.primaryColor) payload.primary_color = updates.primaryColor;
+        if (updates.organizerSubtitle) payload.organizer_subtitle = updates.organizerSubtitle;
+        if (updates.businessType) payload.business_type = updates.businessType;
+        if (updates.commissionRate !== undefined) payload.commission_rate = updates.commissionRate;
+        if (updates.organizerWebsite) payload.website = updates.organizerWebsite;
+        if (updates.affiliateCode) payload.affiliate_code = updates.affiliateCode;
+
         try {
             // Use dedicated Update endpoint for robustness
             await postSupabase(`/auth/profiles/${userId}`, 'PUT', payload);
@@ -578,11 +718,9 @@ export const StorageService = {
             const updated = await StorageService.getUserById(userId);
             if (updated) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated));
             return updated;
-            if (updated) localStorage.setItem(CURRENT_USER_KEY, safeStringify(updated));
-            return updated;
         } catch (e) {
             console.error("StorageService.updateUser failed:", e);
-            return null;
+            throw e;
         }
     },
 
@@ -642,249 +780,291 @@ export const StorageService = {
         return StorageService.getMyEvents();
     },
 
-    getEventById: async (id: string): Promise<Event | undefined> => {
-        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id);
-
-        try {
-            // First try public endpoint if not authenticated or just general view
-            // But we actually have a dedicated GET /events/:id endpoint in eventRoutes.js
-            const { event } = await fetchSupabase(`/events/${id}`, false); // false = optional auth usually? or try true if logged in.
-            // Backend returns snake_case usually unless controller normalizes.
-            // Let's normalize here to be safe.
-            return normalizeEvent(event);
-        } catch (e) {
-            console.warn("Get Event By ID failed", e);
-            return undefined;
-        }
+}
     },
 
 
-    saveEvent: async (event: Event) => {
-        const clean = sanitizeInput(event);
-        if (isOffline) {
-            const list = getLocal<Event>(LS_EVENTS_KEY);
-            const idx = list.findIndex(e => e.id === clean.id);
-            if (idx >= 0) list[idx] = clean; else list.push(clean);
-            setLocal(LS_EVENTS_KEY, list);
-            return;
-        }
+saveEvent: async (event: Event) => {
+    const clean = sanitizeInput(event);
+    if (isOffline) {
+        const list = getLocal<Event>(LS_EVENTS_KEY);
+        const idx = list.findIndex(e => e.id === clean.id);
+        if (idx >= 0) list[idx] = clean; else list.push(clean);
+        setLocal(LS_EVENTS_KEY, list);
+        return;
+    }
 
-        // Use POST (create) or PUT (update)
-        // Check if event exists? Or rely on ID.
-        // Usually POST is for new (no ID or ignored ID), PUT for existing.
-        // Map to snake_case
-        const payload = {
-            id: clean.id,
-            title: clean.title,
-            description: clean.description,
-            category: clean.category,
-            event_type: clean.eventType,
-            date: clean.date,
-            time: clean.time,
-            location: clean.location,
-            venue_name: clean.venueName,
-            image_url: clean.imageUrl,
-            price: clean.price,
-            price_type: clean.priceType,
-            capacity: clean.capacity,
-            is_draft: clean.isDraft,
-            visibility: clean.visibility,
-            payment_config: clean.paymentConfig,
-            waiver_config: clean.waiverConfig,
-            questions: clean.questions,
-            ticket_tiers: clean.ticketTiers,
-            add_ons: clean.addOns,
-            custom_fees: clean.customFees,
-            absorb_fees: clean.absorbFees
-        };
+    // Use POST (create) or PUT (update)
+    // Check if event exists? Or rely on ID.
+    // Usually POST is for new (no ID or ignored ID), PUT for existing.
+    // Map to snake_case
+    const payload = {
+        id: clean.id,
+        title: clean.title,
+        description: clean.description,
+        category: clean.category,
+        event_type: clean.eventType,
+        date: clean.date,
+        time: clean.time,
+        location: clean.location,
+        venue_name: clean.venueName,
+        image_url: clean.imageUrl,
+        price: clean.price,
+        price_type: clean.priceType,
+        capacity: clean.capacity,
+        is_draft: clean.isDraft,
+        visibility: clean.visibility,
+        payment_config: clean.paymentConfig,
+        waiver_config: clean.waiverConfig,
+        questions: clean.questions,
+        ticket_tiers: clean.ticketTiers,
+        add_ons: clean.addOns,
+        custom_fees: clean.customFees,
+        absorb_fees: clean.absorbFees
+    };
 
-        // Determine if update or create.
-        // We can try to fetch it first, or just hit PUT if we have an ID?
-        // Backend /events POST likely creates.
-        // Backend /events/:id PUT updates.
+    // Determine if update or create.
+    // We can try to fetch it first, or just hit PUT if we have an ID?
+    // Backend /events POST likely creates.
+    // Backend /events/:id PUT updates.
 
-        // Helper: Check if known in cache
-        const all = await StorageService.getEvents();
-        const exists = all.some(e => e.id === clean.id);
+    // Helper: Check if known in cache
+    const all = await StorageService.getEvents();
+    const exists = all.some(e => e.id === clean.id);
 
-        if (exists) {
-            await postSupabase(`/events/${clean.id}`, 'PUT', payload);
-        } else {
-            await postSupabase('/events', 'POST', payload);
-        }
-        clearCache('events');
-    },
+    if (exists) {
+        await postSupabase(`/events/${clean.id}`, 'PUT', payload);
+    } else {
+        await postSupabase('/events', 'POST', payload);
+    }
+    clearCache('events');
+},
 
     getRegistrations: async (eventId?: string): Promise<Registration[]> => {
         if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); return eventId ? list.filter(r => r.eventId === eventId) : list; }
 
         try {
-            const endpoint = eventId ? `/registrations/event/${eventId}` : `/registrations`; // Backend needs this route
+            const endpoint = eventId ? `/registrations/event/${eventId}` : `/registrations`;
+            console.log(`[StorageService] Fetching registrations from ${endpoint}`);
             const { registrations } = await fetchSupabase(endpoint, true);
-            return registrations || [];
-        } catch { return []; }
+            console.log('[StorageService] Raw DB response:', registrations);
+
+            // Map snake_case to camelCase
+            const mapped = (registrations || []).map((r: any) => normalizeRegistration(r));
+            console.log('[StorageService] Mapped registrations:', mapped);
+            return mapped;
+        } catch (e) {
+            console.error('[StorageService] Fetch Error:', e);
+            return [];
+        }
     },
 
-    getRegistrationsByEmail: async (email: string) => {
-        // Client-side filtering for now
-        const allRegs = await StorageService.getRegistrations();
-        const userRegs = allRegs.filter(r => r.attendeeEmail && r.attendeeEmail.toLowerCase() === email.toLowerCase());
-        const allEvents = await StorageService.getEvents();
-        return userRegs.map(reg => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter(x => x.event);
-    },
+        getRegistrationBySessionId: async (sessionId: string): Promise<Registration | null> => {
+            try {
+                console.log(`[StorageService] Fetching registration by session ID: ${sessionId}`);
+                // ALWAYS try network first, regardless of isOffline state, because this is a server-side confirmation.
+                // If the user is in "offline mode" (demo), they wouldn't have a Stripe Session ID anyway.
 
-    saveRegistration: async (reg: Registration) => {
-        try {
-            // This is primarily used for manual registration creation by organizer or offline
-            // Public registration goes through /orders/create usually?
-            // If we use this, map fields:
-            const payload = {
-                id: reg.id,
-                event_id: reg.eventId,
-                attendee_name: reg.attendeeName,
-                attendee_email: reg.attendeeEmail,
-                payment_status: reg.paymentStatus,
-                approval_status: reg.approvalStatus,
-                tickets: reg.tickets, // Backend logic to handle json
-                answers: reg.answers,
-                promo_code_used: reg.promoCodeUsed
-            };
-            await postSupabase('/registrations', 'POST', payload);
-            return { success: true };
-        } catch { throw new Error("Save failed"); }
-    },
+                const response = await fetchSupabase(`/registrations?stripe_checkout_session_id=${sessionId}`, false);
+                console.log('[StorageService] Polling Response:', response);
 
-    updateTicketHolder: async (regId: string, ticketIndex: number, name: string, email: string) => {
-        const allRegs = await StorageService.getRegistrations();
-        const reg = allRegs.find(r => r.id === regId);
-        if (!reg) throw new Error("Registration not found");
+                const list = response.registrations || (Array.isArray(response) ? response : []);
 
-        if (!reg.tickets || !reg.tickets[ticketIndex]) throw new Error("Ticket not found");
+                if (Array.isArray(list) && list.length > 0) {
+                    const reg = normalizeRegistration(list[0]);
+                    console.log(`[StorageService] Matched Reg: ${reg.id}, Status: ${reg.paymentStatus}`);
+                    return reg;
+                }
+                return null;
+            } catch (e) {
+                console.error('[StorageService] Get Reg By Session Failed:', e);
+                // Fallback to local storage ONLY if network/backend fails significantly
+                const local = getLocal<Registration>(LS_REGS_KEY).find(r => r.stripePaymentIntentId === sessionId || (r as any).stripeCheckoutSessionId === sessionId);
+                if (local) return local;
 
-        reg.tickets[ticketIndex].attendeeName = name;
-        reg.tickets[ticketIndex].attendeeEmail = email;
-
-        await StorageService.updateRegistration(regId, { tickets: reg.tickets });
-        return { success: true };
-    },
-
-    updateRegistration: async (id: string, updates: Partial<Registration>) => {
-        if (isOffline) return;
-
-        const payload: any = {};
-        if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
-        if (updates.approvalStatus) payload.approval_status = updates.approvalStatus;
-        if (updates.tickets) payload.tickets = updates.tickets;
-
-        await postSupabase(`/registrations/${id}`, 'PUT', payload);
-        clearCache('regs'); // We need cache clearing
-    },
-
-    trackAffiliateClick: async (eventId: string, code: string) => {
-        // Skip for now or implement backend endpoint
-    },
-
-    trackAffiliateConversion: async (eventId: string, code: string) => {
-        // Skip for now
-    },
-
-    Payment: {
-        addPaymentMethod: async (uid: string, m: any) => {
-            // Map to update user
-            const user = await StorageService.getUserById(uid);
-            if (user) {
-                const current = user.paymentMethods || [];
-                // This should technically update a payment_methods table via backend
-                // For now, update user profile JSON/array
-                await StorageService.updateUser(uid, { paymentMethods: [...current, { id: `pm-${Date.now()}`, ...m }] });
+                return null;
             }
         },
+
+            getRegistrationsByEmail: async (email: string) => {
+                console.log(`[StorageService] Fetching registrations for email: ${email}`);
+
+                try {
+                    // Use backend filtering secure endpoint
+                    const { registrations } = await fetchSupabase(`/registrations?email=${encodeURIComponent(email)}`, true);
+
+                    const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
+                    console.log(`[StorageService] Found ${userRegs.length} matches for ${email}`);
+
+                    const allEvents = await StorageService.getEvents();
+                    return userRegs.map((reg: Registration) => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter((x: any) => x.event);
+                } catch (e) {
+                    console.error('[StorageService] Fetch by email failed:', e);
+                    return [];
+                }
+            },
+
+                saveRegistration: async (reg: Registration) => {
+                    try {
+                        // This is primarily used for manual registration creation by organizer or offline
+                        // Public registration goes through /orders/create usually?
+                        // If we use this, map fields:
+                        const payload = {
+                            id: reg.id,
+                            event_id: reg.eventId,
+                            attendee_name: reg.attendeeName,
+                            attendee_email: reg.attendeeEmail,
+                            payment_status: reg.paymentStatus,
+                            approval_status: reg.approvalStatus,
+                            tickets: reg.tickets, // Backend logic to handle json
+                            answers: reg.answers,
+                            promo_code_used: reg.promoCodeUsed
+                        };
+                        await postSupabase('/registrations', 'POST', payload);
+                        return { success: true };
+                    } catch (e: any) {
+                        console.error("Save registration failed:", e);
+                        throw new Error(`Failed to save registration: ${e.message}`);
+                    }
+                },
+
+                    updateTicketHolder: async (regId: string, ticketIndex: number, name: string, email: string) => {
+                        try {
+                            await postSupabase(`/registrations/${regId}/transfer`, 'POST', { ticketIndex, name, email });
+                            return { success: true };
+                        } catch (e) {
+                            console.error("Transfer failed:", e);
+                            throw e;
+                        }
+                    },
+
+                        updateRegistration: async (id: string, updates: Partial<Registration>) => {
+                            if (isOffline) return;
+
+                            const payload: any = {};
+                            if (updates.paymentStatus) payload.payment_status = updates.paymentStatus;
+                            if (updates.approvalStatus) payload.approval_status = updates.approvalStatus;
+                            if (updates.tickets) payload.tickets = updates.tickets;
+                            if (updates.addOns) payload.add_ons = updates.addOns;
+
+                            await postSupabase(`/registrations/${id}`, 'PUT', payload);
+                            clearCache('regs'); // We need cache clearing
+                        },
+
+                            trackAffiliateClick: async (eventId: string, code: string) => {
+                                // Skip for now or implement backend endpoint
+                            },
+
+                                trackAffiliateConversion: async (eventId: string, code: string) => {
+                                    // Skip for now
+                                },
+
+                                    Payment: {
+    addPaymentMethod: async (uid: string, m: any) => {
+        // Map to update user
+        const user = await StorageService.getUserById(uid);
+        if (user) {
+            const current = user.paymentMethods || [];
+            // This should technically update a payment_methods table via backend
+            // For now, update user profile JSON/array
+            await StorageService.updateUser(uid, { paymentMethods: [...current, { id: `pm-${Date.now()}`, ...m }] });
+        }
+    },
         addInstantCard: async (uid: string, card: DebitCard) => {
             const user = await StorageService.getUserById(uid);
             if (user) {
                 await StorageService.updateUser(uid, { payoutSettings: { ...user.payoutSettings, instantCard: card } });
             }
         },
-        payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
-        requestPayout: async (uid: string, mode: string) => {
-            const u = await StorageService.getUserById(uid);
-            if (!u || u.availablePayout <= 0) return { success: false, amount: 0, fee: 0, deducted: 0 };
-            const bal = u.balanceDue || 0;
-            const net = u.availablePayout - bal;
-            if (net <= 0) {
-                await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: bal - u.availablePayout });
-                return { success: true, amount: 0, fee: 0, deducted: u.availablePayout };
-            }
-            let amt = net;
-            let fee = mode === 'instant' ? amt * 0.015 : 0;
-            amt -= fee;
-            await StorageService.updateUser(uid, { availablePayout: 0, balanceDue: 0 });
-            return { success: true, amount: amt, fee, deducted: bal };
-        }
-    },
+            payOutstandingBalance: async (uid: string) => { await StorageService.updateUser(uid, { balanceDue: 0 }); return true; },
+                requestPayout: async (uid: string, mode: string) => {
+                    try {
+                        const res = await postSupabase('/stripe/request-payout', 'POST', { mode });
+                        if (res.success) {
+                            return { success: true, amount: res.amount, fee: res.fee, deducted: 0 };
+                        }
+                        return { success: false, amount: 0, fee: 0, deducted: 0 };
+                    } catch (e) {
+                        console.error("Payout Request Failed:", e);
+                        return { success: false, amount: 0, fee: 0, deducted: 0 };
+                    }
+                }
+},
 
-    logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
-        logAuditEvent('AI_GENERATION', `Generated ${type}`, 'system');
-    },
+logAIUsage: async (userId: string, type: 'text' | 'image', tokens: number) => {
+    logAuditEvent('AI_GENERATION', `Generated ${type}`, 'system');
+},
 
     connectStripeAccount: async (userId: string, type: 'standard' | 'express') => {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        const mockStripeId = `acct_1M${Math.random().toString(36).substr(2, 8)}`;
-        await StorageService.updateUser(userId, {
+        // Use 'mock_' prefix to signal backend to skip transfer_data
+        const mockStripeId = `mock_acct_${Math.random().toString(36).substr(2, 8)}`;
+        const updated = await StorageService.updateUser(userId, {
             stripeConnectId: mockStripeId,
             stripeOnboardingComplete: true
         });
+
+        if (!updated) {
+            throw new Error("Failed to save Stripe connection to user profile. Ensure database columns exist.");
+        }
+
         return { success: true, stripeId: mockStripeId };
     },
 
-    sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
-        const event = await StorageService.getEventById(eventId);
-        if (!event) throw new Error("Event not found");
+        sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
+            const event = await StorageService.getEventById(eventId);
+            if (!event) throw new Error("Event not found");
 
-        // We can just update the event broadcasts array for now
-        // Ideally backend handles email sending
-        const broadcast: Broadcast = { id: `br-${Date.now()}`, subject, message, sentAt: Date.now(), templateId };
-        const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
+            // We can just update the event broadcasts array for now
+            // Ideally backend handles email sending
+            const broadcast: Broadcast = { id: `br-${Date.now()}`, subject, message, sentAt: Date.now(), templateId };
+            const updatedBroadcasts = [...(event.broadcasts || []), broadcast];
 
-        await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
+            await StorageService.saveEvent({ ...event, broadcasts: updatedBroadcasts });
 
-        // Mock return
-        return 10;
-    },
+            // Mock return
+            return 10;
+        },
 
-    // --- Waitlist Methods ---
-    joinWaitlist: async (eventId: string, name: string, email: string) => {
-        // Implement via backend
-        await postSupabase('/waitlist', 'POST', { event_id: eventId, name, email });
-        return { success: true };
-    },
+            // --- Waitlist Methods ---
+            joinWaitlist: async (eventId: string, name: string, email: string) => {
+                // Implement via backend
+                await postSupabase('/waitlist', 'POST', { event_id: eventId, name, email });
+                return { success: true };
+            },
 
-    getWaitlist: async (eventId: string) => {
-        try {
-            // Assuming endpoint exists
-            const { waitlist } = await fetchSupabase(`/waitlist/${eventId}`, true);
-            return waitlist || [];
-        } catch { return []; }
-    },
+                getWaitlist: async (eventId: string) => {
+                    try {
+                        // Assuming endpoint exists
+                        const { waitlist } = await fetchSupabase(`/waitlist/${eventId}`, true);
+                        return waitlist || [];
+                    } catch { return []; }
+                },
 
-    updateWaitlistEntry: async (id: string, status: 'promoted' | 'expired' | 'pending') => {
-        await postSupabase(`/waitlist/${id}`, 'PUT', { status });
-    },
+                    updateWaitlistEntry: async (id: string, status: 'promoted' | 'expired' | 'pending') => {
+                        await postSupabase(`/waitlist/${id}`, 'PUT', { status });
+                    },
 
-    refundRegistration: async (regId: string, ticketKeys: string[], refundReason: string) => {
-        // This needs a backend endpoint to be robust
-        // For now, assume backend exposes /registrations/:id/refund
-        await postSupabase(`/registrations/${regId}/refund`, 'POST', { ticket_keys: ticketKeys, reason: refundReason });
-    },
+                        refundRegistration: async (id: string, updatedTickets: PurchasedTicket[], reason: string) => {
+                            if (isOffline) return;
+                            await postSupabase(`/registrations/${id}/refund`, 'POST', { tickets: updatedTickets, reason });
+                            clearCache('regs');
+                        },
 
-    updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
-        const updates: any = { tickets: updatedTickets };
-        if (newStatus) {
-            updates.paymentStatus = newStatus;
-            if (newStatus === 'refunded') updates.approvalStatus = 'rejected';
-        }
-        if (refundReason) updates.refundReason = refundReason;
+                            refundAddon: async (id: string, addonIndex: number, reason: string) => {
+                                if (isOffline) return;
+                                await postSupabase(`/registrations/${id}/refund-addon`, 'POST', { addonIndex, reason });
+                                clearCache('regs');
+                            },
 
-        await StorageService.updateRegistration(regId, updates);
-    }
+                                updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
+                                    const updates: any = { tickets: updatedTickets };
+                                    if (newStatus) {
+                                        updates.paymentStatus = newStatus;
+                                        if (newStatus === 'refunded') updates.approvalStatus = 'rejected';
+                                    }
+                                    if (refundReason) updates.refundReason = refundReason;
+
+                                    await StorageService.updateRegistration(regId, updates);
+                                }
 };

@@ -31,12 +31,15 @@ export const Billing = () => {
             if (!user) return;
             const allEvents = await StorageService.getEvents();
             const myEvents = allEvents.filter(e => e.ownerId === user.id);
-            const allRegs = await StorageService.getRegistrations();
+
+            // SECURITY FIX: Fetch registrations per event to avoid 403 on getAllRegistrations
+            const regsPromises = myEvents.map(evt => StorageService.getRegistrations(evt.id));
+            const regsArrays = await Promise.all(regsPromises);
 
             const mySales: { reg: Registration, event: Event }[] = [];
 
-            myEvents.forEach(evt => {
-                const evtRegs = allRegs.filter(r => r.eventId === evt.id);
+            myEvents.forEach((evt, index) => {
+                const evtRegs = regsArrays[index] || [];
                 evtRegs.forEach(reg => mySales.push({ reg, event: evt }));
             });
 

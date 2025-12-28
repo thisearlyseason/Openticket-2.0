@@ -45,26 +45,23 @@ export const SuperAdminDashboard = () => {
 
     const refreshData = async () => {
         try {
-            // Safely parse users from local storage to get invoices
-            let allUsers: User[] = [];
-            try {
-                const rawUsers = localStorage.getItem('openticket_users_data');
-                const parsed = rawUsers ? JSON.parse(rawUsers) : [];
-                if (Array.isArray(parsed)) allUsers = parsed;
-            } catch (e) {
-                console.warn("Failed to parse users", e);
-            }
-
-            const allEvents = await StorageService.getEvents() || [];
-            const allRegs = await StorageService.getRegistrations() || [];
+            const [allUsers, allEvents, allRegs] = await Promise.all([
+                StorageService.getAllUsersAdmin().catch(e => { console.error(e); return []; }),
+                StorageService.getAllEventsAdmin().catch(e => { console.error(e); return []; }),
+                StorageService.getAllRegistrationsAdmin().catch(e => { console.error(e); return []; })
+            ]);
 
             setUsers(allUsers);
             setEvents(allEvents);
             setRegistrations(allRegs);
 
-            const ticketRevenue = allRegs.reduce((acc: number, reg: Registration) => {
-                return acc + (reg.stripeFee || reg.serviceFee || 0);
-            }, 0);
+            // Fetch True Financials
+            const financials = await StorageService.getAdminFinancials();
+
+            // Fallback to old Calc if new table empty (migration transition)
+            // But prefer new data if available.
+            let ticketRevenue = financials.platformFees;
+            let totalRevenue = financials.totalVolume;
 
             const subscriptionRevenue = allUsers.reduce((acc: number, user: User) => {
                 const userSubInvoices = user.invoices?.filter(inv => inv.type === 'subscription' && inv.status === 'paid') || [];
@@ -74,11 +71,22 @@ export const SuperAdminDashboard = () => {
 
             const pending = allUsers.reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
 
+            // Save extended stats for Finance Tab
+            // We need to store 'financials' somewhere or just map it to stats? 
+            // Let's attach it to a new state or just use what we have.
+            // Simplified: We'll put the raw objects in a temporary property or just rely on 'stats' holding the summaries.
+            // For the Recent Transactions table, we need to store it.
+            // Quick fix: Add 'recentTransactions' to state.
+
             setStats({
                 ticketRevenue,
                 subscriptionRevenue,
-                totalRevenue: ticketRevenue + subscriptionRevenue,
-                pendingPayouts: pending
+                totalRevenue: totalRevenue + subscriptionRevenue,
+                pendingPayouts: pending,
+                // @ts-ignore
+                recentTransactions: financials.recentTransactions || [],
+                // @ts-ignore
+                organizerNetSummary: financials.organizerNet
             });
 
             try {
@@ -197,7 +205,7 @@ export const SuperAdminDashboard = () => {
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['users', 'events', 'finance', 'broadcast', 'settings'].map(tab => (
+                {['users', 'events', 'registrations', 'finance', 'broadcast', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
@@ -264,6 +272,91 @@ export const SuperAdminDashboard = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {activeTab === 'registrations' && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-zinc-400">
+                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                <tr>
+                                    <th className="p-4">Date</th>
+                                    <th className="p-4">Event</th>
+                                    <th className="p-4">Attendee</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {registrations.map(r => (
+                                    <tr key={r.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                        <td className="p-4 text-xs">{new Date(r.timestamp).toLocaleDateString()}</td>
+                                        <td className="p-4 font-bold text-white max-w-[200px] truncate">{events.find(e => e.id === r.eventId)?.title || 'Unknown Event'}</td>
+                                        <td className="p-4">
+                                            <div className="text-white font-medium">{r.attendeeName}</div>
+                                            <div className="text-xs opacity-60">{r.attendeeEmail}</div>
+                                        </td>
+                                        <td className="p-4"><Badge color={r.paymentStatus === 'completed' ? 'green' : 'yellow'}>{r.paymentStatus}</Badge></td>
+                                        <td className="p-4 text-right font-mono text-white">
+                                            ${((r.totalAmount || 0) + (r.taxAmount || 0)).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {registrations.length === 0 && (
+                                    <tr><td colSpan={5} className="p-8 text-center">No registrations found.</td></tr>
+                                )}{/* Corrected Close Tag */}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {activeTab === 'finance' && (
+                    <div className="p-8">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <DollarSign size={24} className="text-[#E0FF20]" /> Financial Overview
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
+                                <div className="text-3xl font-black text-white">${stats.totalRevenue.toFixed(2)}</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees (Verified)</div>
+                                <div className="text-3xl font-black text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Pending Payouts</div>
+                                <div className="text-3xl font-black text-white opacity-60">${stats.pendingPayouts.toFixed(2)}</div>
+                            </Card>
+                        </div>
+
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-zinc-800 font-bold flex justify-between">
+                                <span>Recent Transactions (Ledger)</span>
+                                <span className="text-xs font-mono bg-zinc-800 p-1 rounded text-zinc-400">Source: financial_transactions</span>
+                            </div>
+                            <table className="w-full text-left text-sm text-zinc-400">
+                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                    <tr><th className="p-4">ID</th><th className="p-4">Type</th><th className="p-4">Stripe Ref</th><th className="p-4 text-right">Gross</th><th className="p-4 text-right text-green-500">Net (Org)</th></tr>
+                                </thead>
+                                <tbody>
+                                    {/* @ts-ignore */}
+                                    {(stats.recentTransactions || []).map((tx: any) => (
+                                        <tr key={tx.id} className="border-t border-zinc-800">
+                                            <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
+                                            <td className="p-4">Sale</td>
+                                            <td className="p-4 font-mono text-xs">{tx.stripe_session_id?.slice(-8) || '-'}</td>
+                                            <td className="p-4 text-right font-mono text-white">${(tx.gross_amount || 0).toFixed(2)}</td>
+                                            <td className="p-4 text-right font-mono text-green-500">${(tx.organizer_net || 0).toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                    {/* @ts-ignore */}
+                                    {(!stats.recentTransactions || stats.recentTransactions.length === 0) && (
+                                        <tr><td colSpan={5} className="p-8 text-center">No financial records found (Table empty).</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
 

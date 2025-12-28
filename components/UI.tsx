@@ -1,7 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Upload, Image as ImageIcon, X, Trash2, Calendar, Clock, ChevronDown, Check, Copy, Facebook, Twitter, Linkedin, Instagram, Link2, Share2, ZoomIn, ChevronLeft, ChevronRight, Eye, Info, FileText, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Link as LinkIcon, Printer, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, Upload, Image as ImageIcon, X, Trash2, Calendar, Clock, ChevronDown, Check, Copy, Facebook, Twitter, Linkedin, Instagram, Link2, Share2, ZoomIn, ChevronLeft, ChevronRight, Eye, Info, FileText, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Link as LinkIcon, Printer, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { Registration, Event, User } from '../types';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // --- Utilities ---
 
@@ -97,10 +99,13 @@ export const Badge = ({ children, color = 'blue', className = '' }: { children?:
     return <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
 };
 
-export const Input = ({ label, error, required, className = '', containerClassName = '', icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string, error?: string, containerClassName?: string, icon?: React.ElementType }) => {
+export const Input = ({ label, error, required, className = '', containerClassName = '', icon: Icon, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string, error?: string, containerClassName?: string, icon?: React.ElementType }) => {
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+
     return (
         <div className={`mb-4 ${containerClassName}`}>
-            {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
+            {label && <label htmlFor={inputId} className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
             <div className="relative">
                 {Icon && (
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
@@ -108,6 +113,7 @@ export const Input = ({ label, error, required, className = '', containerClassNa
                     </div>
                 )}
                 <input
+                    id={inputId}
                     className={`w-full bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 focus:border-primary dark:focus:border-primary text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-sm ${Icon ? 'pl-11' : ''} ${className}`}
                     {...props}
                 />
@@ -117,36 +123,46 @@ export const Input = ({ label, error, required, className = '', containerClassNa
     );
 };
 
-export const Textarea = ({ label, error, required, className = '', ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string, error?: string }) => (
-    <div className="mb-4">
-        {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
-        <textarea
-            className={`w-full bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 focus:border-primary dark:focus:border-primary text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 min-h-[100px] resize-y shadow-sm ${className}`}
-            {...props}
-        />
-        {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
-    </div>
-);
-
-export const Select = ({ label, options, error, className = '', containerClassName = '', ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string, options: { value: string, label: string }[], error?: string, containerClassName?: string }) => (
-    <div className={`mb-4 ${containerClassName}`}>
-        {label && <label className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
-        <div className="relative">
-            <select
-                className={`w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-base rounded-xl px-4 py-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all ${className}`}
+export const Textarea = ({ label, error, required, className = '', id, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string, error?: string }) => {
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+    return (
+        <div className="mb-4">
+            {label && <label htmlFor={inputId} className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label} {required && <span className="text-red-500">*</span>}</label>}
+            <textarea
+                id={inputId}
+                className={`w-full bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 focus:border-primary dark:focus:border-primary text-zinc-900 dark:text-white text-sm rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-primary transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 min-h-[100px] resize-y shadow-sm ${className}`}
                 {...props}
-            >
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
-                <ChevronDown size={16} />
-            </div>
+            />
+            {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
         </div>
-        {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
-    </div>
-);
+    );
+};
+
+export const Select = ({ label, options, error, className = '', containerClassName = '', id, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string, options: { value: string, label: string }[], error?: string, containerClassName?: string }) => {
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
+    return (
+        <div className={`mb-4 ${containerClassName}`}>
+            {label && <label htmlFor={inputId} className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
+            <div className="relative">
+                <select
+                    id={inputId}
+                    className={`w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-base rounded-xl px-4 py-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all ${className}`}
+                    {...props}
+                >
+                    {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">
+                    <ChevronDown size={16} />
+                </div>
+            </div>
+            {error && <p className="text-red-500 text-xs mt-1 font-bold">{error}</p>}
+        </div>
+    );
+};
 
 export const RichTextarea = ({ label, value, onChange, placeholder, name, className = '' }: any) => {
     const editorRef = useRef<HTMLDivElement>(null);
@@ -593,6 +609,37 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
 
     const hasBranding = organizer && (organizer.subscription?.plan === 'pro' || organizer.subscription?.plan === 'premium') && organizer.logoUrl;
 
+    const handleDownloadPDF = async () => {
+        const element = document.getElementById('receipt-content');
+        if (!element) return;
+
+        // Show loading state if needed, or just run
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const imgWidth = 210;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.save(`ticket-${registration.id}.pdf`);
+        } catch (error) {
+            console.error('PDF Generation failed:', error);
+            alert('Failed to generate PDF. Please try the Print button instead.');
+        }
+    };
+
     const handlePrint = () => {
         window.print();
     };
@@ -615,6 +662,9 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                 <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 no-print">
                     <h3 className="font-bold text-lg">Receipt</h3>
                     <div className="flex gap-2">
+                        <button onClick={handleDownloadPDF} className="p-2 hover:bg-gray-200 rounded-full" title="Download PDF">
+                            <Download size={20} />
+                        </button>
                         <button onClick={handlePrint} className="p-2 hover:bg-gray-200 rounded-full" title="Print">
                             <Printer size={20} />
                         </button>

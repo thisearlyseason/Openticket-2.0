@@ -1,24 +1,28 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
 import { Event, Registration, WaitlistEntry } from '../types';
 import { Button, Input, Select, Card, Badge } from './UI';
-import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2, Hourglass, DollarSign } from 'lucide-react';
+import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2, Hourglass, DollarSign, X } from 'lucide-react';
 
 interface AttendeeItem {
     id: string;
     regId: string;
     tierId: string;
     ticketIndex: number;
+    itemType: 'ticket' | 'addon';
     name: string;
     email: string;
-    ticketType: string;
+    ticketType: string; // Name of the ticket tier OR the add-on name
+    price: number;
     orderDate: number;
-    status: 'paid' | 'pending' | 'refunded' | 'comp';
+    status: 'paid' | 'pending' | 'refunded' | 'comp' | 'active' | 'cancelled';
     approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
-    checkedIn: boolean;
+    checkedIn: boolean; // For tickets: check-in. For addons: fulfilled.
+    fulfilled?: boolean;
 }
 
 export const AttendeeManager = () => {
@@ -30,11 +34,15 @@ export const AttendeeManager = () => {
     const [filteredAttendees, setFilteredAttendees] = useState<AttendeeItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { showToast, showConfirm } = useGlobalUI();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     // Waitlist Support
     const [activeTab, setActiveTab] = useState<'attendees' | 'waitlist'>('attendees');
     const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+
+    // Bulk Selection
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     // Dropdown State
     const [dropdownState, setDropdownState] = useState<{
@@ -82,7 +90,7 @@ export const AttendeeManager = () => {
         setError(null);
         try {
             if (!id) throw new Error("Event ID missing");
-            const e = await StorageService.getEventById(id);
+            const e = await StorageService.getEventFull(id);
             if (!e) throw new Error("Event not found");
             setEvent(e);
             const regs = await StorageService.getRegistrations(id);
@@ -120,9 +128,11 @@ export const AttendeeManager = () => {
                                 regId: reg.id,
                                 tierId: t.tierId,
                                 ticketIndex: tIdx,
+                                itemType: 'ticket',
                                 name: t.attendeeName || reg.attendeeName || 'Unknown',
                                 email: t.attendeeEmail || reg.attendeeEmail || '',
                                 ticketType: t.name,
+                                price: t.pricePerTicket || 0,
                                 orderDate: reg.timestamp,
                                 status: status,
                                 approvalStatus: reg.approvalStatus || 'approved',
@@ -137,15 +147,63 @@ export const AttendeeManager = () => {
                             regId: reg.id,
                             tierId: 'general',
                             ticketIndex: 0,
+                            itemType: 'ticket',
                             name: reg.attendeeName || 'Unknown',
                             email: reg.attendeeEmail || '',
                             ticketType: evt?.ticketName || 'General Admission',
+                            price: evt?.price || 0,
                             orderDate: reg.timestamp,
                             status: isPaid ? 'paid' : 'pending',
                             approvalStatus: reg.approvalStatus || 'approved',
                             checkedIn: reg.checkedIn || false
                         });
                     }
+                }
+
+                // Add-ons Processing
+                if (reg.addOns && Array.isArray(reg.addOns) && reg.addOns.length > 0) {
+                    reg.addOns.forEach((a, aIdx) => {
+                        if (!a) return;
+                        // Addons can have quantity > 1. Should we split them?
+                        // Yes, for individual management (mark 1 of 2 fulfilled).
+                        for (let i = 0; i < (a.quantity || 1); i++) {
+                            // Status: Default to reg status, unless specific addon status (defined in types now)
+                            let status: any = isOrderRefunded ? 'refunded' : (isPaid ? 'paid' : 'pending');
+                            if (a.status) status = a.status; // Override if addon has specific status (refunded/cancelled)
+
+                            const isFulfilled = a.fulfilled || false; // We can use bitmask or array if we want per-item fulfillment in multi-qty, but for now assuming all-or-nothing for the line item unless we split the data structure.
+                            // Wait, PurchasedAddOn has `quantity`. If I split visual rows, I can't easily sync back to single object unless I change data structure to be array of single items.
+                            // For now, let's list the *Line Item* as one row if quantity > 1, or split?
+                            // Ticket logic above splits.
+                            // Addon logic: The `PurchasedAddOn` type has `fulfilled?: boolean`. It's a single flag for the whole quantity.
+                            // LIMITATION: "Mark Complete" marks ALL quantity as complete.
+                            // If I want individual, I'd need `fulfilledCount`.
+                            // User asked for "Complete action". Simple is better. One row per Addon Line Item.
+
+                            // Actually, if I split rows, I can't update uniqueness easily.
+                            // Let's keep Addon as ONE row per line item for now (unlike tickets).
+                            // Wait, if quantity is 3, and I verify 1...
+                            // Let's Stick to Line Item for Addons to avoid complex refactor of data structure.
+
+                            list.push({
+                                id: `${reg.id}-addon-${aIdx}`, // Unique ID for list
+                                regId: reg.id,
+                                tierId: a.id, // using addon ID as tierId equivalent
+                                ticketIndex: aIdx,
+                                itemType: 'addon',
+                                name: reg.attendeeName || 'Unknown', // Addons usually don't have separate attendee names, belong to purchaser
+                                email: reg.attendeeEmail || '',
+                                ticketType: `ADD-ON: ${a.name}`, // Visual distinction
+                                price: a.price,
+                                orderDate: reg.timestamp,
+                                status: status,
+                                approvalStatus: 'approved', // Addons don't need approval usually
+                                checkedIn: isFulfilled, // Visual reuse
+                                fulfilled: isFulfilled
+                            });
+                            break; // Only once per line item (ignoring loop i)
+                        }
+                    });
                 }
             });
             const sorted = list.sort((a, b) => b.orderDate - a.orderDate);
@@ -162,14 +220,102 @@ export const AttendeeManager = () => {
             const lower = searchTerm.toLowerCase();
             res = res.filter(a => (a.name || '').toLowerCase().includes(lower) || (a.email || '').toLowerCase().includes(lower) || (a.regId || '').toLowerCase().includes(lower));
         }
-        if (filterStatus !== 'all') {
+
+        if (filterStatus === 'refunded') {
+            res = res.filter(a => a.status === 'refunded' || a.status === 'cancelled');
+        } else {
+            // For all other statuses, exclude refunded/cancelled from the view unless explicitly searching?
+            // Actually, usually we hide them.
+            res = res.filter(a => a.status !== 'refunded' && a.status !== 'cancelled');
+
             if (filterStatus === 'checkedIn') res = res.filter(a => a.checkedIn);
             else if (filterStatus === 'notCheckedIn') res = res.filter(a => !a.checkedIn);
             else if (filterStatus === 'approvalPending') res = res.filter(a => a.approvalStatus === 'pending');
-            else res = res.filter(a => a.status === filterStatus);
+            else if (filterStatus === 'paid') res = res.filter(a => a.status === 'paid');
+            else if (filterStatus === 'pending') res = res.filter(a => a.status === 'pending');
+            // 'all' passes through here (just with refunded excluded)
         }
+
         setFilteredAttendees(res);
     }, [searchTerm, filterStatus, attendees]);
+
+    const handleSelectRow = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) newSelected.delete(id);
+        else newSelected.add(id);
+        setSelectedIds(newSelected);
+    };
+
+    const handleSelectAll = () => {
+        if (selectedIds.size === filteredAttendees.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredAttendees.map(a => a.id)));
+        }
+    };
+
+    const handleBulkRefund = async () => {
+        if (selectedIds.size === 0) return;
+
+        showConfirm({
+            title: "Refund Selected Items?",
+            message: `Are you sure you want to refund ${selectedIds.size} selected items? This cannot be undone.`,
+            confirmText: "Refund All",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    // Group by Registration to minimize API calls
+                    const groups: Record<string, AttendeeItem[]> = {};
+                    selectedIds.forEach(id => {
+                        const item = attendees.find(a => a.id === id);
+                        if (item) {
+                            if (!groups[item.regId]) groups[item.regId] = [];
+                            groups[item.regId].push(item);
+                        }
+                    });
+
+                    for (const regId of Object.keys(groups)) {
+                        const items = groups[regId];
+                        // Separate Addons vs Tickets
+                        const addons = items.filter(i => i.itemType === 'addon');
+                        const tickets = items.filter(i => i.itemType !== 'addon');
+
+                        // 1. Process Addons (One API call per addon)
+                        for (const addon of addons) {
+                            await StorageService.refundAddon(regId, addon.ticketIndex, "Bulk Refund");
+                        }
+
+                        // 2. Process Tickets (Batch)
+                        if (tickets.length > 0) {
+                            const regList = await StorageService.getRegistrations(event!.id);
+                            const reg = regList.find(r => r.id === regId);
+                            if (reg && reg.tickets) {
+                                const updatedTickets = [...reg.tickets];
+                                tickets.forEach(t => {
+                                    if (updatedTickets[t.ticketIndex]) {
+                                        if (updatedTickets[t.ticketIndex].quantity > 1) {
+                                            // Reduce qty logic
+                                            updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], quantity: updatedTickets[t.ticketIndex].quantity - 1 };
+                                            updatedTickets.push({ ...updatedTickets[t.ticketIndex], quantity: 1, status: 'refunded' });
+                                        } else {
+                                            updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], status: 'refunded' };
+                                        }
+                                    }
+                                });
+                                await StorageService.refundRegistration(reg.id, updatedTickets, "Bulk Refund");
+                            }
+                        }
+                    }
+
+                    await loadData();
+                    setSelectedIds(new Set());
+                    showToast("Bulk refund processed.", "success");
+                } catch (e: any) {
+                    showToast("Bulk refund failed: " + e.message, "error");
+                }
+            }
+        });
+    };
 
     const handleCheckInToggle = async (item: AttendeeItem) => {
         if (!event) return;
@@ -177,66 +323,84 @@ export const AttendeeManager = () => {
             const regList = await StorageService.getRegistrations(event.id);
             const reg = regList.find(r => r.id === item.regId);
             if (!reg) return;
-            const parts = item.id.split('-');
-            const index = parseInt(parts[parts.length - 1]);
-            const ticketKey = `${item.tierId}-${index}`;
-            const newStatus = !item.checkedIn;
-            const statuses = reg.checkInStatuses || {};
-            statuses[ticketKey] = { checkedIn: newStatus, timestamp: Date.now() };
-            await StorageService.updateRegistration(reg.id, { checkInStatuses: statuses, checkedIn: Object.values(statuses).some((s: any) => s.checkedIn) });
 
-            // Optimistic update
-            setAttendees(prev => prev.map(a => a.id === item.id ? { ...a, checkedIn: newStatus } : a));
+            if (item.itemType === 'addon') {
+                // Addon Logic
+                const updatedAddOns = [...(reg.addOns || [])];
+                const addon = updatedAddOns[item.ticketIndex]; // Index is reliable because we map mapped straight from array
+                if (addon) {
+                    addon.fulfilled = !addon.fulfilled;
+                    await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
+                    // Optimistic update
+                    setAttendees(prev => prev.map(a => a.id === item.id ? { ...a, checkedIn: addon.fulfilled!, fulfilled: addon.fulfilled } : a));
+                }
+            } else {
+                // Ticket Logic
+                const parts = item.id.split('-');
+                const index = parseInt(parts[parts.length - 1]);
+                const ticketKey = `${item.tierId}-${index}`;
+                const newStatus = !item.checkedIn;
+                const statuses = reg.checkInStatuses || {};
+                statuses[ticketKey] = { checkedIn: newStatus, timestamp: Date.now() };
+                await StorageService.updateRegistration(reg.id, { checkInStatuses: statuses, checkedIn: Object.values(statuses).some((s: any) => s.checkedIn) });
+
+                // Optimistic update
+                setAttendees(prev => prev.map(a => a.id === item.id ? { ...a, checkedIn: newStatus } : a));
+            }
         } catch (e) { console.error(e); }
     };
 
     const handleDeleteGuest = async (item: AttendeeItem) => {
-        if (!confirm(`Are you sure you want to remove ${item.name}?\n\nThis will mark their specific ticket as Refunded/Deleted.`)) return;
-
         if (!event) return;
-        try {
-            const regList = await StorageService.getRegistrations(event.id);
-            const reg = regList.find(r => r.id === item.regId);
 
-            if (!reg) return;
+        showConfirm({
+            title: "Delete Guest",
+            message: `Are you sure you want to delete ${item.name}? This will remove them from the guest list.`,
+            confirmText: "Delete Guest",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    const regList = await StorageService.getRegistrations(event.id);
+                    const reg = regList.find(r => r.id === item.regId);
 
-            // Scenario 1: Multi-ticket order (using tickets array)
-            if (reg.tickets && reg.tickets.length > 0) {
-                const updatedTickets = [...reg.tickets];
-                const targetTicket = updatedTickets[item.ticketIndex];
+                    if (!reg) return;
 
-                if (targetTicket) {
-                    if (targetTicket.quantity > 1) {
-                        // Split ticket logic: Decrease quantity of active, add new refunded entry
-                        updatedTickets[item.ticketIndex] = { ...targetTicket, quantity: targetTicket.quantity - 1 };
-                        updatedTickets.push({ ...targetTicket, quantity: 1, status: 'refunded' });
+                    // Scenario A: Add-on Deletion
+                    if (item.itemType === 'addon') {
+                        if (reg.addOns && reg.addOns[item.ticketIndex]) {
+                            const updatedAddOns = [...reg.addOns];
+                            updatedAddOns.splice(item.ticketIndex, 1);
+                            await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
+                        }
+                    }
+                    // Scenario B: Multi-ticket order (using tickets array)
+                    else if (reg.tickets && reg.tickets.length > 0) {
+                        const updatedTickets = [...reg.tickets];
+                        const targetTicket = updatedTickets[item.ticketIndex];
+
+                        if (targetTicket) {
+                            if (targetTicket.quantity > 1) {
+                                // Split ticket logic: Decrease quantity of active, add new refunded entry
+                                updatedTickets[item.ticketIndex] = { ...targetTicket, quantity: targetTicket.quantity - 1 };
+                                updatedTickets.push({ ...targetTicket, quantity: 1, status: 'refunded' });
+                            } else {
+                                // Single quantity, just mark as refunded
+                                updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
+                            }
+                            await StorageService.refundRegistration(reg.id, updatedTickets, 'Deleted by Organizer');
+                        }
                     } else {
-                        // Single quantity, just mark as refunded
-                        updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
+                        // Scenario C: Simple/Legacy order (mark whole reg)
+                        await StorageService.refundRegistration(reg.id, [], 'Deleted by Organizer');
                     }
 
-                    // Check if ALL tickets are now refunded to update main status
-                    const allRefunded = updatedTickets.every(t => t.status === 'refunded');
-
-                    await StorageService.updateRegistration(reg.id, {
-                        tickets: updatedTickets,
-                        paymentStatus: allRefunded ? 'refunded' : reg.paymentStatus,
-                        approvalStatus: allRefunded ? 'rejected' : reg.approvalStatus
-                    });
+                    await loadData(); // Reload UI
+                    showToast(`${item.name} deleted from list`, "info");
+                } catch (e: any) {
+                    showToast("Failed to delete guest: " + e.message, "error");
                 }
-            } else {
-                // Scenario 2: Simple/Legacy order (mark whole reg)
-                await StorageService.updateRegistration(reg.id, {
-                    paymentStatus: 'refunded',
-                    approvalStatus: 'rejected',
-                    refundReason: 'Deleted by Organizer'
-                });
             }
-
-            await loadData(); // Reload UI
-        } catch (e: any) {
-            alert("Failed to delete guest: " + e.message);
-        }
+        });
     };
 
     const handleApproveAttendee = async (item: AttendeeItem) => {
@@ -278,7 +442,8 @@ export const AttendeeManager = () => {
             await loadData();
             setShowAddModal(false);
             setNewGuestData({ name: '', email: '', tierId: '', quantity: 1, type: 'comp', waitlistId: '' });
-        } catch (e: any) { alert("Failed to add guest: " + e.message); }
+            showToast("Guest added successfully", "success");
+        } catch (e: any) { showToast("Failed to add guest: " + e.message, "error"); }
     };
 
     const handlePromoteWaitlist = (entry: WaitlistEntry) => {
@@ -306,42 +471,51 @@ export const AttendeeManager = () => {
                     if (showEditModal.ticketIndex === 0) await StorageService.updateRegistration(reg.id, { attendeeName: editGuestData.name, attendeeEmail: editGuestData.email });
                     await loadData();
                     setShowEditModal(null);
+                    showToast("Guest details updated", "success");
                 }
             }
-        } catch (e: any) { alert("Failed to save: " + e.message); }
+        } catch (e: any) { showToast("Failed to save: " + e.message, "error"); }
     };
 
     const handleResendEmail = async (item: AttendeeItem) => {
-        if (!event || !item.email) return alert("No email address for this attendee.");
-        if (!confirm(`Resend confirmation email to ${item.email}?`)) return;
+        if (!event || !item.email) return showToast("No email address for this attendee.", "error");
 
-        try {
-            const regList = await StorageService.getRegistrations(event.id);
-            const reg = regList.find(r => r.id === item.regId);
-            if (!reg) throw new Error("Registration not found");
+        showConfirm({
+            title: "Resend Confirmation?",
+            message: `Resend confirmation email to ${item.email}?`,
+            confirmText: "Send Email",
+            onConfirm: async () => {
+                try {
+                    const regList = await StorageService.getRegistrations(event.id);
+                    const reg = regList.find(r => r.id === item.regId);
+                    if (!reg) throw new Error("Registration not found");
 
-            const organizerUser = await StorageService.getUserById(event.ownerId);
-            const templateId = event.emailSettings?.confirmationTemplateId;
-            let subject = `Confirmation: ${event.title}`;
-            let body = `Hi ${item.name},<br><br>Here is your ticket for ${event.title}.<br><br>Date: ${new Date(event.date).toLocaleDateString()}<br>Location: ${event.location}<br><br>Thanks,<br>${event.organizer}`;
+                    const organizerUser = await StorageService.getUserById(event.ownerId);
+                    const templateId = event.emailSettings?.confirmationTemplateId;
+                    let subject = `Confirmation: ${event.title}`;
+                    let body = `Hi ${item.name},<br><br>Here is your ticket for ${event.title}.<br><br>Date: ${new Date(event.date).toLocaleDateString()}<br>Location: ${event.location}<br><br>Thanks,<br>${event.organizer}`;
 
-            if (organizerUser && templateId) {
-                const template = organizerUser.emailTemplates?.find((t: any) => t.id === templateId);
-                if (template) {
-                    subject = template.subject;
-                    body = template.body
-                        .replace(/{{name}}/g, item.name)
-                        .replace(/{{event}}/g, event.title)
-                        .replace(/{{date}}/g, new Date(event.date).toLocaleDateString())
-                        .replace(/{{location}}/g, event.location);
+                    if (organizerUser && templateId) {
+                        const template = organizerUser.emailTemplates?.find((t: any) => t.id === templateId);
+                        if (template) {
+                            subject = template.subject;
+                            body = EmailService.renderTemplate(template.body, {
+                                name: item.name,
+                                event: event.title,
+                                date: new Date(event.date).toLocaleDateString(),
+                                location: event.location,
+                                ticketType: item.ticketType
+                            });
+                        }
+                    }
+
+                    await EmailService.sendEmail(event.ownerId, item.email, subject, body);
+                    showToast("Email sent successfully!", "success");
+                } catch (e: any) {
+                    showToast("Failed to send email: " + e.message, "error");
                 }
             }
-
-            await EmailService.sendEmail(event.ownerId, item.email, subject, body);
-            alert("Email sent successfully!");
-        } catch (e: any) {
-            alert("Failed to send email: " + e.message);
-        }
+        });
     };
 
     const handleOpenRefundModal = (item: AttendeeItem) => {
@@ -360,27 +534,38 @@ export const AttendeeManager = () => {
 
     const processRefund = async () => {
         if (!showRefundModal || !event) return;
+        if (!refundReason.trim()) return showToast("Please provide a reason for the refund.", "error");
+
         try {
             const item = showRefundModal;
             const regList = await StorageService.getRegistrations(event.id);
             const reg = regList.find(r => r.id === item.regId);
             if (!reg) return;
 
+            // Scenario 0: Addon Refund
+            if (item.itemType === 'addon') {
+                const updatedAddOns = [...(reg.addOns || [])];
+                const addon = updatedAddOns[item.ticketIndex];
+                if (addon) {
+                    addon.status = 'refunded';
+                    // We need a specific endpoint to process the MONEY refund for this addon
+                    // Passing the index or ID to backend to find price and refund.
+                    await StorageService.refundAddon(reg.id, item.ticketIndex, refundReason);
+                }
+            }
             // Scenario 1: Full Order Refund
-            if (refundMode === 'order') {
-                if (!confirm(`Refund entire order for ${reg.attendeeName}? This will invalidate ALL tickets in this order.`)) return;
+            else if (refundMode === 'order') {
+                // Confirmation is handled by the modal UI itself now (Red Button).
                 await StorageService.refundRegistration(reg.id, [], refundReason); // Empty array = full refund signal
             }
             // Scenario 2: Single Ticket Refund
             else {
-                // Logic to split the specific ticket if needed
                 if (!reg.tickets) return;
 
                 const updatedTickets = [...reg.tickets];
                 const targetTicket = updatedTickets[item.ticketIndex];
 
                 if (targetTicket) {
-                    // Split logic similar to delete
                     if (targetTicket.quantity > 1) {
                         updatedTickets[item.ticketIndex] = { ...targetTicket, quantity: targetTicket.quantity - 1 };
                         updatedTickets.push({ ...targetTicket, quantity: 1, status: 'refunded' });
@@ -388,19 +573,16 @@ export const AttendeeManager = () => {
                         updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
                     }
 
-                    // Check if all are now refunded
-                    const allRefunded = updatedTickets.every(t => t.status === 'refunded');
-                    const newStatus = allRefunded ? 'refunded' : reg.paymentStatus;
-
-                    await StorageService.updateRegistrationTickets(reg.id, updatedTickets, newStatus, refundReason);
+                    // Call backend with the NEW state desired. Backend calculates diff and refunds.
+                    await StorageService.refundRegistration(reg.id, updatedTickets, refundReason);
                 }
             }
 
-            alert("Refund processed successfully!");
+            showToast("Refund processed successfully!", "success");
             setShowRefundModal(null);
             loadData();
         } catch (e: any) {
-            alert("Refund failed: " + e.message);
+            showToast("Refund failed: " + e.message, "error");
         }
     };
 
@@ -440,7 +622,7 @@ export const AttendeeManager = () => {
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
     const totalRevenue = attendees.filter(a => a.status === 'paid').length * (event?.price || 0);
-    const checkInCount = attendees.filter(a => a.checkedIn).length;
+    const checkInCount = attendees.filter(a => a.checkedIn && a.status !== 'refunded' && a.status !== 'cancelled').length;
 
     return (
         <div className="max-w-7xl mx-auto py-6 px-4 pb-24 md:py-8">
@@ -472,21 +654,30 @@ export const AttendeeManager = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-green-50 to-white dark:from-zinc-900 dark:to-black border border-green-100 dark:border-zinc-800">
-                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Check-in Status</div>
-                    <div className="text-2xl font-black text-green-600 dark:text-green-400 flex items-end gap-2">
-                        {checkInCount} <span className="text-sm font-medium text-zinc-400 mb-1">/ {attendees.length}</span>
+            {(() => {
+                // Computed Stats excluding Refunded/Cancelled
+                const validAttendees = attendees.filter(a => a.status !== 'refunded' && a.status !== 'cancelled');
+                const checkInCount = validAttendees.filter(a => a.checkedIn).length;
+                const totalRevenue = validAttendees.reduce((acc, curr) => acc + (curr.price || 0), 0);
+
+                return (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-green-50 to-white dark:from-zinc-900 dark:to-black border border-green-100 dark:border-zinc-800">
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Check-in Status</div>
+                            <div className="text-2xl font-black text-green-600 dark:text-green-400 flex items-end gap-2">
+                                {checkInCount} <span className="text-sm font-medium text-zinc-400 mb-1">/ {validAttendees.length}</span>
+                            </div>
+                            <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                                <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${validAttendees.length > 0 ? (checkInCount / validAttendees.length) * 100 : 0}%` }}></div>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Revenue</div>
+                            <div className="text-2xl font-black text-zinc-900 dark:text-white truncate">${totalRevenue.toLocaleString()}</div>
+                        </div>
                     </div>
-                    <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${attendees.length > 0 ? (checkInCount / attendees.length) * 100 : 0}%` }}></div>
-                    </div>
-                </div>
-                <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
-                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Revenue</div>
-                    <div className="text-2xl font-black text-zinc-900 dark:text-white truncate">${totalRevenue.toLocaleString()}</div>
-                </div>
-            </div>
+                );
+            })()}
 
             {/* Main Content Card */}
             <div className="flex gap-6 mb-4 border-b border-zinc-200 dark:border-zinc-800">
@@ -524,7 +715,7 @@ export const AttendeeManager = () => {
                                 />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                                {['all', 'approvalPending', 'checkedIn', 'notCheckedIn', 'paid', 'pending'].map(f => (
+                                {['all', 'approvalPending', 'checkedIn', 'notCheckedIn', 'paid', 'pending', 'refunded'].map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setFilterStatus(f)}
@@ -554,6 +745,11 @@ export const AttendeeManager = () => {
                                     >
                                         {/* Top Row Mobile / Left Desktop */}
                                         <div className="flex items-center gap-3 w-full md:w-auto">
+                                            <div onClick={(e) => { e.stopPropagation(); handleSelectRow(item.id); }} className="cursor-pointer shrink-0">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedIds.has(item.id) ? 'bg-primary border-primary text-white' : 'border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800'}`}>
+                                                    {selectedIds.has(item.id) && <Check size={12} strokeWidth={4} />}
+                                                </div>
+                                            </div>
                                             <div onClick={() => handleCheckInToggle(item)} className="cursor-pointer shrink-0">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.checkedIn
                                                     ? 'bg-green-500 text-white shadow-md shadow-green-500/30'
@@ -595,7 +791,7 @@ export const AttendeeManager = () => {
                                                 <Button size="sm" variant="secondary" onClick={() => handleApproveAttendee(item)} className="h-8 px-3 text-[10px] font-black uppercase">Approve</Button>
                                             )}
                                             <button onClick={() => handleCheckInToggle(item)} className="px-3 py-1.5 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap">
-                                                {item.checkedIn ? 'Undo Check-in' : 'Check In'}
+                                                {item.itemType === 'addon' ? (item.checkedIn ? 'Completed' : 'Complete') : (item.checkedIn ? 'Undo Check-in' : 'Check In')}
                                             </button>
                                             <button onClick={() => { setEditGuestData({ name: item.name, email: item.email }); setShowEditModal(item); }} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Edit">
                                                 <Edit size={16} />
@@ -651,10 +847,25 @@ export const AttendeeManager = () => {
                                     </div>
                                 </div>
                             ))
+
                         )}
                     </div>
                 )}
             </Card>
+
+            {/* Bulk Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white dark:bg-white dark:text-black px-6 py-3 rounded-full shadow-2xl z-40 flex items-center gap-4 animate-in slide-in-from-bottom-10 fade-in">
+                    <span className="font-bold text-sm">{selectedIds.size} selected</span>
+                    <div className="h-4 w-px bg-white/20 dark:bg-black/20"></div>
+                    <button onClick={handleBulkRefund} className="font-bold text-sm text-red-500 hover:text-red-400 dark:text-red-600 dark:hover:text-red-700 flex items-center gap-2">
+                        <DollarSign size={16} /> Refund Selected
+                    </button>
+                    <button onClick={() => setSelectedIds(new Set())} className="ml-2 hover:opacity-70">
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Global Fixed Dropdown - Renders outside of overflow containers */}
             {dropdownState.isOpen && dropdownState.item && (
@@ -709,84 +920,139 @@ export const AttendeeManager = () => {
                         </div>
                     </Card>
                 </div>
-            )}
+            )
+            }
 
-            {showEditModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                    <Card className="w-full max-w-md p-6">
-                        <h3 className="text-xl font-bold mb-4">Edit Attendee</h3>
-                        <div className="space-y-4">
-                            <Input label="Name" value={editGuestData.name} onChange={e => setEditGuestData({ ...editGuestData, name: e.target.value })} />
-                            <Input label="Email" value={editGuestData.email} onChange={e => setEditGuestData({ ...editGuestData, email: e.target.value })} />
-                            <div className="flex gap-2 justify-end mt-6">
-                                <Button variant="ghost" onClick={() => setShowEditModal(null)}>Cancel</Button>
-                                <Button onClick={handleSaveEdit}>Save Changes</Button>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {/* Refund Modal */}
-            {showRefundModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                    <Card className="w-full max-w-md p-6">
-                        <div className="flex items-center gap-3 mb-4 text-red-500">
-                            <AlertTriangle size={24} />
-                            <h3 className="text-xl font-bold text-black dark:text-white">Issue Refund</h3>
-                        </div>
-                        <p className="text-zinc-500 mb-6 text-sm">
-                            This will process a refund via Stripe Connect (if configured) and invalidate the ticket(s).
-                        </p>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Refund Scope</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => setRefundMode('ticket')}
-                                        className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'ticket' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
-                                    >
-                                        This Ticket Only
-                                    </button>
-                                    <button
-                                        onClick={() => setRefundMode('order')}
-                                        className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'order' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
-                                    >
-                                        Full Order
-                                    </button>
+            {
+                showEditModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <Card className="w-full max-w-md p-6">
+                            <h3 className="text-xl font-bold mb-4">Edit Attendee</h3>
+                            <div className="space-y-4">
+                                <Input label="Name" value={editGuestData.name} onChange={e => setEditGuestData({ ...editGuestData, name: e.target.value })} />
+                                <Input label="Email" value={editGuestData.email} onChange={e => setEditGuestData({ ...editGuestData, email: e.target.value })} />
+                                <div className="flex gap-2 justify-end mt-6">
+                                    <Button variant="ghost" onClick={() => setShowEditModal(null)}>Cancel</Button>
+                                    <Button onClick={handleSaveEdit}>Save Changes</Button>
                                 </div>
                             </div>
+                        </Card>
+                    </div>
+                )
+            }
 
-                            <Input
-                                label="Refund Amount ($)"
-                                type="number"
-                                value={refundAmount}
-                                onChange={e => setRefundAmount(parseFloat(e.target.value))}
-                                disabled={refundMode === 'order'} // Auto-calc full amount if order
-                            />
-
-                            <Input
-                                label="Reason (Optional)"
-                                value={refundReason}
-                                onChange={e => setRefundReason(e.target.value)}
-                                placeholder="e.g. Duplicate order, Customer request"
-                            />
-
-                            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-xs text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50">
-                                <strong>Note:</strong> Platform fees are generally non-refundable. The customer will receive this amount back to their card.
+            {/* Refund Modal */}
+            {
+                showRefundModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <Card className="w-full max-w-md p-6">
+                            <div className="flex items-center gap-3 mb-4 text-red-500">
+                                <AlertTriangle size={24} />
+                                <h3 className="text-xl font-bold text-black dark:text-white">Issue Refund</h3>
                             </div>
+                            <p className="text-zinc-500 mb-6 text-sm">
+                                This will process a refund via Stripe Connect (if configured) and invalidate the ticket(s).
+                            </p>
 
-                            <div className="flex gap-2 justify-end mt-6">
-                                <Button variant="ghost" onClick={() => setShowRefundModal(null)}>Cancel</Button>
-                                <Button onClick={processRefund} className="bg-red-500 text-white hover:bg-red-600 border-none">
-                                    Confirm Refund
-                                </Button>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Refund Scope</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setRefundMode('ticket')}
+                                            className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'ticket' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
+                                        >
+                                            This Ticket Only
+                                        </button>
+                                        <button
+                                            onClick={() => setRefundMode('order')}
+                                            className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'order' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
+                                        >
+                                            Full Order
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Input
+                                    label="Refund Amount ($)"
+                                    type="number"
+                                    value={refundAmount}
+                                    onChange={e => setRefundAmount(parseFloat(e.target.value))}
+                                    disabled={refundMode === 'order'} // Auto-calc full amount if order
+                                />
+
+                                <Input
+                                    label="Reason (Required)"
+                                    value={refundReason}
+                                    onChange={e => setRefundReason(e.target.value)}
+                                    placeholder="e.g. Duplicate order, Customer request"
+                                />
+
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-xs text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50">
+                                    <strong>Note:</strong> Platform fees are generally non-refundable. The customer will receive this amount back to their card.
+                                </div>
+
+                                <div className="flex gap-2 justify-end mt-6">
+                                    <Button variant="ghost" onClick={() => setShowRefundModal(null)}>Cancel</Button>
+                                    <Button onClick={processRefund} className="bg-red-500 text-white hover:bg-red-600 border-none">
+                                        Confirm Refund
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                    </Card>
-                </div>
-            )}
-        </div>
+                        </Card>
+                    </div>
+                )
+            }
+            {
+                showDeleteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <Card className="w-full max-w-sm p-6">
+                            <div className="flex flex-col items-center text-center">
+                                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 text-red-500">
+                                    <Trash2 size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">Delete Attendee?</h3>
+                                <p className="text-zinc-500 mb-6 font-medium">
+                                    Are you sure you want to remove <span className="font-bold text-zinc-900 dark:text-white">{showDeleteModal.name}</span>?
+                                    <br /><span className="text-xs mt-2 block opacity-70">This will mark their ticket as Deleted/Refunded.</span>
+                                </p>
+
+                                <div className="flex gap-3 w-full">
+                                    <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(null)}>Cancel</Button>
+                                    <Button className="flex-1 bg-red-500 hover:bg-red-600 border-none text-white" onClick={confirmDeleteGuest}>Delete</Button>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                )
+            }
+            {
+                confirmationModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <Card className="w-full max-w-sm p-6">
+                            <div className="flex flex-col items-center text-center">
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${confirmationModal.isDestructive ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-primary/10 text-primary'}`}>
+                                    {confirmationModal.isDestructive ? <AlertTriangle size={32} /> : <Check size={32} />}
+                                </div>
+                                <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">{confirmationModal.title}</h3>
+                                <p className="text-zinc-500 mb-6 font-medium">
+                                    {confirmationModal.message}
+                                </p>
+
+                                <div className="flex gap-3 w-full">
+                                    <Button variant="outline" className="flex-1" onClick={() => setConfirmationModal(null)}>Cancel</Button>
+                                    <Button
+                                        className={`flex-1 ${confirmationModal.isDestructive ? 'bg-red-500 hover:bg-red-600 border-none text-white' : ''}`}
+                                        onClick={() => { confirmationModal.onConfirm(); setConfirmationModal(null); }}
+                                    >
+                                        {confirmationModal.confirmText}
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                )
+            }
+        </div >
     );
 };

@@ -14,6 +14,8 @@ export const EventFinance = () => {
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [activeTab, setActiveTab] = useState<'overview' | 'refunds'>('overview');
+
     useEffect(() => {
         loadData();
     }, [id]);
@@ -21,25 +23,39 @@ export const EventFinance = () => {
     const loadData = async () => {
         if (!id) return;
         const [evt, regs, user] = await Promise.all([
-            StorageService.getEventById(id),
-            StorageService.getRegistrations(),
+            StorageService.getEventFull(id),
+            StorageService.getRegistrations(id), // <--- FIX: Scope to Event ID
             StorageService.getCurrentUser()
         ]);
 
         if (evt) setEvent(evt);
         if (user) setCurrentUser(user);
-        setRegistrations(regs.filter(r => r.eventId === id && r.paymentStatus !== 'refunded'));
+        // LOAD ALL for this event, do not filter out refunded yet
+        setRegistrations(regs.filter(r => r.eventId === id));
         setIsLoading(false);
     };
 
-    // Calculations
-    const totalGross = registrations.reduce((sum, reg) => {
-        const ticketTotal = reg.tickets?.reduce((s, t) => s + (t.pricePerTicket * t.quantity), 0) || 0;
-        const addOnTotal = reg.addOns?.reduce((s, a) => s + (a.price * a.quantity), 0) || 0;
+    // Derived Lists
+    const validRegistrations = registrations.filter(r => ['paid', 'completed', 'approved'].includes(r.paymentStatus));
+    const refundedRegistrations = registrations.filter(r => r.paymentStatus === 'refunded' || (r.tickets && r.tickets.some(t => t.status === 'refunded')) || (r.addOns && r.addOns.some(a => a.status === 'refunded')));
+
+    // Calculations (Based on VALID only to show current net position)
+    const totalGross = validRegistrations.reduce((sum, reg) => {
+        // Calculate only valid items within the registration
+        const ticketTotal = reg.tickets?.reduce((s, t) => {
+            if (t.status === 'refunded' || t.status === 'cancelled') return s;
+            return s + (t.pricePerTicket * t.quantity);
+        }, 0) || 0;
+
+        const addOnTotal = reg.addOns?.reduce((s, a) => {
+            if (a.status === 'refunded' || a.status === 'cancelled') return s;
+            return s + (a.price * a.quantity);
+        }, 0) || 0;
+
         return sum + ticketTotal + addOnTotal + (reg.donationAmount || 0);
     }, 0);
 
-    const totalFees = registrations.reduce((sum, reg) => sum + (reg.serviceFee || 0) + (reg.stripeFee || 0), 0);
+    const totalFees = validRegistrations.reduce((sum, reg) => sum + (reg.serviceFee || 0) + (reg.stripeFee || 0), 0);
     const totalNet = totalGross - totalFees;
 
     if (isLoading) return <div className="p-8 text-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div></div>;
@@ -68,102 +84,176 @@ export const EventFinance = () => {
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="p-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-950 border-zinc-200 dark:border-zinc-800">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-400">
-                            <DollarSign size={20} />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white mb-1">${totalGross.toFixed(2)}</div>
-                    <div className="text-xs font-bold text-zinc-500 uppercase">Gross Revenue</div>
-                </Card>
-
-                <Card className="p-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-950 border-zinc-200 dark:border-zinc-800">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
-                            <ArrowUpRight size={20} />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-black text-red-500 mb-1">-${totalFees.toFixed(2)}</div>
-                    <div className="text-xs font-bold text-zinc-500 uppercase">Fees & Processing</div>
-                </Card>
-
-                <Card className="p-6 bg-zinc-900 text-white dark:bg-primary dark:text-black border-none ring-4 ring-primary/20">
-                    <div className="flex justify-between items-start mb-4">
-                        <div className="p-2 bg-white/10 dark:bg-black/10 rounded-lg">
-                            <Wallet size={20} />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-black mb-1">${totalNet.toFixed(2)}</div>
-                    <div className="text-xs font-bold opacity-60 uppercase">Net Earnings</div>
-                </Card>
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-xl w-fit mb-8">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+                >
+                    Overview
+                </button>
+                <button
+                    onClick={() => setActiveTab('refunds')}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'refunds' ? 'bg-white dark:bg-zinc-800 shadow-sm text-zinc-900 dark:text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'}`}
+                >
+                    Refunds
+                </button>
             </div>
 
-            {!hasPayoutMethod && (
-                <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-red-500 rounded-full text-white">
-                            <CreditCard size={24} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-red-500 uppercase">Payout Method Missing</h3>
-                            <p className="text-sm text-zinc-500">You must connect a bank account to receive your earnings.</p>
-                        </div>
-                    </div>
-                    <Button onClick={() => navigate('/billing')} className="bg-red-500 hover:bg-red-600 border-none text-white whitespace-nowrap">
-                        Connect Bank
-                    </Button>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="p-6 border-zinc-200 dark:border-zinc-800">
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                        <BarChart3 size={20} className="text-primary" /> Revenue Breakdown
-                    </h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
-                            <span className="text-sm font-bold">Ticket Sales</span>
-                            <span className="font-mono">${(totalGross - registrations.reduce((s, r) => s + (r.addOns?.reduce((s2, a) => s2 + a.price * a.quantity, 0) || 0) + (r.donationAmount || 0), 0)).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
-                            <span className="text-sm font-bold">Add-on Sales</span>
-                            <span className="font-mono">${registrations.reduce((s, r) => s + (r.addOns?.reduce((s2, a) => s2 + a.price * a.quantity, 0) || 0), 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
-                            <span className="text-sm font-bold">Donations</span>
-                            <span className="font-mono">${registrations.reduce((s, r) => s + (r.donationAmount || 0), 0).toFixed(2)}</span>
-                        </div>
-                        <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold uppercase text-zinc-500">Stripe Processing (2.9% + 30¢)</span>
-                                    <Info size={12} className="text-zinc-400" />
+            {activeTab === 'overview' ? (
+                <>
+                    {/* Stats Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <Card className="p-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-950 border-zinc-200 dark:border-zinc-800">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-400">
+                                    <DollarSign size={20} />
                                 </div>
-                                <span className="font-mono text-red-500">-${registrations.reduce((s, r) => s + (r.stripeFee || 0), 0).toFixed(2)}</span>
                             </div>
-                        </div>
-                    </div>
-                </Card>
+                            <div className="text-3xl font-black text-zinc-900 dark:text-white mb-1">${totalGross.toFixed(2)}</div>
+                            <div className="text-xs font-bold text-zinc-500 uppercase">Gross Revenue (Active)</div>
+                        </Card>
 
-                <Card className="p-6 border-zinc-200 dark:border-zinc-800">
-                    <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
-                        <Wallet size={20} className="text-primary" /> Payout Status
-                    </h3>
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
-                            <CreditCard size={32} />
-                        </div>
-                        <h4 className="font-bold mb-2">No active payouts</h4>
-                        <p className="text-sm text-zinc-500 max-w-xs mx-auto">Payouts are usually processed 2-3 business days after an order is completed.</p>
-                        <Button variant="ghost" className="mt-4 text-xs font-bold uppercase text-primary" onClick={() => navigate('/billing')}>
-                            View Payout Schedule
-                        </Button>
+                        <Card className="p-6 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-zinc-950 border-zinc-200 dark:border-zinc-800">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-red-500/10 rounded-lg text-red-500">
+                                    <ArrowUpRight size={20} />
+                                </div>
+                            </div>
+                            <div className="text-3xl font-black text-red-500 mb-1">-${totalFees.toFixed(2)}</div>
+                            <div className="text-xs font-bold text-zinc-500 uppercase">Fees & Processing</div>
+                        </Card>
+
+                        <Card className="p-6 bg-zinc-900 text-white dark:bg-primary dark:text-black border-none ring-4 ring-primary/20">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-white/10 dark:bg-black/10 rounded-lg">
+                                    <Wallet size={20} />
+                                </div>
+                            </div>
+                            <div className="text-3xl font-black mb-1">${totalNet.toFixed(2)}</div>
+                            <div className="text-xs font-bold opacity-60 uppercase">Net Earnings</div>
+                        </Card>
                     </div>
+
+                    {!hasPayoutMethod && (
+                        <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-red-500 rounded-full text-white">
+                                    <CreditCard size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-red-500 uppercase">Payout Method Missing</h3>
+                                    <p className="text-sm text-zinc-500">You must connect a bank account to receive your earnings.</p>
+                                </div>
+                            </div>
+                            <Button onClick={() => navigate('/billing')} className="bg-red-500 hover:bg-red-600 border-none text-white whitespace-nowrap">
+                                Connect Bank
+                            </Button>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <Card className="p-6 border-zinc-200 dark:border-zinc-800">
+                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                <BarChart3 size={20} className="text-primary" /> Revenue Breakdown
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
+                                    <span className="text-sm font-bold">Ticket Sales</span>
+                                    <span className="font-mono">${validRegistrations.reduce((s, r) => {
+                                        return s + (r.tickets?.reduce((tS, t) => {
+                                            if (t.status === 'refunded' || t.status === 'cancelled') return tS;
+                                            return tS + (t.pricePerTicket * t.quantity);
+                                        }, 0) || 0);
+                                    }, 0).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
+                                    <span className="text-sm font-bold">Add-on Sales</span>
+                                    <span className="font-mono">${validRegistrations.reduce((s, r) => {
+                                        return s + (r.addOns?.reduce((aS, a) => {
+                                            if (a.status === 'refunded' || a.status === 'cancelled') return aS;
+                                            return aS + (a.price * a.quantity);
+                                        }, 0) || 0);
+                                    }, 0).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
+                                    <span className="text-sm font-bold">Donations</span>
+                                    <span className="font-mono">${validRegistrations.reduce((s, r) => s + (r.donationAmount || 0), 0).toFixed(2)}</span>
+                                </div>
+                                <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-bold uppercase text-zinc-500">Stripe Processing (2.9% + 30¢)</span>
+                                            <Info size={12} className="text-zinc-400" />
+                                        </div>
+                                        <span className="font-mono text-red-500">-${validRegistrations.reduce((s, r) => s + (r.stripeFee || 0), 0).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <Card className="p-6 border-zinc-200 dark:border-zinc-800">
+                            <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+                                <Wallet size={20} className="text-primary" /> Payout Status
+                            </h3>
+                            <div className="text-center py-12">
+                                <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-zinc-400">
+                                    <CreditCard size={32} />
+                                </div>
+                                <h4 className="font-bold mb-2">No active payouts</h4>
+                                <p className="text-sm text-zinc-500 max-w-xs mx-auto">Payouts are usually processed 2-3 business days after an order is completed.</p>
+                                <Button variant="ghost" className="mt-4 text-xs font-bold uppercase text-primary" onClick={() => navigate('/billing')}>
+                                    View Payout Schedule
+                                </Button>
+                            </div>
+                        </Card>
+                    </div>
+                </>
+            ) : (
+                <Card className="border-zinc-200 dark:border-zinc-800">
+                    <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+                        <h3 className="text-lg font-bold flex items-center gap-2">Refund History</h3>
+                    </div>
+                    {refundedRegistrations.length === 0 ? (
+                        <div className="p-12 text-center text-zinc-500">
+                            <p>No refunds found.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
+                                    <tr>
+                                        <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Attendee</th>
+                                        <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Status</th>
+                                        <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Refunded Items</th>
+                                        <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                                    {refundedRegistrations.map(r => (
+                                        <tr key={r.id}>
+                                            <td className="p-4">
+                                                <div className="font-bold text-sm">{r.attendeeName}</div>
+                                                <div className="text-xs text-zinc-500">{r.attendeeEmail}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <Badge color="red">{r.paymentStatus === 'refunded' ? 'Full Refund' : 'Partial Refund'}</Badge>
+                                            </td>
+                                            <td className="p-4 text-sm text-zinc-500">
+                                                {r.tickets?.filter(t => t.status === 'refunded').length} Tickets, {r.tickets?.filter(t => t.ticketType).map(t => t.ticketType)}
+                                                {r.addOns?.filter(a => a.status === 'refunded').length ? `, ${r.addOns.filter(a => a.status === 'refunded').length} Addons` : ''}
+                                            </td>
+                                            <td className="p-4 text-right text-sm text-zinc-500">
+                                                {new Date(r.timestamp).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </Card>
-            </div>
+            )}
         </div>
     );
 };

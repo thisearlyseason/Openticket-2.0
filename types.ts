@@ -191,6 +191,7 @@ export interface AddOn {
   question?: string;
   questionType?: 'text' | 'select';
   options?: string[];
+  taxable?: boolean;
 }
 
 export interface Question {
@@ -418,6 +419,7 @@ export interface PurchasedAddOn {
   quantity: number;
   answer?: string;
   fulfilled?: boolean;
+  status?: 'active' | 'refunded' | 'cancelled';
 }
 
 export interface UserNotification {
@@ -467,7 +469,7 @@ export interface Registration {
   affiliateCode?: string;
   discountAmount?: number;
   timestamp: number;
-  paymentStatus: 'pending' | 'completed' | 'offline_pending' | 'refunded';
+  paymentStatus: 'pending' | 'completed' | 'offline_pending' | 'refunded' | 'paid' | 'approved';
   approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
   checkedIn?: boolean;
   checkInTime?: number;

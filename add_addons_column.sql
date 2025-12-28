@@ -1,0 +1,1 @@
+ALTER TABLE registrations ADD COLUMN IF NOT EXISTS add_ons JSONB DEFAULT '[]';

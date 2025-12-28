@@ -25,8 +25,7 @@ export const EventAnalytics = () => {
         const freshUser = await StorageService.getUserById(user.id);
         const plan = freshUser?.subscription?.plan || 'free';
         setIsPro(plan === 'pro' || plan === 'premium' || freshUser?.isAdmin === true);
-
-        const e = await StorageService.getEventById(id);
+        const e = await StorageService.getEventFull(id);
         const r = await StorageService.getRegistrations(id);
 
         if (e) setEvent(e);
@@ -40,8 +39,11 @@ export const EventAnalytics = () => {
     // --- Aggregation Logic ---
     const totalSales = regs.length;
     const grossRevenue = regs.reduce((sum, r) => {
-        let val = r.donationAmount || 0;
-        if (r.tickets) val += r.tickets.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0);
+        let val = Number(r.donationAmount) || 0;
+        if (r.tickets) val += r.tickets.reduce((acc, t) => acc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
+        if (r.addOns && Array.isArray(r.addOns)) {
+            val += r.addOns.reduce((acc, a) => acc + ((Number(a.price) || 0) * (Number(a.quantity) || 0)), 0);
+        }
         return sum + val;
     }, 0);
 

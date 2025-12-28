@@ -11,7 +11,14 @@ const PORT = process.env.PORT || 5001;
 // 1. Enable CORS for all routes (this also handles preflight)
 app.use(cors());
 
-app.use(express.json());
+// Use JSON parser for all routes EXCEPT Stripe Webhook (needs raw buffer)
+app.use((req, res, next) => {
+    if (req.originalUrl.includes('/webhook')) {
+        next();
+    } else {
+        express.json()(req, res, next);
+    }
+});
 
 // Request logger
 app.use((req, res, next) => {
@@ -35,6 +42,19 @@ app.use('/api/registrations', registrationRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/stripe', stripeRoutes);
 
+import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
+// ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
+// We use express.raw because the controller needs the raw body for signature verification.
+// IMPORTANT: This must match the CLI forward-to URL.
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
+
+import adminRoutes from '../backend/routes/adminRoutes.js';
+app.use('/api/admin', adminRoutes);
+
+import notificationRoutes from '../backend/routes/notificationRoutes.js';
+app.use('/api/notifications', notificationRoutes);
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);
@@ -54,7 +74,7 @@ import { fileURLToPath } from 'url';
 
 // Only listen if run directly (local dev)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`Openticket Backend running on port ${PORT}`);
     });
 }

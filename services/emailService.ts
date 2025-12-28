@@ -125,5 +125,18 @@ export const EmailService = {
             const newTemplates = templates.filter(t => t.id !== templateId);
             await StorageService.updateUser(userId, { emailTemplates: newTemplates });
         }
+    },
+
+    // Helper to replace tokens and clean up unused ones
+    renderTemplate: (body: string, data: Record<string, string>) => {
+        let result = body;
+        // Replace known keys
+        Object.keys(data).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            result = result.replace(regex, data[key]);
+        });
+        // Remove remaining tokens (e.g. {{price}} if not provided)
+        result = result.replace(/{{.*?}}/g, '');
+        return result;
     }
 };

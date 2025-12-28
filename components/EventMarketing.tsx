@@ -31,7 +31,7 @@ export const EventMarketing = () => {
     useEffect(() => {
         const load = async () => {
             if (id) {
-                const e = await StorageService.getEventById(id);
+                const e = await StorageService.getEventFull(id);
                 if (e) setEvent(e);
             }
         };

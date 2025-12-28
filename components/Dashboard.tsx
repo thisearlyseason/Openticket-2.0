@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
 import type { Event, Registration, User, SystemNotification, Broadcast } from '../types';
 import { Card, Button, Badge, formatTime, Input, Select } from './UI';
@@ -19,6 +20,7 @@ export const Dashboard = () => {
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [systemNote, setSystemNote] = useState<SystemNotification | null>(null);
+    const { showToast, showConfirm } = useGlobalUI();
 
     // View State
     const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'drafts' | 'past'>('upcoming');
@@ -108,54 +110,134 @@ export const Dashboard = () => {
         const user = currentUser || StorageService.getCurrentUser();
         if (!user) return;
 
-        if (!window.confirm(`Duplicate "${event.title}"?`)) return;
+        if (!user) return;
 
-        try {
-            const { id, registeredCount, createdAt, moderationStatus, moderationReason, broadcasts, ...eventProps } = event;
-            const cleanProps = JSON.parse(JSON.stringify(eventProps));
+        showConfirm({
+            title: "Duplicate Event",
+            message: `Duplicate "${event.title}"?`,
+            confirmText: "Duplicate",
+            onConfirm: async () => {
+                try {
+                    const { id, registeredCount, createdAt, moderationStatus, moderationReason, broadcasts, ...eventProps } = event;
+                    const cleanProps = JSON.parse(JSON.stringify(eventProps));
 
-            const newEvent: Event = {
-                ...cleanProps,
-                id: `evt-${Date.now()}`,
-                title: `${event.title} (Copy)`,
-                registeredCount: 0,
-                createdAt: Date.now(),
-                isDraft: true,
-                broadcasts: [],
-                moderationStatus: 'approved'
-            };
+                    // 1. Regenerate Ticket Tier IDs & Build Map
+                    const tierIdMap: Record<string, string> = {};
+                    if (cleanProps.ticketTiers) {
+                        cleanProps.ticketTiers = cleanProps.ticketTiers.map((t: any) => {
+                            const newId = `tier-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            tierIdMap[t.id] = newId;
+                            return { ...t, id: newId };
+                        });
+                    }
 
-            await StorageService.saveEvent(newEvent);
-            setEvents(prev => [newEvent, ...prev]);
-            // Switch to drafts tab to show new item
-            setActiveTab('drafts');
-        } catch (e: any) {
-            alert(`Failed to duplicate: ${e.message}`);
-        }
+                    // 2. Update Promo Codes with new Tier IDs
+                    if (cleanProps.promoCodes) {
+                        cleanProps.promoCodes = cleanProps.promoCodes.map((p: any) => {
+                            if (p.applicableTiers && p.applicableTiers.length > 0) {
+                                return {
+                                    ...p,
+                                    applicableTiers: p.applicableTiers.map((oldId: string) => tierIdMap[oldId]).filter(Boolean)
+                                };
+                            }
+                            return p;
+                        });
+                    }
+
+                    // 3. Regenerate other sub-IDs
+                    if (cleanProps.questions) {
+                        cleanProps.questions = cleanProps.questions.map((q: any) => ({ ...q, id: `q-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` }));
+                    }
+                    if (cleanProps.addOns) {
+                        cleanProps.addOns = cleanProps.addOns.map((a: any) => ({ ...a, id: `addon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` }));
+                    }
+                    if (cleanProps.recurringDates) {
+                        cleanProps.recurringDates = cleanProps.recurringDates.map((r: any) => ({ ...r, id: `date-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` }));
+                    }
+                    if (cleanProps.gallery) {
+                        cleanProps.gallery = cleanProps.gallery.map((g: any) => ({ ...g, id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` }));
+                    }
+                    if (cleanProps.affiliates) {
+                        cleanProps.affiliates = []; // Clear affiliates for new event
+                    }
+
+                    const newEvent: Event = {
+                        ...cleanProps,
+                        id: `evt-${Date.now()}`,
+                        title: `${event.title} (Copy)`,
+                        registeredCount: 0,
+                        createdAt: Date.now(),
+                        isDraft: true,
+                        broadcasts: [],
+                        moderationStatus: 'approved'
+                    };
+
+                    await StorageService.saveEvent(newEvent);
+                    setEvents(prev => [newEvent, ...prev]);
+                    setActiveTab('drafts');
+                    showToast("Event duplicated successfully", "success");
+                } catch (e: any) {
+                    showToast(`Failed to duplicate: ${e.message}`, "error");
+                }
+            }
+        });
     };
 
     const handleDeleteClick = (id: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
-        setEventToDelete(id);
-    };
 
-    const confirmDelete = async () => {
-        if (!eventToDelete) return;
-        try {
-            await StorageService.deleteEvent(eventToDelete);
-            setEvents(prev => prev.filter(e => e.id !== eventToDelete));
-            setEventToDelete(null);
-        } catch (e: any) {
-            alert(`Failed to delete: ${e.message}`);
-        }
+        const event = events.find(x => x.id === id);
+        showConfirm({
+            title: "Delete Event",
+            message: `Are you sure you want to delete "${event?.title || 'this event'}"? This cannot be undone and all data will be lost.`,
+            confirmText: "Delete Permanently",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await StorageService.deleteEvent(id);
+                    setEvents(prev => prev.filter(e => e.id !== id));
+                    showToast("Event deleted", "info");
+                } catch (e: any) {
+                    showToast(`Failed to delete: ${e.message}`, "error");
+                }
+            }
+        });
     };
 
     const getEventStats = (eventId: string) => {
-        const eventRegs = registrations.filter(r => r.eventId === eventId && r.paymentStatus !== 'refunded');
-        const itemsSold = eventRegs.reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + t.quantity, 0) || 1), 0);
+        // AUDIT FIX: Filter for all valid confirmed statuses (paid, completed, approved) and exclude pending/refunded.
+        const eventRegs = registrations.filter(r => r.eventId === eventId && ['paid', 'completed', 'approved'].includes(r.paymentStatus));
+        const itemsSold = eventRegs.reduce((acc, r) => {
+            if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
+                // Count only valid tickets
+                return acc + r.tickets.reduce((tAcc, t) => {
+                    if (t.status === 'refunded' || t.status === 'cancelled') return tAcc;
+                    return tAcc + (Number(t.quantity) || 0);
+                }, 0);
+            }
+            // Fallback for legacy registrations without tickets array
+            return acc + 1;
+        }, 0);
+
         const grossRevenue = eventRegs.reduce((acc, r) => {
-            let total = r.donationAmount || 0;
-            if (r.tickets) total += r.tickets.reduce((tAcc, t) => tAcc + (t.pricePerTicket * t.quantity), 0);
+            let total = Number(r.donationAmount) || 0;
+
+            // 1. Tickets
+            if (r.tickets && Array.isArray(r.tickets)) {
+                total += r.tickets.reduce((tAcc, t) => {
+                    if (t.status === 'refunded' || t.status === 'cancelled') return tAcc;
+                    return tAcc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0));
+                }, 0);
+            }
+
+            // 2. Add-ons
+            if (r.addOns && Array.isArray(r.addOns)) {
+                total += r.addOns.reduce((aAcc, a) => {
+                    if (a.status === 'refunded' || a.status === 'cancelled') return aAcc;
+                    return aAcc + (Number(a.price) || 0);
+                }, 0);
+            }
+
             return acc + total;
         }, 0);
         return { itemsSold, grossRevenue };
@@ -178,13 +260,20 @@ export const Dashboard = () => {
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     // Aggregate Stats
-    const totalRevenue = registrations.filter(r => r.paymentStatus !== 'refunded').reduce((acc, r) => {
-        let total = r.donationAmount || 0;
-        if (r.tickets) total += r.tickets.reduce((tAcc, t) => tAcc + (t.pricePerTicket * t.quantity), 0);
-        return acc + total;
+    const totalRevenue = registrations.filter(r => r.paymentStatus === 'paid').reduce((acc, r) => {
+        let total = Number(r.donationAmount) || 0;
+        if (r.tickets && Array.isArray(r.tickets)) {
+            total += r.tickets.reduce((tAcc, t) => tAcc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
+        }
+
+        const addOns = r.addOns || (r as any).add_ons;
+        if (addOns && Array.isArray(addOns)) {
+            total += addOns.reduce((aAcc: number, a: any) => aAcc + ((Number(a.price) || 0) * (Number(a.quantity) || 0)), 0);
+        }
+        return acc + (Number(total) || 0);
     }, 0);
 
-    const totalTicketsSold = registrations.filter(r => r.paymentStatus !== 'refunded').reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + t.quantity, 0) || 1), 0);
+    const totalTicketsSold = registrations.filter(r => r.paymentStatus === 'paid').reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + (Number(t.quantity) || 0), 0) || 1), 0);
 
     if (!currentUser) return null; // Don't render while redirecting
 
@@ -446,26 +535,9 @@ export const Dashboard = () => {
                 </div>
             )}
 
-            {/* Delete Confirmation Modal */}
-            {eventToDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl border border-zinc-200 dark:border-zinc-800 animate-in zoom-in-95">
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
-                                <Trash2 size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold mb-2">Delete Event?</h3>
-                            <p className="text-zinc-500 text-sm">
-                                Are you sure you want to delete this event? This action cannot be undone and all data will be lost.
-                            </p>
-                        </div>
-                        <div className="flex gap-3">
-                            <Button onClick={() => setEventToDelete(null)} variant="outline" className="flex-1">Cancel</Button>
-                            <Button onClick={confirmDelete} className="flex-1 bg-red-500 hover:bg-red-600 text-white border-none">Delete</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
+    )
+}
+        </div >
     );
 };

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Registration, Event, PurchasedAddOn } from '../types';
 import { Button, Input, Card, Badge } from './UI';
-import { ArrowLeft, Search, ShoppingBag, Receipt, Ticket, User, ExternalLink, Calendar } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingBag, Receipt, Ticket, User, ExternalLink, Calendar, Trash2, DollarSign, AlertTriangle, Check } from 'lucide-react';
 
 interface AddOnItem {
     id: string; // registration id
@@ -13,6 +13,7 @@ interface AddOnItem {
     addOn: PurchasedAddOn;
     timestamp: number;
     fulfilled: boolean;
+    index: number; // Index in the source registration array
 }
 
 export const AddOnManager = () => {
@@ -22,6 +23,14 @@ export const AddOnManager = () => {
     const [addOnItems, setAddOnItems] = useState<AddOnItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    // Modal State
+    const [confirmationModal, setConfirmationModal] = useState<{
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        confirmText?: string;
+        isDestructive?: boolean;
+    } | null>(null);
 
     useEffect(() => {
         loadData();
@@ -30,25 +39,44 @@ export const AddOnManager = () => {
     const loadData = async () => {
         if (!id) return;
         const [evt, regs] = await Promise.all([
-            StorageService.getEventById(id),
-            StorageService.getRegistrations()
+            StorageService.getEventFull(id),
+            StorageService.getRegistrations() // This might need eventId filter if API supports it, currently fetches all and client filters
         ]);
 
         if (evt) setEvent(evt);
 
+        // Show all addons unless refunded? Or show refunded too?
+        // User wants to refund them here. So we should show active ones.
+        // If already refunded, maybe show status?
+        // Logic below: filters out `paymentStatus === 'refunded'`. This is REG registration status.
+        // But what about ADDON status?
         const eventRegs = regs.filter(r => r.eventId === id && r.paymentStatus !== 'refunded');
         const items: AddOnItem[] = [];
 
         eventRegs.forEach(reg => {
             if (reg.addOns && reg.addOns.length > 0) {
-                reg.addOns.forEach(addon => {
+                reg.addOns.forEach((addon, idx) => {
+                    // Filter out already refunded addons? Or show them?
+                    // If filtering, user can't see verification.
+                    // AttendeeManager hides refunded by default but has filter.
+                    // Here, we'll exclude refunded addons from this default view to keep it clean, 
+                    // BUT maybe we need a toggle?
+                    // For now, let's include all so user can see them, filtering visually?
+                    // Actually, if I delete/refund, it should change status.
+                    // Let's exclude refunded addons if the user desires "Management of active items".
+                    // But if I want to delete valid items...
+                    // Let's Include ALL for now, maybe filtered visually.
+                    // Wait, `PurchasedAddOn` has status.
+                    if (addon.status === 'refunded' || addon.status === 'cancelled') return;
+
                     items.push({
                         id: reg.id,
                         attendeeName: reg.attendeeName,
                         attendeeEmail: reg.attendeeEmail,
                         addOn: addon,
                         timestamp: reg.timestamp,
-                        fulfilled: addon.fulfilled || false
+                        fulfilled: addon.fulfilled || false,
+                        index: idx
                     });
                 });
             }
@@ -79,6 +107,47 @@ export const AddOnManager = () => {
         } catch (e) { console.error(e); }
     };
 
+    const handleDelete = (item: AddOnItem) => {
+        setConfirmationModal({
+            title: "Delete Add-On?",
+            message: `Are you sure you want to remove "${item.addOn.name}" for ${item.attendeeName}? This cannot be undone.`,
+            confirmText: "Delete",
+            isDestructive: true,
+            onConfirm: async () => {
+                try {
+                    const regList = await StorageService.getRegistrations(id!);
+                    const reg = regList.find(r => r.id === item.id);
+                    if (!reg || !reg.addOns) return;
+
+                    const updatedAddOns = [...reg.addOns];
+                    updatedAddOns.splice(item.index, 1); // Remove it
+
+                    await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
+                    loadData();
+                } catch (e: any) {
+                    alert("Failed to delete: " + e.message);
+                }
+            }
+        });
+    };
+
+    const handleRefund = (item: AddOnItem) => {
+        setConfirmationModal({
+            title: "Refund Add-On?",
+            message: `Refund $${(item.addOn.price * item.addOn.quantity).toFixed(2)} for "${item.addOn.name}"? This will return funds to the customer via Stripe.`,
+            confirmText: "Refund & Remove",
+            isDestructive: true,
+            onConfirm: async () => {
+                try {
+                    await StorageService.refundAddon(item.id, item.index, "Requested via AddOn Manager");
+                    loadData();
+                } catch (e: any) {
+                    alert("Failed to refund: " + e.message);
+                }
+            }
+        });
+    };
+
     const filteredItems = addOnItems.filter(item =>
         item.attendeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.addOn.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -88,6 +157,31 @@ export const AddOnManager = () => {
 
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 pb-24">
+            {confirmationModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <Card className="w-full max-w-sm p-6">
+                        <div className="flex flex-col items-center text-center">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${confirmationModal.isDestructive ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-primary/10 text-primary'}`}>
+                                {confirmationModal.isDestructive ? <AlertTriangle size={32} /> : <Check size={32} />}
+                            </div>
+                            <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">{confirmationModal.title}</h3>
+                            <p className="text-zinc-500 mb-6 font-medium">
+                                {confirmationModal.message}
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <Button variant="outline" className="flex-1" onClick={() => setConfirmationModal(null)}>Cancel</Button>
+                                <Button
+                                    className={`flex-1 ${confirmationModal.isDestructive ? 'bg-red-500 hover:bg-red-600 border-none text-white' : ''}`}
+                                    onClick={() => { confirmationModal.onConfirm(); setConfirmationModal(null); }}
+                                >
+                                    {confirmationModal.confirmText || 'Confirm'}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
             <div className="flex items-center justify-between mb-8">
                 <button onClick={() => navigate(`/manage/${id}`)} className="text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center text-sm font-bold transition-colors">
                     <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
@@ -158,10 +252,26 @@ export const AddOnManager = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-end gap-2 items-center">
                                             <Button size="sm" variant="outline" className="h-8 text-[10px] uppercase font-bold" onClick={() => navigate(`/manage/${id}/attendees?search=${encodeURIComponent(item.attendeeEmail)}`)}>
                                                 <Ticket size={12} className="mr-1" /> View Ticket
                                             </Button>
+
+                                            <button
+                                                onClick={() => handleRefund(item)}
+                                                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+                                                title="Refund Add-On"
+                                            >
+                                                <DollarSign size={16} />
+                                            </button>
+
+                                            <button
+                                                onClick={() => handleDelete(item)}
+                                                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+                                                title="Delete Add-On"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>

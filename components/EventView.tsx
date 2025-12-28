@@ -7,6 +7,7 @@ import { Event, Registration, PurchasedTicket, PurchasedAddOn, PromoCode, User }
 import stripePromise from '../services/stripe';
 import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay, ReceiptModal } from './UI';
 import { Calendar, MapPin, Clock, Share2, Ticket, Check, AlertCircle, Info, Lock, Users, Printer, FileText, Download, Gift, Hourglass, CheckCircle, ArrowRight, Target, Image as ImageIcon, QrCode, Heart } from 'lucide-react';
+import { useGlobalUI } from './GlobalUIProvider';
 
 export const EventView = () => {
     const { id } = useParams<{ id: string }>();
@@ -50,11 +51,12 @@ export const EventView = () => {
     const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
     const [waitlistSuccess, setWaitlistSuccess] = useState(false);
     const [waitlistData, setWaitlistData] = useState({ name: '', email: '' });
+    const { showToast, showAlert, showConfirm } = useGlobalUI();
 
     // Favorites
     const [loadingFavorite, setLoadingFavorite] = useState(false);
     const toggleFavorite = async () => {
-        if (!currentUser) return alert("Please login to favorite organizers.");
+        if (!currentUser) return showToast("Please login to favorite organizers.", "info");
         if (!organizerUser) return;
         setLoadingFavorite(true);
         const updated = await StorageService.toggleFavoriteOrganizer(organizerUser.id);
@@ -76,6 +78,19 @@ export const EventView = () => {
     }, [id]);
 
     useEffect(() => {
+        if (organizerUser?.primaryColor) {
+            document.documentElement.style.setProperty('--color-primary', organizerUser.primaryColor);
+        } else {
+            document.documentElement.style.removeProperty('--color-primary');
+        }
+
+        return () => {
+            // Clean up branding when leaving the event page to restore global site branding
+            document.documentElement.style.removeProperty('--color-primary');
+        };
+    }, [organizerUser?.primaryColor]);
+
+    useEffect(() => {
         const user = StorageService.getCurrentUser();
         if (user) {
             setCurrentUser(user);
@@ -83,66 +98,64 @@ export const EventView = () => {
         }
     }, []);
 
+
+
     useEffect(() => {
         const checkSuccess = async () => {
             const success = searchParams.get('success');
             if (success === 'true' && event && !isSuccess) {
-                const pendingKey = `pending_reg_${event.id}`;
-                const savedReg = localStorage.getItem(pendingKey);
+                const sessionId = searchParams.get('session_id');
+                if (sessionId) {
+                    setIsProcessingPayment(true);
+                    const poll = async () => {
+                        let attempts = 0;
+                        while (attempts < 60) {
+                            try {
+                                const reg = await StorageService.getRegistrationBySessionId(sessionId);
+                                if (reg) {
+                                    if (reg.paymentStatus === 'paid' || reg.paymentStatus === 'approved') {
+                                        setCompletedRegistration(reg);
+                                        setIsSuccess(true);
+                                        setIsProcessingPayment(false);
+                                        window.scrollTo(0, 0);
 
-                if (savedReg) {
-                    try {
-                        setIsProcessingPayment(true);
-                        const { regData, tickets, purchasedAddOns, appliedPromo, paymentStatus, serviceFee, total } = JSON.parse(savedReg);
+                                        // TEMPORARY: Client-side delivery of Server-Verified Receipt
+                                        if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
+                                            const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
+                                            const body = event.requiresApproval
+                                                ? `Hi ${reg.attendeeName}, we've received your registration for ${event.title}. This event requires manual approval by the organizer. We'll notify you once your request has been reviewed.`
+                                                : `Hi ${reg.attendeeName}, you are registered for ${event.title}.`;
+                                            EmailService.sendEmail(organizerUser.id, reg.attendeeEmail, subject, body).catch(console.error);
+                                        }
 
-                        const newReg: Registration = {
-                            id: `reg-${Date.now()}`,
-                            eventId: event.id,
-                            attendeeName: regData.name,
-                            attendeeEmail: regData.email.trim(),
-                            phoneNumber: regData.phoneNumber,
-                            donationAmount: Number(regData.donation) || 0,
-                            serviceFee,
-                            answers: regData.answers,
-                            tickets: tickets,
-                            addOns: purchasedAddOns,
-                            timestamp: Date.now(),
-                            paymentStatus: 'completed', // Assume completed if redirected back with success
-                            approvalStatus: event.requiresApproval ? 'pending' : 'approved',
-                            promoCodeUsed: appliedPromo?.code,
-                            waiverAgreed: regData.waiverAgreed,
-                            stripePaymentIntentId: 'stripe_checkout' // Placeholder or parse from session
-                        };
-
-                        const result: any = await StorageService.saveRegistration(newReg);
-                        setNewCredentials(result.newAccount);
-                        setCompletedRegistration(newReg);
-                        setIsSuccess(true);
-                        localStorage.removeItem(pendingKey);
-                        window.scrollTo(0, 0);
-
-                        // Send Confirmation Email
-                        if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
-                            const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
-                            const body = event.requiresApproval
-                                ? `Hi ${newReg.attendeeName}, we've received your registration for ${event.title}. This event requires manual approval by the organizer. We'll notify you once your request has been reviewed.`
-                                : `Hi ${newReg.attendeeName}, you are registered for ${event.title}.`;
-                            EmailService.sendEmail(organizerUser.id, newReg.attendeeEmail, subject, body).catch(console.error);
+                                        // Remove query params
+                                        window.history.replaceState({}, '', `/#/event/${event.id}`);
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Polling error:", e);
+                            }
+                            attempts++;
+                            await new Promise(r => setTimeout(r, 500));
                         }
-
-                    } catch (e) {
-                        console.error("Failed to finalize registration:", e);
-                        alert("There was an error saving your registration. Please contact support.");
-                    } finally {
+                        showAlert({
+                            title: "Payment Timeout",
+                            message: "Payment processing timed out. Please check 'My Tickets' for confirmation."
+                        });
                         setIsProcessingPayment(false);
-                    }
+                    };
+                    poll();
+                } else {
+                    showAlert({
+                        title: "Payment Status",
+                        message: "Payment processed. Please check 'My Tickets'. (No Session ID in URL)"
+                    });
                 }
             }
         };
 
-        if (event) {
-            checkSuccess();
-        }
+        if (event) checkSuccess();
     }, [searchParams, event, isSuccess, organizerUser]);
 
     if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black uppercase tracking-widest text-xl">Loading Experience...</div>;
@@ -160,7 +173,7 @@ export const EventView = () => {
             if (newTotal > remainingGlobalCapacity) {
                 const availableForThisTier = remainingGlobalCapacity - (currentTotal - currentTierQty);
                 if (qty > availableForThisTier) {
-                    alert(`Sorry, only ${availableForThisTier} tickets remaining for this event.`);
+                    showToast(`Sorry, only ${availableForThisTier} tickets remaining for this event.`, "info");
                     return;
                 }
             }
@@ -194,42 +207,67 @@ export const EventView = () => {
         if (!promoCode) return;
         const code = event.promoCodes?.find(p => p.code === promoCode);
         if (code) {
-            if (code.maxUsage && code.usageCount >= code.maxUsage) return alert("This code has reached its usage limit.");
-            if (code.expiryDate && Date.now() > code.expiryDate) return alert("This promo code has expired.");
-            if (code.minOrderQty && getTotalTickets() < code.minOrderQty) return alert(`This code requires a minimum purchase of ${code.minOrderQty} tickets.`);
+            if (code.maxUsage && code.usageCount >= code.maxUsage) return showToast("This code has reached its usage limit.", "error");
+            if (code.expiryDate && Date.now() > code.expiryDate) return showToast("This promo code has expired.", "error");
+            if (code.minOrderQty && getTotalTickets() < code.minOrderQty) return showToast(`This code requires a minimum purchase of ${code.minOrderQty} tickets.`, "info");
             setAppliedPromo(code);
+            showToast("Promo code applied!", "success");
         } else {
-            alert("Invalid code.");
+            showToast("Invalid promo code.", "error");
         }
     };
 
     const calculateTotal = () => {
-        let total = 0;
+        let taxableGross = 0;
+        let nonTaxableGross = 0;
+
+        // Tickets are assumed taxable by default (legacy behavior)
         if (event.priceType === 'fixed') {
-            total += (ticketSelection['general'] || 0) * event.price;
+            taxableGross += (ticketSelection['general'] || 0) * event.price;
         } else if (event.priceType === 'tiered') {
             event.ticketTiers?.forEach(tier => {
-                total += (ticketSelection[tier.id] || 0) * tier.price;
+                taxableGross += (ticketSelection[tier.id] || 0) * tier.price;
             });
         } else if (event.priceType === 'donation') {
-            total += Number(regData.donation) || 0;
+            // Donation tickets often taxed in legacy code, preserving this unless changed.
+            taxableGross += Number(regData.donation) || 0;
         }
 
+        // Add-ons: Check taxable flag
         event.addOns?.forEach(addon => {
             const sel = addOnSelection[addon.id];
-            if (sel) total += sel.qty * addon.price;
+            if (sel) {
+                const amount = sel.qty * addon.price;
+                // Treat undefined as TRUE (Taxable) to support legacy behavior
+                // Explicit FALSE means tax-exempt
+                if (addon.taxable !== false) {
+                    taxableGross += amount;
+                } else {
+                    nonTaxableGross += amount;
+                }
+            }
         });
 
+        const totalGross = taxableGross + nonTaxableGross;
+
+        // Apply Discount (Pro-rata or on total base)
+        let basePrice = totalGross;
         if (appliedPromo) {
-            if (appliedPromo.type === 'percent') total -= total * (appliedPromo.value / 100);
-            else total -= appliedPromo.value;
+            if (appliedPromo.type === 'percent') basePrice -= basePrice * (appliedPromo.value / 100);
+            else basePrice = Math.max(0, basePrice - appliedPromo.value);
         }
 
-        // Snapshot base before fees
-        const basePrice = Math.max(0, total);
+        // Calculate Taxable Portion of Base Price
+        // If discount happened, we scale taxable amount down proportionally
+        const taxableRatio = totalGross > 0 ? (taxableGross / totalGross) : 0;
+        const taxableBase = basePrice * taxableRatio;
+
+        let total = basePrice;
 
         // Tax
-        if (event.taxRate) total += basePrice * (event.taxRate / 100);
+        if (event.taxRate) {
+            total += taxableBase * (event.taxRate / 100);
+        }
 
         // Custom Fees
         if (event.customFees) {
@@ -241,11 +279,6 @@ export const EventView = () => {
 
         if (!event.absorbFees && event.priceType !== 'free' && event.priceType !== 'donation') {
             const plan = organizerUser?.subscription?.plan || 'free';
-            // Calculate platform fee on the base price (standard practice) or total? 
-            // Existing code used 'total' (which included tax). 
-            // Let's use 'total' (inclusive of tax/custom fees) to ensure we cover costs, 
-            // OR stick to basePrice if that's the policy. 
-            // Assuming platform fee is on the transaction volume:
             total += StorageService.calculateFees(total, plan);
         }
 
@@ -253,7 +286,7 @@ export const EventView = () => {
     };
 
     const handleRegister = async () => {
-        if (!regData.name || !regData.email) return alert("Please fill in your details (Main Buyer).");
+        if (!regData.name || !regData.email) return showToast("Please fill in your details (Main Buyer).", "info");
         if (event.collectGuestInfo !== false && getTotalTickets() > 0) {
             const tiers = event.ticketTiers || [{ id: 'general', name: 'General Admission' }];
             for (const tier of tiers) {
@@ -263,7 +296,7 @@ export const EventView = () => {
                     for (let i = 0; i < qty; i++) {
                         const guest = tierAssignments[i] || { name: '', email: '' };
                         if (!guest.name) {
-                            return alert(`Please enter a name for ${tier.name} - Participant #${i + 1}`);
+                            return showToast(`Please enter a name for ${tier.name} - Participant #${i + 1}`, "info");
                         }
                     }
                 }
@@ -272,7 +305,7 @@ export const EventView = () => {
 
         const isWaiverEnabled = (event.waiverConfig?.enabled) || (event.specificWaiverText || event.specificWaiverPdfUrl);
         if (isWaiverEnabled && !regData.waiverAgreed) {
-            return alert("Please agree to the waiver and release of liability to continue.");
+            return showToast("Please agree to the waiver to continue.", "info");
         }
 
         setIsRegistering(true);
@@ -302,7 +335,7 @@ export const EventView = () => {
                     tickets.push({
                         tierId: 'general',
                         name: event.ticketName || 'General Admission',
-                        pricePerTicket: event.priceType === 'donation' ? 0 : event.price,
+                        pricePerTicket: (event.priceType === 'donation' || event.priceType === 'free') ? 0 : event.price,
                         quantity: 1,
                         attendeeName: assignment.name || (i === 0 ? regData.name : 'Guest'),
                         attendeeEmail: assignment.email
@@ -320,23 +353,37 @@ export const EventView = () => {
 
 
             // Let's do a precise breakdown calculation to save correct snapshots
-            let breakdownTotal = 0;
+            let taxableSnapshotGross = 0;
+            let nonTaxableSnapshotGross = 0;
+
             // 1. Base Ticket Price
-            if (event.priceType === 'fixed') breakdownTotal += (ticketSelection['general'] || 0) * event.price;
-            else if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => breakdownTotal += (ticketSelection[t.id] || 0) * t.price);
-            else if (event.priceType === 'donation') breakdownTotal += Number(regData.donation) || 0;
-            event.addOns?.forEach(a => { if (addOnSelection[a.id]) breakdownTotal += addOnSelection[a.id].qty * a.price; });
+            if (event.priceType === 'fixed') taxableSnapshotGross += (ticketSelection['general'] || 0) * event.price;
+            else if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => taxableSnapshotGross += (ticketSelection[t.id] || 0) * t.price);
+            else if (event.priceType === 'donation') taxableSnapshotGross += Number(regData.donation) || 0;
+
+            event.addOns?.forEach(a => {
+                if (addOnSelection[a.id]) {
+                    const amt = addOnSelection[a.id].qty * a.price;
+                    if (a.taxable !== false) taxableSnapshotGross += amt;
+                    else nonTaxableSnapshotGross += amt;
+                }
+            });
+
+            const snapshotTotalGross = taxableSnapshotGross + nonTaxableSnapshotGross;
 
             // 2. Discounts
+            let basePrice = snapshotTotalGross;
             if (appliedPromo) {
-                if (appliedPromo.type === 'percent') breakdownTotal -= breakdownTotal * (appliedPromo.value / 100);
-                else breakdownTotal -= appliedPromo.value;
+                if (appliedPromo.type === 'percent') basePrice -= basePrice * (appliedPromo.value / 100);
+                else basePrice = Math.max(0, basePrice - appliedPromo.value);
             }
-            const basePrice = Math.max(0, breakdownTotal);
 
             // 3. Tax
             let taxAmount = 0;
-            if (event.taxRate) taxAmount = basePrice * (event.taxRate / 100);
+            if (event.taxRate) {
+                const taxableRatio = snapshotTotalGross > 0 ? (taxableSnapshotGross / snapshotTotalGross) : 0;
+                taxAmount = (basePrice * taxableRatio) * (event.taxRate / 100);
+            }
 
             // 4. Custom Fees
             let customFeesAmount = 0;
@@ -369,21 +416,28 @@ export const EventView = () => {
                 // --- REAL STRIPE CHECKOUT ---
                 setIsProcessingPayment(true);
 
+                // Construct simple addon map for backend
+                const simpleAddOns: { [key: string]: number } = {};
+                Object.entries(addOnSelection).forEach(([id, val]) => {
+                    if (val.qty > 0) simpleAddOns[id] = val.qty;
+                });
+
                 const response = await fetch('http://127.0.0.1:5001/api/stripe/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         eventId: event.id,
-                        eventTitle: event.title,
-                        tickets: tickets,
-                        addOns: purchasedAddOns,
+                        ticketSelections: ticketSelection,
+                        addOnSelections: simpleAddOns,
                         promoCode: appliedPromo?.code,
+                        affiliateCode: searchParams.get('ref') || undefined, // <--- Pass Affiliate Ref
                         customerEmail: regData.email.trim(),
                         customerName: regData.name,
-                        successUrl: `${window.location.origin}/#/event/${event.id}?success=true`,
-                        cancelUrl: `${window.location.origin}/#/event/${event.id}?canceled=true`,
-                        organizerStripeId: organizerUser.stripeConnectId,
-                        applicationFee: serviceFee
+                        assignments: assignments, // Full guest list
+                        phoneNumber: regData.phoneNumber,
+                        successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
+                        cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
+                        userId: currentUser?.id // Optional, for tracking
                     }),
                 });
 
@@ -391,18 +445,8 @@ export const EventView = () => {
                 if (sessionData.error) throw new Error(sessionData.error);
 
                 if (sessionData.url) {
-                    // Save state before redirect
-                    const pendingData = {
-                        regData,
-                        tickets,
-                        purchasedAddOns,
-                        appliedPromo,
-                        paymentStatus,
-                        serviceFee,
-                        total
-                    };
-                    localStorage.setItem(`pending_reg_${event.id}`, JSON.stringify(pendingData));
-
+                    // No need to save pending state for recreation - backend has the pending registration now.
+                    // We just redirect.
                     window.location.href = sessionData.url;
                     return;
                 }
@@ -448,20 +492,24 @@ export const EventView = () => {
             }
         } catch (e: any) {
             console.error(e);
-            alert("Registration failed: " + e.message);
+            showAlert({
+                title: "Registration Failed",
+                message: e.message || "An unexpected error occurred during registration."
+            });
         } finally {
             setIsRegistering(false);
         }
     };
 
     const handleJoinWaitlist = async () => {
-        if (!waitlistData.name || !waitlistData.email) return alert("Please fill in your details.");
+        if (!waitlistData.name || !waitlistData.email) return showToast("Please fill in your details.", "info");
         setIsJoiningWaitlist(true);
         try {
             await StorageService.joinWaitlist(event.id, waitlistData.name, waitlistData.email);
             setWaitlistSuccess(true);
+            showToast("You've been added to the waitlist!", "success");
         } catch (e: any) {
-            alert("Failed to join waitlist: " + e.message);
+            showToast("Failed to join waitlist: " + e.message, "error");
         } finally {
             setIsJoiningWaitlist(false);
         }
@@ -722,32 +770,42 @@ export const EventView = () => {
                                     </div>
 
                                     <Card className="p-8 border-zinc-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/50 rounded-[2.5rem]">
-                                        {isSoldOut && event.waitlistConfig?.enabled ? (
-                                            waitlistSuccess ? (
-                                                <div className="text-center py-12 animate-in zoom-in-95 duration-500">
-                                                    <div className="w-24 h-24 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/20">
-                                                        <CheckCircle size={48} />
-                                                    </div>
-                                                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">You're on the list!</h2>
-                                                    <p className="text-zinc-500 text-xl font-medium">We'll email you if a spot opens up.</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-8">
-                                                    <div className="text-center mb-10">
-                                                        <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 rotate-3 shadow-inner">
-                                                            <Hourglass size={40} />
+                                        {isSoldOut ? (
+                                            event.waitlistConfig?.enabled ? (
+                                                waitlistSuccess ? (
+                                                    <div className="text-center py-12 animate-in zoom-in-95 duration-500">
+                                                        <div className="w-24 h-24 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/20">
+                                                            <CheckCircle size={48} />
                                                         </div>
-                                                        <h2 className="text-5xl font-black uppercase tracking-tighter mb-4">Sold Out!</h2>
-                                                        <p className="text-zinc-500 text-xl font-medium max-w-sm mx-auto">Join our waitlist to be first in line if tickets reappear.</p>
+                                                        <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">You're on the list!</h2>
+                                                        <p className="text-zinc-500 text-xl font-medium">We'll email you if a spot opens up.</p>
                                                     </div>
-                                                    <div className="max-w-md mx-auto space-y-4 p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl relative overflow-hidden group">
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors"></div>
-                                                        <Input label="Full Name" placeholder="Jane Doe" value={waitlistData.name} onChange={e => setWaitlistData({ ...waitlistData, name: e.target.value })} className="bg-white dark:bg-black rounded-xl h-12" />
-                                                        <Input label="Email Address" type="email" placeholder="jane@example.com" value={waitlistData.email} onChange={e => setWaitlistData({ ...waitlistData, email: e.target.value })} className="bg-white dark:bg-black rounded-xl h-12" />
-                                                        <Button onClick={handleJoinWaitlist} isLoading={isJoiningWaitlist} className="w-full mt-6 h-14 text-xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all rounded-2xl">
-                                                            Join Waitlist
-                                                        </Button>
+                                                ) : (
+                                                    <div className="space-y-8">
+                                                        <div className="text-center mb-10">
+                                                            <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 rotate-3 shadow-inner">
+                                                                <Hourglass size={40} />
+                                                            </div>
+                                                            <h2 className="text-5xl font-black uppercase tracking-tighter mb-4">Sold Out!</h2>
+                                                            <p className="text-zinc-500 text-xl font-medium max-w-sm mx-auto">Join our waitlist to be first in line if tickets reappear.</p>
+                                                        </div>
+                                                        <div className="max-w-md mx-auto space-y-4 p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl relative overflow-hidden group">
+                                                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors"></div>
+                                                            <Input label="Full Name" placeholder="Jane Doe" value={waitlistData.name} onChange={e => setWaitlistData({ ...waitlistData, name: e.target.value })} className="bg-white dark:bg-black rounded-xl h-12" />
+                                                            <Input label="Email Address" type="email" placeholder="jane@example.com" value={waitlistData.email} onChange={e => setWaitlistData({ ...waitlistData, email: e.target.value })} className="bg-white dark:bg-black rounded-xl h-12" />
+                                                            <Button onClick={handleJoinWaitlist} isLoading={isJoiningWaitlist} className="w-full mt-6 h-14 text-xl font-black shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all rounded-2xl">
+                                                                Join Waitlist
+                                                            </Button>
+                                                        </div>
                                                     </div>
+                                                )
+                                            ) : (
+                                                <div className="text-center py-12">
+                                                    <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 text-zinc-400 rounded-[2rem] flex items-center justify-center mx-auto mb-6 rotate-3 shadow-inner">
+                                                        <AlertCircle size={40} />
+                                                    </div>
+                                                    <h2 className="text-5xl font-black uppercase tracking-tighter mb-4">Sold Out!</h2>
+                                                    <p className="text-zinc-500 text-xl font-medium max-w-sm mx-auto">All tickets for this event have been claimed.</p>
                                                 </div>
                                             )
                                         ) : (
@@ -879,7 +937,19 @@ export const EventView = () => {
 
                                                     {((event.waiverConfig?.enabled) || (event.specificWaiverText || event.specificWaiverPdfUrl)) && (
                                                         <div className="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 mb-8">
-                                                            <h3 className="font-black mb-4 text-xs uppercase tracking-widest text-zinc-400">Waiver & Release</h3>
+                                                            <div className="flex justify-between items-center mb-4">
+                                                                <h3 className="font-black text-xs uppercase tracking-widest text-zinc-400">Waiver & Release</h3>
+                                                                {(event.waiverConfig?.pdfUrl || event.specificWaiverPdfUrl) && (
+                                                                    <a
+                                                                        href={event.waiverConfig?.pdfUrl || event.specificWaiverPdfUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="flex items-center gap-2 text-primary text-xs font-bold hover:underline"
+                                                                    >
+                                                                        <Download size={14} /> Download PDF
+                                                                    </a>
+                                                                )}
+                                                            </div>
                                                             <div className="h-40 overflow-y-auto bg-white dark:bg-zinc-900/50 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-200 mb-6 rich-text-content font-medium opacity-90" dangerouslySetInnerHTML={{ __html: event.waiverConfig?.text || event.specificWaiverText || (organizerUser?.defaultWaiver?.text) || "No waiver text provided." }} />
                                                             <label className="flex items-start gap-4 cursor-pointer group">
                                                                 <div className="relative pt-1">
@@ -1011,7 +1081,7 @@ export const EventView = () => {
                                                                                 let sub = 0;
                                                                                 if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
                                                                                 if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                                if ((event.priceType as string) === 'donation') sub += Number(regData.donation) || 0;
                                                                                 event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
                                                                                 if (appliedPromo) {
                                                                                     if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
@@ -1054,8 +1124,8 @@ export const EventView = () => {
                         <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/40 transition-all"></div>
                             <div className="relative text-center">
-                                <div className="w-24 h-24 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full mx-auto mb-6 flex items-center justify-center p-1 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700 overflow-hidden">
-                                    <div className="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center text-4xl font-black overflow-hidden bg-white/5">
+                                <div className="w-40 h-40 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full mx-auto mb-6 flex items-center justify-center p-1 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700 overflow-hidden">
+                                    <div className="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center text-8xl font-black overflow-hidden bg-white/5">
                                         {organizerUser?.logoUrl ? (
                                             <img src={organizerUser.logoUrl} alt={organizerUser.businessName || organizerUser.name} className="w-full h-full object-cover" />
                                         ) : (
@@ -1074,7 +1144,7 @@ export const EventView = () => {
                                     <Button
                                         variant="outline"
                                         onClick={() => navigate(`/organizer/${organizerUser?.id || event.ownerId}`)}
-                                        className="flex-1 border-zinc-800 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-14 uppercase tracking-widest text-xs transition-all"
+                                        className="flex-1 border-zinc-800 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-24 uppercase tracking-widest text-xs transition-all"
                                     >
                                         View Full Bio
                                     </Button>
@@ -1082,9 +1152,9 @@ export const EventView = () => {
                                         variant="outline"
                                         onClick={toggleFavorite}
                                         disabled={loadingFavorite}
-                                        className={`w-14 h-14 rounded-2xl border-zinc-800 flex items-center justify-center transition-all ${currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? 'bg-pink-500 border-pink-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]' : 'text-zinc-600 hover:text-pink-500 hover:border-pink-500'}`}
+                                        className={`w-24 h-24 !p-0 rounded-2xl border-zinc-800 flex items-center justify-center transition-all ${currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? 'bg-pink-500 border-pink-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]' : 'text-zinc-600 hover:text-pink-500 hover:border-pink-500'}`}
                                     >
-                                        <Heart size={24} fill={currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? "currentColor" : "none"} />
+                                        <Heart size={42} fill={currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? "currentColor" : "none"} />
                                     </Button>
                                 </div>
                             </div>
@@ -1110,7 +1180,7 @@ export const EventView = () => {
                             </div>
                             <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Tell your friends</h3>
                             <p className="text-zinc-500 font-bold mb-8">This event is better with a crew. Share the vibe!</p>
-                            <Button onClick={() => { navigator.clipboard.writeText(shareUrl); alert("Link copied!"); }} className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all flex items-center justify-center gap-3">
+                            <Button onClick={() => { navigator.clipboard.writeText(shareUrl); showToast("Link copied to clipboard!", "success"); }} className="w-full h-14 rounded-2xl bg-zinc-900 text-white font-black uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all flex items-center justify-center gap-3">
                                 <CheckCircle size={16} /> Copy Magic Link
                             </Button>
                         </Card>

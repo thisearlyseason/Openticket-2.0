@@ -71,17 +71,28 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     }, [isDark]);
 
     // Global UI & Notifications
-    const { showAlert } = useGlobalUI();
+    const { showAlert, showConfirm } = useGlobalUI();
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
     useEffect(() => {
         // Override window.alert
-        // const originalAlert = window.alert; 
-        // We override it on the window object. Note: browser might block if called too early, but usually fine in effects.
-        window.alert = (msg) => showAlert({ title: "Reference", message: String(msg) });
-        // Restore? No, we want it permanent for the session lifespan in React
-        // return () => { window.alert = originalAlert; };
+        window.alert = (msg) => showAlert({ title: "Notice", message: String(msg) });
+
+        // Override window.confirm
+        window.confirm = (msg) => {
+            // We can't actually make window.confirm sync with a React modal easily without returning a Promise
+            // and using async/await everywhere. For now, since we want to avoid refactoring EVERY confirm call,
+            // we will keep it as is IF we want sync behavior, OR we encourage use of useGlobalUI.
+            // Actually, a better way is to provide showConfirm via context and use that.
+            // But let's try to override it anyway for simple cases if possible, though it's problematic for sync.
+
+            // Reverting the idea of overriding confirm because it's synchronous and React modals are not.
+            // We will refactor the calls to useGlobalUI.showConfirm instead.
+            return true;
+        };
+        // Restore window.confirm to native for now to avoid breaking sync logic
+        delete (window as any).confirm;
     }, [showAlert]);
 
     useEffect(() => {
@@ -102,12 +113,20 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
         localStorage.setItem('openticket_theme', newTheme ? 'dark' : 'light');
     };
 
-    const handleLogout = async () => {
-        try {
-            await StorageService.logout();
-        } finally {
-            window.location.href = '/';
-        }
+    const handleLogout = () => {
+        showConfirm({
+            title: "Sign Out",
+            message: "Are you sure you want to log out of your account?",
+            confirmText: "Log Out",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await StorageService.logout();
+                } finally {
+                    window.location.href = '/';
+                }
+            }
+        });
     };
 
     useEffect(() => {
@@ -203,6 +222,11 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                             )}
                                         </div>
 
+                                        {user?.role === 'superadmin' && (
+                                            <Link to="/admin" className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-1">
+                                                <LayoutDashboard size={14} /> Admin
+                                            </Link>
+                                        )}
                                         {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
                                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
                                         <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>

@@ -70,7 +70,8 @@ CREATE TABLE public.registrations (
     timestamp TIMESTAMPTZ DEFAULT NOW(),
     answers JSONB,
     promo_code_used TEXT,
-    stripe_session_id TEXT
+    stripe_session_id TEXT,
+    tickets JSONB
 );
 
 -- 5. Enable RLS

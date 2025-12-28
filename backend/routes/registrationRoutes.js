@@ -4,7 +4,11 @@ import * as registrationController from '../controllers/registrationController.j
 import verifyToken from '../middlewares/authMiddleware.js';
 
 router.post('/', registrationController.createRegistration);
-router.get('/event/:eventId', verifyToken, registrationController.getRegistrationsByEvent);
+router.get('/', registrationController.getAllRegistrations);
+router.get('/:eventId', verifyToken, registrationController.getRegistrationsByEvent);
 router.put('/:id', verifyToken, registrationController.updateRegistration);
+router.post('/:id/refund', verifyToken, registrationController.refundRegistration);
+router.post('/:id/refund-addon', verifyToken, registrationController.refundAddOn);
+router.post('/:id/transfer', verifyToken, registrationController.transferTicket);
 
 export default router;

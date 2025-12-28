@@ -22,6 +22,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>OpenTicket - Community Events</title>
+  <script>
+    // CRITICAL: Stripe Return Interceptor (Pre-React)
+    // Runs immediately to prevent Landing Page flash
+    (function () {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('stripe_return') === 'true') {
+          const eventId = params.get('event_id');
+          const sessionId = params.get('session_id');
+          const isSuccess = params.get('success') === 'true';
+          const isCanceled = params.get('canceled') === 'true';
+
+          if (eventId) {
+            const newHashPartial = `/event/${eventId}`;
+            const newSearchParams = new URLSearchParams();
+            if (isSuccess) newSearchParams.append('success', 'true');
+            if (isCanceled) newSearchParams.append('canceled', 'true');
+            if (sessionId) newSearchParams.append('session_id', sessionId);
+
+            const newUrl = `${window.location.origin}/#${newHashPartial}?${newSearchParams.toString()}`;
+            console.log("[Index] Stripe Return Intercepted. Redirecting to Hash Router:", newUrl);
+            window.location.replace(newUrl);
+          }
+        }
+      } catch (e) {
+        console.error("Stripe Redirect Error", e);
+      }
+    })();
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {

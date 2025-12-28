@@ -24,9 +24,10 @@ interface TicketRowProps {
     ticket: CheckInTicket;
     onCheckIn: () => void;
     onDelete: () => void;
+    onPay: () => void;
 }
 
-const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete }) => {
+const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete, onPay }) => {
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +42,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete }) =>
     }, []);
 
     const isCheckedIn = ticket.checkedIn;
+    const isUnpaid = ticket.reg.paymentStatus !== 'completed';
 
     return (
         <div className={`relative rounded-2xl mb-3 border-l-4 transition-all shadow-sm flex flex-col sm:flex-row gap-4 p-5 ${isCheckedIn
@@ -75,7 +77,7 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete }) =>
                 </div>
 
                 <div className="flex items-center gap-2 mb-1">
-                    {ticket.reg.paymentStatus !== 'completed' && (
+                    {isUnpaid && (
                         <Badge color="red" className="text-[10px] px-1.5 py-0.5">UNPAID</Badge>
                     )}
                     {isCheckedIn && (
@@ -115,22 +117,32 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete }) =>
                     </div>
                 </div>
 
-                <button
-                    onClick={(e) => { e.stopPropagation(); onCheckIn(); }}
-                    className={`
-                        h-12 w-full sm:w-auto px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
-                        ${isCheckedIn
-                            ? 'bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700'
-                            : 'bg-[#E0FF20] text-black hover:bg-[#d4f542] hover:scale-105 border border-transparent'
-                        }
-                    `}
-                >
-                    {isCheckedIn ? (
-                        <>Undo <RotateCcw size={16} /></>
-                    ) : (
-                        <>Check In <CheckCircle2 size={18} /></>
+                <div className="flex gap-2 w-full sm:w-auto">
+                    {isUnpaid && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onPay(); }}
+                            className="h-12 w-full sm:w-auto px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 bg-green-100 text-green-700 hover:bg-green-200 border border-green-200"
+                        >
+                            <DollarSign size={18} /> Pay
+                        </button>
                     )}
-                </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onCheckIn(); }}
+                        className={`
+                            h-12 w-full sm:w-auto px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg
+                            ${isCheckedIn
+                                ? 'bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700'
+                                : 'bg-[#E0FF20] text-black hover:bg-[#d4f542] hover:scale-105 border border-transparent'
+                            }
+                        `}
+                    >
+                        {isCheckedIn ? (
+                            <>Undo <RotateCcw size={16} /></>
+                        ) : (
+                            <>Check In <CheckCircle2 size={18} /></>
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -175,7 +187,7 @@ export const CheckInPortal = () => {
 
         const init = async () => {
             if (id) {
-                const e = await StorageService.getEventById(id);
+                const e = await StorageService.getEventFull(id);
                 if (e) {
                     if (e.ownerId !== user.id && !user.isAdmin) {
                         alert("Unauthorized access to Check-In Portal.");
@@ -446,9 +458,7 @@ export const CheckInPortal = () => {
 
         let matchesFilter = true;
         if (filter === 'checked-in') matchesFilter = t.checkedIn;
-        // User requested "all others" (not checked in) to be in the "unpaid" tab.
-        // Effectively "Unpaid" now serves as "Not Checked In" / "Pending"
-        if (filter === 'unpaid') matchesFilter = !t.checkedIn;
+        if (filter === 'unpaid') matchesFilter = t.reg.paymentStatus !== 'completed';
 
         return matchesSearch && matchesFilter;
     });
@@ -748,6 +758,18 @@ export const CheckInPortal = () => {
                                 ticket={ticket}
                                 onCheckIn={() => handleCheckInToggle(ticket.reg.id, ticket.uniqueKeySuffix || `${ticket.tierId}-${ticket.index}`, ticket.checkedIn)}
                                 onDelete={() => setTicketToDelete(ticket)}
+                                onPay={() => {
+                                    setPaymentContext({
+                                        reg: ticket.reg,
+                                        ticketId: ticket.id,
+                                        tierId: ticket.tierId,
+                                        index: ticket.index
+                                    });
+                                    setPaymentMethod(null); // Force selection
+                                    setCashTendered('');
+                                    setCardDetails({ number: '', expiry: '', cvc: '', zip: '' });
+                                    setPaymentStatus('input');
+                                }}
                             />
                         ))
                     )}

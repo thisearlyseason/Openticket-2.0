@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useGlobalUI } from './GlobalUIProvider';
 import { Info, Image as ImageIcon, MapPin, Calendar, Clock, DollarSign, Plus, Trash2, Save, ArrowLeft, Loader2, Sparkles, Check, ChevronRight, Settings, Ticket, Target, Users, CreditCard, Shield, Globe, Gift, HelpCircle, FileText, Megaphone, CheckCircle2, QrCode, Tag, Percent, LinkIcon as LinkIcon, Copy, Mail, AlertCircle, X } from 'lucide-react';
 import { Button, Input, RichTextarea, Select, Card, FileDropZone, DatePicker, TimePicker, Switch, Tooltip, formatTime, ErrorModal } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
@@ -40,6 +41,7 @@ export const EventBuilder = () => {
     const [validationError, setValidationError] = useState('');
 
     const [errorModal, setErrorModal] = useState<{ open: boolean, title?: string, message: string }>({ open: false, message: '' });
+    const { showToast, showConfirm, showAlert } = useGlobalUI();
 
     // Expanded Ticket State
     const [expandedTierIndex, setExpandedTierIndex] = useState<number | null>(null);
@@ -94,7 +96,7 @@ export const EventBuilder = () => {
             setCurrentUser(updatedUser || user);
 
             if (id) {
-                const event = await StorageService.getEventById(id);
+                const event = await StorageService.getEventFull(id);
                 if (event) {
                     if (event.ownerId !== user.id && !user.isAdmin) {
                         setErrorModal({ open: true, message: "Unauthorized access to this event." });
@@ -139,8 +141,7 @@ export const EventBuilder = () => {
         if (recurringIndex === -1) {
             // Single Event Total Capacity
             if (newVal > limit) {
-                setErrorModal({
-                    open: true,
+                showAlert({
                     title: "Capacity Limit Reached",
                     message: `Your ${planConfig.name} plan allows a maximum of ${limit} tickets per event.\n\nPlease upgrade your plan to increase this limit.`
                 });
@@ -155,8 +156,7 @@ export const EventBuilder = () => {
 
             if ((otherDatesTotal + newVal) > limit) {
                 const available = Math.max(0, limit - otherDatesTotal);
-                setErrorModal({
-                    open: true,
+                showAlert({
                     title: "Capacity Limit Reached",
                     message: `Your ${planConfig.name} plan allows ${limit} total tickets across all dates.\n\nYou have ${otherDatesTotal} assigned to other dates. You can add up to ${available} for this date.`
                 });
@@ -184,7 +184,7 @@ export const EventBuilder = () => {
         const error = validateStep(currentStep);
         if (error) {
             setValidationError(error);
-            setErrorModal({ open: true, message: `Missing Info: ${error}` });
+            showAlert({ title: "Missing Info", message: error });
             return;
         }
         setValidationError('');
@@ -199,9 +199,13 @@ export const EventBuilder = () => {
     };
 
     const handleExit = () => {
-        if (confirm("Exit without saving? Unsaved changes will be lost.")) {
-            navigate('/dashboard');
-        }
+        showConfirm({
+            title: "Exit Builder",
+            message: "Exit without saving? Unsaved changes will be lost.",
+            confirmText: "Exit",
+            variant: "danger",
+            onConfirm: async () => navigate('/dashboard')
+        });
     };
 
     const handleSubmit = async (asDraft = false) => {
@@ -220,7 +224,7 @@ export const EventBuilder = () => {
             }
 
             if (!user) {
-                setErrorModal({ open: true, message: "Session expired. Please log in again." });
+                showAlert({ title: "Session Expired", message: "Please log in again." });
                 navigate('/auth');
                 return;
             }
@@ -232,7 +236,7 @@ export const EventBuilder = () => {
         // 2. Validate current step before proceeding (sanity check)
         const stepError = validateStep(1); // Check basics
         if (stepError && !asDraft) {
-            setErrorModal({ open: true, message: `Cannot publish: ${stepError}` });
+            showAlert({ title: "Incomplete Event", message: `Cannot publish: ${stepError}` });
             return;
         }
 
@@ -240,7 +244,7 @@ export const EventBuilder = () => {
         if (!asDraft) {
             // Check Outstanding Balance - FORCE DRAFT if unpaid
             if (user.balanceDue > 0) {
-                setErrorModal({ open: true, message: "Outstanding Balance: Event saved as Draft. Please pay your balance to publish." });
+                showAlert({ title: "Balance Due", message: "Event saved as Draft. Please pay your balance to publish." });
                 asDraft = true;
             }
 
@@ -250,8 +254,7 @@ export const EventBuilder = () => {
                 : formData.capacity || 0;
 
             if (totalCapacity > planDetails.ticketLimit && !asDraft) { // Skip checking if already forced to draft
-                setErrorModal({
-                    open: true,
+                showAlert({
                     title: "Capacity Limit Exceeded",
                     message: `Your current ${planDetails.name} plan is limited to ${planDetails.ticketLimit} tickets per event. This event has a capacity of ${totalCapacity}. Please upgrade to increase capacity.`
                 });
@@ -275,8 +278,7 @@ export const EventBuilder = () => {
                 const isNewPublish = !id || (id && formData.isDraft);
 
                 if (isNewPublish && eventsThisMonth >= planDetails.eventLimit) {
-                    setErrorModal({
-                        open: true,
+                    showAlert({
                         title: "Monthly Limit Reached",
                         message: `You have reached the limit of ${planDetails.eventLimit} published events this month on the Free plan. Please upgrade to Pro for unlimited events.`
                     });
@@ -360,14 +362,14 @@ export const EventBuilder = () => {
             ]);
 
             if (asDraft) {
-                alert("Event saved as Draft!");
+                showToast("Event saved as Draft!", "info");
                 navigate('/dashboard');
             } else {
                 navigate('/dashboard', { state: { showSuccess: true } });
             }
         } catch (e: any) {
             console.error("Save failed", e);
-            setErrorModal({ open: true, title: "Save Failed", message: `Failed to save event: ${e.message}` });
+            showAlert({ title: "Save Failed", message: `Failed to save event: ${e.message}` });
         } finally {
             setIsSaving(false);
         }
@@ -773,7 +775,14 @@ export const EventBuilder = () => {
                                             {['free', 'fixed', 'donation', 'tiered'].map(type => (
                                                 <button
                                                     key={type}
-                                                    onClick={() => setFormData({ ...formData, priceType: type as any })}
+                                                    onClick={() => {
+                                                        const updates: any = { priceType: type };
+                                                        if (type === 'free' || type === 'donation') {
+                                                            updates.price = 0;
+                                                            updates.customFees = [];
+                                                        }
+                                                        setFormData({ ...formData, ...updates });
+                                                    }}
                                                     className={`px-3 py-1 rounded-lg text-sm font-bold capitalize transition-colors ${formData.priceType === type ? 'bg-zinc-900 text-white dark:bg-white dark:text-black' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 text-zinc-500'}`}
                                                 >
                                                     {type}
@@ -878,7 +887,10 @@ export const EventBuilder = () => {
                                             <div key={addon.id} className="p-4 border rounded-xl bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                                                 <div>
                                                     <div className="font-bold">{addon.name}</div>
-                                                    <div className="text-sm text-zinc-500">${addon.price} {addon.question && `• ${addon.question}`}</div>
+                                                    <div className="text-sm text-zinc-500">
+                                                        ${addon.price} {addon.question && `• ${addon.question}`}
+                                                        {addon.taxable && <span className="ml-2 text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 font-bold border border-zinc-200 dark:border-zinc-700">+ TAX</span>}
+                                                    </div>
                                                 </div>
                                                 <Button variant="danger" size="sm" onClick={() => setFormData({ ...formData, addOns: formData.addOns?.filter((_, i) => i !== idx) })}>
                                                     <Trash2 size={16} />
@@ -906,12 +918,21 @@ export const EventBuilder = () => {
                                             />
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <Switch
-                                                checked={!!newAddOn.question}
-                                                onChange={c => setNewAddOn({ ...newAddOn, question: c ? 'Select Option' : undefined, questionType: 'select' })}
-                                            />
-                                            <span className="text-sm font-bold">Has Variants (e.g. Size, Color)</span>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <Switch
+                                                    checked={!!newAddOn.question}
+                                                    onChange={c => setNewAddOn({ ...newAddOn, question: c ? 'Select Option' : undefined, questionType: 'select' })}
+                                                />
+                                                <span className="text-sm font-bold">Has Variants</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Switch
+                                                    checked={newAddOn.taxable || false}
+                                                    onChange={c => setNewAddOn({ ...newAddOn, taxable: c })}
+                                                />
+                                                <span className="text-sm font-bold">Taxable</span>
+                                            </div>
                                         </div>
 
                                         {newAddOn.question !== undefined && (

@@ -11,6 +11,21 @@ export const Auth = () => {
     const [step, setStep] = useState(0); // 0 = Role Selection, 1 = Basics, 2 = Onboarding, 3 = Non-Profit (Optional)
     const [role, setRole] = useState<'attendee' | 'organizer'>('attendee');
     const [isLoading, setIsLoading] = useState(false);
+    const [findTickets, setFindTickets] = useState(false);
+    const [ticketMessage, setTicketMessage] = useState('');
+
+    const handleFindTickets = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formData.email) return;
+        setIsLoading(true);
+        // Mock success for now, or call StorageService.sendMagicLink(formData.email)
+        // Since we don't have a backend "Send Magic Link" yet, we'll simulate.
+        // TODO: Implement StorageService.sendTicketLink(formData.email)
+        setTimeout(() => {
+            setTicketMessage(`If matched, an access link has been sent to ${formData.email}`);
+            setIsLoading(false);
+        }, 1500);
+    };
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -206,9 +221,49 @@ export const Auth = () => {
                     </p>
                 </div>
 
+                {/* MODE SWITCHER */}
+                <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-6">
+                    <button onClick={() => { setIsLogin(true); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                        Sign In
+                    </button>
+                    <button onClick={() => { setIsLogin(false); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                        Sign Up
+                    </button>
+                    <button onClick={() => { setFindTickets(true); setIsLogin(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                        Find Tickets
+                    </button>
+                </div>
+
+                {/* FIND TICKETS FORM */}
+                {findTickets && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
+                        <div className="text-center mb-6">
+                            <h3 className="font-bold text-lg mb-2">Lost your tickets?</h3>
+                            <p className="text-sm text-zinc-500">Enter your email and we'll send a magic link to access your orders.</p>
+                        </div>
+                        <form onSubmit={handleFindTickets} className="space-y-4">
+                            <Input
+                                label="Email Address used for purchase"
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            />
+                            {ticketMessage && (
+                                <div className="p-4 bg-green-500/10 text-green-600 rounded-xl text-sm font-bold text-center">
+                                    {ticketMessage}
+                                </div>
+                            )}
+                            <Button type="submit" variant="secondary" className="w-full py-4 text-lg text-black" isLoading={isLoading}>
+                                Email Me My Tickets
+                            </Button>
+                        </form>
+                    </div>
+                )}
+
                 {/* LOGIN FORM */}
-                {isLogin && (
-                    <div className="space-y-4">
+                {isLogin && !findTickets && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
                         {/* Google Login Button */}
                         <button
                             type="button"
@@ -260,7 +315,7 @@ export const Auth = () => {
                 )}
 
                 {/* SIGNUP FLOW */}
-                {!isLogin && (
+                {!isLogin && !findTickets && (
                     <div className="space-y-4">
 
 
@@ -442,14 +497,7 @@ export const Auth = () => {
                     </div>
                 )}
 
-                <div className="mt-6 text-center">
-                    <button
-                        onClick={() => { setIsLogin(!isLogin); setStep(0); setError(''); }}
-                        className="text-primary hover:underline text-sm font-bold"
-                    >
-                        {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-                    </button>
-                </div>
+
             </Card>
         </div>
     );
