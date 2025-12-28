@@ -70,11 +70,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 
-app.get('/api/payments/ping', (req, res) => {
-    res.json({ status: 'Direct Payment Route Active' });
+app.get('/api/check', (req, res) => {
+    res.json({ status: 'Check Route Active' });
 });
 
-app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE
+// app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE - REMOVED
 
 // app.use('/api/payments', inlinePaymentRouter);
 
