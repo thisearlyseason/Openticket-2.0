@@ -1,12 +1,12 @@
 import supabase from '../services/supabase.js';
-import Stripe from 'stripe';
+// import Stripe from 'stripe';
 
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+// // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
 
 export const createRegistration = async (req, res) => {
     try {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
         const registrationData = req.body;
         // 1. Validate Capacity
         const { data: eventData } = await supabase.from('events').select('capacity, registered_count').eq('id', registrationData.event_id).single();
@@ -148,7 +148,7 @@ export const refundRegistration = async (req, res) => {
         const owner_id = req.user.uid;
         const { tickets, reason } = req.body; // tickets: [] means full order refund
 
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
@@ -248,7 +248,7 @@ export const refundAddOn = async (req, res) => {
         const { id } = req.params;
         const owner_id = req.user.uid;
         const { addonIndex, reason } = req.body; // We expect index or ID? StorageService sends index.
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
         // 1. Verify Ownership
         const { data: reg, error: regError } = await supabase
