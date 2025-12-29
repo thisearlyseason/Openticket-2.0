@@ -41,12 +41,32 @@ export const createOrder = async (req, res) => {
         for (const [ticketId, qtyVal] of Object.entries(ticketSelections)) {
             const qty = Number(qtyVal); // Ensure number
             if (qty > 0) {
-                const tier = event.ticket_tiers.find(t => t.id === ticketId);
-                if (tier) {
-                    rawSubtotal += (tier.price * qty);
+                let tierName = "";
+                let tierPrice = 0;
+                let found = false;
+
+                // 1. Try to find in tiers (if tiered event)
+                if (event.ticket_tiers && Array.isArray(event.ticket_tiers)) {
+                    const tier = event.ticket_tiers.find(t => t.id === ticketId);
+                    if (tier) {
+                        tierName = tier.name;
+                        tierPrice = tier.price;
+                        found = true;
+                    }
+                }
+
+                // 2. Fallback for Fixed/General Price (if not found in tiers)
+                if (!found && ticketId === 'general') {
+                    tierName = event.ticket_name || 'General Admission';
+                    tierPrice = (event.price_type === 'free' || event.price_type === 'donation') ? 0 : (event.price || 0);
+                    found = true;
+                }
+
+                if (found) {
+                    rawSubtotal += (tierPrice * qty);
                     cartItems.push({
-                        name: `${event.title} - ${tier.name}`,
-                        price: tier.price,
+                        name: `${event.title} - ${tierName}`,
+                        price: tierPrice,
                         quantity: qty,
                         type: 'ticket',
                         id: ticketId
@@ -57,8 +77,8 @@ export const createOrder = async (req, res) => {
                         ticketsData.push({
                             id: `tix-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
                             tierId: ticketId,
-                            name: tier.name,
-                            pricePerTicket: tier.price,
+                            name: tierName,
+                            pricePerTicket: tierPrice,
                             status: 'valid'
                         });
                     }
