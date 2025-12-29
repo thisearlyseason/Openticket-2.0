@@ -806,6 +806,17 @@ export const StorageService = {
             return null;
         }
     },
+
+    getEventFull: async (id: string): Promise<Event | null> => {
+        if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id) || null;
+        try {
+            const { event } = await fetchSupabase(`/events/${id}/full`, true);
+            return event ? normalizeEvent(event) : null;
+        } catch (e) {
+            console.warn("Get Event Full failed", e);
+            return null;
+        }
+    },
     saveEvent: async (event: Event) => {
         const clean = sanitizeInput(event);
         if (isOffline) {
