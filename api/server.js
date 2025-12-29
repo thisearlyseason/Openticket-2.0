@@ -77,7 +77,8 @@ app.get('/api/check', (req, res) => {
 // import stripeRoutes from '../backend/routes/stripeRoutes.js';
 // app.use('/api/stripe', stripeRoutes);
 app.use('/api/admin', adminRoutes);
-// app.use('/api/notifications', notificationRoutes);
+import notificationRoutes from '../backend/routes/notificationRoutes.js';
+app.use('/api/notifications', notificationRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
