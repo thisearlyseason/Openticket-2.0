@@ -1003,56 +1003,6 @@ export const AttendeeManager = () => {
                     </div>
                 )
             }
-            {
-                showDeleteModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                        <Card className="w-full max-w-sm p-6">
-                            <div className="flex flex-col items-center text-center">
-                                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 text-red-500">
-                                    <Trash2 size={32} />
-                                </div>
-                                <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">Delete Attendee?</h3>
-                                <p className="text-zinc-500 mb-6 font-medium">
-                                    Are you sure you want to remove <span className="font-bold text-zinc-900 dark:text-white">{showDeleteModal.name}</span>?
-                                    <br /><span className="text-xs mt-2 block opacity-70">This will mark their ticket as Deleted/Refunded.</span>
-                                </p>
-
-                                <div className="flex gap-3 w-full">
-                                    <Button variant="outline" className="flex-1" onClick={() => setShowDeleteModal(null)}>Cancel</Button>
-                                    <Button className="flex-1 bg-red-500 hover:bg-red-600 border-none text-white" onClick={confirmDeleteGuest}>Delete</Button>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                )
-            }
-            {
-                confirmationModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                        <Card className="w-full max-w-sm p-6">
-                            <div className="flex flex-col items-center text-center">
-                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${confirmationModal.isDestructive ? 'bg-red-100 dark:bg-red-900/30 text-red-500' : 'bg-primary/10 text-primary'}`}>
-                                    {confirmationModal.isDestructive ? <AlertTriangle size={32} /> : <Check size={32} />}
-                                </div>
-                                <h3 className="text-xl font-bold mb-2 text-zinc-900 dark:text-white">{confirmationModal.title}</h3>
-                                <p className="text-zinc-500 mb-6 font-medium">
-                                    {confirmationModal.message}
-                                </p>
-
-                                <div className="flex gap-3 w-full">
-                                    <Button variant="outline" className="flex-1" onClick={() => setConfirmationModal(null)}>Cancel</Button>
-                                    <Button
-                                        className={`flex-1 ${confirmationModal.isDestructive ? 'bg-red-500 hover:bg-red-600 border-none text-white' : ''}`}
-                                        onClick={() => { confirmationModal.onConfirm(); setConfirmationModal(null); }}
-                                    >
-                                        {confirmationModal.confirmText}
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                )
-            }
         </div >
     );
 };
