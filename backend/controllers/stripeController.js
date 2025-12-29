@@ -108,8 +108,48 @@ export const createOrder = async (req, res) => {
 
         if (line_items.length === 0) return res.status(400).json({ error: "No items selected" });
 
-        // Calculate Fees
+        // Calculate Tax
+        // subtotal is in DOLLARS currently from loop above
+        if (event.tax_rate && event.tax_rate > 0) {
+            const taxAmountCents = Math.round(subtotal * (event.tax_rate / 100) * 100);
+            if (taxAmountCents > 0) {
+                line_items.push({
+                    price_data: {
+                        currency: 'usd',
+                        product_data: { name: `Tax (${event.tax_rate}%)` },
+                        unit_amount: taxAmountCents,
+                    },
+                    quantity: 1,
+                });
+            }
+        }
+
+        // Calculate Custom Fees
+        if (event.custom_fees && Array.isArray(event.custom_fees)) {
+            event.custom_fees.forEach(fee => {
+                let amountCents = 0;
+                if (fee.type === 'percent') {
+                    amountCents = Math.round(subtotal * (fee.amount / 100) * 100);
+                } else {
+                    amountCents = Math.round(fee.amount * 100);
+                }
+
+                if (amountCents > 0) {
+                    line_items.push({
+                        price_data: {
+                            currency: 'usd',
+                            product_data: { name: fee.name || "Fee" },
+                            unit_amount: amountCents,
+                        },
+                        quantity: 1,
+                    });
+                }
+            });
+        }
+
+        // Calculate Platform/Service Fees
         let serviceFee = 0;
+        // ... (existing service fee logic)
         if (!event.absorb_fees && event.price_type !== 'free' && event.price_type !== 'donation' && subtotal > 0) {
             const feeFixed = 0.99;
             const feePercent = 0.0275;
