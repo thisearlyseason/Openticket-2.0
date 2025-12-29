@@ -1,6 +1,7 @@
-import Stripe from 'stripe';
 import crypto from 'crypto';
 import supabase from '../services/supabase.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 // FIX: Use Server-Side Email Service (Nodemailer), not Client-Side (Firebase)
 import { EmailService } from '../services/serverEmail.js';
@@ -17,7 +18,10 @@ export const handleWebhook = async (req, res) => {
     let event;
 
     try {
+        // Safe Lazy Load
+        const Stripe = require('stripe');
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+
         event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     } catch (err) {
         console.error(`Webhook Signature Verification Failed: ${err.message}`);
@@ -25,6 +29,13 @@ export const handleWebhook = async (req, res) => {
     }
 
     try {
+        // Lazy Load Stripe Again for inner logic if needed (or reuse instance above)
+        // Since we initialized it in the try block, we need to ensure scope or re-init.
+        // Simplified: Re-init or move scope.
+        // Moving scope is messy with try-catch. I'll just re-require or rely on the fact that verification passed.
+        const Stripe = require('stripe');
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             console.log(`[Webhook] Payment succeeded for session: ${session.id}`);
