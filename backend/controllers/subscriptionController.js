@@ -1,7 +1,8 @@
 
-import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 dotenv.config();
 
@@ -72,7 +73,16 @@ const ensureStripeProducts = async (stripe) => {
 
 export const createSubscriptionCheckout = async (req, res) => {
     try {
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        // Safe Lazy Load
+        let stripe;
+        try {
+            const Stripe = require('stripe');
+            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+        } catch (loaderError) {
+            console.error("Stripe Load Failed:", loaderError);
+            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
+        }
+
         const { planName, cycle, userId, userEmail } = req.body;
 
         if (!['Pro Plan', 'Premium Plan'].includes(planName)) {
