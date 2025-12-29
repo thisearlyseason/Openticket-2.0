@@ -74,12 +74,12 @@ app.get('/api/check', (req, res) => {
 });
 
 // app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE - REMOVED
-import stripeRoutes from '../backend/routes/stripeRoutes.js';
-app.use('/api/stripe', stripeRoutes);
+// import stripeRoutes from '../backend/routes/stripeRoutes.js';
+// app.use('/api/stripe', stripeRoutes);
 app.use('/api/admin', adminRoutes);
 
 // notificationRoutes already imported at top
-app.use('/api/notifications', notificationRoutes);
+// app.use('/api/notifications', notificationRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
