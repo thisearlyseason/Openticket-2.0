@@ -29,8 +29,11 @@ export const createOrder = async (req, res) => {
         }
 
         // 3. Calculate Total & Construct Line Items
-        const line_items = [];
-        let subtotal = 0;
+        // We calculate strictly to match Frontend: EventView.tsx
+
+        // A. Gather raw items and subtotal
+        let rawSubtotal = 0;
+        const cartItems = []; // { name, price (dollars), type, id, quantity }
         const ticketsData = [];
         const addOnsData = [];
 
@@ -39,31 +42,20 @@ export const createOrder = async (req, res) => {
             if (selection.qty > 0) {
                 const tier = event.ticket_tiers.find(t => t.id === ticketId);
                 const qty = selection.qty;
-
                 if (tier) {
-                    const amount = Math.round(tier.price * 100);
-                    line_items.push({
-                        price_data: {
-                            currency: 'usd',
-                            product_data: {
-                                name: `${event.title} - ${tier.name}`,
-                                metadata: {
-                                    event_id: eventId,
-                                    ticket_id: ticketId,
-                                    type: 'ticket'
-                                }
-                            },
-                            unit_amount: amount,
-                        },
+                    rawSubtotal += (tier.price * qty);
+                    cartItems.push({
+                        name: `${event.title} - ${tier.name}`,
+                        price: tier.price,
                         quantity: qty,
+                        type: 'ticket',
+                        id: ticketId
                     });
 
-                    subtotal += (tier.price * qty);
-
-                    // Construct DB Object
+                    // DB Object
                     for (let i = 0; i < qty; i++) {
                         ticketsData.push({
-                            id: `tix-${Date.now()}-${i}`,
+                            id: `tix-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
                             tierId: ticketId,
                             name: tier.name,
                             pricePerTicket: tier.price,
@@ -80,19 +72,14 @@ export const createOrder = async (req, res) => {
                 if (qty > 0) {
                     const addon = event.add_ons ? event.add_ons.find(a => a.id === addonId) : null;
                     if (addon) {
-                        const amount = Math.round(addon.price * 100);
-                        line_items.push({
-                            price_data: {
-                                currency: 'usd',
-                                product_data: {
-                                    name: `${addon.name} (Add-on)`,
-                                },
-                                unit_amount: amount,
-                            },
+                        rawSubtotal += (addon.price * qty);
+                        cartItems.push({
+                            name: `${addon.name} (Add-on)`,
+                            price: addon.price,
                             quantity: qty,
+                            type: 'addon',
+                            id: addonId
                         });
-
-                        subtotal += (addon.price * qty);
 
                         addOnsData.push({
                             id: addonId,
@@ -106,40 +93,93 @@ export const createOrder = async (req, res) => {
             }
         }
 
-        if (line_items.length === 0) return res.status(400).json({ error: "No items selected" });
+        if (cartItems.length === 0) return res.status(400).json({ error: "No items selected" });
 
-        // Calculate Tax
-        // subtotal is in DOLLARS currently from loop above
+        // B. Apply Discount (if any)
+        // This gives us the target "Base Price" (taxable)
+        let targetBasePrice = rawSubtotal;
+        let discountApplied = false;
+
+        if (promoCode && event.promo_codes) {
+            const code = event.promo_codes.find(c => c.code === promoCode);
+            // Basic validity check
+            let isValid = !!code;
+            if (code && code.expiry_date && Date.now() > code.expiry_date) isValid = false;
+
+            if (isValid) {
+                discountApplied = true;
+                if (code.type === 'percent') {
+                    // Example: 20% off -> price * 0.8
+                    targetBasePrice = Math.max(0, rawSubtotal * (1 - (code.value / 100)));
+                } else {
+                    // Example: $10 off
+                    targetBasePrice = Math.max(0, rawSubtotal - code.value);
+                }
+            }
+        }
+
+        // C. Build Stripe Line Items with Adjusted Prices
+        const line_items = [];
+        let actualStripeSubtotalCents = 0; // The true sum of line items in cents
+
+        // Calculate ratio to scale unit prices evenly
+        const priceRatio = rawSubtotal > 0 ? (targetBasePrice / rawSubtotal) : 1;
+
+        cartItems.forEach(item => {
+            // New unit price in cents
+            // We apply the ratio to the item price
+            const unitAmountCents = Math.round(item.price * priceRatio * 100);
+
+            line_items.push({
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: item.name,
+                        metadata: { type: item.type, id: item.id }
+                    },
+                    unit_amount: unitAmountCents,
+                },
+                quantity: item.quantity,
+            });
+            actualStripeSubtotalCents += (unitAmountCents * item.quantity);
+        });
+
+        // D. Calculate Tax (on Actual Stripe Subtotal of items)
+        let totalTaxCents = 0;
         if (event.tax_rate && event.tax_rate > 0) {
-            const taxAmountCents = Math.round(subtotal * (event.tax_rate / 100) * 100);
-            if (taxAmountCents > 0) {
+            totalTaxCents = Math.round(actualStripeSubtotalCents * (event.tax_rate / 100));
+            if (totalTaxCents > 0) {
                 line_items.push({
                     price_data: {
                         currency: 'usd',
                         product_data: { name: `Tax (${event.tax_rate}%)` },
-                        unit_amount: taxAmountCents,
+                        unit_amount: totalTaxCents,
                     },
                     quantity: 1,
                 });
             }
         }
 
-        // Calculate Custom Fees
+        // E. Calculate Custom Fees
+        // Percent fees based on actualStripeSubtotalCents
+        // Fixed fees are flat cents
+        let totalCustomFeesCents = 0;
         if (event.custom_fees && Array.isArray(event.custom_fees)) {
             event.custom_fees.forEach(fee => {
-                let amountCents = 0;
+                let feeCents = 0;
                 if (fee.type === 'percent') {
-                    amountCents = Math.round(subtotal * (fee.amount / 100) * 100);
+                    feeCents = Math.round(actualStripeSubtotalCents * (fee.amount / 100));
                 } else {
-                    amountCents = Math.round(fee.amount * 100);
+                    feeCents = Math.round(fee.amount * 100);
                 }
 
-                if (amountCents > 0) {
+                if (feeCents > 0) {
+                    totalCustomFeesCents += feeCents;
                     line_items.push({
                         price_data: {
                             currency: 'usd',
                             product_data: { name: fee.name || "Fee" },
-                            unit_amount: amountCents,
+                            unit_amount: feeCents,
                         },
                         quantity: 1,
                     });
@@ -147,26 +187,36 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        // Calculate Platform/Service Fees
-        let serviceFee = 0;
-        // ... (existing service fee logic)
-        if (!event.absorb_fees && event.price_type !== 'free' && event.price_type !== 'donation' && subtotal > 0) {
+        // F. Calculate Platform Service Fee
+        // Base for Service Fee = Subtotal (Discounted) + Tax + Custom Fees
+        const serviceFeeBaseCents = actualStripeSubtotalCents + totalTaxCents + totalCustomFeesCents;
+        let serviceFeeCents = 0;
+
+        if (!event.absorb_fees && event.price_type !== 'free' && event.price_type !== 'donation' && serviceFeeBaseCents > 0) {
+            // Frontend: calculateFees(total_in_dollars)
+            // PLANS hardcoded fallback to free/standard logic if user logic missing
+            // Standard: 2.75% + 0.99
+
+            // We convert Cents -> Dollars for formula -> Cents
+            const baseDollars = serviceFeeBaseCents / 100;
             const feeFixed = 0.99;
             const feePercent = 0.0275;
-            const calculated = (subtotal * feePercent) + feeFixed;
-            serviceFee = Math.round(calculated * 100); // in cents
+
+            const calculatedFeeDollars = (baseDollars * feePercent) + feeFixed;
+            serviceFeeCents = Math.round(calculatedFeeDollars * 100);
 
             line_items.push({
                 price_data: {
                     currency: 'usd',
-                    product_data: {
-                        name: "Service Fee",
-                    },
-                    unit_amount: serviceFee,
+                    product_data: { name: "Service Fee" },
+                    unit_amount: serviceFeeCents,
                 },
                 quantity: 1,
             });
         }
+
+        // G. Store Total for DB (Dollars)
+        const totalAmountDollars = (serviceFeeBaseCents + serviceFeeCents) / 100;
 
         // FIX: Append session_id to successUrl
         const finalSuccessUrl = successUrl.includes('?')
@@ -222,7 +272,8 @@ export const createOrder = async (req, res) => {
             answers: {}, // Add answers if passed
             created_at: new Date(),
             phone_number: phoneNumber,
-            total_amount: (subtotal + (serviceFee / 100)) // store as dollars or handle in DB
+            promo_code_used: discountApplied ? promoCode : null,
+            total_amount: totalAmountDollars
         };
 
         const { error: insertError } = await supabase.from('registrations').insert([registrationPayload]);
