@@ -38,10 +38,10 @@ export const createOrder = async (req, res) => {
         const addOnsData = [];
 
         // Tickets
-        for (const [ticketId, selection] of Object.entries(ticketSelections)) {
-            if (selection.qty > 0) {
+        for (const [ticketId, qtyVal] of Object.entries(ticketSelections)) {
+            const qty = Number(qtyVal); // Ensure number
+            if (qty > 0) {
                 const tier = event.ticket_tiers.find(t => t.id === ticketId);
-                const qty = selection.qty;
                 if (tier) {
                     rawSubtotal += (tier.price * qty);
                     cartItems.push({
