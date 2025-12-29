@@ -12,7 +12,7 @@ import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 
 // Controllers
-// import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
+import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
 
 dotenv.config();
 
@@ -23,7 +23,9 @@ const PORT = process.env.PORT || 5001;
 app.use(cors({ origin: true, credentials: true }));
 
 // Webhook parsing needs RAW body, handled in specific route or before global JSON
-// For simplicity in Vercel, we might need to rely on the specific route handler to parse raw.
+// CRITICAL: Must be BEFORE express.json() to preserve signature
+app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+
 app.use(express.json());
 
 // Request logger
@@ -82,7 +84,7 @@ app.use('/api/admin', adminRoutes);
 // app.use('/api/notifications', notificationRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
-// app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+// ALIAS: Webhook mounted at top.
 
 // Global Error Handler
 app.use((err, req, res, next) => {
