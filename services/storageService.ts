@@ -1028,20 +1028,70 @@ export const StorageService = {
         logAuditEvent('AI_GENERATION', `Generated ${type}`, 'system');
     },
 
+    /**
+     * STRIPE CONNECT: Create Express account and redirect to onboarding
+     */
     connectStripeAccount: async (userId: string, type: 'standard' | 'express') => {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        // Use 'mock_' prefix to signal backend to skip transfer_data
-        const mockStripeId = `mock_acct_${Math.random().toString(36).substr(2, 8)}`;
-        const updated = await StorageService.updateUser(userId, {
-            stripeConnectId: mockStripeId,
-            stripeOnboardingComplete: true
-        });
-
-        if (!updated) {
-            throw new Error("Failed to save Stripe connection to user profile. Ensure database columns exist.");
+        try {
+            const response = await postSupabase('/stripe/connect/create-account', 'POST', {});
+            if (response.url) {
+                // Redirect to Stripe Onboarding
+                window.location.href = response.url;
+                return { success: true, stripeId: response.accountId };
+            }
+            throw new Error('No onboarding URL received');
+        } catch (error: any) {
+            console.error('Stripe Connect Error:', error);
+            throw error;
         }
+    },
 
-        return { success: true, stripeId: mockStripeId };
+    /**
+     * STRIPE CONNECT: Get account status
+     */
+    getStripeConnectStatus: async () => {
+        try {
+            const response = await fetchSupabase('/stripe/connect/status', true);
+            return response;
+        } catch (error) {
+            console.error('Get Stripe Status Error:', error);
+            return {
+                connected: false,
+                accountId: null,
+                chargesEnabled: false,
+                payoutsEnabled: false,
+                detailsSubmitted: false,
+            };
+        }
+    },
+
+    /**
+     * STRIPE CONNECT: Create new onboarding link (for incomplete accounts)
+     */
+    createStripeOnboardingLink: async () => {
+        const response = await postSupabase('/stripe/connect/create-link', 'POST', {});
+        if (response.url) {
+            window.location.href = response.url;
+        }
+        return response;
+    },
+
+    /**
+     * STRIPE CONNECT: Open Stripe Express Dashboard
+     */
+    openStripeDashboard: async () => {
+        const response = await postSupabase('/stripe/connect/dashboard-link', 'POST', {});
+        if (response.url) {
+            window.open(response.url, '_blank');
+        }
+        return response;
+    },
+
+    /**
+     * STRIPE CONNECT: Disconnect account
+     */
+    disconnectStripeAccount: async () => {
+        return await postSupabase('/stripe/connect/disconnect', 'POST', {});
     },
 
     sendEventBroadcast: async (eventId: string, subject: string, message: string, templateId?: string) => {
