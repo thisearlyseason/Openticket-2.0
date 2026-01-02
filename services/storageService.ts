@@ -1041,8 +1041,8 @@ export const StorageService = {
         try {
             const response = await postSupabase('/stripe/connect/create-account', 'POST', {});
             if (response.url) {
-                // Redirect to Stripe Onboarding
-                window.location.href = response.url;
+                // Open in new tab to avoid iframe restrictions
+                window.open(response.url, '_blank');
                 return { success: true, stripeId: response.accountId };
             }
             throw new Error('No onboarding URL received');
@@ -1077,7 +1077,8 @@ export const StorageService = {
     createStripeOnboardingLink: async () => {
         const response = await postSupabase('/stripe/connect/create-link', 'POST', {});
         if (response.url) {
-            window.location.href = response.url;
+            // Open in new tab to avoid iframe restrictions
+            window.open(response.url, '_blank');
         }
         return response;
     },
