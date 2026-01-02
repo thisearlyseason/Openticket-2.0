@@ -31,21 +31,31 @@ export const createConnectAccount = async (req, res) => {
 
         if (profileError) throw new Error('Failed to fetch user profile');
 
-        // Check if already connected
+        // Check if already connected with a valid account
         if (profile.stripe_connect_id && !profile.stripe_connect_id.startsWith('mock_')) {
-            // Return existing account link for re-onboarding if needed
-            const accountLink = await stripe.accountLinks.create({
-                account: profile.stripe_connect_id,
-                refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
-                return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
-                type: 'account_onboarding',
-            });
-            return res.json({ url: accountLink.url, accountId: profile.stripe_connect_id });
+            try {
+                // Verify the account still exists in Stripe
+                const existingAccount = await stripe.accounts.retrieve(profile.stripe_connect_id);
+                if (existingAccount) {
+                    // Return existing account link for re-onboarding if needed
+                    const accountLink = await stripe.accountLinks.create({
+                        account: profile.stripe_connect_id,
+                        refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
+                        return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
+                        type: 'account_onboarding',
+                    });
+                    return res.json({ url: accountLink.url, accountId: profile.stripe_connect_id });
+                }
+            } catch (e) {
+                // Account doesn't exist in Stripe anymore, clear it
+                console.log('Existing account not found in Stripe, creating new one');
+            }
         }
 
-        // Create new Express account
-        const account = await stripe.accounts.create({
+        // Create new Express account with pre-filled test data
+        const accountParams = {
             type: 'express',
+            country: 'US',
             email: profile.email,
             capabilities: {
                 card_payments: { requested: true },
@@ -55,7 +65,19 @@ export const createConnectAccount = async (req, res) => {
             metadata: {
                 openticket_user_id: userId,
             },
-        });
+        };
+
+        // In test mode, pre-fill some data to make onboarding easier
+        if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+            accountParams.business_profile = {
+                mcc: '7922', // Theatrical Producers and Ticket Agencies
+                url: 'https://example.com',
+            };
+        }
+
+        const account = await stripe.accounts.create(accountParams);
+
+        console.log(`[Stripe Connect] Created account: ${account.id}`);
 
         // Save account ID to profile
         const { error: updateError } = await supabase
@@ -83,11 +105,20 @@ export const createConnectAccount = async (req, res) => {
             refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
             return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
             type: 'account_onboarding',
+            collect: 'eventually_due', // Only collect what's needed now
         });
+
+        console.log(`[Stripe Connect] Onboarding URL created for: ${account.id}`);
 
         res.json({
             url: accountLink.url,
             accountId: account.id,
+        });
+    } catch (error) {
+        console.error('Create Connect Account Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
         });
     } catch (error) {
         console.error('Create Connect Account Error:', error);
