@@ -661,6 +661,12 @@ export const StorageService = {
             const userCredential = await createUserWithEmailAndPassword(auth, cleanData.email, cleanData.password);
             const uid = userCredential.user.uid;
 
+            // Wait for the token to be available
+            const token = await userCredential.user.getIdToken(true);
+            if (!token) {
+                throw new Error("Failed to get authentication token");
+            }
+
             // Sync to backend
             const payload = {
                 id: uid,
