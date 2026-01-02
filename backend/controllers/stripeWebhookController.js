@@ -180,13 +180,13 @@ async function handleCheckoutCompleted(stripe, session) {
         p_platform_fee: platformFee,
         p_stripe_fee: stripeFee,
         p_tax_amount: taxAmount,
-        p_discount_amount: discountAmount,
         p_organizer_net: organizerNet,
-        p_currency: session.currency || 'usd',
         p_event_id: session.metadata?.eventId || reg.event_id,
         p_registration_id: reg.id,
-        p_transaction_type: 'ticket_sale',
         p_tickets: finalizedTickets,
+        p_currency: session.currency || 'usd',
+        p_transaction_type: 'ticket_sale',
+        p_discount_amount: discountAmount,
         p_affiliate_code: affiliateCode,
         p_affiliate_commission: affiliateCommission
     });
