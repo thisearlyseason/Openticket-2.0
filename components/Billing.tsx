@@ -112,7 +112,9 @@ export const Billing = () => {
         setIsConnecting(true);
         try {
             await StorageService.connectStripeAccount(user.id, 'express');
-            // User will be redirected to Stripe
+            // Stripe opens in new tab
+            showToast('Stripe onboarding opened in a new tab. Complete the setup there, then refresh this page.', 'success');
+            setIsConnecting(false);
         } catch (error: any) {
             showToast(error.message || 'Failed to connect Stripe', 'error');
             setIsConnecting(false);
@@ -123,7 +125,9 @@ export const Billing = () => {
         setIsConnecting(true);
         try {
             await StorageService.createStripeOnboardingLink();
-            // User will be redirected to Stripe
+            // Stripe opens in new tab
+            showToast('Stripe onboarding opened in a new tab. Complete the setup there, then refresh this page.', 'success');
+            setIsConnecting(false);
         } catch (error: any) {
             showToast(error.message || 'Failed to create onboarding link', 'error');
             setIsConnecting(false);
