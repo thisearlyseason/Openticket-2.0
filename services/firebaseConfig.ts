@@ -48,5 +48,11 @@ export const googleProvider = googleProviderInstance;
 
 export const getAuthToken = async () => {
   if (!authInstance?.currentUser) return null;
-  return await authInstance.currentUser.getIdToken();
+  try {
+    // Force refresh the token to ensure it's valid
+    return await authInstance.currentUser.getIdToken(true);
+  } catch (e) {
+    console.error("Error getting auth token:", e);
+    return null;
+  }
 };
