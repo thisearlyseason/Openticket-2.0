@@ -34,42 +34,196 @@ export const getAllRegistrations = async (req, res) => {
     }
 };
 
+/**
+ * Get comprehensive financial statistics for admin dashboard
+ */
 export const getFinancialStats = async (req, res) => {
     try {
-        // 1. Transaction Volume
-        // Note: Supabase JS doesn't support .sum() directly in one easy call without RPC, 
-        // but we can fetch all or use a postgres function. 
-        // For scalability, we should use RPC, but for now, we'll fetch ID/Amounts to aggregate or use a tailored query.
-        // Actually, let's try to be efficient. 
+        // 1. Try to use RPC for aggregated stats
+        let stats = {
+            totalVolume: 0,
+            platformFees: 0,
+            organizerNet: 0,
+            refundTotal: 0,
+        };
 
-        // BETTER: Create an RPC function in SQL, but I can't do that easily now without user running SQL.
-        // FALLBACK: Client-side aggregation of "recent" might be too small. 
-        // We will fetch minimal columns for all valid transactions.
+        try {
+            const { data: rpcStats, error: rpcError } = await supabase.rpc('get_admin_financial_stats');
+            if (!rpcError && rpcStats) {
+                stats = {
+                    totalVolume: Number(rpcStats.totalVolume) || 0,
+                    platformFees: Number(rpcStats.platformFees) || 0,
+                    organizerNet: Number(rpcStats.organizerNet) || 0,
+                    refundTotal: Number(rpcStats.refundTotal) || 0,
+                };
+            }
+        } catch (rpcErr) {
+            console.warn('RPC stats not available, falling back to manual calculation:', rpcErr.message);
+            
+            // Fallback: Manual aggregation
+            const { data: transactions } = await supabase
+                .from('financial_transactions')
+                .select('gross_amount, platform_fee, organizer_net');
 
-        // 1. Transaction Volume (Optimized via RPC)
-        const { data: statsData, error: statsError } = await supabase.rpc('get_admin_financial_stats');
-
-        if (statsError) {
-            console.error("RPC Stats Error:", statsError.message);
-            // Fallback to 0 if RPC fails or doesn't exist yet
+            if (transactions) {
+                transactions.forEach(tx => {
+                    if (tx.gross_amount > 0) {
+                        stats.totalVolume += Number(tx.gross_amount) || 0;
+                        stats.platformFees += Number(tx.platform_fee) || 0;
+                        stats.organizerNet += Number(tx.organizer_net) || 0;
+                    } else {
+                        stats.refundTotal += Math.abs(Number(tx.gross_amount) || 0);
+                    }
+                });
+            }
         }
 
-        const stats = statsData || { totalVolume: 0, platformFees: 0, organizerNet: 0 };
-
-        // 2. Recent Transactions
-        const { data: recent, error: recentError } = await supabase
+        // 2. Get recent transactions
+        const { data: recentTransactions, error: recentError } = await supabase
             .from('financial_transactions')
-            .select('*')
+            .select(`
+                *,
+                registration:registrations(attendee_name, attendee_email),
+                event:events(title, owner_id)
+            `)
             .order('created_at', { ascending: false })
             .limit(50);
 
+        // 3. Get per-organizer breakdown
+        const { data: organizerStats } = await supabase
+            .from('financial_transactions')
+            .select('event:events(owner_id, owner:profiles!owner_id(name, email)), organizer_net, platform_fee, gross_amount')
+            .gt('gross_amount', 0);
+
+        const organizerBreakdown = {};
+        if (organizerStats) {
+            organizerStats.forEach(tx => {
+                const ownerId = tx.event?.owner_id;
+                if (!ownerId) return;
+                
+                if (!organizerBreakdown[ownerId]) {
+                    organizerBreakdown[ownerId] = {
+                        organizerId: ownerId,
+                        organizerName: tx.event?.owner?.name || 'Unknown',
+                        organizerEmail: tx.event?.owner?.email || '',
+                        totalVolume: 0,
+                        platformFees: 0,
+                        netEarnings: 0,
+                        transactionCount: 0,
+                    };
+                }
+                
+                organizerBreakdown[ownerId].totalVolume += Number(tx.gross_amount) || 0;
+                organizerBreakdown[ownerId].platformFees += Number(tx.platform_fee) || 0;
+                organizerBreakdown[ownerId].netEarnings += Number(tx.organizer_net) || 0;
+                organizerBreakdown[ownerId].transactionCount += 1;
+            });
+        }
+
         res.json({
             ...stats,
-            recentTransactions: recent || []
+            recentTransactions: recentTransactions || [],
+            organizerBreakdown: Object.values(organizerBreakdown),
         });
 
     } catch (error) {
         console.error("Financial Stats Error:", error);
         res.status(500).json({ error: "Failed to fetch financials" });
+    }
+};
+
+/**
+ * Get financial details for a specific event (for organizer dashboard)
+ */
+export const getEventFinancials = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user.uid;
+
+        // Verify ownership
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('owner_id')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Check admin or owner
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        if (event.owner_id !== userId && !profile?.is_admin) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Try RPC first
+        let financials = null;
+        try {
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_organizer_event_financials', {
+                p_event_id: eventId
+            });
+            if (!rpcError && rpcData) {
+                financials = rpcData;
+            }
+        } catch (e) {
+            console.warn('RPC not available, falling back');
+        }
+
+        // Fallback to manual calculation
+        if (!financials) {
+            const { data: transactions } = await supabase
+                .from('financial_transactions')
+                .select('*')
+                .eq('event_id', eventId);
+
+            financials = {
+                grossSales: 0,
+                platformFees: 0,
+                stripeFees: 0,
+                taxCollected: 0,
+                netEarnings: 0,
+                refundedAmount: 0,
+                transactionCount: 0,
+                refundCount: 0,
+            };
+
+            if (transactions) {
+                transactions.forEach(tx => {
+                    if (tx.gross_amount > 0) {
+                        financials.grossSales += Number(tx.gross_amount) || 0;
+                        financials.platformFees += Number(tx.platform_fee) || 0;
+                        financials.stripeFees += Number(tx.stripe_fee) || 0;
+                        financials.taxCollected += Number(tx.tax_amount) || 0;
+                        financials.netEarnings += Number(tx.organizer_net) || 0;
+                        financials.transactionCount += 1;
+                    } else {
+                        financials.refundedAmount += Math.abs(Number(tx.gross_amount) || 0);
+                        financials.refundCount += 1;
+                    }
+                });
+            }
+        }
+
+        // Get transaction list
+        const { data: transactionList } = await supabase
+            .from('financial_transactions')
+            .select('*, registration:registrations(attendee_name, attendee_email)')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false });
+
+        res.json({
+            summary: financials,
+            transactions: transactionList || [],
+        });
+
+    } catch (error) {
+        console.error("Event Financials Error:", error);
+        res.status(500).json({ error: error.message });
     }
 };
