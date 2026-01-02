@@ -109,9 +109,10 @@ app.use((err, req, res, next) => {
 export default app;
 
 // Start server for local development
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 OpenTicket API Server running on http://0.0.0.0:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 OpenTicket API Server running on http://0.0.0.0:${PORT}`);
+    });
+}
 
 // FORCE REBUILD: 2025-12-28 - Lazy Load Fix v2
