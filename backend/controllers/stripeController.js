@@ -1,252 +1,126 @@
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
+import { calculateOrderBreakdown, buildStripeLineItems } from '../utils/priceCalculator.js';
 const require = createRequire(import.meta.url);
+
+/**
+ * STRIPE CHECKOUT CONTROLLER
+ * Creates Stripe Checkout sessions with proper Connect destination
+ */
+
+const getStripe = () => {
+    const Stripe = require('stripe');
+    return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+};
 
 export const createOrder = async (req, res) => {
     try {
-        // Safe Lazy Load
-        let stripe;
-        try {
-            const Stripe = require('stripe');
-            stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
-        } catch (loaderError) {
-            console.error("Stripe Load Failed:", loaderError);
-            return res.status(500).json({ error: "Payment System Unavailable", details: loaderError.message });
+        const stripe = getStripe();
+
+        const {
+            eventId,
+            ticketSelections,
+            addOnSelections,
+            promoCode,
+            affiliateCode,
+            customerEmail,
+            customerName,
+            successUrl,
+            cancelUrl,
+            userId,
+            assignments,
+            phoneNumber
+        } = req.body;
+
+        // 1. Fetch Event with owner info
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('*, owner:profiles!owner_id(id, stripe_connect_id, stripe_onboarding_complete, subscription)')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
+            return res.status(404).json({ error: "Event not found" });
         }
 
-        const { eventId, ticketSelections, addOnSelections, promoCode, affiliateCode, customerEmail, customerName, successUrl, cancelUrl, userId, assignments, phoneNumber } = req.body;
-
-        // 1. Fetch Event
-        const { data: event, error: eventError } = await supabase.from('events').select('*').eq('id', eventId).single();
-        if (eventError || !event) return res.status(404).json({ error: "Event not found" });
-
-        // 2. Validate Capacity (Basic Check)
+        // 2. Validate Capacity
         let requestedQty = 0;
-        Object.values(ticketSelections).forEach((val) => requestedQty += (val.qty || 0));
+        Object.values(ticketSelections || {}).forEach((val) => requestedQty += (Number(val) || 0));
 
         if (event.capacity && (event.registered_count || 0) + requestedQty > event.capacity) {
             return res.status(400).json({ error: "Event capacity reached." });
         }
 
-        // 3. Calculate Total & Construct Line Items
-        // We calculate strictly to match Frontend: EventView.tsx
-
-        // A. Gather raw items and subtotal
-        let rawSubtotal = 0;
-        const cartItems = []; // { name, price (dollars), type, id, quantity }
-        const ticketsData = [];
-        const addOnsData = [];
-
-        // Tickets
-        for (const [ticketId, qtyVal] of Object.entries(ticketSelections)) {
-            const qty = Number(qtyVal); // Ensure number
-            if (qty > 0) {
-                let tierName = "";
-                let tierPrice = 0;
-                let found = false;
-
-                // 1. Try to find in tiers (if tiered event)
-                if (event.ticket_tiers && Array.isArray(event.ticket_tiers)) {
-                    const tier = event.ticket_tiers.find(t => t.id === ticketId);
-                    if (tier) {
-                        tierName = tier.name;
-                        tierPrice = tier.price;
-                        found = true;
-                    }
-                }
-
-                // 2. Fallback for Fixed/General Price (if not found in tiers)
-                if (!found && ticketId === 'general') {
-                    tierName = event.ticket_name || 'General Admission';
-                    tierPrice = (event.price_type === 'free' || event.price_type === 'donation') ? 0 : (event.price || 0);
-                    found = true;
-                }
-
-                if (found) {
-                    rawSubtotal += (tierPrice * qty);
-                    cartItems.push({
-                        name: `${event.title} - ${tierName}`,
-                        price: tierPrice,
-                        quantity: qty,
-                        type: 'ticket',
-                        id: ticketId
-                    });
-
-                    // DB Object
-                    for (let i = 0; i < qty; i++) {
-                        ticketsData.push({
-                            id: `tix-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
-                            tierId: ticketId,
-                            name: tierName,
-                            pricePerTicket: tierPrice,
-                            status: 'valid'
-                        });
-                    }
-                }
-            }
-        }
-
-        // Add-ons
-        if (addOnSelections) {
-            for (const [addonId, qty] of Object.entries(addOnSelections)) {
-                if (qty > 0) {
-                    const addon = event.add_ons ? event.add_ons.find(a => a.id === addonId) : null;
-                    if (addon) {
-                        rawSubtotal += (addon.price * qty);
-                        cartItems.push({
-                            name: `${addon.name} (Add-on)`,
-                            price: addon.price,
-                            quantity: qty,
-                            type: 'addon',
-                            id: addonId
-                        });
-
-                        addOnsData.push({
-                            id: addonId,
-                            name: addon.name,
-                            price: addon.price,
-                            quantity: qty,
-                            status: 'valid'
-                        });
-                    }
-                }
-            }
-        }
-
-        if (cartItems.length === 0) return res.status(400).json({ error: "No items selected" });
-
-        // B. Apply Discount (if any)
-        // This gives us the target "Base Price" (taxable)
-        let targetBasePrice = rawSubtotal;
-        let discountApplied = false;
-
+        // 3. Validate promo code if provided
+        let validPromoCode = null;
         if (promoCode && event.promo_codes) {
             const code = event.promo_codes.find(c => c.code === promoCode);
-            // Basic validity check
-            let isValid = !!code;
-            if (code && code.expiry_date && Date.now() > code.expiry_date) isValid = false;
-
-            if (isValid) {
-                discountApplied = true;
-                if (code.type === 'percent') {
-                    // Example: 20% off -> price * 0.8
-                    targetBasePrice = Math.max(0, rawSubtotal * (1 - (code.value / 100)));
-                } else {
-                    // Example: $10 off
-                    targetBasePrice = Math.max(0, rawSubtotal - code.value);
-                }
+            if (code) {
+                let isValid = true;
+                if (code.max_usage && code.usage_count >= code.max_usage) isValid = false;
+                if (code.expiry_date && Date.now() > code.expiry_date) isValid = false;
+                if (isValid) validPromoCode = code;
             }
         }
 
-        // C. Build Stripe Line Items with Adjusted Prices
-        const line_items = [];
-        let actualStripeSubtotalCents = 0; // The true sum of line items in cents
-
-        // Calculate ratio to scale unit prices evenly
-        const priceRatio = rawSubtotal > 0 ? (targetBasePrice / rawSubtotal) : 1;
-
-        cartItems.forEach(item => {
-            // New unit price in cents
-            // We apply the ratio to the item price
-            const unitAmountCents = Math.round(item.price * priceRatio * 100);
-
-            line_items.push({
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: item.name,
-                        metadata: { type: item.type, id: item.id }
-                    },
-                    unit_amount: unitAmountCents,
-                },
-                quantity: item.quantity,
-            });
-            actualStripeSubtotalCents += (unitAmountCents * item.quantity);
+        // 4. Calculate order using SINGLE SOURCE OF TRUTH
+        const organizerPlan = event.owner?.subscription?.plan || 'free';
+        const breakdown = calculateOrderBreakdown({
+            event,
+            ticketSelections: ticketSelections || {},
+            addOnSelections: addOnSelections || {},
+            promoCode: validPromoCode,
+            organizerPlan,
         });
 
-        // D. Calculate Tax (on Actual Stripe Subtotal of items)
-        let totalTaxCents = 0;
-        if (event.tax_rate && event.tax_rate > 0) {
-            totalTaxCents = Math.round(actualStripeSubtotalCents * (event.tax_rate / 100));
-            if (totalTaxCents > 0) {
-                line_items.push({
-                    price_data: {
-                        currency: 'usd',
-                        product_data: { name: `Tax (${event.tax_rate}%)` },
-                        unit_amount: totalTaxCents,
-                    },
+        if (breakdown.items.length === 0) {
+            return res.status(400).json({ error: "No items selected" });
+        }
+
+        // 5. Build Stripe line items
+        const lineItems = buildStripeLineItems(breakdown, event.title);
+
+        // 6. Build tickets data for DB
+        const ticketsData = [];
+        for (const item of breakdown.items) {
+            if (item.type !== 'ticket') continue;
+            for (let i = 0; i < item.quantity; i++) {
+                // Get assignment if available
+                const assignment = assignments?.[item.id]?.[i] || {};
+                ticketsData.push({
+                    id: `tix-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
+                    tierId: item.id,
+                    name: item.name,
+                    pricePerTicket: item.unitPrice,
                     quantity: 1,
+                    status: 'valid',
+                    attendeeName: assignment.name || customerName,
+                    attendeeEmail: assignment.email || customerEmail,
                 });
             }
         }
 
-        // E. Calculate Custom Fees
-        // Percent fees based on actualStripeSubtotalCents
-        // Fixed fees are flat cents
-        let totalCustomFeesCents = 0;
-        if (event.custom_fees && Array.isArray(event.custom_fees)) {
-            event.custom_fees.forEach(fee => {
-                let feeCents = 0;
-                if (fee.type === 'percent') {
-                    feeCents = Math.round(actualStripeSubtotalCents * (fee.amount / 100));
-                } else {
-                    feeCents = Math.round(fee.amount * 100);
-                }
-
-                if (feeCents > 0) {
-                    totalCustomFeesCents += feeCents;
-                    line_items.push({
-                        price_data: {
-                            currency: 'usd',
-                            product_data: { name: fee.name || "Fee" },
-                            unit_amount: feeCents,
-                        },
-                        quantity: 1,
-                    });
-                }
+        // 7. Build add-ons data for DB
+        const addOnsData = [];
+        for (const item of breakdown.items) {
+            if (item.type !== 'addon') continue;
+            addOnsData.push({
+                id: item.id,
+                name: item.name,
+                price: item.unitPrice,
+                quantity: item.quantity,
+                status: 'valid',
             });
         }
 
-        // F. Calculate Platform Service Fee
-        // Base for Service Fee = Subtotal (Discounted) + Tax + Custom Fees
-        const serviceFeeBaseCents = actualStripeSubtotalCents + totalTaxCents + totalCustomFeesCents;
-        let serviceFeeCents = 0;
-
-        if (!event.absorb_fees && event.price_type !== 'free' && event.price_type !== 'donation' && serviceFeeBaseCents > 0) {
-            // Frontend: calculateFees(total_in_dollars)
-            // PLANS hardcoded fallback to free/standard logic if user logic missing
-            // Standard: 2.75% + 0.99
-
-            // We convert Cents -> Dollars for formula -> Cents
-            const baseDollars = serviceFeeBaseCents / 100;
-            const feeFixed = 0.99;
-            const feePercent = 0.0275;
-
-            const calculatedFeeDollars = (baseDollars * feePercent) + feeFixed;
-            serviceFeeCents = Math.round(calculatedFeeDollars * 100);
-
-            line_items.push({
-                price_data: {
-                    currency: 'usd',
-                    product_data: { name: "Service Fee" },
-                    unit_amount: serviceFeeCents,
-                },
-                quantity: 1,
-            });
-        }
-
-        // G. Store Total for DB (Dollars)
-        const totalAmountDollars = (serviceFeeBaseCents + serviceFeeCents) / 100;
-
-        // FIX: Append session_id to successUrl
+        // 8. Prepare Checkout Session options
         const finalSuccessUrl = successUrl.includes('?')
             ? `${successUrl}&session_id={CHECKOUT_SESSION_ID}`
             : `${successUrl}?session_id={CHECKOUT_SESSION_ID}`;
 
-        // 4. Create Stripe Session
-        const session = await stripe.checkout.sessions.create({
+        const sessionOptions = {
             payment_method_types: ['card'],
-            line_items,
+            line_items: lineItems,
             mode: 'payment',
             success_url: finalSuccessUrl,
             cancel_url: cancelUrl,
@@ -254,53 +128,75 @@ export const createOrder = async (req, res) => {
             metadata: {
                 eventId,
                 userId: userId || 'guest',
-                affiliateCode: affiliateCode || ''
-            }
-        });
+                affiliateCode: affiliateCode || '',
+                // Store breakdown for webhook reconciliation
+                platformFee: breakdown.platformFee.toString(),
+                taxAmount: breakdown.taxAmount.toString(),
+                discountAmount: breakdown.discountAmount.toString(),
+                promoCode: validPromoCode?.code || '',
+            },
+        };
 
-        // 5. INSERT REGISTRATION RECORD (Pending) - CRITICAL FIX
-        // We match assignments if passed, otherwise default to customerName/Email
+        // 9. CRITICAL: Add Stripe Connect destination for split payments
+        const organizerStripeId = event.owner?.stripe_connect_id;
+        const isRealStripeAccount = organizerStripeId && 
+            !organizerStripeId.startsWith('mock_') && 
+            event.owner?.stripe_onboarding_complete;
 
-        // Basic assignment logic if assignments object is passed (map by ticket ID)
-        if (assignments) {
-            ticketsData.forEach(t => {
-                const list = assignments[t.tierId];
-                if (list && list.length > 0) {
-                    const assignee = list.shift(); // take first
-                    if (assignee) {
-                        t.attendeeName = assignee.name;
-                        t.attendeeEmail = assignee.email;
-                    }
-                }
-                if (!t.attendeeName) {
-                    t.attendeeName = customerName;
-                    t.attendeeEmail = customerEmail;
-                }
-            });
+        if (isRealStripeAccount && breakdown.grandTotal > 0) {
+            // Calculate application fee (platform commission)
+            // This is the platform fee + any absorbed fees
+            const applicationFeeAmount = Math.round(breakdown.platformFee * 100); // cents
+
+            sessionOptions.payment_intent_data = {
+                application_fee_amount: applicationFeeAmount,
+                transfer_data: {
+                    destination: organizerStripeId,
+                },
+                metadata: {
+                    eventId,
+                    organizerId: event.owner_id,
+                },
+            };
+
+            console.log(`[Stripe] Creating session with Connect destination: ${organizerStripeId}, app_fee: $${breakdown.platformFee}`);
+        } else {
+            console.log(`[Stripe] Creating session WITHOUT Connect (mock account or no account)`);
         }
 
+        // 10. Create Stripe Checkout Session
+        const session = await stripe.checkout.sessions.create(sessionOptions);
+
+        // 11. Create pending registration record
         const registrationPayload = {
             event_id: eventId,
             attendee_email: customerEmail,
             attendee_name: customerName,
             user_id: userId !== 'guest' ? userId : null,
-            payment_status: 'pending', // Pending confirmation
-            approval_status: 'approved',
+            payment_status: 'pending',
+            approval_status: event.requires_approval ? 'pending' : 'approved',
             tickets: ticketsData,
             add_ons: addOnsData,
-            stripe_checkout_session_id: session.id, // THE LOOKUP KEY
-            answers: {}, // Add answers if passed
+            stripe_checkout_session_id: session.id,
+            answers: {},
             created_at: new Date(),
             phone_number: phoneNumber,
-            promo_code_used: discountApplied ? promoCode : null,
-            total_amount: totalAmountDollars
+            promo_code_used: validPromoCode?.code || null,
+            discount_amount: breakdown.discountAmount,
+            total_amount: breakdown.grandTotal,
+            service_fee: breakdown.platformFee,
+            tax_amount: breakdown.taxAmount,
+            custom_fees_amount: breakdown.customFeesAmount,
+            affiliate_code: affiliateCode || null,
         };
 
-        const { error: insertError } = await supabase.from('registrations').insert([registrationPayload]);
+        const { error: insertError } = await supabase
+            .from('registrations')
+            .insert([registrationPayload]);
 
         if (insertError) {
             console.error("Failed to save pending registration:", insertError);
-            // We should probably cancel the stripe session or warn the user, but for now log it.
+            // Don't fail the checkout - webhook will handle verification
         }
 
         res.json({ url: session.url, id: session.id });
@@ -312,6 +208,132 @@ export const createOrder = async (req, res) => {
 };
 
 export const createPortalSession = async (req, res) => {
-    // Placeholder for portal
-    res.json({ url: 'https://billing.stripe.com/p/login/test' });
+    try {
+        const stripe = getStripe();
+        const userId = req.user.uid;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('stripe_customer_id')
+            .eq('id', userId)
+            .single();
+
+        if (!profile?.stripe_customer_id) {
+            return res.status(400).json({ error: 'No billing account found' });
+        }
+
+        const session = await stripe.billingPortal.sessions.create({
+            customer: profile.stripe_customer_id,
+            return_url: `${req.headers.origin}/#/billing`,
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error("Portal Session Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Create a PaymentIntent for at-door payments
+ * POST /api/stripe/create-payment-intent
+ */
+export const createPaymentIntent = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { registrationId, amount } = req.body;
+
+        // Fetch registration with event owner
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(*, owner:profiles!owner_id(stripe_connect_id, stripe_onboarding_complete))')
+            .eq('id', registrationId)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        const organizerStripeId = reg.event?.owner?.stripe_connect_id;
+        const isRealAccount = organizerStripeId && 
+            !organizerStripeId.startsWith('mock_') && 
+            reg.event?.owner?.stripe_onboarding_complete;
+
+        const paymentIntentData = {
+            amount: Math.round(amount * 100), // cents
+            currency: 'usd',
+            metadata: {
+                registrationId,
+                eventId: reg.event_id,
+                source: 'checkin_portal',
+            },
+        };
+
+        if (isRealAccount) {
+            // Calculate platform fee (simplified - use same structure)
+            const platformFeePercent = 0.0275; // Default free plan
+            const platformFee = Math.round(amount * platformFeePercent * 100);
+
+            paymentIntentData.application_fee_amount = platformFee;
+            paymentIntentData.transfer_data = {
+                destination: organizerStripeId,
+            };
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+        });
+    } catch (error) {
+        console.error("Create PaymentIntent Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Get order calculation preview (for frontend validation)
+ * POST /api/stripe/calculate-order
+ */
+export const calculateOrder = async (req, res) => {
+    try {
+        const { eventId, ticketSelections, addOnSelections, promoCode } = req.body;
+
+        const { data: event, error } = await supabase
+            .from('events')
+            .select('*, owner:profiles!owner_id(subscription)')
+            .eq('id', eventId)
+            .single();
+
+        if (error || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Validate promo code
+        let validPromoCode = null;
+        if (promoCode && event.promo_codes) {
+            const code = event.promo_codes.find(c => c.code === promoCode);
+            if (code) {
+                let isValid = true;
+                if (code.max_usage && code.usage_count >= code.max_usage) isValid = false;
+                if (code.expiry_date && Date.now() > code.expiry_date) isValid = false;
+                if (isValid) validPromoCode = code;
+            }
+        }
+
+        const organizerPlan = event.owner?.subscription?.plan || 'free';
+        const breakdown = calculateOrderBreakdown({
+            event,
+            ticketSelections: ticketSelections || {},
+            addOnSelections: addOnSelections || {},
+            promoCode: validPromoCode,
+            organizerPlan,
+        });
+
+        res.json(breakdown);
+    } catch (error) {
+        console.error("Calculate Order Error:", error);
+        res.status(500).json({ error: error.message });
+    }
 };

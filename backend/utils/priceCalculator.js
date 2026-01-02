@@ -1,0 +1,269 @@
+/**
+ * SINGLE SOURCE OF TRUTH FOR PRICE CALCULATIONS
+ * Used by both frontend (via API) and backend
+ * Ensures checkout amounts always match Stripe amounts
+ */
+
+// Platform fee structure by plan
+export const PLAN_FEES = {
+    free: { percent: 0.0275, fixed: 0.99 },    // 2.75% + $0.99
+    pro: { percent: 0.015, fixed: 0.75 },       // 1.5% + $0.75
+    premium: { percent: 0.0075, fixed: 0 },     // 0.75% + $0
+};
+
+/**
+ * Calculate platform service fee
+ * @param {number} subtotal - Base amount in dollars
+ * @param {string} plan - 'free' | 'pro' | 'premium'
+ * @returns {number} Service fee in dollars
+ */
+export const calculatePlatformFee = (subtotal, plan = 'free') => {
+    if (subtotal <= 0) return 0;
+    const planFees = PLAN_FEES[plan] || PLAN_FEES.free;
+    return Number(((subtotal * planFees.percent) + planFees.fixed).toFixed(2));
+};
+
+/**
+ * Calculate complete order breakdown
+ * @param {Object} params
+ * @param {Object} params.event - Event object with ticket_tiers, add_ons, tax_rate, custom_fees, absorb_fees
+ * @param {Object} params.ticketSelections - { tierId: quantity }
+ * @param {Object} params.addOnSelections - { addonId: quantity }
+ * @param {Object|null} params.promoCode - Applied promo code object
+ * @param {string} params.organizerPlan - Organizer's subscription plan
+ * @returns {Object} Complete price breakdown
+ */
+export const calculateOrderBreakdown = ({
+    event,
+    ticketSelections = {},
+    addOnSelections = {},
+    promoCode = null,
+    organizerPlan = 'free'
+}) => {
+    const breakdown = {
+        items: [],
+        ticketSubtotal: 0,
+        addOnSubtotal: 0,
+        rawSubtotal: 0,
+        discountAmount: 0,
+        discountedSubtotal: 0,
+        taxableAmount: 0,
+        taxAmount: 0,
+        customFeesAmount: 0,
+        platformFee: 0,
+        grandTotal: 0,
+        currency: 'usd',
+    };
+
+    // 1. Calculate ticket totals
+    for (const [ticketId, qty] of Object.entries(ticketSelections)) {
+        const quantity = Number(qty) || 0;
+        if (quantity <= 0) continue;
+
+        let tierName = '';
+        let tierPrice = 0;
+        let found = false;
+
+        // Find in tiers
+        if (event.ticket_tiers && Array.isArray(event.ticket_tiers)) {
+            const tier = event.ticket_tiers.find(t => t.id === ticketId);
+            if (tier) {
+                tierName = tier.name;
+                tierPrice = Number(tier.price) || 0;
+                found = true;
+            }
+        }
+
+        // Fallback for general admission
+        if (!found && ticketId === 'general') {
+            tierName = event.ticket_name || 'General Admission';
+            tierPrice = (event.price_type === 'free' || event.price_type === 'donation') 
+                ? 0 
+                : (Number(event.price) || 0);
+            found = true;
+        }
+
+        if (found) {
+            const itemTotal = tierPrice * quantity;
+            breakdown.ticketSubtotal += itemTotal;
+            breakdown.items.push({
+                type: 'ticket',
+                id: ticketId,
+                name: tierName,
+                unitPrice: tierPrice,
+                quantity,
+                total: itemTotal,
+            });
+        }
+    }
+
+    // 2. Calculate add-on totals
+    if (event.add_ons && Array.isArray(event.add_ons)) {
+        for (const [addonId, qty] of Object.entries(addOnSelections)) {
+            const quantity = Number(qty) || 0;
+            if (quantity <= 0) continue;
+
+            const addon = event.add_ons.find(a => a.id === addonId);
+            if (addon) {
+                const itemTotal = (Number(addon.price) || 0) * quantity;
+                breakdown.addOnSubtotal += itemTotal;
+                breakdown.items.push({
+                    type: 'addon',
+                    id: addonId,
+                    name: addon.name,
+                    unitPrice: Number(addon.price) || 0,
+                    quantity,
+                    total: itemTotal,
+                    taxable: addon.taxable !== false, // Default to taxable
+                });
+            }
+        }
+    }
+
+    breakdown.rawSubtotal = breakdown.ticketSubtotal + breakdown.addOnSubtotal;
+
+    // 3. Apply promo code discount
+    if (promoCode) {
+        if (promoCode.type === 'percent') {
+            breakdown.discountAmount = breakdown.rawSubtotal * (promoCode.value / 100);
+        } else {
+            breakdown.discountAmount = Math.min(promoCode.value, breakdown.rawSubtotal);
+        }
+    }
+    breakdown.discountedSubtotal = Math.max(0, breakdown.rawSubtotal - breakdown.discountAmount);
+
+    // 4. Calculate tax (on taxable items after discount)
+    // Proportionally apply discount to each item
+    const discountRatio = breakdown.rawSubtotal > 0 
+        ? breakdown.discountedSubtotal / breakdown.rawSubtotal 
+        : 1;
+
+    // Tickets are always taxable, add-ons check taxable flag
+    breakdown.taxableAmount = breakdown.ticketSubtotal * discountRatio;
+    breakdown.items.forEach(item => {
+        if (item.type === 'addon' && item.taxable) {
+            breakdown.taxableAmount += item.total * discountRatio;
+        }
+    });
+
+    if (event.tax_rate && event.tax_rate > 0) {
+        breakdown.taxAmount = Number((breakdown.taxableAmount * (event.tax_rate / 100)).toFixed(2));
+    }
+
+    // 5. Calculate custom fees
+    if (event.custom_fees && Array.isArray(event.custom_fees)) {
+        event.custom_fees.forEach(fee => {
+            let feeAmount = 0;
+            if (fee.type === 'percent') {
+                feeAmount = breakdown.discountedSubtotal * (fee.amount / 100);
+            } else {
+                feeAmount = fee.amount;
+            }
+            breakdown.customFeesAmount += Number(feeAmount.toFixed(2));
+        });
+    }
+
+    // 6. Calculate platform fee
+    const feeBase = breakdown.discountedSubtotal + breakdown.taxAmount + breakdown.customFeesAmount;
+    
+    // Only charge platform fee if:
+    // - Event doesn't absorb fees
+    // - Event is not free or donation type
+    // - There's an actual amount to charge
+    const shouldChargeFee = !event.absorb_fees && 
+        event.price_type !== 'free' && 
+        event.price_type !== 'donation' && 
+        feeBase > 0;
+
+    if (shouldChargeFee) {
+        breakdown.platformFee = calculatePlatformFee(feeBase, organizerPlan);
+    }
+
+    // 7. Calculate grand total
+    breakdown.grandTotal = Number((
+        breakdown.discountedSubtotal + 
+        breakdown.taxAmount + 
+        breakdown.customFeesAmount + 
+        breakdown.platformFee
+    ).toFixed(2));
+
+    return breakdown;
+};
+
+/**
+ * Build Stripe line items from breakdown
+ * @param {Object} breakdown - Result from calculateOrderBreakdown
+ * @param {string} eventTitle - Event title for line item names
+ * @returns {Array} Stripe line_items array
+ */
+export const buildStripeLineItems = (breakdown, eventTitle) => {
+    const lineItems = [];
+
+    // Add tickets and add-ons
+    breakdown.items.forEach(item => {
+        // Apply discount proportionally
+        const discountRatio = breakdown.rawSubtotal > 0 
+            ? breakdown.discountedSubtotal / breakdown.rawSubtotal 
+            : 1;
+        const adjustedUnitPrice = Math.round(item.unitPrice * discountRatio * 100); // cents
+
+        lineItems.push({
+            price_data: {
+                currency: breakdown.currency,
+                product_data: {
+                    name: item.type === 'ticket' 
+                        ? `${eventTitle} - ${item.name}`
+                        : `${item.name} (Add-on)`,
+                    metadata: { type: item.type, id: item.id },
+                },
+                unit_amount: adjustedUnitPrice,
+            },
+            quantity: item.quantity,
+        });
+    });
+
+    // Add tax as line item
+    if (breakdown.taxAmount > 0) {
+        lineItems.push({
+            price_data: {
+                currency: breakdown.currency,
+                product_data: { name: 'Tax' },
+                unit_amount: Math.round(breakdown.taxAmount * 100),
+            },
+            quantity: 1,
+        });
+    }
+
+    // Add custom fees as line items
+    if (breakdown.customFeesAmount > 0) {
+        lineItems.push({
+            price_data: {
+                currency: breakdown.currency,
+                product_data: { name: 'Additional Fees' },
+                unit_amount: Math.round(breakdown.customFeesAmount * 100),
+            },
+            quantity: 1,
+        });
+    }
+
+    // Add platform service fee as line item
+    if (breakdown.platformFee > 0) {
+        lineItems.push({
+            price_data: {
+                currency: breakdown.currency,
+                product_data: { name: 'Service Fee' },
+                unit_amount: Math.round(breakdown.platformFee * 100),
+            },
+            quantity: 1,
+        });
+    }
+
+    return lineItems;
+};
+
+export default {
+    PLAN_FEES,
+    calculatePlatformFee,
+    calculateOrderBreakdown,
+    buildStripeLineItems,
+};
