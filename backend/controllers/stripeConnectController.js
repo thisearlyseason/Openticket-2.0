@@ -119,12 +119,6 @@ export const createConnectAccount = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-        });
-    } catch (error) {
-        console.error('Create Connect Account Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-};
 
 /**
  * Get Stripe Connect account status
