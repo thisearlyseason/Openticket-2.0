@@ -1240,24 +1240,23 @@ export const EventView = () => {
                             <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent"></div>
 
                             <div className="relative">
-                                <div className="w-24 h-24 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(224,255,32,0.2)]"></div>
+                                <div className="w-24 h-24 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(34,197,94,0.2)]"></div>
                                 <div className="absolute inset-0 flex items-center justify-center mb-8">
-                                    <Lock size={32} className="text-secondary animate-pulse" />
+                                    <CheckCircle size={32} className="text-green-500 animate-pulse" />
                                 </div>
 
-                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4 animate-pulse">
-                                    Secure Checkout
+                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
+                                    Payment Successful!
                                 </h2>
                                 <p className="text-zinc-400 font-bold mb-8">
-                                    Transferring to our secure payment processor...
+                                    Preparing your tickets and confirmation...
                                 </p>
 
-                                <div className="flex items-center justify-center gap-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
-                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Encrypted</span>
-                                    <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Validated</span>
-                                    <div className="h-1 w-1 bg-zinc-700 rounded-full"></div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Stripe Verified</span>
+                                <div className="flex items-center justify-center gap-6 px-4 py-3 bg-green-500/10 rounded-2xl border border-green-500/20">
+                                    <span className="text-xs font-black uppercase tracking-widest text-green-500">Payment Confirmed</span>
+                                    <div className="h-1 w-1 bg-green-500 rounded-full"></div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Generating Tickets...</span>
+                                </div>
                                 </div>
                             </div>
                         </div>
