@@ -228,11 +228,14 @@ export const createOrder = async (req, res) => {
             // Don't fail the checkout - webhook will handle verification
         }
 
+        console.log(`[Stripe] Checkout session created: ${session.id}`);
         res.json({ url: session.url, id: session.id });
 
     } catch (error) {
         console.error("Create Order Error:", error);
-        res.status(500).json({ error: error.message });
+        // Provide more detailed error message
+        const errorMessage = error.raw?.message || error.message || 'Unknown error';
+        res.status(500).json({ error: errorMessage });
     }
 };
 
