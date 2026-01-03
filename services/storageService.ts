@@ -883,7 +883,8 @@ export const StorageService = {
         if (isOffline) { const list = getLocal<Registration>(LS_REGS_KEY); return eventId ? list.filter(r => r.eventId === eventId) : list; }
 
         try {
-            const endpoint = eventId ? `/registrations/event/${eventId}` : `/registrations`;
+            // Backend route is /registrations/:eventId (not /registrations/event/:eventId)
+            const endpoint = eventId ? `/registrations/${eventId}` : `/registrations`;
             console.log(`[StorageService] Fetching registrations from ${endpoint}`);
             const { registrations } = await fetchSupabase(endpoint, true);
             console.log('[StorageService] Raw DB response:', registrations);
