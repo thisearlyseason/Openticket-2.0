@@ -31,6 +31,9 @@ export const createConnectAccount = async (req, res) => {
 
         if (profileError) throw new Error('Failed to fetch user profile');
 
+        // Get the base URL (remove hash routing)
+        const baseUrl = (process.env.FRONTEND_URL || req.headers.origin || '').replace(/\/$/, '');
+        
         // Check if already connected with a valid account
         if (profile.stripe_connect_id && !profile.stripe_connect_id.startsWith('mock_')) {
             try {
@@ -40,8 +43,8 @@ export const createConnectAccount = async (req, res) => {
                     // Return existing account link for re-onboarding if needed
                     const accountLink = await stripe.accountLinks.create({
                         account: profile.stripe_connect_id,
-                        refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
-                        return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
+                        refresh_url: `${baseUrl}/?stripe_connect=refresh`,
+                        return_url: `${baseUrl}/?stripe_connect=success`,
                         type: 'account_onboarding',
                     });
                     return res.json({ url: accountLink.url, accountId: profile.stripe_connect_id });
