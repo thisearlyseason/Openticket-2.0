@@ -80,6 +80,24 @@ export const getRegistrationsByEvent = async (req, res) => {
             .eq('event_id', eventId);
 
         if (error) throw error;
+        
+        // Auto-fix: Update payment_status to 'paid' for registrations that have stripe_payment_intent_id
+        // This helps clean up old data without requiring manual SQL
+        const pendingWithPayment = data.filter(r => 
+            r.payment_status === 'pending' && r.stripe_payment_intent_id
+        );
+        
+        if (pendingWithPayment.length > 0) {
+            console.log(`[AutoFix] Updating ${pendingWithPayment.length} registrations from pending to paid`);
+            await Promise.all(pendingWithPayment.map(r => 
+                supabase.from('registrations')
+                    .update({ payment_status: 'paid' })
+                    .eq('id', r.id)
+            ));
+            // Update the local data to reflect changes
+            pendingWithPayment.forEach(r => r.payment_status = 'paid');
+        }
+        
         res.json({ registrations: data });
     } catch (error) {
         res.status(500).json({ error: error.message });
