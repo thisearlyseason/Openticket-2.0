@@ -8,8 +8,8 @@ import pytest
 import requests
 import os
 
-# Use the public URL for testing
-BASE_URL = "https://12015d9a-7cef-4380-9740-206453105a4c.preview.emergentagent.com"
+# Use localhost for testing since the public URL isn't routing to backend
+BASE_URL = "http://localhost:8001"
 
 
 class TestHealthEndpoints:
