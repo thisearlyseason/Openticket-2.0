@@ -116,7 +116,8 @@ export const EventFinance = () => {
         const mockTransactions: FinancialTransaction[] = [];
 
         regs.forEach(reg => {
-            const isPaid = reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed';
+            // Consider paid if status is paid/completed OR has stripe payment intent
+            const isPaid = reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed' || !!(reg as any).stripePaymentIntentId;
             const isRefunded = reg.paymentStatus === 'refunded';
 
             if (isRefunded) {
