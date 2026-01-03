@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink, RefreshCw, XCircle, Loader2 } from 'lucide-react';
+import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink, RefreshCw, XCircle, Loader2, TrendingUp } from 'lucide-react';
 import { Button, Card, Badge, Input, Select } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { Registration, Event } from '../types';
