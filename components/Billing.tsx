@@ -639,16 +639,25 @@ export const Billing = () => {
                                     ledger.map((item, idx) => {
                                         const r = item.reg;
                                         const isCancelled = r.paymentStatus === 'refunded';
+                                        // Consider registration paid if it has a stripe payment intent ID OR status is paid/completed
+                                        const isPaid = r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!r.stripePaymentIntentId;
                                         let gross = 0;
+                                        let platformFee = 0;
+                                        let stripeFee = 0;
                                         let net = 0;
 
                                         if (!isCancelled) {
-                                            gross = (r.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0)
+                                            gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
                                                 + (r.donationAmount || 0)
-                                                + (r.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0)
+                                                + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
                                                 + (r.customFeesAmount || 0);
-                                            net = gross - (r.serviceFee || 0);
+                                            platformFee = r.serviceFee || 0;
+                                            // Estimate Stripe fee if not available (2.9% + $0.30)
+                                            stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
+                                            net = gross - platformFee - stripeFee;
                                         }
+
+                                        const totalFee = platformFee + stripeFee;
 
                                         return (
                                             <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
@@ -666,7 +675,9 @@ export const Billing = () => {
                                                 ) : (
                                                     <>
                                                         <td className="p-4 text-right font-mono">${gross.toFixed(2)}</td>
-                                                        <td className="p-4 text-right font-mono text-red-500">-${(r.serviceFee || 0).toFixed(2)}</td>
+                                                        <td className="p-4 text-right font-mono text-red-500" title={`Platform: $${platformFee.toFixed(2)} | Stripe: $${stripeFee.toFixed(2)}`}>
+                                                            -${totalFee.toFixed(2)}
+                                                        </td>
                                                         <td className="p-4 text-right font-mono font-bold text-green-600 dark:text-green-400">
                                                             ${net.toFixed(2)}
                                                         </td>
@@ -676,10 +687,10 @@ export const Billing = () => {
                                                 <td className="p-4 text-center">
                                                     {isCancelled ? (
                                                         <Badge color="gray">CANCELLED</Badge>
+                                                    ) : isPaid ? (
+                                                        <Badge color="green">PAID</Badge>
                                                     ) : (
-                                                        <Badge color={r.paymentStatus === 'completed' || r.paymentStatus === 'paid' ? 'green' : 'yellow'}>
-                                                            {r.paymentStatus === 'completed' || r.paymentStatus === 'paid' ? 'PAID' : 'PENDING'}
-                                                        </Badge>
+                                                        <Badge color="yellow">PENDING</Badge>
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-right">
