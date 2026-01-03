@@ -92,6 +92,28 @@ export const Billing = () => {
             // Sort by date desc
             setLedger(mySales.sort((a, b) => b.reg.timestamp - a.reg.timestamp));
             setIsLoadingLedger(false);
+            
+            // Load financial summary from backend
+            try {
+                const response = await fetch('/api/admin/organizer/financial-summary', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${await (await import('../services/firebaseConfig')).getAuthToken()}`
+                    }
+                });
+                if (response.ok) {
+                    const summary = await response.json();
+                    setFinancialSummary({
+                        grossRevenue: summary.grossRevenue || 0,
+                        stripeFees: summary.stripeFees || 0,
+                        platformFees: summary.platformFees || 0,
+                        organizerNet: summary.organizerNet || 0,
+                        transactionCount: summary.transactionCount || 0
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load financial summary:', e);
+            }
         };
         loadLedger();
         loadStripeStatus();
