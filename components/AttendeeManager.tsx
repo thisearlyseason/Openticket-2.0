@@ -109,7 +109,8 @@ export const AttendeeManager = () => {
         try {
             const list: AttendeeItem[] = [];
             regs.forEach(reg => {
-                const isPaid = reg.paymentStatus === 'completed';
+                // Consider paid if status is paid/completed OR has stripe payment intent
+                const isPaid = reg.paymentStatus === 'completed' || reg.paymentStatus === 'paid' || !!(reg as any).stripePaymentIntentId;
                 // If the entire order is refunded, mark as such
                 const isOrderRefunded = reg.paymentStatus === 'refunded';
 
