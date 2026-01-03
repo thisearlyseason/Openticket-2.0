@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
+import { AuditLogService } from '../services/auditLogService.js';
 const require = createRequire(import.meta.url);
 
 // FIX: Use Server-Side Email Service (Nodemailer), not Client-Side (Firebase)
