@@ -32,6 +32,34 @@ export const createOrder = async (req, res) => {
             phoneNumber
         } = req.body;
 
+        console.log(`[Stripe] createOrder called for event: ${eventId}`);
+        console.log(`[Stripe] successUrl: ${successUrl}`);
+        console.log(`[Stripe] cancelUrl: ${cancelUrl}`);
+
+        // Validate URLs
+        if (!successUrl || !cancelUrl) {
+            return res.status(400).json({ error: "Missing success or cancel URL" });
+        }
+
+        // Ensure URLs are valid (Stripe doesn't accept hash routes)
+        const validateUrl = (url) => {
+            try {
+                const parsed = new URL(url);
+                // Stripe requires http or https
+                if (!['http:', 'https:'].includes(parsed.protocol)) {
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        };
+
+        if (!validateUrl(successUrl) || !validateUrl(cancelUrl)) {
+            console.error(`[Stripe] Invalid URLs - success: ${successUrl}, cancel: ${cancelUrl}`);
+            return res.status(400).json({ error: "Invalid success or cancel URL format" });
+        }
+
         // 1. Fetch Event with owner info
         const { data: event, error: eventError } = await supabase
             .from('events')
@@ -40,6 +68,7 @@ export const createOrder = async (req, res) => {
             .single();
 
         if (eventError || !event) {
+            console.error(`[Stripe] Event not found: ${eventId}`, eventError);
             return res.status(404).json({ error: "Event not found" });
         }
 
