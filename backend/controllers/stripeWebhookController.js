@@ -403,6 +403,26 @@ async function handleRefund(stripe, refundData) {
             .eq('id', transaction.id);
     }
 
+    // Log to Audit Trail
+    try {
+        await AuditLogService.logRefund({
+            actorId: 'system',
+            actorType: 'system',
+            eventId: transaction.event_id,
+            registrationId: transaction.registration_id,
+            refundAmount: refundAmountDollars,
+            stripeFeeRefund: stripeFeeRefund,
+            platformFeeRefund: platformFeeRefund,
+            netRefund: organizerNetRefund,
+            currency: transaction.currency,
+            stripePaymentIntentId: paymentIntentId,
+            stripeRefundId: refundData.id,
+            reason: 'Stripe refund processed'
+        });
+    } catch (auditError) {
+        console.error("[AuditLog] Failed to log refund:", auditError.message);
+    }
+
     console.log(`[Webhook] Refund transaction recorded: $${refundAmountDollars}`);
 }
 
