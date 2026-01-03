@@ -34,6 +34,15 @@ export const Billing = () => {
     const [ledger, setLedger] = useState<{ reg: Registration, event: Event }[]>([]);
     const [isLoadingLedger, setIsLoadingLedger] = useState(true);
 
+    // Financial Summary State
+    const [financialSummary, setFinancialSummary] = useState<{
+        grossRevenue: number;
+        stripeFees: number;
+        platformFees: number;
+        organizerNet: number;
+        transactionCount: number;
+    }>({ grossRevenue: 0, stripeFees: 0, platformFees: 0, organizerNet: 0, transactionCount: 0 });
+
     const user = StorageService.getCurrentUser();
 
     // Handle Stripe redirect parameters
