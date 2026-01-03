@@ -70,11 +70,10 @@ export const createConnectAccount = async (req, res) => {
             },
         };
 
-        // In test mode, pre-fill some data to make onboarding easier
+        // In test mode, pre-fill MCC code only (skip problematic URL)
         if (process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
             accountParams.business_profile = {
                 mcc: '7922', // Theatrical Producers and Ticket Agencies
-                url: 'https://example.com',
             };
         }
 
