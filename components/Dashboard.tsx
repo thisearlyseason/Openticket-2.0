@@ -262,8 +262,11 @@ export const Dashboard = () => {
         return matchesSearch && matchesTab;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Aggregate Stats
-    const totalRevenue = registrations.filter(r => r.paymentStatus === 'paid').reduce((acc, r) => {
+    // Aggregate Stats - consider paid if status is paid/completed OR has stripe payment intent
+    const paidRegistrations = registrations.filter(r => 
+        r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!(r as any).stripePaymentIntentId
+    );
+    const totalRevenue = paidRegistrations.reduce((acc, r) => {
         let total = Number(r.donationAmount) || 0;
         if (r.tickets && Array.isArray(r.tickets)) {
             total += r.tickets.reduce((tAcc, t) => tAcc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
@@ -276,7 +279,7 @@ export const Dashboard = () => {
         return acc + (Number(total) || 0);
     }, 0);
 
-    const totalTicketsSold = registrations.filter(r => r.paymentStatus === 'paid').reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + (Number(t.quantity) || 0), 0) || 1), 0);
+    const totalTicketsSold = paidRegistrations.reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + (Number(t.quantity) || 0), 0) || 1), 0);
 
     if (!currentUser) return null; // Don't render while redirecting
 
