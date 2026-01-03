@@ -205,8 +205,11 @@ export const Dashboard = () => {
     };
 
     const getEventStats = (eventId: string) => {
-        // AUDIT FIX: Filter for all valid confirmed statuses (paid, completed, approved) and exclude pending/refunded.
-        const eventRegs = registrations.filter(r => r.eventId === eventId && ['paid', 'completed', 'approved'].includes(r.paymentStatus));
+        // AUDIT FIX: Consider paid if status is paid/completed/approved OR has stripe payment intent
+        const eventRegs = registrations.filter(r => 
+            r.eventId === eventId && 
+            (['paid', 'completed', 'approved'].includes(r.paymentStatus) || !!(r as any).stripePaymentIntentId)
+        );
         const itemsSold = eventRegs.reduce((acc, r) => {
             if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
                 // Count only valid tickets
