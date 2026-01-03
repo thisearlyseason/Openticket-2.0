@@ -369,3 +369,85 @@ export const calculateOrder = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Verify a checkout session and update registration status
+ * POST /api/stripe/verify-session
+ * This is used when webhooks don't fire (e.g., development environment)
+ */
+export const verifySession = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+            return res.status(400).json({ error: 'Session ID required' });
+        }
+
+        console.log(`[Stripe] Verifying session: ${sessionId}`);
+
+        // Retrieve the session from Stripe
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+            expand: ['payment_intent']
+        });
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Check payment status
+        if (session.payment_status !== 'paid') {
+            return res.status(200).json({ 
+                status: 'pending',
+                message: 'Payment not yet completed'
+            });
+        }
+
+        // Find the registration
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('stripe_checkout_session_id', sessionId)
+            .single();
+
+        if (regError || !reg) {
+            console.error('[Stripe] Registration not found for session:', sessionId);
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // If already paid, return success
+        if (reg.payment_status === 'paid' || reg.payment_status === 'completed') {
+            return res.json({ 
+                status: 'success',
+                registration: reg
+            });
+        }
+
+        // Update registration to paid
+        const { data: updatedReg, error: updateError } = await supabase
+            .from('registrations')
+            .update({
+                payment_status: 'paid',
+                stripe_payment_intent_id: session.payment_intent?.id || session.payment_intent
+            })
+            .eq('id', reg.id)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error('[Stripe] Failed to update registration:', updateError);
+            return res.status(500).json({ error: 'Failed to update registration' });
+        }
+
+        console.log(`[Stripe] Session verified and registration updated: ${reg.id}`);
+
+        res.json({ 
+            status: 'success',
+            registration: updatedReg
+        });
+
+    } catch (error) {
+        console.error("Verify Session Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
