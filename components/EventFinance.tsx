@@ -66,10 +66,11 @@ export const EventFinance = () => {
 
             // 2. Try to load from backend API first
             try {
+                const token = await getAuthToken();
                 const response = await fetch(`/api/admin/events/${eventId}/financials`, {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${await (await import('../services/firebaseConfig')).getAuthToken()}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
