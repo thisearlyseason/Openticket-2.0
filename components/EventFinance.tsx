@@ -6,6 +6,7 @@ import { Card, Button, Badge } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { Event, Registration } from '../types';
 import { useGlobalUI } from './GlobalUIProvider';
+import { getAuthToken } from '../services/firebaseConfig';
 
 interface FinancialSummary {
     grossSales: number;
