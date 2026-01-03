@@ -1283,7 +1283,6 @@ export const EventView = () => {
                                     <div className="h-1 w-1 bg-green-500 rounded-full"></div>
                                     <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Generating Tickets...</span>
                                 </div>
-                                </div>
                             </div>
                         </div>
                     </div>
