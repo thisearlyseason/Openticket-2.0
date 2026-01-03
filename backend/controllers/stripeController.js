@@ -386,9 +386,9 @@ export const verifySession = async (req, res) => {
 
         console.log(`[Stripe] Verifying session: ${sessionId}`);
 
-        // Retrieve the session from Stripe
+        // Retrieve the session from Stripe with expanded payment intent
         const session = await stripe.checkout.sessions.retrieve(sessionId, {
-            expand: ['payment_intent']
+            expand: ['payment_intent.latest_charge.balance_transaction']
         });
 
         if (!session) {
@@ -403,10 +403,10 @@ export const verifySession = async (req, res) => {
             });
         }
 
-        // Find the registration
+        // Find the registration with event data
         const { data: reg, error: regError } = await supabase
             .from('registrations')
-            .select('*')
+            .select('*, event:events(*)')
             .eq('stripe_checkout_session_id', sessionId)
             .single();
 
@@ -415,7 +415,7 @@ export const verifySession = async (req, res) => {
             return res.status(404).json({ error: 'Registration not found' });
         }
 
-        // If already paid, return success
+        // IDEMPOTENCY: If already paid, return success without re-processing
         if (reg.payment_status === 'paid' || reg.payment_status === 'completed') {
             return res.json({ 
                 status: 'success',
@@ -423,12 +423,99 @@ export const verifySession = async (req, res) => {
             });
         }
 
-        // Update registration to paid
+        // ========== FULL POST-PAYMENT PROCESSING ==========
+        console.log(`[Stripe] Processing full payment for registration: ${reg.id}`);
+
+        // 1. Finalize Tickets with unique IDs
+        const finalizedTickets = (reg.tickets || []).map(ticket => ({
+            ...ticket,
+            id: ticket.id || `tix-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+            status: 'valid',
+            purchaseDate: new Date().toISOString()
+        }));
+
+        // 2. Calculate financial breakdown
+        const centsToDollars = (cents) => (cents ? cents / 100 : 0);
+        let grossAmount = centsToDollars(session.amount_total);
+        
+        // Get actual Stripe fee from balance transaction
+        let stripeFee = 0;
+        try {
+            const paymentIntent = session.payment_intent;
+            if (paymentIntent && typeof paymentIntent === 'object') {
+                const charge = paymentIntent.latest_charge;
+                if (charge && typeof charge === 'object' && charge.balance_transaction) {
+                    const bt = charge.balance_transaction;
+                    if (typeof bt === 'object' && bt.fee) {
+                        stripeFee = centsToDollars(bt.fee);
+                        console.log(`[Stripe] Actual fee from balance_transaction: $${stripeFee}`);
+                    }
+                }
+            }
+        } catch (feeError) {
+            console.warn("[Stripe] Could not retrieve actual fee:", feeError.message);
+        }
+
+        // Fallback fee estimation if actual fee not available
+        if (stripeFee === 0 && grossAmount > 0) {
+            stripeFee = Number(((grossAmount * 0.029) + 0.30).toFixed(2));
+            console.log(`[Stripe] Estimated fee: $${stripeFee}`);
+        }
+
+        // Parse metadata for financial reconciliation
+        const platformFee = Number(session.metadata?.platformFee || reg.service_fee || 0);
+        const taxAmount = Number(session.metadata?.taxAmount || reg.tax_amount || 0);
+        const discountAmount = Number(session.metadata?.discountAmount || reg.discount_amount || 0);
+        const affiliateCode = session.metadata?.affiliateCode || reg.affiliate_code || null;
+
+        // Calculate affiliate commission if applicable
+        let affiliateCommission = 0;
+        if (affiliateCode) {
+            try {
+                const eventAffiliates = reg.event?.affiliates || [];
+                const isAuthorized = eventAffiliates.some(a => a.code === affiliateCode);
+
+                if (isAuthorized) {
+                    const { data: affiliate } = await supabase
+                        .from('profiles')
+                        .select('id, commission_rate')
+                        .eq('affiliate_code', affiliateCode)
+                        .single();
+
+                    if (affiliate) {
+                        const buyerId = session.metadata?.userId;
+                        if (buyerId && affiliate.id === buyerId) {
+                            console.warn(`[Affiliate] Self-referral detected. Commission set to 0.`);
+                        } else {
+                            const rate = affiliate.commission_rate || 10;
+                            const baseSubtotal = grossAmount - platformFee - taxAmount;
+                            affiliateCommission = Number((baseSubtotal * (rate / 100)).toFixed(2));
+                        }
+                    }
+                }
+            } catch (affError) {
+                console.warn("[Affiliate] Error processing commission:", affError.message);
+            }
+        }
+
+        // Calculate organizer net earnings
+        const organizerNet = Number((grossAmount - platformFee - stripeFee - affiliateCommission).toFixed(2));
+
+        // 3. Update registration with all data
+        const paymentIntentId = typeof session.payment_intent === 'object' 
+            ? session.payment_intent.id 
+            : session.payment_intent;
+
         const { data: updatedReg, error: updateError } = await supabase
             .from('registrations')
             .update({
                 payment_status: 'paid',
-                stripe_payment_intent_id: session.payment_intent?.id || session.payment_intent
+                stripe_payment_intent_id: paymentIntentId,
+                tickets: finalizedTickets,
+                total_amount: grossAmount,
+                service_fee: platformFee,
+                tax_amount: taxAmount,
+                discount_amount: discountAmount
             })
             .eq('id', reg.id)
             .select()
@@ -439,7 +526,91 @@ export const verifySession = async (req, res) => {
             return res.status(500).json({ error: 'Failed to update registration' });
         }
 
-        console.log(`[Stripe] Session verified and registration updated: ${reg.id}`);
+        // 4. Insert financial transaction record
+        const { error: txError } = await supabase.from('financial_transactions').insert({
+            registration_id: reg.id,
+            event_id: reg.event_id,
+            stripe_session_id: session.id,
+            stripe_payment_intent_id: paymentIntentId,
+            gross_amount: grossAmount,
+            platform_fee: platformFee,
+            stripe_fee: stripeFee,
+            tax_amount: taxAmount,
+            organizer_net: organizerNet,
+            currency: session.currency || 'usd',
+            status: 'succeeded',
+            payout_status: 'pending',
+            transaction_type: 'ticket_sale',
+            discount_amount: discountAmount,
+            affiliate_code: affiliateCode,
+            affiliate_commission: affiliateCommission,
+            created_at: new Date().toISOString()
+        });
+
+        if (txError) {
+            console.error('[Stripe] Failed to insert financial transaction:', txError);
+            // Don't fail the request - registration is already paid
+        } else {
+            console.log(`[Stripe] Financial transaction created for ${sessionId}`);
+        }
+
+        // 5. Update event's registered count
+        const ticketCount = finalizedTickets.length;
+        if (ticketCount > 0 && reg.event_id) {
+            const { error: countError } = await supabase.rpc('increment_registered_count', {
+                p_event_id: reg.event_id,
+                p_count: ticketCount
+            });
+            
+            if (countError) {
+                // Fallback: direct update
+                console.warn('[Stripe] RPC increment failed, trying direct update:', countError);
+                const { data: eventData } = await supabase
+                    .from('events')
+                    .select('registered_count')
+                    .eq('id', reg.event_id)
+                    .single();
+                
+                if (eventData) {
+                    await supabase
+                        .from('events')
+                        .update({ registered_count: (eventData.registered_count || 0) + ticketCount })
+                        .eq('id', reg.event_id);
+                }
+            }
+            console.log(`[Stripe] Updated event registered count (+${ticketCount})`);
+        }
+
+        // 6. Insert audit log
+        try {
+            await supabase.from('audit_logs').insert({
+                timestamp: new Date().toISOString(),
+                actor_id: session.metadata?.userId || 'guest',
+                actor_type: session.metadata?.userId ? 'user' : 'guest',
+                actor_email: reg.attendee_email,
+                action: 'ticket_purchase',
+                target_type: 'registration',
+                target_id: reg.id,
+                details: {
+                    eventId: reg.event_id,
+                    eventTitle: reg.event?.title,
+                    grossAmount: grossAmount,
+                    stripeFee: stripeFee,
+                    platformFee: platformFee,
+                    netAmount: organizerNet,
+                    currency: session.currency || 'usd',
+                    ticketCount: ticketCount,
+                    stripeSessionId: session.id,
+                    stripePaymentIntentId: paymentIntentId
+                }
+            });
+            console.log(`[Stripe] Audit log created for ${sessionId}`);
+        } catch (auditError) {
+            console.error('[Stripe] Failed to create audit log:', auditError);
+        }
+
+        console.log(`[Stripe] Full payment processing complete for session: ${sessionId}`);
+        console.log(`[Stripe] Breakdown: Gross=$${grossAmount}, StripeFee=$${stripeFee}, PlatformFee=$${platformFee}, OrganizerNet=$${organizerNet}`);
 
         res.json({ 
             status: 'success',
