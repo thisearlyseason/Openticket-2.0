@@ -6,6 +6,7 @@ import { Button, Card, Badge, Input, Select } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { Registration, Event } from '../types';
 import { useGlobalUI } from './GlobalUIProvider';
+import { getAuthToken } from '../services/firebaseConfig';
 
 export const Billing = () => {
     const navigate = useNavigate();
