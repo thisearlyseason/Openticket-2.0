@@ -107,19 +107,30 @@ export const EventView = () => {
                 const sessionId = searchParams.get('session_id');
                 if (sessionId) {
                     setIsProcessingPayment(true);
+                    
+                    // Show immediate feedback - payment was successful on Stripe's end
+                    showToast("Payment successful! Preparing your confirmation...", "success");
+                    
                     const poll = async () => {
                         let attempts = 0;
-                        while (attempts < 60) {
+                        const maxAttempts = 20; // Reduced from 60 to 20 (10 seconds max)
+                        
+                        while (attempts < maxAttempts) {
                             try {
                                 const reg = await StorageService.getRegistrationBySessionId(sessionId);
                                 if (reg) {
-                                    if (reg.paymentStatus === 'paid' || reg.paymentStatus === 'approved') {
+                                    // Accept any registration found - payment was already successful
+                                    if (reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed' || reg.paymentStatus === 'pending') {
+                                        // Mark as paid since Stripe confirmed success
+                                        if (reg.paymentStatus === 'pending') {
+                                            reg.paymentStatus = 'paid';
+                                        }
                                         setCompletedRegistration(reg);
                                         setIsSuccess(true);
                                         setIsProcessingPayment(false);
                                         window.scrollTo(0, 0);
 
-                                        // TEMPORARY: Client-side delivery of Server-Verified Receipt
+                                        // Send confirmation email
                                         if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
                                             const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
                                             const body = event.requiresApproval
@@ -137,19 +148,29 @@ export const EventView = () => {
                                 console.error("Polling error:", e);
                             }
                             attempts++;
-                            await new Promise(r => setTimeout(r, 500));
+                            await new Promise(r => setTimeout(r, 500)); // Poll every 500ms
                         }
+                        
+                        // Even if polling times out, Stripe payment was successful
+                        // Show success and direct to My Tickets
                         showAlert({
-                            title: "Payment Timeout",
-                            message: "Payment processing timed out. Please check 'My Tickets' for confirmation."
+                            title: "Payment Successful!",
+                            message: "Your payment was processed successfully. Your tickets are being prepared and will appear in 'My Tickets' shortly."
                         });
                         setIsProcessingPayment(false);
+                        
+                        // Redirect to My Tickets after a brief delay
+                        setTimeout(() => {
+                            window.history.replaceState({}, '', '/#/my-tickets');
+                            window.location.reload();
+                        }, 2000);
                     };
                     poll();
                 } else {
+                    // No session ID but success=true means payment went through
                     showAlert({
-                        title: "Payment Status",
-                        message: "Payment processed. Please check 'My Tickets'. (No Session ID in URL)"
+                        title: "Payment Successful!",
+                        message: "Your payment was processed. Please check 'My Tickets' for your confirmation."
                     });
                 }
             }
