@@ -265,15 +265,79 @@ export const AuditLogService = {
      */
     getOrganizerSummary: async (organizerId) => {
         try {
-            const { data, error } = await supabase.rpc('get_organizer_financial_summary', {
-                p_organizer_id: organizerId
-            });
+            // First get events owned by this organizer
+            const { data: events, error: eventsError } = await supabase
+                .from('events')
+                .select('id')
+                .eq('owner_id', organizerId);
 
-            if (error) throw error;
-            return data;
+            if (eventsError) throw eventsError;
+            
+            if (!events || events.length === 0) {
+                return {
+                    grossRevenue: 0,
+                    stripeFees: 0,
+                    platformFees: 0,
+                    organizerNet: 0,
+                    transactionCount: 0
+                };
+            }
+
+            const eventIds = events.map(e => e.id);
+
+            // Get financial transactions for these events
+            const { data: transactions, error: txError } = await supabase
+                .from('financial_transactions')
+                .select('gross_amount, stripe_fee, platform_fee, organizer_net')
+                .in('event_id', eventIds)
+                .eq('status', 'succeeded');
+
+            if (txError) {
+                console.error('[AuditLog] Error fetching transactions:', txError);
+                // Fallback to registrations-based calculation
+                const { data: registrations, error: regError } = await supabase
+                    .from('registrations')
+                    .select('total_amount, service_fee, payment_status')
+                    .in('event_id', eventIds)
+                    .in('payment_status', ['paid', 'completed']);
+
+                if (regError) throw regError;
+
+                const grossRevenue = registrations.reduce((sum, r) => sum + (r.total_amount || 0), 0);
+                const platformFees = registrations.reduce((sum, r) => sum + (r.service_fee || 0), 0);
+                // Estimate Stripe fees at 2.9% + $0.30
+                const stripeFees = registrations.reduce((sum, r) => {
+                    const amount = r.total_amount || 0;
+                    return sum + (amount > 0 ? (amount * 0.029 + 0.30) : 0);
+                }, 0);
+
+                return {
+                    grossRevenue,
+                    stripeFees: Number(stripeFees.toFixed(2)),
+                    platformFees,
+                    organizerNet: Number((grossRevenue - stripeFees - platformFees).toFixed(2)),
+                    transactionCount: registrations.length
+                };
+            }
+
+            const summary = {
+                grossRevenue: transactions.reduce((sum, t) => sum + (parseFloat(t.gross_amount) || 0), 0),
+                stripeFees: transactions.reduce((sum, t) => sum + (parseFloat(t.stripe_fee) || 0), 0),
+                platformFees: transactions.reduce((sum, t) => sum + (parseFloat(t.platform_fee) || 0), 0),
+                organizerNet: transactions.reduce((sum, t) => sum + (parseFloat(t.organizer_net) || 0), 0),
+                transactionCount: transactions.length
+            };
+
+            return summary;
         } catch (e) {
             console.error('[AuditLog] Error fetching organizer summary:', e);
-            return null;
+            return {
+                grossRevenue: 0,
+                stripeFees: 0,
+                platformFees: 0,
+                organizerNet: 0,
+                transactionCount: 0
+            };
         }
     },
 
