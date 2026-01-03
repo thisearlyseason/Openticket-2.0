@@ -105,8 +105,8 @@ export const createConnectAccount = async (req, res) => {
         // Create account onboarding link
         const accountLink = await stripe.accountLinks.create({
             account: account.id,
-            refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
-            return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
+            refresh_url: `${baseUrl}/?stripe_connect=refresh`,
+            return_url: `${baseUrl}/?stripe_connect=success`,
             type: 'account_onboarding',
             collect: 'eventually_due', // Only collect what's needed now
         });
