@@ -575,6 +575,37 @@ export const Billing = () => {
                 </Card>
             )}
 
+            {/* Financial Breakdown Summary */}
+            {financialSummary.transactionCount > 0 && (
+                <Card className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black border-zinc-200 dark:border-zinc-800">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="text-primary" size={20} /> Financial Summary
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Gross Revenue</div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">${financialSummary.grossRevenue.toFixed(2)}</div>
+                            <div className="text-xs text-zinc-400">{financialSummary.transactionCount} transactions</div>
+                        </div>
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Stripe Fees</div>
+                            <div className="text-2xl font-bold text-red-500">-${financialSummary.stripeFees.toFixed(2)}</div>
+                            <div className="text-xs text-zinc-400">Payment processing</div>
+                        </div>
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Platform Fees</div>
+                            <div className="text-2xl font-bold text-orange-500">-${financialSummary.platformFees.toFixed(2)}</div>
+                            <div className="text-xs text-zinc-400">OpenTicket service</div>
+                        </div>
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Your Earnings</div>
+                            <div className="text-2xl font-bold text-green-500">${financialSummary.organizerNet.toFixed(2)}</div>
+                            <div className="text-xs text-zinc-400">Net to organizer</div>
+                        </div>
+                    </div>
+                </Card>
+            )}
+
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
