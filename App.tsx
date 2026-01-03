@@ -133,6 +133,23 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
         window.scrollTo(0, 0);
     }, [location.pathname]);
 
+    // Handle Stripe Connect redirect
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const stripeConnect = urlParams.get('stripe_connect');
+        const redirect = urlParams.get('redirect');
+        
+        if (stripeConnect === 'success' && redirect === 'settings') {
+            // Clear URL params and redirect to settings
+            window.history.replaceState({}, '', window.location.pathname);
+            navigate('/settings');
+        } else if (stripeConnect === 'refresh' && redirect === 'settings') {
+            // Onboarding incomplete, redirect to settings anyway
+            window.history.replaceState({}, '', window.location.pathname);
+            navigate('/settings');
+        }
+    }, [navigate]);
+
     return (
         <div className={`min-h-screen bg-background text-zinc-900 dark:text-white flex flex-col font-sans selection:bg-secondary selection:text-black relative overflow-x-hidden transition-colors duration-300 ${isEmbed ? 'bg-transparent' : ''}`}>
 
