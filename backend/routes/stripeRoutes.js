@@ -9,6 +9,7 @@ router.post('/create-order', stripeController.createOrder);
 router.post('/create-portal-session', verifyToken, stripeController.createPortalSession);
 router.post('/create-payment-intent', verifyToken, stripeController.createPaymentIntent);
 router.post('/calculate-order', stripeController.calculateOrder);
+router.post('/verify-session', stripeController.verifySession);
 
 // ========== STRIPE CONNECT ROUTES ==========
 router.post('/connect/create-account', verifyToken, stripeConnectController.createConnectAccount);
