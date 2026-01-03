@@ -200,10 +200,12 @@ export const createAccountLink = async (req, res) => {
             return res.status(400).json({ error: 'Mock account detected. Create a real account.' });
         }
 
+        const baseUrl = (process.env.FRONTEND_URL || req.headers.origin || '').replace(/\/$/, '');
+
         const accountLink = await stripe.accountLinks.create({
             account: profile.stripe_connect_id,
-            refresh_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_refresh=true`,
-            return_url: `${process.env.FRONTEND_URL || req.headers.origin}/#/billing?stripe_success=true`,
+            refresh_url: `${baseUrl}/?stripe_connect=refresh`,
+            return_url: `${baseUrl}/?stripe_connect=success`,
             type: 'account_onboarding',
         });
 
