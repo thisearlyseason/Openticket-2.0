@@ -226,7 +226,33 @@ async function handleCheckoutCompleted(stripe, session) {
 
     console.log(`[Stripe] Transaction Processed for Session ${session.id}`);
 
-    // 8. Send confirmation email
+    // 8. Log to Audit Trail
+    try {
+        await AuditLogService.logTicketPurchase({
+            actorId: session.metadata?.userId || 'guest',
+            actorType: session.metadata?.userId ? 'guest' : 'guest',
+            actorEmail: reg.attendee_email,
+            eventId: reg.event_id,
+            registrationId: reg.id,
+            grossAmount: grossAmount,
+            stripeFee: stripeFee,
+            platformFee: platformFee,
+            netAmount: organizerNet,
+            currency: session.currency || 'usd',
+            stripePaymentIntentId: session.payment_intent,
+            stripeSessionId: session.id,
+            ticketCount: finalizedTickets.length,
+            metadata: {
+                eventTitle: reg.event?.title,
+                attendeeName: reg.attendee_name,
+                promoCode: session.metadata?.promoCode
+            }
+        });
+    } catch (auditError) {
+        console.error("[AuditLog] Failed to log ticket purchase:", auditError.message);
+    }
+
+    // 9. Send confirmation email
     try {
         console.log(`[Webhook] Sending confirmation email to: ${reg.attendee_email}`);
         await EmailService.sendConfirmation(reg.attendee_email, finalizedTickets, reg.event);
