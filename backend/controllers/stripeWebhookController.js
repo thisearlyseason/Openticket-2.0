@@ -434,6 +434,13 @@ async function handleAccountUpdated(account) {
 
     const isComplete = account.charges_enabled && account.payouts_enabled;
 
+    // Get profile for logging
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('stripe_connect_id', account.id)
+        .single();
+
     // Update profile with onboarding status
     const { error } = await supabase
         .from('profiles')
@@ -442,6 +449,24 @@ async function handleAccountUpdated(account) {
 
     if (error) {
         console.error('[Webhook] Failed to update profile:', error);
+    }
+
+    // Log to Audit Trail
+    if (profile && isComplete) {
+        try {
+            await AuditLogService.logStripeConnect({
+                actorId: profile.id,
+                actorEmail: profile.email,
+                stripeAccountId: account.id,
+                status: 'completed',
+                metadata: {
+                    chargesEnabled: account.charges_enabled,
+                    payoutsEnabled: account.payouts_enabled
+                }
+            });
+        } catch (auditError) {
+            console.error("[AuditLog] Failed to log Stripe Connect:", auditError.message);
+        }
     }
 
     console.log(`[Webhook] Account ${account.id} onboarding complete: ${isComplete}`);
