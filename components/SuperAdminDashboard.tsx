@@ -496,35 +496,62 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     };
 
     return (
-        <div className="max-w-7xl mx-auto py-8 px-4 pb-20">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                        <Shield className="text-[#E0FF20]" size={32} /> Super Admin
-                    </h1>
-                    <p className="text-zinc-400">Platform Management Dashboard</p>
+        <div className={embedded ? "py-4 px-6" : "max-w-7xl mx-auto py-8 px-4 pb-20"} data-testid="super-admin-dashboard">
+            {/* Header - only show when not embedded */}
+            {!embedded && (
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h1 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <Shield className="text-[#E0FF20]" size={32} /> Super Admin
+                        </h1>
+                        <p className="text-zinc-400">Platform Management Dashboard</p>
+                    </div>
+                    <div className="flex gap-4 flex-wrap">
+                        <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                            <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
+                                <Ticket size={12} /> Platform Fees
+                            </div>
+                            <div className="text-xl font-bold text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
+                        </div>
+                        <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                            <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
+                                <Crown size={12} className="text-purple-500" /> Subscriptions
+                            </div>
+                            <div className="text-xl font-bold text-purple-400">${stats.subscriptionRevenue.toFixed(2)}</div>
+                        </div>
+                        <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                            <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
+                                <TrendingUp size={12} className="text-green-500" /> Total Volume
+                            </div>
+                            <div className="text-xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</div>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-4 flex-wrap">
-                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+            )}
+
+            {/* Stats Summary - show at top when embedded */}
+            {embedded && (
+                <div className="flex gap-4 flex-wrap mb-6">
+                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex-1 min-w-[150px]">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                             <Ticket size={12} /> Platform Fees
                         </div>
                         <div className="text-xl font-bold text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
                     </div>
-                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex-1 min-w-[150px]">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                             <Crown size={12} className="text-purple-500" /> Subscriptions
                         </div>
                         <div className="text-xl font-bold text-purple-400">${stats.subscriptionRevenue.toFixed(2)}</div>
                     </div>
-                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex-1 min-w-[150px]">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                             <TrendingUp size={12} className="text-green-500" /> Total Volume
                         </div>
                         <div className="text-xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Search Bar */}
             <div className="mb-6">
