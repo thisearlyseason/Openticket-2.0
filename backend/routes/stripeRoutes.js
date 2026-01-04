@@ -11,6 +11,9 @@ router.post('/create-payment-intent', verifyToken, stripeController.createPaymen
 router.post('/calculate-order', stripeController.calculateOrder);
 router.post('/verify-session', stripeController.verifySession);
 
+// ========== AT-DOOR PAYMENT ROUTES ==========
+router.post('/record-at-door-payment', verifyToken, stripeController.recordAtDoorPayment);
+
 // ========== STRIPE CONNECT ROUTES ==========
 router.post('/connect/create-account', verifyToken, stripeConnectController.createConnectAccount);
 router.get('/connect/status', verifyToken, stripeConnectController.getConnectStatus);
