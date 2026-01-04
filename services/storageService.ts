@@ -600,11 +600,6 @@ export const StorageService = {
         }
     },
 
-    // System Notification with targeting
-    setSystemNotification: async (message: string, type: string = 'info', target: string = 'all'): Promise<void> => {
-        localStorage.setItem('SYSTEM_NOTIFICATION', JSON.stringify({ message, type, target, timestamp: Date.now() }));
-    },
-
     getSuperAdmin: async (): Promise<User | undefined> => {
         // Return current user if admin
         const u = StorageService.getCurrentUser();
