@@ -105,10 +105,9 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 - `/app/CREATE_AFFILIATE_PAYOUTS_TABLE.sql`
 
 ### 📋 Future Tasks
-- [ ] Affiliate click tracking endpoint (increment on link visit)
-- [ ] Subscription attribution to affiliate
-- [ ] Complete at-door payment (currently UI-only MOCKED)
-- [ ] Add automated tests for payment flows
+- [ ] Subscription attribution to affiliate (track which subscriptions came from affiliates)
+- [ ] Add automated e2e tests for full payment flows
+- [ ] Stripe Elements integration for in-app card processing at check-in (currently uses external terminal)
 
 ---
 
@@ -125,6 +124,7 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ### Stripe Checkout
 - `POST /api/stripe/create-order` - Create Stripe Checkout session
 - `POST /api/stripe/verify-session` - Verify payment with full financial processing
+- `POST /api/stripe/record-at-door-payment` - Record at-door payment (cash/card/transfer)
 
 ### Stripe Connect
 - `POST /api/stripe/connect/create-account` - Create Connect account
@@ -140,11 +140,16 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 - `POST /api/admin/affiliate-payouts` - Record affiliate payout
 - `POST /api/admin/affiliate-payouts/stripe` - Initiate Stripe transfer to affiliate
 
+### Affiliate Tracking (NEW)
+- `POST /api/admin/affiliate/track-click` - Track affiliate link click (public, no auth)
+- `GET /api/admin/affiliate/analytics` - Get comprehensive affiliate analytics (admin only)
+- `GET /api/admin/affiliate/:affiliateId` - Get detailed affiliate info with transactions/payouts
+
 ---
 
 ## Known Issues
-1. At-door payment on check-in page is UI-only (MOCKED)
-2. Affiliate clicks need manual tracking endpoint
+1. ~~At-door payment on check-in page is UI-only (MOCKED)~~ ✅ RESOLVED - Now records financial transactions
+2. ~~Affiliate clicks need manual tracking endpoint~~ ✅ RESOLVED - Endpoint implemented
 
 ---
 
