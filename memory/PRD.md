@@ -51,7 +51,14 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 4, 2026)
 
-#### Super Admin Button Feature (NEW)
+#### Critical Backend Fix (LATEST)
+- [x] Fixed backend server startup - was configured for Python/uvicorn but app uses Node.js/Express
+- [x] Updated supervisor config: `/etc/supervisor/conf.d/supervisord.conf`
+- [x] Backend now runs via `node /app/api/server.js` on port 8001
+- [x] All Stripe endpoints now functional: `/api/stripe/verify-session`, `/api/stripe/connect/*`
+- [x] Fixed Vite fs.allow issue by adding `/app` and `/app/frontend` to allowed paths
+
+#### Super Admin Button Feature
 - [x] Added "Super Admin" button in navbar for admin users (user.isAdmin === true)
 - [x] Clicking button opens fullscreen overlay panel with Super Admin dashboard
 - [x] Close button (X) to dismiss the panel
