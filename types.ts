@@ -127,6 +127,9 @@ export interface User {
 
   // Affiliate
   affiliateCode?: string;
+  affiliateClicks?: number;
+  totalPaidOut?: number;
+  commissionRate?: number;
 
   // Team
   teamMembers?: TeamMember[];
