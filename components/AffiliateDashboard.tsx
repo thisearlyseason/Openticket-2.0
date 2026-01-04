@@ -91,8 +91,6 @@ export const AffiliateDashboard = () => {
                         conversionRate,
                         recentCommissions: commissions.sort((a, b) => b.date - a.date).slice(0, 5)
                     });
-                        recentCommissions: commissions.sort((a, b) => b.date - a.date).slice(0, 5)
-                    });
                 } else {
                     setView('onboarding');
                 }
