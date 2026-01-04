@@ -243,9 +243,13 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                         </div>
 
                                         {user?.isAdmin && (
-                                            <Link to="/admin" className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-1 bg-red-500/10 px-3 py-1 rounded-full">
+                                            <button 
+                                                onClick={() => setShowSuperAdminPanel(true)} 
+                                                className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-1 bg-red-500/10 px-3 py-1 rounded-full transition-all hover:bg-red-500/20"
+                                                data-testid="super-admin-toggle-btn"
+                                            >
                                                 <Shield size={14} /> Super Admin
-                                            </Link>
+                                            </button>
                                         )}
                                         {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
                                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
