@@ -434,10 +434,10 @@ export const StorageService = {
         });
     },
 
-    setSystemNotification: (message: string, type: 'info' | 'warning' | 'success' = 'info') => {
+    setSystemNotification: (message: string, type: 'info' | 'warning' | 'success' = 'info', target: 'all' | 'organizers' | 'affiliates' = 'all') => {
         const currentUser = StorageService.getCurrentUser();
         if (!currentUser?.isAdmin) return;
-        const note: SystemNotification = { id: `note-${Date.now()}`, message, type, active: true, timestamp: Date.now() };
+        const note: SystemNotification = { id: `note-${Date.now()}`, message, type, active: true, timestamp: Date.now(), target };
         localStorage.setItem(SYSTEM_NOTE_KEY, safeStringify(note));
     },
 
