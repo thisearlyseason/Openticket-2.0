@@ -94,13 +94,22 @@ export const SuperAdminDashboard = () => {
         organizerBreakdown: [] as OrganizerBreakdown[]
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'broadcast' | 'promo' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'broadcast' | 'promo' | 'settings'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
     // Broadcast State
     const [broadcastMsg, setBroadcastMsg] = useState('');
     const [broadcastTarget, setBroadcastTarget] = useState<'all' | 'organizers' | 'affiliates'>('all');
     const [activeNotification, setActiveNotification] = useState<any>(null);
+
+    // Affiliate State
+    const [affiliates, setAffiliates] = useState<AffiliateData[]>([]);
+    const [affiliatePayouts, setAffiliatePayouts] = useState<AffiliatePayout[]>([]);
+    const [selectedAffiliate, setSelectedAffiliate] = useState<AffiliateData | null>(null);
+    const [payoutAmount, setPayoutAmount] = useState('');
+    const [payoutMethod, setPayoutMethod] = useState<'stripe' | 'offline'>('stripe');
+    const [payoutNotes, setPayoutNotes] = useState('');
+    const [isProcessingPayout, setIsProcessingPayout] = useState(false);
 
     // Promo Code State
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
