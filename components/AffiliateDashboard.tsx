@@ -73,6 +73,11 @@ export const AffiliateDashboard = () => {
                     // Parse Plan Types for confirmation
                     const proCount = commissions.filter(c => c.description.toLowerCase().includes('pro')).length;
                     const premiumCount = commissions.filter(c => c.description.toLowerCase().includes('premium')).length;
+                    
+                    // Get click stats from user profile
+                    const clicks = userData.affiliateClicks || 0;
+                    const conversions = commissions.length;
+                    const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
 
                     setStats({
                         referrals: Math.max(commissions.length, Math.floor(total / 5)),
@@ -81,6 +86,11 @@ export const AffiliateDashboard = () => {
                         pending: 0,
                         proCount,
                         premiumCount,
+                        clicks,
+                        conversions,
+                        conversionRate,
+                        recentCommissions: commissions.sort((a, b) => b.date - a.date).slice(0, 5)
+                    });
                         recentCommissions: commissions.sort((a, b) => b.date - a.date).slice(0, 5)
                     });
                 } else {
