@@ -461,7 +461,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         a.click();
     };
 
-    if (unauthorized) {
+    if (unauthorized && !embedded) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
                 <div className="bg-red-500/10 p-8 rounded-3xl border border-red-500/20 text-center max-w-md">
@@ -476,7 +476,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         );
     }
 
-    if (!currentUser?.isAdmin) return null;
+    if (!embedded && !currentUser?.isAdmin) return null;
 
     const filteredUsers = (users || []).filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
