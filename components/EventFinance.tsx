@@ -67,19 +67,26 @@ export const EventFinance = () => {
             // 2. Try to load from backend API first
             try {
                 const token = await getAuthToken();
-                const response = await fetch(`/api/admin/events/${eventId}/financials`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                if (token) {
+                    const response = await fetch(`/api/admin/events/${eventId}/financials`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    setSummary(data.summary);
-                    setTransactions(data.transactions || []);
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSummary(data.summary);
+                        setTransactions(data.transactions || []);
+                    } else {
+                        // Fallback to registration-based calculation
+                        console.warn('API returned error, using registration data');
+                        await loadFromRegistrations(eventId);
+                    }
                 } else {
-                    // Fallback to registration-based calculation
+                    // No token available, use registration-based calculation
+                    console.warn('No auth token, using registration data');
                     await loadFromRegistrations(eventId);
                 }
             } catch (apiError) {
