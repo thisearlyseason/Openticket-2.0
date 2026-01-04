@@ -52,7 +52,17 @@ export const EventFinance = () => {
     const user = StorageService.getCurrentUser();
 
     const loadFinancials = async () => {
-        if (!eventId) return;
+        if (!eventId) {
+            setIsLoading(false);
+            return;
+        }
+        
+        // Check if user is authenticated
+        if (!user) {
+            console.warn('No authenticated user, redirecting to login');
+            navigate('/auth');
+            return;
+        }
 
         try {
             // 1. Load Event
