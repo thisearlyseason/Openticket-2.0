@@ -5,7 +5,7 @@
     "minor": [
       {
         "endpoint": "Public URL routing",
-        "issue": "The public preview URL (https://12015d9a-7cef-4380-9740-206453105a4c.preview.emergentagent.com) returns Framer landing page instead of routing to the app. Backend works on localhost:8001."
+        "issue": "The public preview URL (https://admindash-fix.preview.emergentagent.com) returns Framer landing page instead of routing to the app. Backend works on localhost:8001."
       }
     ]
   },
