@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { User, Event, Registration } from '../types';
 import { Card, Button, Badge, Input, RichTextarea, Select } from './UI';
-import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save, Download, Tag, Percent, Calendar, Mail, Building2, UserCheck, FileText } from 'lucide-react';
+import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save, Download, Tag, Percent, Calendar, Mail, Building2, UserCheck, FileText, Gift, Wallet, Clock, Eye } from 'lucide-react';
 
 interface FinancialTransaction {
     id: string;
@@ -12,6 +12,8 @@ interface FinancialTransaction {
     platform_fee: number;
     stripe_fee: number;
     organizer_net: number;
+    affiliate_code?: string;
+    affiliate_commission?: number;
     stripe_session_id?: string;
     event_id?: string;
     created_at: string;
@@ -33,6 +35,34 @@ interface OrganizerBreakdown {
     platformFees: number;
     netEarnings: number;
     transactionCount: number;
+}
+
+interface AffiliateData {
+    id: string;
+    name: string;
+    email: string;
+    affiliateCode: string;
+    stripeConnectId?: string;
+    totalEarnings: number;
+    pendingPayout: number;
+    paidOut: number;
+    clicks: number;
+    conversions: number;
+    conversionRate: number;
+    transactions: FinancialTransaction[];
+}
+
+interface AffiliatePayout {
+    id: string;
+    affiliateId: string;
+    affiliateName: string;
+    affiliateCode: string;
+    amount: number;
+    method: 'stripe' | 'offline' | 'manual';
+    status: 'pending' | 'paid' | 'failed';
+    notes?: string;
+    createdAt: string;
+    paidAt?: string;
 }
 
 interface PromoCode {
