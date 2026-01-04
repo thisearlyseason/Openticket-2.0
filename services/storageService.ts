@@ -927,6 +927,12 @@ export const StorageService = {
     },
 
     getRegistrationsByEmail: async (email: string) => {
+        // Don't call API if email is empty
+        if (!email || email.trim() === '') {
+            console.log('[StorageService] No email provided, returning empty');
+            return [];
+        }
+        
         console.log(`[StorageService] Fetching registrations for email: ${email}`);
 
         try {
