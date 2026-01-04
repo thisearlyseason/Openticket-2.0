@@ -1,0 +1,6 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS affiliate_code TEXT UNIQUE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS affiliate_clicks INTEGER DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS commission_rate NUMERIC DEFAULT 10;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS total_paid_out NUMERIC DEFAULT 0;
+
+NOTIFY pgrst, 'reload schema';
