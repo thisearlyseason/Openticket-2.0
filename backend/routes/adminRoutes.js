@@ -296,4 +296,204 @@ router.post('/affiliate-payouts/stripe', verifyToken, requireAdmin, async (req, 
     }
 });
 
+// ============================================
+// AFFILIATE CLICK TRACKING ENDPOINTS
+// ============================================
+
+/**
+ * Track affiliate link click (public, no auth required)
+ * POST /api/admin/affiliate/track-click
+ */
+router.post('/affiliate/track-click', async (req, res) => {
+    try {
+        const { affiliateCode, eventId, referrer, userAgent } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        if (!affiliateCode) {
+            return res.status(400).json({ error: 'Affiliate code required' });
+        }
+
+        // Find the affiliate by code
+        const { data: affiliate, error: affError } = await supabase
+            .from('profiles')
+            .select('id, affiliate_clicks')
+            .eq('affiliate_code', affiliateCode)
+            .single();
+
+        if (affError || !affiliate) {
+            console.warn(`[Affiliate] Click ignored - unknown code: ${affiliateCode}`);
+            return res.status(200).json({ tracked: false, reason: 'Unknown affiliate code' });
+        }
+
+        // Increment affiliate_clicks on profile
+        const newClickCount = (affiliate.affiliate_clicks || 0) + 1;
+        await supabase
+            .from('profiles')
+            .update({ affiliate_clicks: newClickCount })
+            .eq('id', affiliate.id);
+
+        // Log to affiliate_clicks table for detailed tracking
+        await supabase.from('affiliate_clicks').insert({
+            affiliate_id: affiliate.id,
+            affiliate_code: affiliateCode,
+            event_id: eventId || null,
+            referrer: referrer || null,
+            user_agent: userAgent || null,
+            ip_hash: req.ip ? Buffer.from(req.ip).toString('base64').slice(0, 16) : null,
+            created_at: new Date().toISOString()
+        }).catch(err => {
+            // Table may not exist yet, that's ok
+            console.warn('[Affiliate] Click logging table error:', err.message);
+        });
+
+        console.log(`[Affiliate] Click tracked for ${affiliateCode} (total: ${newClickCount})`);
+        res.json({ tracked: true, clickCount: newClickCount });
+    } catch (error) {
+        console.error('Affiliate click tracking error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get affiliate analytics (admin only)
+ * GET /api/admin/affiliate/analytics
+ */
+router.get('/affiliate/analytics', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Get all affiliates with their stats
+        const { data: affiliates, error: affError } = await supabase
+            .from('profiles')
+            .select('id, name, email, affiliate_code, affiliate_clicks, commission_rate, stripe_connect_id, total_paid_out')
+            .not('affiliate_code', 'is', null)
+            .order('affiliate_clicks', { ascending: false });
+
+        if (affError) throw affError;
+
+        // Get financial transactions with affiliate attribution
+        const { data: transactions, error: txError } = await supabase
+            .from('financial_transactions')
+            .select('id, gross_amount, affiliate_code, affiliate_commission, created_at, event_id')
+            .not('affiliate_code', 'is', null);
+
+        if (txError) throw txError;
+
+        // Build analytics per affiliate
+        const analytics = (affiliates || []).map(aff => {
+            const affTxs = (transactions || []).filter(tx => tx.affiliate_code === aff.affiliate_code);
+            const totalRevenue = affTxs.reduce((sum, tx) => sum + (Number(tx.gross_amount) || 0), 0);
+            const totalCommission = affTxs.reduce((sum, tx) => sum + (Number(tx.affiliate_commission) || 0), 0);
+            const conversions = affTxs.length;
+            const clicks = aff.affiliate_clicks || 0;
+            const conversionRate = clicks > 0 ? ((conversions / clicks) * 100).toFixed(2) : '0.00';
+
+            return {
+                id: aff.id,
+                name: aff.name || 'Unknown',
+                email: aff.email,
+                affiliateCode: aff.affiliate_code,
+                stripeConnected: !!aff.stripe_connect_id,
+                commissionRate: aff.commission_rate || 10,
+                clicks: clicks,
+                conversions: conversions,
+                conversionRate: parseFloat(conversionRate),
+                totalRevenue: totalRevenue,
+                totalCommission: totalCommission,
+                pendingPayout: Math.max(0, totalCommission - (aff.total_paid_out || 0)),
+                totalPaidOut: aff.total_paid_out || 0,
+                transactions: affTxs.map(tx => ({
+                    id: tx.id,
+                    amount: tx.gross_amount,
+                    commission: tx.affiliate_commission,
+                    eventId: tx.event_id,
+                    date: tx.created_at
+                }))
+            };
+        });
+
+        // Summary stats
+        const summary = {
+            totalAffiliates: analytics.length,
+            totalClicks: analytics.reduce((sum, a) => sum + a.clicks, 0),
+            totalConversions: analytics.reduce((sum, a) => sum + a.conversions, 0),
+            totalRevenue: analytics.reduce((sum, a) => sum + a.totalRevenue, 0),
+            totalCommissions: analytics.reduce((sum, a) => sum + a.totalCommission, 0),
+            totalPaidOut: analytics.reduce((sum, a) => sum + a.totalPaidOut, 0),
+            pendingPayouts: analytics.reduce((sum, a) => sum + a.pendingPayout, 0)
+        };
+
+        res.json({ affiliates: analytics, summary });
+    } catch (error) {
+        console.error('Affiliate analytics error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get affiliate detail by ID (admin only)
+ * GET /api/admin/affiliate/:affiliateId
+ */
+router.get('/affiliate/:affiliateId', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { affiliateId } = req.params;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Get affiliate profile
+        const { data: affiliate, error: affError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', affiliateId)
+            .single();
+
+        if (affError || !affiliate) {
+            return res.status(404).json({ error: 'Affiliate not found' });
+        }
+
+        // Get all transactions for this affiliate
+        const { data: transactions } = await supabase
+            .from('financial_transactions')
+            .select('*, event:events(title)')
+            .eq('affiliate_code', affiliate.affiliate_code)
+            .order('created_at', { ascending: false });
+
+        // Get payout history
+        const { data: payouts } = await supabase
+            .from('affiliate_payouts')
+            .select('*')
+            .eq('affiliate_id', affiliateId)
+            .order('created_at', { ascending: false });
+
+        const totalCommission = (transactions || []).reduce(
+            (sum, tx) => sum + (Number(tx.affiliate_commission) || 0), 0
+        );
+        const totalPaidOut = affiliate.total_paid_out || 0;
+
+        res.json({
+            affiliate: {
+                id: affiliate.id,
+                name: affiliate.name,
+                email: affiliate.email,
+                affiliateCode: affiliate.affiliate_code,
+                clicks: affiliate.affiliate_clicks || 0,
+                commissionRate: affiliate.commission_rate || 10,
+                stripeConnectId: affiliate.stripe_connect_id,
+                stripeOnboardingComplete: affiliate.stripe_onboarding_complete
+            },
+            stats: {
+                totalRevenue: (transactions || []).reduce((sum, tx) => sum + (Number(tx.gross_amount) || 0), 0),
+                totalCommission: totalCommission,
+                pendingPayout: Math.max(0, totalCommission - totalPaidOut),
+                totalPaidOut: totalPaidOut,
+                conversions: (transactions || []).length
+            },
+            transactions: transactions || [],
+            payouts: payouts || []
+        });
+    } catch (error) {
+        console.error('Get affiliate detail error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
