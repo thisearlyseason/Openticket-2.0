@@ -404,90 +404,21 @@ export const CheckInPortal = () => {
     const handleProcessPayment = async (method: 'cash' | 'card' | 'transfer') => {
         if (!paymentContext) return;
         setPaymentError(null);
+        setPaymentStatus('processing');
         
-        if (method === 'card') {
-            // For card payments, we need to process through Stripe
-            setPaymentStatus('processing');
+        try {
+            // For at-door payments, we record the payment and mark as completed
+            // Card payments are assumed to be processed on an external terminal
+            await finalizePayment(method, method === 'card' ? 'terminal' : method);
+        } catch (error: any) {
+            console.error('[Payment] Payment error:', error);
+            setPaymentError(error.message || 'Payment failed. Please try again.');
+            setPaymentStatus('error');
             
-            try {
-                const totalDue = calculateTotalDue(paymentContext.reg);
-                
-                // Check if Stripe is available and we have a valid key
-                if (!stripeInstance) {
-                    // Fallback to manual/offline card recording
-                    console.warn('[Payment] Stripe not available, falling back to offline card recording');
-                    await finalizePayment(method, 'offline_card');
-                    return;
-                }
-
-                // Create a PaymentIntent via our backend
-                const response = await StorageService.Stripe.createAtDoorPaymentIntent(
-                    paymentContext.reg.id,
-                    totalDue
-                );
-
-                if (!response.clientSecret) {
-                    throw new Error('Failed to create payment intent');
-                }
-
-                setStripeClientSecret(response.clientSecret);
-
-                // Format card details for Stripe
-                const [expMonth, expYear] = cardDetails.expiry.split('/').map(s => s.trim());
-                const cardNumber = cardDetails.number.replace(/\s/g, '');
-
-                // Confirm the payment with Stripe
-                const { error, paymentIntent } = await stripeInstance.confirmCardPayment(
-                    response.clientSecret,
-                    {
-                        payment_method: {
-                            card: {
-                                // Note: In production, you'd use Stripe Elements for PCI compliance
-                                // This is a simplified version that collects card data directly
-                                // For full PCI compliance, integrate Stripe Elements
-                                token: await createCardToken(cardNumber, expMonth, expYear, cardDetails.cvc)
-                            },
-                            billing_details: {
-                                name: paymentContext.reg.attendeeName,
-                                email: paymentContext.reg.attendeeEmail
-                            }
-                        }
-                    }
-                );
-
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                if (paymentIntent?.status === 'succeeded') {
-                    setPaymentStatus('done');
-                    setTimeout(() => finalizePayment(method, 'stripe'), 1500);
-                } else {
-                    throw new Error(`Payment failed with status: ${paymentIntent?.status}`);
-                }
-            } catch (error: any) {
-                console.error('[Payment] Card payment error:', error);
-                setPaymentError(error.message || 'Payment failed. Try cash or manual entry.');
-                setPaymentStatus('error');
-                
-                // Offer fallback option
-                setTimeout(() => {
-                    setPaymentStatus('input');
-                }, 3000);
-            }
-            return;
+            setTimeout(() => {
+                setPaymentStatus('input');
+            }, 3000);
         }
-        
-        // For cash and transfer, proceed directly to finalize
-        finalizePayment(method);
-    };
-
-    // Helper to create a card token (simplified - in production use Stripe Elements)
-    const createCardToken = async (number: string, expMonth: string, expYear: string, cvc: string) => {
-        // This is a placeholder - in a real implementation, you would use Stripe Elements
-        // or the Stripe.js createToken method with a card element
-        // For now, we'll throw an error to fall back to offline mode
-        throw new Error('Direct card tokenization requires Stripe Elements integration');
     };
 
     const finalizePayment = async (method: 'cash' | 'card' | 'transfer', paymentSource?: string) => {
