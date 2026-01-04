@@ -186,6 +186,48 @@ export const SuperAdminDashboard = () => {
                 organizerBreakdown: financials.organizerBreakdown || []
             });
 
+            // Calculate affiliate data from transactions
+            const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
+            const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                // Find transactions attributed to this affiliate
+                const affTransactions = (financials.recentTransactions || []).filter(
+                    (tx: any) => tx.affiliate_code === aff.affiliateCode
+                );
+                
+                const totalCommission = affTransactions.reduce(
+                    (sum: number, tx: any) => sum + (Number(tx.affiliate_commission) || 0), 0
+                );
+                
+                // Calculate paid out vs pending (from payouts table or user record)
+                const paidOut = aff.totalPaidOut || 0;
+                const pendingPayout = totalCommission - paidOut;
+                
+                return {
+                    id: aff.id,
+                    name: aff.name || 'Unknown',
+                    email: aff.email || '',
+                    affiliateCode: aff.affiliateCode || '',
+                    stripeConnectId: aff.stripeConnectId,
+                    totalEarnings: totalCommission,
+                    pendingPayout: Math.max(0, pendingPayout),
+                    paidOut: paidOut,
+                    clicks: aff.affiliateClicks || 0,
+                    conversions: affTransactions.length,
+                    conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
+                    transactions: affTransactions
+                };
+            });
+            
+            setAffiliates(affiliateDataList);
+            
+            // Load affiliate payouts
+            try {
+                const payouts = await StorageService.getAffiliatePayouts();
+                setAffiliatePayouts(payouts || []);
+            } catch (e) {
+                console.error("Failed to load affiliate payouts", e);
+            }
+
             try {
                 setActiveNotification(StorageService.getSystemNotification());
             } catch (e) { console.error(e); }
@@ -201,6 +243,73 @@ export const SuperAdminDashboard = () => {
             setPromoCodes(codes || []);
         } catch (e) {
             console.error("Failed to load promo codes", e);
+        }
+    };
+
+    const handleProcessAffiliatePayout = async () => {
+        if (!selectedAffiliate || !payoutAmount) return;
+        
+        const amount = parseFloat(payoutAmount);
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+        
+        if (amount > selectedAffiliate.pendingPayout) {
+            alert(`Cannot pay more than pending amount ($${selectedAffiliate.pendingPayout.toFixed(2)})`);
+            return;
+        }
+        
+        setIsProcessingPayout(true);
+        
+        try {
+            const payout: AffiliatePayout = {
+                id: `payout-${Date.now()}`,
+                affiliateId: selectedAffiliate.id,
+                affiliateName: selectedAffiliate.name,
+                affiliateCode: selectedAffiliate.affiliateCode,
+                amount: amount,
+                method: payoutMethod,
+                status: payoutMethod === 'stripe' ? 'pending' : 'paid',
+                notes: payoutNotes,
+                createdAt: new Date().toISOString(),
+                paidAt: payoutMethod === 'offline' ? new Date().toISOString() : undefined
+            };
+            
+            // Save payout record
+            await StorageService.createAffiliatePayout(payout);
+            
+            // Update affiliate's paid out amount
+            await StorageService.updateUser(selectedAffiliate.id, {
+                totalPaidOut: (selectedAffiliate.paidOut || 0) + amount
+            });
+            
+            // If Stripe payout, initiate transfer
+            if (payoutMethod === 'stripe' && selectedAffiliate.stripeConnectId) {
+                try {
+                    await StorageService.initiateStripePayout(selectedAffiliate.id, amount);
+                    await StorageService.updateAffiliatePayout(payout.id, { status: 'paid', paidAt: new Date().toISOString() });
+                } catch (stripeError) {
+                    console.error('Stripe payout failed:', stripeError);
+                    await StorageService.updateAffiliatePayout(payout.id, { status: 'failed' });
+                    alert('Stripe payout failed. Please try offline payment or check Stripe connection.');
+                }
+            }
+            
+            // Reset form
+            setPayoutAmount('');
+            setPayoutNotes('');
+            setSelectedAffiliate(null);
+            
+            // Refresh data
+            refreshData();
+            alert(`Payout of $${amount.toFixed(2)} to ${payout.affiliateName} recorded successfully!`);
+            
+        } catch (e) {
+            console.error('Payout error:', e);
+            alert('Failed to process payout. Please try again.');
+        } finally {
+            setIsProcessingPayout(false);
         }
     };
 
