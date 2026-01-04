@@ -82,4 +82,95 @@ router.get('/organizer/financial-summary', verifyToken, async (req, res) => {
     }
 });
 
+// Promo Code Management (Admin only)
+router.get('/promo-codes', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const { data, error } = await supabase
+            .from('promo_codes')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        res.json({ promoCodes: data || [] });
+    } catch (error) {
+        // If table doesn't exist, return empty array
+        if (error.message?.includes('does not exist')) {
+            return res.json({ promoCodes: [] });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/promo-codes', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const promoCode = req.body;
+        
+        const { data, error } = await supabase
+            .from('promo_codes')
+            .insert({
+                id: promoCode.id,
+                code: promoCode.code,
+                type: promoCode.type,
+                value: promoCode.value,
+                target: promoCode.target,
+                target_plans: promoCode.targetPlans,
+                usage_limit: promoCode.usageLimit,
+                usage_count: 0,
+                expires_at: promoCode.expiresAt,
+                is_active: true,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        res.json({ promoCode: data });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.put('/promo-codes/:id', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const { id } = req.params;
+        const updates = req.body;
+        
+        const { data, error } = await supabase
+            .from('promo_codes')
+            .update({
+                is_active: updates.isActive,
+                usage_limit: updates.usageLimit,
+                expires_at: updates.expiresAt
+            })
+            .eq('id', id)
+            .select()
+            .single();
+        
+        if (error) throw error;
+        res.json({ promoCode: data });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete('/promo-codes/:id', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const { id } = req.params;
+        
+        const { error } = await supabase
+            .from('promo_codes')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
