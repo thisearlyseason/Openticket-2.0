@@ -849,6 +849,287 @@ export const SuperAdminDashboard = () => {
                     </div>
                 )}
 
+                {/* AFFILIATES TAB */}
+                {activeTab === 'affiliates' && (
+                    <div className="p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Gift size={24} className="text-purple-400" /> Affiliate Management
+                            </h2>
+                            <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => {
+                                    const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Earnings', 'Paid', 'Pending'];
+                                    const rows = affiliates.map(a => [
+                                        a.name, a.email, a.affiliateCode, a.clicks, a.conversions, 
+                                        `${a.conversionRate.toFixed(1)}%`, `$${a.totalEarnings.toFixed(2)}`,
+                                        `$${a.paidOut.toFixed(2)}`, `$${a.pendingPayout.toFixed(2)}`
+                                    ]);
+                                    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                                    const blob = new Blob([csv], { type: 'text/csv' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `affiliates-${new Date().toISOString().split('T')[0]}.csv`;
+                                    a.click();
+                                }}>
+                                    <Download size={14} className="mr-2" /> Export CSV
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Affiliate Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase">Total Affiliates</div>
+                                <div className="text-2xl font-black text-white">{affiliates.length}</div>
+                            </Card>
+                            <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase">Total Commissions</div>
+                                <div className="text-2xl font-black text-purple-400">
+                                    ${affiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(2)}
+                                </div>
+                            </Card>
+                            <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase">Pending Payouts</div>
+                                <div className="text-2xl font-black text-yellow-400">
+                                    ${affiliates.reduce((sum, a) => sum + a.pendingPayout, 0).toFixed(2)}
+                                </div>
+                            </Card>
+                            <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase">Total Paid Out</div>
+                                <div className="text-2xl font-black text-green-400">
+                                    ${affiliates.reduce((sum, a) => sum + a.paidOut, 0).toFixed(2)}
+                                </div>
+                            </Card>
+                        </div>
+
+                        {/* Affiliate List */}
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
+                            <div className="p-4 border-b border-zinc-800 font-bold">
+                                All Affiliates ({affiliates.length})
+                            </div>
+                            <table className="w-full text-left text-sm text-zinc-400">
+                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">Affiliate</th>
+                                        <th className="p-4">Code</th>
+                                        <th className="p-4 text-right">Clicks</th>
+                                        <th className="p-4 text-right">Conversions</th>
+                                        <th className="p-4 text-right">Rate</th>
+                                        <th className="p-4 text-right">Earnings</th>
+                                        <th className="p-4 text-right">Pending</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {affiliates.map(aff => (
+                                        <tr key={aff.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                            <td className="p-4">
+                                                <div className="font-bold text-white">{aff.name}</div>
+                                                <div className="text-xs">{aff.email}</div>
+                                            </td>
+                                            <td className="p-4 font-mono text-purple-400">{aff.affiliateCode}</td>
+                                            <td className="p-4 text-right font-mono">{aff.clicks}</td>
+                                            <td className="p-4 text-right font-mono">{aff.conversions}</td>
+                                            <td className="p-4 text-right font-mono">{aff.conversionRate.toFixed(1)}%</td>
+                                            <td className="p-4 text-right font-mono text-white">${aff.totalEarnings.toFixed(2)}</td>
+                                            <td className="p-4 text-right">
+                                                {aff.pendingPayout > 0 ? (
+                                                    <span className="font-mono text-yellow-400">${aff.pendingPayout.toFixed(2)}</span>
+                                                ) : (
+                                                    <span className="text-zinc-500">$0.00</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex gap-2">
+                                                    <button 
+                                                        onClick={() => setSelectedAffiliate(aff)}
+                                                        className="p-2 hover:bg-zinc-700 rounded text-blue-400"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye size={14} />
+                                                    </button>
+                                                    {aff.pendingPayout > 0 && (
+                                                        <Button 
+                                                            size="sm" 
+                                                            onClick={() => {
+                                                                setSelectedAffiliate(aff);
+                                                                setPayoutAmount(aff.pendingPayout.toFixed(2));
+                                                            }}
+                                                        >
+                                                            <Wallet size={12} className="mr-1" /> Pay
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {affiliates.length === 0 && (
+                                        <tr><td colSpan={8} className="p-8 text-center">No affiliates found.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Payout Modal */}
+                        {selectedAffiliate && (
+                            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                                <Card className="max-w-2xl w-full p-6 border-zinc-700 bg-zinc-900">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white">{selectedAffiliate.name}</h3>
+                                            <div className="text-sm text-zinc-400">{selectedAffiliate.email}</div>
+                                            <div className="text-xs text-purple-400 font-mono mt-1">Code: {selectedAffiliate.affiliateCode}</div>
+                                        </div>
+                                        <button onClick={() => setSelectedAffiliate(null)} className="text-zinc-400 hover:text-white">
+                                            <XCircle size={24} />
+                                        </button>
+                                    </div>
+
+                                    {/* Affiliate Stats */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                        <div className="bg-zinc-800 p-3 rounded-xl">
+                                            <div className="text-xs text-zinc-500">Clicks</div>
+                                            <div className="text-lg font-bold text-white">{selectedAffiliate.clicks}</div>
+                                        </div>
+                                        <div className="bg-zinc-800 p-3 rounded-xl">
+                                            <div className="text-xs text-zinc-500">Conversions</div>
+                                            <div className="text-lg font-bold text-white">{selectedAffiliate.conversions}</div>
+                                        </div>
+                                        <div className="bg-zinc-800 p-3 rounded-xl">
+                                            <div className="text-xs text-zinc-500">Total Earnings</div>
+                                            <div className="text-lg font-bold text-purple-400">${selectedAffiliate.totalEarnings.toFixed(2)}</div>
+                                        </div>
+                                        <div className="bg-zinc-800 p-3 rounded-xl">
+                                            <div className="text-xs text-zinc-500">Pending Payout</div>
+                                            <div className="text-lg font-bold text-yellow-400">${selectedAffiliate.pendingPayout.toFixed(2)}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Payout Form */}
+                                    {selectedAffiliate.pendingPayout > 0 && (
+                                        <div className="border-t border-zinc-800 pt-6">
+                                            <h4 className="font-bold text-white mb-4">Process Payout</h4>
+                                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                                <Input
+                                                    label="Amount ($)"
+                                                    type="number"
+                                                    value={payoutAmount}
+                                                    onChange={e => setPayoutAmount(e.target.value)}
+                                                    placeholder={selectedAffiliate.pendingPayout.toFixed(2)}
+                                                    className="bg-black border-zinc-700"
+                                                />
+                                                <div>
+                                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Method</label>
+                                                    <select
+                                                        value={payoutMethod}
+                                                        onChange={e => setPayoutMethod(e.target.value as any)}
+                                                        className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                                                    >
+                                                        <option value="stripe" disabled={!selectedAffiliate.stripeConnectId}>
+                                                            Stripe {!selectedAffiliate.stripeConnectId && '(Not Connected)'}
+                                                        </option>
+                                                        <option value="offline">Offline / Manual</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <Input
+                                                label="Notes (optional)"
+                                                value={payoutNotes}
+                                                onChange={e => setPayoutNotes(e.target.value)}
+                                                placeholder="e.g., Bank transfer, PayPal, etc."
+                                                className="bg-black border-zinc-700 mb-4"
+                                            />
+                                            <Button 
+                                                onClick={handleProcessAffiliatePayout}
+                                                disabled={isProcessingPayout || !payoutAmount}
+                                                className="w-full"
+                                            >
+                                                {isProcessingPayout ? (
+                                                    <><RefreshCw size={16} className="mr-2 animate-spin" /> Processing...</>
+                                                ) : (
+                                                    <><Wallet size={16} className="mr-2" /> Process ${payoutAmount || '0.00'} Payout</>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {/* Transaction History */}
+                                    {selectedAffiliate.transactions.length > 0 && (
+                                        <div className="border-t border-zinc-800 pt-6 mt-6">
+                                            <h4 className="font-bold text-white mb-4">Commission History</h4>
+                                            <div className="max-h-48 overflow-y-auto">
+                                                <table className="w-full text-xs">
+                                                    <thead className="text-zinc-500 uppercase">
+                                                        <tr>
+                                                            <th className="p-2 text-left">Date</th>
+                                                            <th className="p-2 text-left">Event</th>
+                                                            <th className="p-2 text-right">Gross</th>
+                                                            <th className="p-2 text-right">Commission</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {selectedAffiliate.transactions.map((tx: any) => (
+                                                            <tr key={tx.id} className="border-t border-zinc-800">
+                                                                <td className="p-2 text-zinc-400">
+                                                                    {new Date(tx.created_at).toLocaleDateString()}
+                                                                </td>
+                                                                <td className="p-2 text-white">{tx.event?.title || '-'}</td>
+                                                                <td className="p-2 text-right text-white">${(tx.gross_amount || 0).toFixed(2)}</td>
+                                                                <td className="p-2 text-right text-purple-400">${(tx.affiliate_commission || 0).toFixed(2)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </Card>
+                            </div>
+                        )}
+
+                        {/* Payout History */}
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-zinc-800 font-bold flex items-center gap-2">
+                                <Clock size={16} /> Payout History (Audit Trail)
+                            </div>
+                            <table className="w-full text-left text-sm text-zinc-400">
+                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">Date</th>
+                                        <th className="p-4">Affiliate</th>
+                                        <th className="p-4">Code</th>
+                                        <th className="p-4 text-right">Amount</th>
+                                        <th className="p-4">Method</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {affiliatePayouts.map(payout => (
+                                        <tr key={payout.id} className="border-t border-zinc-800">
+                                            <td className="p-4 text-xs">{new Date(payout.createdAt).toLocaleString()}</td>
+                                            <td className="p-4 text-white">{payout.affiliateName}</td>
+                                            <td className="p-4 font-mono text-purple-400">{payout.affiliateCode}</td>
+                                            <td className="p-4 text-right font-mono text-white">${payout.amount.toFixed(2)}</td>
+                                            <td className="p-4 capitalize">{payout.method}</td>
+                                            <td className="p-4">
+                                                <Badge color={payout.status === 'paid' ? 'green' : payout.status === 'pending' ? 'yellow' : 'red'}>
+                                                    {payout.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 text-xs max-w-[150px] truncate">{payout.notes || '-'}</td>
+                                        </tr>
+                                    ))}
+                                    {affiliatePayouts.length === 0 && (
+                                        <tr><td colSpan={7} className="p-8 text-center">No payout history yet.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* BROADCAST TAB */}
                 {activeTab === 'broadcast' && (
                     <div className="p-8">
