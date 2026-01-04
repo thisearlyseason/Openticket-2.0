@@ -600,6 +600,47 @@ export const StorageService = {
         }
     },
 
+    // Affiliate Payout Management
+    getAffiliatePayouts: async (): Promise<any[]> => {
+        try {
+            const { payouts } = await fetchSupabase('/admin/affiliate-payouts');
+            return payouts || [];
+        } catch (e) {
+            console.error("Failed to fetch affiliate payouts", e);
+            return [];
+        }
+    },
+
+    createAffiliatePayout: async (payout: any): Promise<boolean> => {
+        try {
+            await fetchSupabase('/admin/affiliate-payouts', true, 'POST', payout);
+            return true;
+        } catch (e) {
+            console.error("Failed to create affiliate payout", e);
+            return false;
+        }
+    },
+
+    updateAffiliatePayout: async (id: string, updates: any): Promise<boolean> => {
+        try {
+            await fetchSupabase(`/admin/affiliate-payouts/${id}`, true, 'PUT', updates);
+            return true;
+        } catch (e) {
+            console.error("Failed to update affiliate payout", e);
+            return false;
+        }
+    },
+
+    initiateStripePayout: async (affiliateId: string, amount: number): Promise<boolean> => {
+        try {
+            await fetchSupabase('/admin/affiliate-payouts/stripe', true, 'POST', { affiliateId, amount });
+            return true;
+        } catch (e) {
+            console.error("Failed to initiate Stripe payout", e);
+            throw e;
+        }
+    },
+
     getSuperAdmin: async (): Promise<User | undefined> => {
         // Return current user if admin
         const u = StorageService.getCurrentUser();
