@@ -98,6 +98,14 @@ export const EventView = () => {
         }
     }, []);
 
+    // Track affiliate click when visiting event page with referral code
+    useEffect(() => {
+        const refCode = searchParams.get('ref');
+        if (refCode && id) {
+            StorageService.trackAffiliateClick(id, refCode);
+        }
+    }, [id, searchParams]);
+
 
 
     useEffect(() => {
