@@ -9,6 +9,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 5. Fix slow payment confirmation process (timeout error)
 6. Super Admin dashboard data integrity and financial tracking
 7. Affiliate tracking, revenue attribution, and payout logic
+8. **Super Admin button-triggered panel** for single super admin access
 
 ## Tech Stack
 - **Frontend:** Vite + React + TypeScript + Tailwind CSS
@@ -36,7 +37,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 ```
 
 ## Key Database Tables
-- `profiles`: User data with `stripe_connect_id`, `stripe_onboarding_complete`, `affiliate_code`, `affiliate_clicks`, `total_paid_out`
+- `profiles`: User data with `stripe_connect_id`, `stripe_onboarding_complete`, `affiliate_code`, `affiliate_clicks`, `total_paid_out`, `is_admin`
 - `events`: Event data with pricing, capacity
 - `registrations`: Ticket purchases with payment tracking
 - `financial_transactions`: Revenue/fee breakdown with `affiliate_code`, `affiliate_commission`
@@ -49,6 +50,14 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 ## Implementation Status
 
 ### ✅ Completed (January 4, 2026)
+
+#### Super Admin Button Feature (NEW)
+- [x] Added "Super Admin" button in navbar for admin users (user.isAdmin === true)
+- [x] Clicking button opens fullscreen overlay panel with Super Admin dashboard
+- [x] Close button (X) to dismiss the panel
+- [x] SuperAdminDashboard accepts `embedded` prop for modal use
+- [x] Fixed Shield and X icon imports in App.tsx
+- [x] Fixed Vite black screen issue with fs.allow configuration
 
 #### Financial Systems
 - [x] Backend server running on port 8001
@@ -80,10 +89,13 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] CSV export for affiliate data
 
 ### 🔄 Pending SQL Migrations (User Action Required)
-Run these in Supabase SQL Editor:
-1. `/app/COMPLETE_FINANCIAL_FIX_v3.sql` - Financial transactions and audit logs
-2. `/app/CREATE_PROMO_CODES_TABLE.sql` - Promo codes table
-3. `/app/CREATE_AFFILIATE_PAYOUTS_TABLE.sql` - Affiliate payouts audit trail
+Run **ONE** consolidated script in Supabase SQL Editor:
+- `/app/MASTER_MIGRATION.sql` - Contains ALL tables and functions needed
+
+Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
+- `/app/COMPLETE_FINANCIAL_FIX_v3.sql`
+- `/app/CREATE_PROMO_CODES_TABLE.sql`
+- `/app/CREATE_AFFILIATE_PAYOUTS_TABLE.sql`
 
 ### 📋 Future Tasks
 - [ ] Affiliate click tracking endpoint (increment on link visit)
