@@ -120,11 +120,18 @@ export const AffiliateDashboard = () => {
                 return;
             }
 
-            // Activate - update user with affiliate code and role
-            await StorageService.updateUser(user.id, { 
-                affiliateCode: formattedCode,
-                role: 'affiliate' // Ensure role is set to affiliate
-            });
+            // Activate - update user with affiliate code (keep existing role if organizer)
+            const updates: any = { 
+                affiliateCode: formattedCode
+            };
+            
+            // Only set role to affiliate if user is currently an attendee
+            // Organizers can be both organizers AND affiliates
+            if (user.role === 'attendee') {
+                updates.role = 'affiliate';
+            }
+            
+            await StorageService.updateUser(user.id, updates);
             
             // Refresh the user data to show the dashboard
             await refreshData(user.id);
