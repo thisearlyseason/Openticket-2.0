@@ -51,8 +51,8 @@ export const LandingPage = () => {
                         <span className="text-[#E0FF20]">●</span> THE FUTURE OF EVENTS
                     </div>
                     <h1 className="text-7xl md:text-9xl font-black font-display tracking-tighter leading-none mb-6">
-                        SELL <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E0FF20] to-[#00ff9d]">TICKETS</span><br />
-                        NOT YOUR SOUL
+                        TICKETS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E0FF20] to-[#00ff9d]">SOLD.</span><br />
+                        VIBES UNCOMPROMISED.
                     </h1>
                     <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 font-medium">
                         The boldest ticketing platform for creators. Zero hidden fees.
