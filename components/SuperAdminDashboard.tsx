@@ -2,9 +2,52 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
-import { User, Event, Registration, Invoice } from '../types';
-import { Card, Button, Badge, Input, RichTextarea, Tooltip } from './UI';
-import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save } from 'lucide-react';
+import { User, Event, Registration } from '../types';
+import { Card, Button, Badge, Input, RichTextarea, Select } from './UI';
+import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save, Download, Tag, Percent, Calendar, Mail, Building2, UserCheck, FileText } from 'lucide-react';
+
+interface FinancialTransaction {
+    id: string;
+    gross_amount: number;
+    platform_fee: number;
+    stripe_fee: number;
+    organizer_net: number;
+    stripe_session_id?: string;
+    event_id?: string;
+    created_at: string;
+    registration?: {
+        attendee_name: string;
+        attendee_email: string;
+    };
+    event?: {
+        title: string;
+        owner_id: string;
+    };
+}
+
+interface OrganizerBreakdown {
+    organizerId: string;
+    organizerName: string;
+    organizerEmail: string;
+    totalVolume: number;
+    platformFees: number;
+    netEarnings: number;
+    transactionCount: number;
+}
+
+interface PromoCode {
+    id: string;
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    target: 'subscription' | 'ticket' | 'all';
+    targetPlans?: string[];
+    usageLimit?: number;
+    usageCount: number;
+    expiresAt?: string;
+    isActive: boolean;
+    createdAt: string;
+}
 
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
@@ -15,15 +58,31 @@ export const SuperAdminDashboard = () => {
         ticketRevenue: 0,
         subscriptionRevenue: 0,
         totalRevenue: 0,
-        pendingPayouts: 0
+        pendingPayouts: 0,
+        stripeFees: 0,
+        recentTransactions: [] as FinancialTransaction[],
+        organizerBreakdown: [] as OrganizerBreakdown[]
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'finance' | 'broadcast' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'broadcast' | 'promo' | 'settings'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
     // Broadcast State
     const [broadcastMsg, setBroadcastMsg] = useState('');
+    const [broadcastTarget, setBroadcastTarget] = useState<'all' | 'organizers' | 'affiliates'>('all');
     const [activeNotification, setActiveNotification] = useState<any>(null);
+
+    // Promo Code State
+    const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+    const [newPromo, setNewPromo] = useState({
+        code: '',
+        type: 'percentage' as 'percentage' | 'fixed',
+        value: 10,
+        target: 'all' as 'subscription' | 'ticket' | 'all',
+        targetPlans: [] as string[],
+        usageLimit: 0,
+        expiresAt: ''
+    });
 
     // Platform Settings State
     const [platformStripeId, setPlatformStripeId] = useState('');
@@ -41,6 +100,7 @@ export const SuperAdminDashboard = () => {
         setPlatformPublishableKey(currentUser.stripePublishableKey || '');
         setPlatformSecretKey(currentUser.stripeSecretKey || '');
         refreshData();
+        loadPromoCodes();
     }, [navigate]);
 
     const refreshData = async () => {
@@ -58,11 +118,17 @@ export const SuperAdminDashboard = () => {
             // Fetch True Financials
             const financials = await StorageService.getAdminFinancials();
 
-            // Fallback to old Calc if new table empty (migration transition)
-            // But prefer new data if available.
-            let ticketRevenue = financials.platformFees;
-            let totalRevenue = financials.totalVolume;
+            let ticketRevenue = financials.platformFees || 0;
+            let totalRevenue = financials.totalVolume || 0;
+            let stripeFees = 0;
 
+            // Calculate Stripe fees from transactions
+            if (financials.recentTransactions) {
+                stripeFees = financials.recentTransactions.reduce((acc: number, tx: any) => 
+                    acc + (Number(tx.stripe_fee) || 0), 0);
+            }
+
+            // Calculate subscription revenue from user invoices
             const subscriptionRevenue = allUsers.reduce((acc: number, user: User) => {
                 const userSubInvoices = user.invoices?.filter(inv => inv.type === 'subscription' && inv.status === 'paid') || [];
                 const userTotal = userSubInvoices.reduce((sum, inv) => sum + inv.amount, 0);
@@ -71,22 +137,14 @@ export const SuperAdminDashboard = () => {
 
             const pending = allUsers.reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
 
-            // Save extended stats for Finance Tab
-            // We need to store 'financials' somewhere or just map it to stats? 
-            // Let's attach it to a new state or just use what we have.
-            // Simplified: We'll put the raw objects in a temporary property or just rely on 'stats' holding the summaries.
-            // For the Recent Transactions table, we need to store it.
-            // Quick fix: Add 'recentTransactions' to state.
-
             setStats({
                 ticketRevenue,
                 subscriptionRevenue,
                 totalRevenue: totalRevenue + subscriptionRevenue,
                 pendingPayouts: pending,
-                // @ts-ignore
+                stripeFees,
                 recentTransactions: financials.recentTransactions || [],
-                // @ts-ignore
-                organizerNetSummary: financials.organizerNet
+                organizerBreakdown: financials.organizerBreakdown || []
             });
 
             try {
@@ -98,12 +156,23 @@ export const SuperAdminDashboard = () => {
         }
     };
 
-    const handleSendBroadcast = () => {
+    const loadPromoCodes = async () => {
+        try {
+            const codes = await StorageService.getPromoCodes();
+            setPromoCodes(codes || []);
+        } catch (e) {
+            console.error("Failed to load promo codes", e);
+        }
+    };
+
+    const handleSendBroadcast = async () => {
         if (!broadcastMsg.trim()) return;
-        StorageService.setSystemNotification(broadcastMsg, 'info');
+        
+        // Store broadcast with target audience
+        await StorageService.setSystemNotification(broadcastMsg, 'info', broadcastTarget);
         setBroadcastMsg('');
         refreshData();
-        alert("Broadcast sent to all users!");
+        alert(`Broadcast sent to ${broadcastTarget === 'all' ? 'all users' : broadcastTarget}!`);
     };
 
     const handleClearBroadcast = () => {
@@ -130,15 +199,56 @@ export const SuperAdminDashboard = () => {
         }
     };
 
-    const handleApproveEvent = (event: Event) => {
-        StorageService.saveEvent({ ...event, moderationStatus: 'approved', moderationReason: undefined });
-        refreshData();
-    };
-
     const handleRejectEvent = (event: Event) => {
         if (confirm(`Reject "${event.title}"? This will hide the event from the public and mark it as rejected.`)) {
             StorageService.saveEvent({ ...event, moderationStatus: 'rejected', visibility: 'hidden' });
             refreshData();
+        }
+    };
+
+    const handleCreatePromoCode = async () => {
+        if (!newPromo.code.trim()) {
+            alert('Please enter a promo code');
+            return;
+        }
+
+        const promoCode: PromoCode = {
+            id: `promo-${Date.now()}`,
+            code: newPromo.code.toUpperCase(),
+            type: newPromo.type,
+            value: newPromo.value,
+            target: newPromo.target,
+            targetPlans: newPromo.targetPlans,
+            usageLimit: newPromo.usageLimit || undefined,
+            usageCount: 0,
+            expiresAt: newPromo.expiresAt || undefined,
+            isActive: true,
+            createdAt: new Date().toISOString()
+        };
+
+        await StorageService.createPromoCode(promoCode);
+        loadPromoCodes();
+        setNewPromo({
+            code: '',
+            type: 'percentage',
+            value: 10,
+            target: 'all',
+            targetPlans: [],
+            usageLimit: 0,
+            expiresAt: ''
+        });
+        alert('Promo code created successfully!');
+    };
+
+    const handleTogglePromoCode = async (promo: PromoCode) => {
+        await StorageService.updatePromoCode(promo.id, { isActive: !promo.isActive });
+        loadPromoCodes();
+    };
+
+    const handleDeletePromoCode = async (promo: PromoCode) => {
+        if (confirm(`Delete promo code "${promo.code}"?`)) {
+            await StorageService.deletePromoCode(promo.id);
+            loadPromoCodes();
         }
     };
 
@@ -150,6 +260,56 @@ export const SuperAdminDashboard = () => {
             stripeSecretKey: platformSecretKey
         });
         alert("Platform settings saved successfully.");
+    };
+
+    const exportFinancialsCSV = () => {
+        const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
+        const rows = stats.recentTransactions.map(tx => [
+            new Date(tx.created_at).toLocaleDateString(),
+            tx.id,
+            tx.event?.title || 'N/A',
+            tx.event?.owner_id || 'N/A',
+            tx.gross_amount.toFixed(2),
+            tx.platform_fee.toFixed(2),
+            (tx.stripe_fee || 0).toFixed(2),
+            tx.organizer_net.toFixed(2)
+        ]);
+
+        // Add summary
+        rows.push([]);
+        rows.push(['SUMMARY']);
+        rows.push(['Total Gross Volume', '', '', '', stats.totalRevenue.toFixed(2)]);
+        rows.push(['Platform Fees', '', '', '', stats.ticketRevenue.toFixed(2)]);
+        rows.push(['Subscription Revenue', '', '', '', stats.subscriptionRevenue.toFixed(2)]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `platform-financials-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    const exportUsersCSV = () => {
+        const headers = ['Name', 'Email', 'Role', 'Business Name', 'Business Type', 'Account Type', 'Created At'];
+        const rows = users.map(u => [
+            u.name || '',
+            u.email || '',
+            u.role || '',
+            u.businessName || '',
+            u.businessType || '',
+            u.role === 'organizer' ? 'Organizer' : u.role === 'affiliate' ? 'Affiliate' : 'User',
+            u.createdAt ? new Date(u.createdAt).toLocaleDateString() : ''
+        ]);
+
+        const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${cell}"`).join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `platform-users-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
     };
 
     if (unauthorized) {
@@ -171,13 +331,20 @@ export const SuperAdminDashboard = () => {
 
     const filteredUsers = (users || []).filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.businessName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const filteredEvents = (events || []).filter(e =>
         (e.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.organizer || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Get organizer name for an event
+    const getOrganizerName = (ownerId: string) => {
+        const owner = users.find(u => u.id === ownerId);
+        return owner?.name || owner?.email || 'Unknown';
+    };
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 pb-20">
@@ -188,12 +355,12 @@ export const SuperAdminDashboard = () => {
                     </h1>
                     <p className="text-zinc-400">Platform Management Dashboard</p>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 flex-wrap">
                     <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
-                            <Ticket size={12} /> Ticket Fees
+                            <Ticket size={12} /> Platform Fees
                         </div>
-                        <div className="text-xl font-bold text-white">${stats.ticketRevenue.toFixed(2)}</div>
+                        <div className="text-xl font-bold text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
                     </div>
                     <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
@@ -201,158 +368,98 @@ export const SuperAdminDashboard = () => {
                         </div>
                         <div className="text-xl font-bold text-purple-400">${stats.subscriptionRevenue.toFixed(2)}</div>
                     </div>
+                    <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                        <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
+                            <TrendingUp size={12} className="text-green-500" /> Total Volume
+                        </div>
+                        <div className="text-xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="mb-6">
+                <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search users, events, or organizations..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-12 pr-4 py-3 text-white focus:border-[#E0FF20] outline-none"
+                    />
                 </div>
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['users', 'events', 'registrations', 'finance', 'broadcast', 'settings'].map(tab => (
+                {['users', 'events', 'registrations', 'finance', 'broadcast', 'promo', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold capitalize transition-all ${activeTab === tab
+                        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold capitalize transition-all whitespace-nowrap ${activeTab === tab
                             ? 'bg-[#E0FF20] text-black shadow-[0_0_20px_rgba(224,255,32,0.3)]'
                             : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                             }`}
                     >
-                        {tab}
+                        {tab === 'promo' ? 'Promo Codes' : tab}
                     </button>
                 ))}
             </div>
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden min-h-[500px]">
+                {/* USERS TAB */}
                 {activeTab === 'users' && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-zinc-400">
-                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                <tr><th className="p-4">User</th><th className="p-4">Role</th><th className="p-4">Actions</th></tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map(u => (
-                                    <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                        <td className="p-4">
-                                            <div className="font-bold text-white">{u.name}</div>
-                                            <div className="text-xs">{u.email}</div>
-                                        </td>
-                                        <td className="p-4"><Badge color={u.isAdmin ? 'purple' : 'gray'}>{u.role}</Badge></td>
-                                        <td className="p-4">
-                                            <Button size="sm" variant={u.isBanned ? 'primary' : 'outline'} onClick={() => handleToggleBan(u)}>
-                                                {u.isBanned ? 'Unban User' : 'Ban User'}
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {activeTab === 'events' && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-zinc-400">
-                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                <tr><th className="p-4">Event</th><th className="p-4">Organizer</th><th className="p-4">Status</th><th className="p-4">Actions</th></tr>
-                            </thead>
-                            <tbody>
-                                {filteredEvents.map(e => (
-                                    <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                        <td className="p-4">
-                                            <div className="font-bold text-white">{e.title}</div>
-                                            <div className="text-xs">{new Date(e.date).toLocaleDateString()}</div>
-                                        </td>
-                                        <td className="p-4">{e.organizer}</td>
-                                        <td className="p-4">
-                                            {e.moderationStatus === 'rejected' ? <Badge color="red">Rejected</Badge> : <Badge color="green">Active</Badge>}
-                                        </td>
-                                        <td className="p-4 flex gap-2">
-                                            <button onClick={() => window.open(`/#/event/${e.id}`, '_blank')} className="p-2 hover:bg-zinc-700 rounded"><ExternalLink size={14} /></button>
-                                            <button onClick={() => handleRejectEvent(e)} className="p-2 hover:bg-red-900/30 text-red-500 rounded"><Ban size={14} /></button>
-                                            <button onClick={() => handleDeleteEvent(e)} className="p-2 hover:bg-red-900/30 text-red-500 rounded"><Trash2 size={14} /></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {activeTab === 'registrations' && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-zinc-400">
-                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                <tr>
-                                    <th className="p-4">Date</th>
-                                    <th className="p-4">Event</th>
-                                    <th className="p-4">Attendee</th>
-                                    <th className="p-4">Status</th>
-                                    <th className="p-4 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {registrations.map(r => (
-                                    <tr key={r.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                        <td className="p-4 text-xs">{new Date(r.timestamp).toLocaleDateString()}</td>
-                                        <td className="p-4 font-bold text-white max-w-[200px] truncate">{events.find(e => e.id === r.eventId)?.title || 'Unknown Event'}</td>
-                                        <td className="p-4">
-                                            <div className="text-white font-medium">{r.attendeeName}</div>
-                                            <div className="text-xs opacity-60">{r.attendeeEmail}</div>
-                                        </td>
-                                        <td className="p-4"><Badge color={r.paymentStatus === 'completed' ? 'green' : 'yellow'}>{r.paymentStatus}</Badge></td>
-                                        <td className="p-4 text-right font-mono text-white">
-                                            ${((r.totalAmount || 0) + (r.taxAmount || 0)).toFixed(2)}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {registrations.length === 0 && (
-                                    <tr><td colSpan={5} className="p-8 text-center">No registrations found.</td></tr>
-                                )}{/* Corrected Close Tag */}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {activeTab === 'finance' && (
-                    <div className="p-8">
-                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                            <DollarSign size={24} className="text-[#E0FF20]" /> Financial Overview
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
-                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
-                                <div className="text-3xl font-black text-white">${stats.totalRevenue.toFixed(2)}</div>
-                            </Card>
-                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
-                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees (Verified)</div>
-                                <div className="text-3xl font-black text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
-                            </Card>
-                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
-                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Pending Payouts</div>
-                                <div className="text-3xl font-black text-white opacity-60">${stats.pendingPayouts.toFixed(2)}</div>
-                            </Card>
+                    <div>
+                        <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
+                            <span className="font-bold text-white">All Users ({filteredUsers.length})</span>
+                            <Button size="sm" variant="outline" onClick={exportUsersCSV}>
+                                <Download size={14} className="mr-2" /> Export CSV
+                            </Button>
                         </div>
-
-                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-                            <div className="p-4 border-b border-zinc-800 font-bold flex justify-between">
-                                <span>Recent Transactions (Ledger)</span>
-                                <span className="text-xs font-mono bg-zinc-800 p-1 rounded text-zinc-400">Source: financial_transactions</span>
-                            </div>
+                        <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm text-zinc-400">
                                 <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                    <tr><th className="p-4">ID</th><th className="p-4">Type</th><th className="p-4">Stripe Ref</th><th className="p-4 text-right">Gross</th><th className="p-4 text-right text-green-500">Net (Org)</th></tr>
+                                    <tr>
+                                        <th className="p-4">User</th>
+                                        <th className="p-4">Organization</th>
+                                        <th className="p-4">Account Type</th>
+                                        <th className="p-4">Business Type</th>
+                                        <th className="p-4">Role</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                    {/* @ts-ignore */}
-                                    {(stats.recentTransactions || []).map((tx: any) => (
-                                        <tr key={tx.id} className="border-t border-zinc-800">
-                                            <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
-                                            <td className="p-4">Sale</td>
-                                            <td className="p-4 font-mono text-xs">{tx.stripe_session_id?.slice(-8) || '-'}</td>
-                                            <td className="p-4 text-right font-mono text-white">${(tx.gross_amount || 0).toFixed(2)}</td>
-                                            <td className="p-4 text-right font-mono text-green-500">${(tx.organizer_net || 0).toFixed(2)}</td>
+                                    {filteredUsers.map(u => (
+                                        <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                            <td className="p-4">
+                                                <div className="font-bold text-white">{u.name || 'No Name'}</div>
+                                                <div className="text-xs">{u.email}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="font-medium text-white">{u.businessName || '-'}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <Badge color={u.role === 'organizer' ? 'green' : u.role === 'affiliate' ? 'purple' : 'gray'}>
+                                                    {u.role === 'organizer' ? 'Organizer' : u.role === 'affiliate' ? 'Affiliate' : 'User'}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 text-xs">{u.businessType || '-'}</td>
+                                            <td className="p-4">
+                                                <Badge color={u.isAdmin ? 'yellow' : 'gray'}>
+                                                    {u.isAdmin ? 'Admin' : u.role || 'User'}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4">
+                                                {!u.isAdmin && (
+                                                    <Button size="sm" variant={u.isBanned ? 'primary' : 'outline'} onClick={() => handleToggleBan(u)}>
+                                                        {u.isBanned ? 'Unban' : 'Ban'}
+                                                    </Button>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))}
-                                    {/* @ts-ignore */}
-                                    {(!stats.recentTransactions || stats.recentTransactions.length === 0) && (
-                                        <tr><td colSpan={5} className="p-8 text-center">No financial records found (Table empty).</td></tr>
+                                    {filteredUsers.length === 0 && (
+                                        <tr><td colSpan={6} className="p-8 text-center">No users found.</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -360,19 +467,276 @@ export const SuperAdminDashboard = () => {
                     </div>
                 )}
 
+                {/* EVENTS TAB */}
+                {activeTab === 'events' && (
+                    <div className="overflow-x-auto">
+                        <div className="p-4 border-b border-zinc-800">
+                            <span className="font-bold text-white">All Events ({filteredEvents.length})</span>
+                        </div>
+                        <table className="w-full text-left text-sm text-zinc-400">
+                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                <tr>
+                                    <th className="p-4">Event</th>
+                                    <th className="p-4">Organizer</th>
+                                    <th className="p-4">Date</th>
+                                    <th className="p-4">Registrations</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredEvents.map(e => (
+                                    <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                        <td className="p-4">
+                                            <div className="font-bold text-white">{e.title}</div>
+                                            <div className="text-xs text-zinc-500">{e.location}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-white">{getOrganizerName(e.ownerId)}</div>
+                                        </td>
+                                        <td className="p-4 text-xs">{new Date(e.date).toLocaleDateString()}</td>
+                                        <td className="p-4">
+                                            <span className="font-mono">{e.registeredCount || 0}/{e.capacity || '∞'}</span>
+                                        </td>
+                                        <td className="p-4">
+                                            {e.moderationStatus === 'rejected' ? (
+                                                <Badge color="red">Rejected</Badge>
+                                            ) : e.isDraft ? (
+                                                <Badge color="gray">Draft</Badge>
+                                            ) : (
+                                                <Badge color="green">Active</Badge>
+                                            )}
+                                        </td>
+                                        <td className="p-4 flex gap-2">
+                                            <button 
+                                                onClick={() => navigate(`/event/${e.id}`)} 
+                                                className="p-2 hover:bg-zinc-700 rounded text-blue-400"
+                                                title="View Event"
+                                            >
+                                                <ExternalLink size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleRejectEvent(e)} 
+                                                className="p-2 hover:bg-red-900/30 text-red-500 rounded"
+                                                title="Reject Event"
+                                            >
+                                                <Ban size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteEvent(e)} 
+                                                className="p-2 hover:bg-red-900/30 text-red-500 rounded"
+                                                title="Delete Event"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredEvents.length === 0 && (
+                                    <tr><td colSpan={6} className="p-8 text-center">No events found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* REGISTRATIONS TAB */}
+                {activeTab === 'registrations' && (
+                    <div className="overflow-x-auto">
+                        <div className="p-4 border-b border-zinc-800">
+                            <span className="font-bold text-white">All Registrations ({registrations.length})</span>
+                        </div>
+                        <table className="w-full text-left text-sm text-zinc-400">
+                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                <tr>
+                                    <th className="p-4">Date</th>
+                                    <th className="p-4">Event</th>
+                                    <th className="p-4">Organizer</th>
+                                    <th className="p-4">Attendee</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {registrations.map(r => {
+                                    const event = events.find(e => e.id === r.eventId);
+                                    return (
+                                        <tr key={r.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
+                                            <td className="p-4 text-xs">{new Date(r.timestamp).toLocaleDateString()}</td>
+                                            <td className="p-4 font-bold text-white max-w-[200px] truncate">
+                                                {event?.title || 'Unknown Event'}
+                                            </td>
+                                            <td className="p-4">
+                                                {event ? getOrganizerName(event.ownerId) : '-'}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="text-white font-medium">{r.attendeeName}</div>
+                                                <div className="text-xs opacity-60">{r.attendeeEmail}</div>
+                                            </td>
+                                            <td className="p-4">
+                                                <Badge color={
+                                                    r.paymentStatus === 'paid' || r.paymentStatus === 'completed' ? 'green' : 
+                                                    r.paymentStatus === 'refunded' ? 'red' : 'yellow'
+                                                }>
+                                                    {r.paymentStatus}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 text-right font-mono text-white">
+                                                ${((r.totalAmount || 0) + (r.taxAmount || 0)).toFixed(2)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {registrations.length === 0 && (
+                                    <tr><td colSpan={6} className="p-8 text-center">No registrations found.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* FINANCE TAB */}
+                {activeTab === 'finance' && (
+                    <div className="p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <DollarSign size={24} className="text-[#E0FF20]" /> Financial Overview
+                            </h2>
+                            <Button size="sm" onClick={exportFinancialsCSV}>
+                                <Download size={14} className="mr-2" /> Export CSV
+                            </Button>
+                        </div>
+
+                        {/* Financial Summary Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
+                                <div className="text-3xl font-black text-white">${stats.totalRevenue.toFixed(2)}</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees</div>
+                                <div className="text-3xl font-black text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
+                                <div className="text-xs text-zinc-500 mt-1">Revenue to OpenTicket</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Stripe Fees</div>
+                                <div className="text-3xl font-black text-red-400">${stats.stripeFees.toFixed(2)}</div>
+                                <div className="text-xs text-zinc-500 mt-1">Paid to Stripe</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-zinc-800/30">
+                                <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Subscription Revenue</div>
+                                <div className="text-3xl font-black text-purple-400">${stats.subscriptionRevenue.toFixed(2)}</div>
+                                <div className="text-xs text-zinc-500 mt-1">Pro & Premium plans</div>
+                            </Card>
+                        </div>
+
+                        {/* Organizer Breakdown */}
+                        {stats.organizerBreakdown.length > 0 && (
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
+                                <div className="p-4 border-b border-zinc-800 font-bold flex items-center gap-2">
+                                    <Building2 size={16} /> Revenue by Organizer
+                                </div>
+                                <table className="w-full text-left text-sm text-zinc-400">
+                                    <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                        <tr>
+                                            <th className="p-4">Organizer</th>
+                                            <th className="p-4 text-right">Transactions</th>
+                                            <th className="p-4 text-right">Gross Volume</th>
+                                            <th className="p-4 text-right text-[#E0FF20]">Platform Fees</th>
+                                            <th className="p-4 text-right text-green-500">Organizer Net</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {stats.organizerBreakdown.map((org, idx) => (
+                                            <tr key={idx} className="border-t border-zinc-800">
+                                                <td className="p-4">
+                                                    <div className="font-bold text-white">{org.organizerName}</div>
+                                                    <div className="text-xs">{org.organizerEmail}</div>
+                                                </td>
+                                                <td className="p-4 text-right font-mono">{org.transactionCount}</td>
+                                                <td className="p-4 text-right font-mono text-white">${org.totalVolume.toFixed(2)}</td>
+                                                <td className="p-4 text-right font-mono text-[#E0FF20]">${org.platformFees.toFixed(2)}</td>
+                                                <td className="p-4 text-right font-mono text-green-500">${org.netEarnings.toFixed(2)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Recent Transactions */}
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-zinc-800 font-bold flex justify-between">
+                                <span>Recent Transactions</span>
+                                <span className="text-xs font-mono bg-zinc-800 p-1 rounded text-zinc-400">Source: financial_transactions</span>
+                            </div>
+                            <table className="w-full text-left text-sm text-zinc-400">
+                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">ID</th>
+                                        <th className="p-4">Event</th>
+                                        <th className="p-4 text-right">Gross</th>
+                                        <th className="p-4 text-right text-[#E0FF20]">Platform Fee</th>
+                                        <th className="p-4 text-right text-red-400">Stripe Fee</th>
+                                        <th className="p-4 text-right text-green-500">Organizer Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {stats.recentTransactions.map((tx: any) => (
+                                        <tr key={tx.id} className="border-t border-zinc-800">
+                                            <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
+                                            <td className="p-4 text-white">{tx.event?.title || '-'}</td>
+                                            <td className="p-4 text-right font-mono text-white">${(tx.gross_amount || 0).toFixed(2)}</td>
+                                            <td className="p-4 text-right font-mono text-[#E0FF20]">${(tx.platform_fee || 0).toFixed(2)}</td>
+                                            <td className="p-4 text-right font-mono text-red-400">${(tx.stripe_fee || 0).toFixed(2)}</td>
+                                            <td className="p-4 text-right font-mono text-green-500">${(tx.organizer_net || 0).toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                    {stats.recentTransactions.length === 0 && (
+                                        <tr><td colSpan={6} className="p-8 text-center">No financial records found.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* BROADCAST TAB */}
                 {activeTab === 'broadcast' && (
                     <div className="p-8">
-                        <h2 className="text-xl font-bold text-white mb-4">System Broadcast</h2>
+                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <Megaphone size={24} className="text-[#E0FF20]" /> System Broadcast
+                        </h2>
                         <div className="max-w-2xl">
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Target Audience</label>
+                                <div className="flex gap-2">
+                                    {['all', 'organizers', 'affiliates'].map(target => (
+                                        <button
+                                            key={target}
+                                            onClick={() => setBroadcastTarget(target as any)}
+                                            className={`px-4 py-2 rounded-lg font-bold capitalize ${
+                                                broadcastTarget === target
+                                                    ? 'bg-[#E0FF20] text-black'
+                                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            }`}
+                                        >
+                                            {target === 'all' ? 'All Users' : target}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                             <RichTextarea
-                                label="Global Notification Message"
+                                label="Broadcast Message"
                                 value={broadcastMsg}
                                 onChange={(e: any) => setBroadcastMsg(e.target.value)}
-                                placeholder="Message to display on all dashboards..."
+                                placeholder="Message to display on dashboards..."
                                 className="mb-4"
                             />
                             <div className="flex gap-2">
-                                <Button onClick={handleSendBroadcast} disabled={!broadcastMsg}><Send size={16} className="mr-2" /> Post Broadcast</Button>
+                                <Button onClick={handleSendBroadcast} disabled={!broadcastMsg}>
+                                    <Send size={16} className="mr-2" /> Send to {broadcastTarget === 'all' ? 'All' : broadcastTarget}
+                                </Button>
                                 <Button variant="outline" onClick={handleClearBroadcast}>Clear Active Broadcast</Button>
                             </div>
                         </div>
@@ -385,6 +749,135 @@ export const SuperAdminDashboard = () => {
                     </div>
                 )}
 
+                {/* PROMO CODES TAB */}
+                {activeTab === 'promo' && (
+                    <div className="p-8">
+                        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                            <Tag size={24} className="text-[#E0FF20]" /> Promo Code Management
+                        </h2>
+
+                        {/* Create New Promo Code */}
+                        <Card className="p-6 border-zinc-700 bg-zinc-800/30 mb-8">
+                            <h3 className="font-bold text-white mb-4">Create New Promo Code</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <Input
+                                    label="Promo Code"
+                                    placeholder="e.g., SUMMER2026"
+                                    value={newPromo.code}
+                                    onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })}
+                                    className="bg-black border-zinc-700"
+                                />
+                                <div>
+                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Discount Type</label>
+                                    <select
+                                        value={newPromo.type}
+                                        onChange={e => setNewPromo({ ...newPromo, type: e.target.value as any })}
+                                        className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                                    >
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount ($)</option>
+                                    </select>
+                                </div>
+                                <Input
+                                    label={newPromo.type === 'percentage' ? 'Discount %' : 'Discount $'}
+                                    type="number"
+                                    value={newPromo.value}
+                                    onChange={e => setNewPromo({ ...newPromo, value: Number(e.target.value) })}
+                                    className="bg-black border-zinc-700"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Applies To</label>
+                                    <select
+                                        value={newPromo.target}
+                                        onChange={e => setNewPromo({ ...newPromo, target: e.target.value as any })}
+                                        className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                                    >
+                                        <option value="all">All (Subscriptions & Tickets)</option>
+                                        <option value="subscription">Subscriptions Only (Pro/Premium)</option>
+                                        <option value="ticket">Tickets Only</option>
+                                    </select>
+                                </div>
+                                <Input
+                                    label="Usage Limit (0 = unlimited)"
+                                    type="number"
+                                    value={newPromo.usageLimit}
+                                    onChange={e => setNewPromo({ ...newPromo, usageLimit: Number(e.target.value) })}
+                                    className="bg-black border-zinc-700"
+                                />
+                                <Input
+                                    label="Expires At (optional)"
+                                    type="date"
+                                    value={newPromo.expiresAt}
+                                    onChange={e => setNewPromo({ ...newPromo, expiresAt: e.target.value })}
+                                    className="bg-black border-zinc-700"
+                                />
+                            </div>
+                            <Button onClick={handleCreatePromoCode}>
+                                <Tag size={16} className="mr-2" /> Create Promo Code
+                            </Button>
+                        </Card>
+
+                        {/* Existing Promo Codes */}
+                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                            <div className="p-4 border-b border-zinc-800 font-bold">
+                                Active Promo Codes ({promoCodes.length})
+                            </div>
+                            <table className="w-full text-left text-sm text-zinc-400">
+                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
+                                    <tr>
+                                        <th className="p-4">Code</th>
+                                        <th className="p-4">Discount</th>
+                                        <th className="p-4">Applies To</th>
+                                        <th className="p-4">Usage</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {promoCodes.map(promo => (
+                                        <tr key={promo.id} className="border-t border-zinc-800">
+                                            <td className="p-4 font-mono font-bold text-[#E0FF20]">{promo.code}</td>
+                                            <td className="p-4">
+                                                {promo.type === 'percentage' ? `${promo.value}%` : `$${promo.value}`}
+                                            </td>
+                                            <td className="p-4 capitalize">{promo.target}</td>
+                                            <td className="p-4">
+                                                {promo.usageCount}/{promo.usageLimit || '∞'}
+                                            </td>
+                                            <td className="p-4">
+                                                <Badge color={promo.isActive ? 'green' : 'gray'}>
+                                                    {promo.isActive ? 'Active' : 'Inactive'}
+                                                </Badge>
+                                            </td>
+                                            <td className="p-4 flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    onClick={() => handleTogglePromoCode(promo)}
+                                                >
+                                                    {promo.isActive ? 'Disable' : 'Enable'}
+                                                </Button>
+                                                <button 
+                                                    onClick={() => handleDeletePromoCode(promo)} 
+                                                    className="p-2 hover:bg-red-900/30 text-red-500 rounded"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {promoCodes.length === 0 && (
+                                        <tr><td colSpan={6} className="p-8 text-center">No promo codes created yet.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* SETTINGS TAB */}
                 {activeTab === 'settings' && (
                     <div className="p-8">
                         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
@@ -414,8 +907,6 @@ export const SuperAdminDashboard = () => {
                                                     const res = await StorageService.connectStripeAccount(currentUser.id, 'standard');
                                                     if (res.success) {
                                                         setPlatformStripeId(res.stripeId);
-                                                        setPlatformPublishableKey('pk_test_mock_key');
-                                                        setPlatformSecretKey('sk_test_mock_key');
                                                     }
                                                 }}
                                                 className="w-full bg-[#635BFF] hover:bg-[#534ac2] text-white border-none"
