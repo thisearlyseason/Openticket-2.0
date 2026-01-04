@@ -540,7 +540,7 @@ export const SuperAdminDashboard = () => {
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['users', 'events', 'registrations', 'finance', 'broadcast', 'promo', 'settings'].map(tab => (
+                {['users', 'events', 'registrations', 'finance', 'affiliates', 'broadcast', 'promo', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
