@@ -622,3 +622,110 @@ export const verifySession = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Record an at-door payment (cash, card, or transfer)
+ * POST /api/stripe/record-at-door-payment
+ * This creates a financial transaction record for offline payments
+ */
+export const recordAtDoorPayment = async (req, res) => {
+    try {
+        const { registrationId, amount, method } = req.body;
+
+        if (!registrationId || !amount || !method) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Get registration with event data
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(*, owner:profiles!owner_id(subscription))')
+            .eq('id', registrationId)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Calculate platform fee based on organizer's plan
+        const organizerPlan = reg.event?.owner?.subscription?.plan || 'free';
+        const PLAN_FEES = {
+            free: { percent: 0.0275, fixed: 1.25 },
+            pro: { percent: 0.015, fixed: 0.75 },
+            premium: { percent: 0.0075, fixed: 0 }
+        };
+        const planFee = PLAN_FEES[organizerPlan] || PLAN_FEES.free;
+        const platformFee = Number((amount * planFee.percent + planFee.fixed).toFixed(2));
+        
+        // No Stripe fee for cash/transfer payments
+        const stripeFee = method === 'card' ? Number((amount * 0.029 + 0.30).toFixed(2)) : 0;
+        
+        const organizerNet = Number((amount - platformFee - stripeFee).toFixed(2));
+
+        // Insert financial transaction record
+        const { data: tx, error: txError } = await supabase
+            .from('financial_transactions')
+            .insert({
+                registration_id: registrationId,
+                event_id: reg.event_id,
+                gross_amount: amount,
+                platform_fee: platformFee,
+                stripe_fee: stripeFee,
+                tax_amount: reg.tax_amount || 0,
+                organizer_net: organizerNet,
+                currency: 'usd',
+                status: 'succeeded',
+                payout_status: method === 'cash' ? 'collected' : 'pending',
+                transaction_type: 'at_door_payment',
+                payment_method: method,
+                affiliate_code: reg.affiliate_code || null,
+                affiliate_commission: 0, // At-door payments don't typically carry affiliate commission
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (txError) {
+            console.error('[At-Door Payment] Failed to record transaction:', txError);
+            // Don't fail - the payment was collected
+        }
+
+        // Create audit log
+        try {
+            await supabase.from('audit_logs').insert({
+                timestamp: new Date().toISOString(),
+                actor_id: req.user?.uid || 'staff',
+                actor_type: 'staff',
+                action: 'at_door_payment',
+                target_type: 'registration',
+                target_id: registrationId,
+                details: {
+                    eventId: reg.event_id,
+                    amount: amount,
+                    method: method,
+                    platformFee: platformFee,
+                    organizerNet: organizerNet
+                }
+            });
+        } catch (auditError) {
+            console.error('[At-Door Payment] Audit log failed:', auditError);
+        }
+
+        console.log(`[At-Door Payment] Recorded ${method} payment of $${amount} for registration ${registrationId}`);
+        
+        res.json({
+            recorded: true,
+            transactionId: tx?.id,
+            breakdown: {
+                gross: amount,
+                platformFee: platformFee,
+                stripeFee: stripeFee,
+                organizerNet: organizerNet
+            }
+        });
+
+    } catch (error) {
+        console.error('Record At-Door Payment Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
