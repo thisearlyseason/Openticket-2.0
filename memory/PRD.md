@@ -59,6 +59,13 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] `affiliate_clicks` table added to MASTER_MIGRATION.sql for detailed click tracking
 - [x] Clicks increment on profile's `affiliate_clicks` field
 
+#### Affiliate Performance Dashboards (LATEST)
+- [x] Conversion funnel visualization: Total Clicks → Conversions → Commission Earned
+- [x] Overall conversion rate progress bar
+- [x] Top performers section: Top 3 by clicks, conversions, and earnings
+- [x] Enhanced SuperAdminDashboard affiliates tab with full analytics
+- [x] AffiliateDashboard updated to show click stats and conversion rate
+
 #### At-Door Payment Implementation (LATEST)
 - [x] `POST /api/stripe/record-at-door-payment` - Records at-door payments in financial_transactions
 - [x] Supports cash, card (external terminal), and transfer payment methods
