@@ -3,10 +3,19 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Ticket, Shield, BarChart3, Globe, Heart, CheckCircle2, ArrowRight, Zap, PlayCircle, Star, Instagram, Twitter, Linkedin, Facebook } from 'lucide-react';
 import { Button, Card } from './UI';
+import { StorageService } from '../services/storageService';
 
 export const LandingPage = () => {
     const navigate = useNavigate();
     const marqueeRef = useRef<HTMLDivElement>(null);
+
+    // Redirect logged-in users to dashboard
+    useEffect(() => {
+        const user = StorageService.getCurrentUser();
+        if (user) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [navigate]);
 
     useEffect(() => {
         const handleScroll = () => {
