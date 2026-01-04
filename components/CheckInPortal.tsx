@@ -733,12 +733,33 @@ export const CheckInPortal = () => {
 
                         {paymentMethod === 'card' && (
                             <div className="space-y-4">
-                                <Input label="Card Number" placeholder="0000 0000 0000 0000" value={cardDetails.number} onChange={e => setCardDetails({ ...cardDetails, number: e.target.value })} containerClassName="mb-0" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Input label="Expiry" placeholder="MM/YY" value={cardDetails.expiry} onChange={e => setCardDetails({ ...cardDetails, expiry: e.target.value })} containerClassName="mb-0" />
-                                    <Input label="CVC" placeholder="123" value={cardDetails.cvc} onChange={e => setCardDetails({ ...cardDetails, cvc: e.target.value })} containerClassName="mb-0" />
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-2">
+                                    <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                                        <CreditCard size={14} />
+                                        Process card on your external terminal, then confirm below.
+                                    </p>
                                 </div>
-                                <Button onClick={() => handleProcessPayment('card')} className="w-full mt-4" disabled={!cardDetails.number}>Charge Card</Button>
+                                <div className="p-4 bg-zinc-50 dark:bg-black rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-bold text-zinc-500">Amount to Charge</span>
+                                        <span className="font-bold text-2xl">${calculateTotalDue(paymentContext.reg).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <Input 
+                                    label="Last 4 Digits (optional)" 
+                                    placeholder="1234" 
+                                    maxLength={4}
+                                    value={cardDetails.number} 
+                                    onChange={e => setCardDetails({ ...cardDetails, number: e.target.value })} 
+                                    containerClassName="mb-0" 
+                                />
+                                <Button 
+                                    onClick={() => handleProcessPayment('card')} 
+                                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white border-none"
+                                >
+                                    <CreditCard size={18} className="mr-2" />
+                                    Confirm Card Payment Received
+                                </Button>
                             </div>
                         )}
 
@@ -765,7 +786,10 @@ export const CheckInPortal = () => {
                                         </div>
                                     )}
                                 </div>
-                                <Button onClick={() => handleProcessPayment('cash')} className="w-full bg-green-600 hover:bg-green-700 text-white border-none">Mark Paid</Button>
+                                <Button onClick={() => handleProcessPayment('cash')} className="w-full bg-green-600 hover:bg-green-700 text-white border-none">
+                                    <Banknote size={18} className="mr-2" />
+                                    Mark as Paid (Cash)
+                                </Button>
                             </div>
                         )}
 
@@ -775,7 +799,10 @@ export const CheckInPortal = () => {
                                     <p className="text-purple-800 dark:text-purple-200 text-sm mb-2">Verify the transfer on your external device/app.</p>
                                     <div className="font-mono font-bold text-2xl text-purple-900 dark:text-white">${totalDue.toFixed(2)}</div>
                                 </div>
-                                <Button onClick={() => handleProcessPayment('transfer')} className="w-full">Confirm Transfer Received</Button>
+                                <Button onClick={() => handleProcessPayment('transfer')} className="w-full bg-purple-600 hover:bg-purple-700 text-white border-none">
+                                    <Smartphone size={18} className="mr-2" />
+                                    Confirm Transfer Received
+                                </Button>
                             </div>
                         )}
                     </div>
