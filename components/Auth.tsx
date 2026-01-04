@@ -13,6 +13,15 @@ export const Auth = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [findTickets, setFindTickets] = useState(false);
     const [ticketMessage, setTicketMessage] = useState('');
+    const navigate = useNavigate();
+
+    // Redirect logged-in users to dashboard
+    useEffect(() => {
+        const user = StorageService.getCurrentUser();
+        if (user) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [navigate]);
 
     const handleFindTickets = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,7 +50,6 @@ export const Auth = () => {
     });
 
     const [error, setError] = useState('');
-    const navigate = useNavigate();
 
     // Handle Redirect Param & Referral Code
     const redirectPlan = searchParams.get('plan');
