@@ -74,6 +74,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     const { showAlert, showConfirm } = useGlobalUI();
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
     const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    
+    // Super Admin Panel State (only for the single super admin)
+    const [showSuperAdminPanel, setShowSuperAdminPanel] = useState(false);
 
     useEffect(() => {
         // Override window.alert
