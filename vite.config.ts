@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
         '.emergentagent.com'
       ],
       headers: {},
+      fs: {
+        allow: ['/app', '/app/frontend']
+      },
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:8001',
