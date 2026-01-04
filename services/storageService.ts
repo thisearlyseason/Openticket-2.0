@@ -1087,11 +1087,46 @@ export const StorageService = {
     },
 
     trackAffiliateClick: async (eventId: string, code: string) => {
-        // Skip for now or implement backend endpoint
+        try {
+            // Call the backend to track the click
+            const response = await postSupabase('/admin/affiliate/track-click', 'POST', {
+                affiliateCode: code,
+                eventId: eventId,
+                referrer: document.referrer || null,
+                userAgent: navigator.userAgent || null
+            });
+            console.log('[Affiliate] Click tracked:', response);
+            return response;
+        } catch (e) {
+            console.warn('[Affiliate] Click tracking failed (non-blocking):', e);
+            return { tracked: false };
+        }
     },
 
     trackAffiliateConversion: async (eventId: string, code: string) => {
-        // Skip for now
+        // Conversions are automatically tracked when payment completes via stripeController/webhook
+        // This is just a placeholder for any additional frontend-side tracking needs
+        console.log(`[Affiliate] Conversion recorded for code: ${code}, event: ${eventId}`);
+    },
+
+    getAffiliateAnalytics: async () => {
+        try {
+            const data = await fetchSupabase('/admin/affiliate/analytics', true);
+            return data;
+        } catch (e) {
+            console.error('Failed to fetch affiliate analytics:', e);
+            return { affiliates: [], summary: {} };
+        }
+    },
+
+    getAffiliateDetail: async (affiliateId: string) => {
+        try {
+            const data = await fetchSupabase(`/admin/affiliate/${affiliateId}`, true);
+            return data;
+        } catch (e) {
+            console.error('Failed to fetch affiliate detail:', e);
+            return null;
+        }
     },
 
     Payment: {
