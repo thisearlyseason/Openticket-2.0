@@ -549,14 +549,60 @@ export const StorageService = {
         }
     },
 
-    getAdminFinancials: async (): Promise<{ totalVolume: number, platformFees: number, organizerNet: number, recentTransactions: any[] }> => {
+    getAdminFinancials: async (): Promise<{ totalVolume: number, platformFees: number, organizerNet: number, recentTransactions: any[], organizerBreakdown: any[] }> => {
         try {
             return await fetchSupabase('/admin/financials');
         } catch (e) {
             console.error("Admin fetch financials failed", e);
             // Return zeroed structure on failure to prevent dashboard crash
-            return { totalVolume: 0, platformFees: 0, organizerNet: 0, recentTransactions: [] };
+            return { totalVolume: 0, platformFees: 0, organizerNet: 0, recentTransactions: [], organizerBreakdown: [] };
         }
+    },
+
+    // Promo Code Management
+    getPromoCodes: async (): Promise<any[]> => {
+        try {
+            const { promoCodes } = await fetchSupabase('/admin/promo-codes');
+            return promoCodes || [];
+        } catch (e) {
+            console.error("Failed to fetch promo codes", e);
+            return [];
+        }
+    },
+
+    createPromoCode: async (promoCode: any): Promise<boolean> => {
+        try {
+            await fetchSupabase('/admin/promo-codes', true, 'POST', promoCode);
+            return true;
+        } catch (e) {
+            console.error("Failed to create promo code", e);
+            return false;
+        }
+    },
+
+    updatePromoCode: async (id: string, updates: any): Promise<boolean> => {
+        try {
+            await fetchSupabase(`/admin/promo-codes/${id}`, true, 'PUT', updates);
+            return true;
+        } catch (e) {
+            console.error("Failed to update promo code", e);
+            return false;
+        }
+    },
+
+    deletePromoCode: async (id: string): Promise<boolean> => {
+        try {
+            await fetchSupabase(`/admin/promo-codes/${id}`, true, 'DELETE');
+            return true;
+        } catch (e) {
+            console.error("Failed to delete promo code", e);
+            return false;
+        }
+    },
+
+    // System Notification with targeting
+    setSystemNotification: async (message: string, type: string = 'info', target: string = 'all'): Promise<void> => {
+        localStorage.setItem('SYSTEM_NOTIFICATION', JSON.stringify({ message, type, target, timestamp: Date.now() }));
     },
 
     getSuperAdmin: async (): Promise<User | undefined> => {
