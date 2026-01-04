@@ -79,7 +79,7 @@ interface PromoCode {
     createdAt: string;
 }
 
-export const SuperAdminDashboard = () => {
+export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
