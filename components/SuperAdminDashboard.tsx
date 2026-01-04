@@ -928,6 +928,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <Gift size={24} className="text-purple-400" /> Affiliate Management
                             </h2>
                             <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={refreshData}>
+                                    <RefreshCw size={14} className="mr-2" /> Refresh
+                                </Button>
                                 <Button size="sm" variant="outline" onClick={() => {
                                     const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Earnings', 'Paid', 'Pending'];
                                     const rows = affiliates.map(a => [
@@ -945,6 +948,69 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 }}>
                                     <Download size={14} className="mr-2" /> Export CSV
                                 </Button>
+                            </div>
+                        </div>
+
+                        {/* Conversion Funnel Visualization */}
+                        <div className="mb-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-2xl p-6">
+                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <TrendingUp size={20} className="text-purple-400" /> Conversion Funnel
+                            </h3>
+                            <div className="flex items-center justify-between">
+                                {/* Step 1: Clicks */}
+                                <div className="flex-1 text-center">
+                                    <div className="bg-purple-500/20 rounded-xl p-4 mx-2">
+                                        <div className="text-3xl font-black text-purple-400">
+                                            {affiliates.reduce((sum, a) => sum + a.clicks, 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Total Clicks</div>
+                                    </div>
+                                </div>
+                                <div className="text-zinc-500">→</div>
+                                {/* Step 2: Conversions */}
+                                <div className="flex-1 text-center">
+                                    <div className="bg-blue-500/20 rounded-xl p-4 mx-2">
+                                        <div className="text-3xl font-black text-blue-400">
+                                            {affiliates.reduce((sum, a) => sum + a.conversions, 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Conversions</div>
+                                    </div>
+                                </div>
+                                <div className="text-zinc-500">→</div>
+                                {/* Step 3: Revenue */}
+                                <div className="flex-1 text-center">
+                                    <div className="bg-green-500/20 rounded-xl p-4 mx-2">
+                                        <div className="text-3xl font-black text-green-400">
+                                            ${affiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(0)}
+                                        </div>
+                                        <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Commission Earned</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Conversion Rate Bar */}
+                            <div className="mt-6">
+                                <div className="flex justify-between text-xs text-zinc-500 mb-2">
+                                    <span>Overall Conversion Rate</span>
+                                    <span className="font-mono">
+                                        {(() => {
+                                            const totalClicks = affiliates.reduce((sum, a) => sum + a.clicks, 0);
+                                            const totalConversions = affiliates.reduce((sum, a) => sum + a.conversions, 0);
+                                            return totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(2) : '0.00';
+                                        })()}%
+                                    </span>
+                                </div>
+                                <div className="h-3 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-purple-500 to-green-500 rounded-full transition-all duration-500"
+                                        style={{ 
+                                            width: `${Math.min(100, (() => {
+                                                const totalClicks = affiliates.reduce((sum, a) => sum + a.clicks, 0);
+                                                const totalConversions = affiliates.reduce((sum, a) => sum + a.conversions, 0);
+                                                return totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+                                            })())}%` 
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -973,6 +1039,63 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </div>
                             </Card>
                         </div>
+
+                        {/* Top Performers Section */}
+                        {affiliates.length > 0 && (
+                            <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Top by Clicks */}
+                                <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
+                                        <Eye size={14} /> Top by Clicks
+                                    </div>
+                                    {[...affiliates].sort((a, b) => b.clicks - a.clicks).slice(0, 3).map((aff, i) => (
+                                        <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
+                                                    {i + 1}
+                                                </span>
+                                                <span className="text-sm text-white truncate max-w-[100px]">{aff.name}</span>
+                                            </div>
+                                            <span className="font-mono text-purple-400">{aff.clicks.toLocaleString()}</span>
+                                        </div>
+                                    ))}
+                                </Card>
+                                {/* Top by Conversions */}
+                                <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
+                                        <CheckCircle size={14} /> Top by Conversions
+                                    </div>
+                                    {[...affiliates].sort((a, b) => b.conversions - a.conversions).slice(0, 3).map((aff, i) => (
+                                        <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
+                                                    {i + 1}
+                                                </span>
+                                                <span className="text-sm text-white truncate max-w-[100px]">{aff.name}</span>
+                                            </div>
+                                            <span className="font-mono text-blue-400">{aff.conversions}</span>
+                                        </div>
+                                    ))}
+                                </Card>
+                                {/* Top by Earnings */}
+                                <Card className="p-4 border-zinc-700 bg-zinc-800/30">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
+                                        <DollarSign size={14} /> Top by Earnings
+                                    </div>
+                                    {[...affiliates].sort((a, b) => b.totalEarnings - a.totalEarnings).slice(0, 3).map((aff, i) => (
+                                        <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
+                                                    {i + 1}
+                                                </span>
+                                                <span className="text-sm text-white truncate max-w-[100px]">{aff.name}</span>
+                                            </div>
+                                            <span className="font-mono text-green-400">${aff.totalEarnings.toFixed(0)}</span>
+                                        </div>
+                                    ))}
+                                </Card>
+                            </div>
+                        )}
 
                         {/* Affiliate List */}
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
@@ -1017,6 +1140,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                         onClick={() => setSelectedAffiliate(aff)}
                                                         className="p-2 hover:bg-zinc-700 rounded text-blue-400"
                                                         title="View Details"
+                                                        data-testid={`view-affiliate-${aff.id}`}
                                                     >
                                                         <Eye size={14} />
                                                     </button>
@@ -1027,6 +1151,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                                 setSelectedAffiliate(aff);
                                                                 setPayoutAmount(aff.pendingPayout.toFixed(2));
                                                             }}
+                                                            data-testid={`pay-affiliate-${aff.id}`}
                                                         >
                                                             <Wallet size={12} className="mr-1" /> Pay
                                                         </Button>
@@ -1036,7 +1161,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </tr>
                                     ))}
                                     {affiliates.length === 0 && (
-                                        <tr><td colSpan={8} className="p-8 text-center">No affiliates found.</td></tr>
+                                        <tr><td colSpan={8} className="p-8 text-center text-zinc-500">
+                                            No affiliates found. Affiliates will appear here once they join your program.
+                                        </td></tr>
                                     )}
                                 </tbody>
                             </table>
