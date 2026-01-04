@@ -146,24 +146,27 @@ export const getAllRegistrations = async (req, res) => {
     try {
         const { stripe_checkout_session_id, email } = req.query;
 
-        // SECURITY FIX: Require filters
-        if (!stripe_checkout_session_id && !email) {
+        // SECURITY FIX: Require valid filters (not empty strings)
+        const hasValidSessionId = stripe_checkout_session_id && stripe_checkout_session_id.trim() !== '';
+        const hasValidEmail = email && email.trim() !== '';
+        
+        if (!hasValidSessionId && !hasValidEmail) {
             return res.status(403).json({ error: "Missing filter parameters" });
         }
 
         let query = supabase.from('registrations').select('*');
 
-        if (stripe_checkout_session_id) {
+        if (hasValidSessionId) {
             query = query.eq('stripe_checkout_session_id', stripe_checkout_session_id);
         }
-        if (email) {
+        if (hasValidEmail) {
             query = query.eq('attendee_email', email);
         }
 
         const { data, error } = await query;
 
         if (error) throw error;
-        res.json({ registrations: data });
+        res.json({ registrations: data || [] });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
