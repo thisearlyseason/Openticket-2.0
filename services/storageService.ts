@@ -327,7 +327,42 @@ const StripeService = {
             throw new Error(`Subscription initialization failed: ${e.message}`);
         }
     },
-    refundSplitPayment: async (paymentIntentId: string) => true
+    refundSplitPayment: async (paymentIntentId: string) => true,
+    
+    /**
+     * Create a PaymentIntent for at-door card payments
+     * Returns clientSecret for Stripe Elements confirmation
+     */
+    createAtDoorPaymentIntent: async (registrationId: string, amount: number) => {
+        try {
+            const response = await postSupabase('/stripe/create-payment-intent', 'POST', {
+                registrationId,
+                amount
+            });
+            return response;
+        } catch (e: any) {
+            console.error('[Stripe] Failed to create payment intent:', e);
+            throw new Error(`Payment setup failed: ${e.message}`);
+        }
+    },
+    
+    /**
+     * Record an at-door payment (cash, card, or transfer) for financial tracking
+     */
+    recordAtDoorPayment: async (registrationId: string, amount: number, method: 'cash' | 'card' | 'transfer') => {
+        try {
+            const response = await postSupabase('/stripe/record-at-door-payment', 'POST', {
+                registrationId,
+                amount,
+                method
+            });
+            return response;
+        } catch (e: any) {
+            console.error('[Stripe] Failed to record at-door payment:', e);
+            // Don't throw - this is supplementary
+            return { recorded: false, error: e.message };
+        }
+    }
 };
 
 const normalizeEvent = (raw: any): Event => {
