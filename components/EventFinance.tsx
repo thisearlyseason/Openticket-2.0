@@ -218,7 +218,18 @@ export const EventFinance = () => {
     };
 
     useEffect(() => {
+        // Add a safety timeout to prevent infinite loading
+        const timeout = setTimeout(() => {
+            if (isLoading) {
+                console.warn('Loading timeout reached, forcing complete');
+                setIsLoading(false);
+                showToast('Loading timed out. Please refresh.', 'error');
+            }
+        }, 15000); // 15 second timeout
+        
         loadFinancials();
+        
+        return () => clearTimeout(timeout);
     }, [eventId]);
 
     const handleRefresh = () => {
