@@ -228,25 +228,49 @@ END;
 $$;
 
 -- =====================================================
--- 10. DISABLE RLS FOR ADMIN ACCESS
+-- 10. AFFILIATE CLICKS TABLE (Detailed Click Tracking)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.affiliate_clicks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    affiliate_id TEXT NOT NULL,
+    affiliate_code TEXT NOT NULL,
+    event_id TEXT,
+    referrer TEXT,
+    user_agent TEXT,
+    ip_hash TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_affiliate_id ON affiliate_clicks(affiliate_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_affiliate_code ON affiliate_clicks(affiliate_code);
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_created_at ON affiliate_clicks(created_at);
+
+-- Add payment_method column to financial_transactions for at-door payments
+ALTER TABLE financial_transactions 
+ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'stripe';
+
+-- =====================================================
+-- 11. DISABLE RLS FOR ADMIN ACCESS
 -- =====================================================
 ALTER TABLE financial_transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE affiliate_payouts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE affiliate_clicks DISABLE ROW LEVEL SECURITY;
 
 -- =====================================================
--- 11. GRANT PERMISSIONS
+-- 12. GRANT PERMISSIONS
 -- =====================================================
 GRANT ALL ON financial_transactions TO authenticated, service_role, anon;
 GRANT ALL ON audit_logs TO authenticated, service_role, anon;
 GRANT ALL ON promo_codes TO authenticated, service_role, anon;
 GRANT ALL ON affiliate_payouts TO authenticated, service_role, anon;
+GRANT ALL ON affiliate_clicks TO authenticated, service_role, anon;
 GRANT EXECUTE ON FUNCTION increment_registered_count TO authenticated, service_role, anon;
 GRANT EXECUTE ON FUNCTION process_checkout_success_v2 TO authenticated, service_role, anon;
 
 -- =====================================================
--- 12. REFRESH SCHEMA CACHE
+-- 13. REFRESH SCHEMA CACHE
 -- =====================================================
 NOTIFY pgrst, 'reload schema';
 
@@ -254,5 +278,5 @@ NOTIFY pgrst, 'reload schema';
 -- VERIFICATION
 -- =====================================================
 SELECT 'SUCCESS! Master migration completed.' as result;
-SELECT 'Tables created: financial_transactions, audit_logs, promo_codes, affiliate_payouts' as tables_created;
+SELECT 'Tables created: financial_transactions, audit_logs, promo_codes, affiliate_payouts, affiliate_clicks' as tables_created;
 SELECT 'Functions created: increment_registered_count, process_checkout_success_v2' as functions_created;
