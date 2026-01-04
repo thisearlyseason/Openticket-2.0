@@ -86,13 +86,14 @@ export const Dashboard = () => {
         const myEvents = allEvents.filter(e => e.ownerId === userId);
         setEvents(myEvents);
 
-        const allRegs = await StorageService.getRegistrations();
-        // Get regs for my events
-        const myRegs = allRegs.filter(r => myEvents.some(e => e.id === r.eventId));
+        // Fetch registrations per event (not all at once - that causes 403)
+        const regsPromises = myEvents.map(evt => StorageService.getRegistrations(evt.id));
+        const regsArrays = await Promise.all(regsPromises);
+        const myRegs = regsArrays.flat();
         setRegistrations(myRegs);
 
-        // Get regs where I am an attendee to show messages
-        const userRegs = allRegs.filter(r => r.attendeeEmail === currentUser?.email);
+        // For user messages, fetch registrations by email
+        const userRegs = await StorageService.getRegistrationsByEmail(currentUser?.email || '');
         const attendedEvents = allEvents.filter(e => userRegs.some(r => r.eventId === e.id));
 
         const messages: { broadcast: Broadcast, eventTitle: string }[] = [];
