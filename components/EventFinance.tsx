@@ -57,10 +57,13 @@ export const EventFinance = () => {
             return;
         }
         
-        // Check if user is authenticated
-        if (!user) {
+        // Check if user is authenticated - wait a moment for auth to settle
+        const currentUser = StorageService.getCurrentUser();
+        if (!currentUser) {
             console.warn('No authenticated user, redirecting to login');
+            showToast('Please log in to view financials', 'error');
             navigate('/auth');
+            setIsLoading(false);
             return;
         }
 
