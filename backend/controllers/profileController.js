@@ -129,12 +129,20 @@ export const updateProfile = async (req, res) => {
             'favorite_organizers', 'gemini_api_key', 'default_tax_rate', 'default_custom_fees', 'address',
             'notifications', 'email_templates', 'default_confirmation_template', 'default_waiver',
             'default_refund_policy', 'default_refund_policy_enabled', 'logo_url', 'header_image_url',
-            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code'
+            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code',
+            'role' // Allow role changes (for affiliate signup)
         ];
 
         const safeUpdates = {};
         Object.keys(updates).forEach(key => {
             if (allowedFields.includes(key)) {
+                // Security: Only allow specific role values, not 'admin' or 'superadmin'
+                if (key === 'role') {
+                    const allowedRoles = ['attendee', 'organizer', 'affiliate'];
+                    if (!allowedRoles.includes(updates[key])) {
+                        return; // Skip disallowed role values
+                    }
+                }
                 safeUpdates[key] = updates[key];
             }
         });
