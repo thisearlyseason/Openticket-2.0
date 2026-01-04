@@ -5,10 +5,6 @@ import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Fi
 import { StorageService } from '../services/storageService';
 import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
-import { loadStripe, Stripe as StripeType } from '@stripe/stripe-js';
-
-// Get Stripe publishable key from environment
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface CheckInTicket {
     reg: Registration;
