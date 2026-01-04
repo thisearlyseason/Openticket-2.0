@@ -230,11 +230,20 @@ export const AffiliateDashboard = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-in fade-in slide-in-from-bottom-5">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 animate-in fade-in slide-in-from-bottom-5">
                 <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
-                    <div className="text-zinc-500 text-xs font-bold uppercase mb-2">Total Referrals</div>
+                    <div className="text-zinc-500 text-xs font-bold uppercase mb-2">Link Clicks</div>
                     <div className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2">
-                        <Users className="text-blue-500" size={24} /> {stats.referrals}
+                        <ExternalLink className="text-purple-500" size={24} /> {stats.clicks.toLocaleString()}
+                    </div>
+                </Card>
+                <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
+                    <div className="text-zinc-500 text-xs font-bold uppercase mb-2">Conversions</div>
+                    <div className="text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                        <Users className="text-blue-500" size={24} /> {stats.conversions}
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-1">
+                        {stats.conversionRate > 0 ? `${stats.conversionRate.toFixed(1)}% rate` : 'No conversions yet'}
                     </div>
                 </Card>
                 <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50">
