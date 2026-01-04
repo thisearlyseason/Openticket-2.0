@@ -17,6 +17,9 @@ export const AffiliateDashboard = () => {
         pending: 0,
         proCount: 0,
         premiumCount: 0,
+        clicks: 0,
+        conversions: 0,
+        conversionRate: 0,
         recentCommissions: [] as Invoice[]
     });
     const [generatedContent, setGeneratedContent] = useState('');
