@@ -331,6 +331,37 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                     </div>
                 </div>
             )}
+
+            {/* Super Admin Panel Overlay - Full screen modal for single super admin */}
+            {showSuperAdminPanel && user?.isAdmin && (
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm animate-in fade-in duration-200" data-testid="super-admin-panel">
+                    <div className="h-full overflow-auto">
+                        {/* Header with close button */}
+                        <div className="sticky top-0 z-10 bg-black/90 backdrop-blur-md border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
+                                    <Shield size={20} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-black text-white">Super Admin Panel</h1>
+                                    <p className="text-xs text-zinc-500">Platform-wide management</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowSuperAdminPanel(false)}
+                                className="p-3 hover:bg-zinc-800 rounded-xl transition-colors text-zinc-400 hover:text-white"
+                                data-testid="close-super-admin-btn"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        {/* Embedded SuperAdminDashboard content */}
+                        <div className="p-0">
+                            <SuperAdminDashboard embedded={true} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
