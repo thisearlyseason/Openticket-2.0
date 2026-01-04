@@ -45,12 +45,8 @@ export const AffiliateDashboard = () => {
                 return;
             }
 
-            // SECURITY CHECK: Attendees shouldn't be here unless they are upgrading
-            if (currentUser.role === 'attendee') {
-                navigate('/browse', { replace: true });
-                return;
-            }
-
+            // Allow users to access affiliate dashboard to become affiliates
+            // Only redirect if they have no potential to become an affiliate
             await refreshData(currentUser.id);
         };
         init();
