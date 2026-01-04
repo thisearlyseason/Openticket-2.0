@@ -187,39 +187,82 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 organizerBreakdown: financials.organizerBreakdown || []
             });
 
-            // Calculate affiliate data from transactions
-            const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
-            const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
-                // Find transactions attributed to this affiliate
-                const affTransactions = (financials.recentTransactions || []).filter(
-                    (tx: any) => tx.affiliate_code === aff.affiliateCode
-                );
-                
-                const totalCommission = affTransactions.reduce(
-                    (sum: number, tx: any) => sum + (Number(tx.affiliate_commission) || 0), 0
-                );
-                
-                // Calculate paid out vs pending (from payouts table or user record)
-                const paidOut = aff.totalPaidOut || 0;
-                const pendingPayout = totalCommission - paidOut;
-                
-                return {
-                    id: aff.id,
-                    name: aff.name || 'Unknown',
-                    email: aff.email || '',
-                    affiliateCode: aff.affiliateCode || '',
-                    stripeConnectId: aff.stripeConnectId,
-                    totalEarnings: totalCommission,
-                    pendingPayout: Math.max(0, pendingPayout),
-                    paidOut: paidOut,
-                    clicks: aff.affiliateClicks || 0,
-                    conversions: affTransactions.length,
-                    conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
-                    transactions: affTransactions
-                };
-            });
-            
-            setAffiliates(affiliateDataList);
+            // Load affiliate data from new analytics endpoint
+            try {
+                const affiliateAnalytics = await StorageService.getAffiliateAnalytics();
+                if (affiliateAnalytics && affiliateAnalytics.affiliates) {
+                    const affiliateDataList: AffiliateData[] = affiliateAnalytics.affiliates.map((aff: any) => ({
+                        id: aff.id,
+                        name: aff.name || 'Unknown',
+                        email: aff.email || '',
+                        affiliateCode: aff.affiliateCode || '',
+                        stripeConnectId: aff.stripeConnected ? 'connected' : undefined,
+                        totalEarnings: aff.totalCommission || 0,
+                        pendingPayout: aff.pendingPayout || 0,
+                        paidOut: aff.totalPaidOut || 0,
+                        clicks: aff.clicks || 0,
+                        conversions: aff.conversions || 0,
+                        conversionRate: aff.conversionRate || 0,
+                        transactions: aff.transactions || []
+                    }));
+                    setAffiliates(affiliateDataList);
+                } else {
+                    // Fallback to old method if analytics endpoint fails
+                    const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
+                    const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                        const affTransactions = (financials.recentTransactions || []).filter(
+                            (tx: any) => tx.affiliate_code === aff.affiliateCode
+                        );
+                        const totalCommission = affTransactions.reduce(
+                            (sum: number, tx: any) => sum + (Number(tx.affiliate_commission) || 0), 0
+                        );
+                        const paidOut = aff.totalPaidOut || 0;
+                        return {
+                            id: aff.id,
+                            name: aff.name || 'Unknown',
+                            email: aff.email || '',
+                            affiliateCode: aff.affiliateCode || '',
+                            stripeConnectId: aff.stripeConnectId,
+                            totalEarnings: totalCommission,
+                            pendingPayout: Math.max(0, totalCommission - paidOut),
+                            paidOut: paidOut,
+                            clicks: aff.affiliateClicks || 0,
+                            conversions: affTransactions.length,
+                            conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
+                            transactions: affTransactions
+                        };
+                    });
+                    setAffiliates(affiliateDataList);
+                }
+            } catch (e) {
+                console.error("Failed to load affiliate analytics, using fallback", e);
+                // Fallback to calculating from users
+                const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
+                const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                    const affTransactions = (financials.recentTransactions || []).filter(
+                        (tx: any) => tx.affiliate_code === aff.affiliateCode
+                    );
+                    const totalCommission = affTransactions.reduce(
+                        (sum: number, tx: any) => sum + (Number(tx.affiliate_commission) || 0), 0
+                    );
+                    const paidOut = aff.totalPaidOut || 0;
+                    return {
+                        id: aff.id,
+                        name: aff.name || 'Unknown',
+                        email: aff.email || '',
+                        affiliateCode: aff.affiliateCode || '',
+                        stripeConnectId: aff.stripeConnectId,
+                        totalEarnings: totalCommission,
+                        pendingPayout: Math.max(0, totalCommission - paidOut),
+                        paidOut: paidOut,
+                        clicks: aff.affiliateClicks || 0,
+                        conversions: affTransactions.length,
+                        conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
+                        transactions: affTransactions
+                    };
+                });
+                setAffiliates(affiliateDataList);
+            }
             
             // Load affiliate payouts
             try {
