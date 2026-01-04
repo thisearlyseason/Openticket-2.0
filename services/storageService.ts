@@ -805,8 +805,15 @@ export const StorageService = {
     getEventById: async (id: string): Promise<Event | null> => {
         if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id) || null;
         try {
-            const { event } = await fetchSupabase(`/events/${id}`, false);
-            return event ? normalizeEvent(event) : null;
+            console.log(`[StorageService] Fetching event by ID: ${id}`);
+            const response = await fetchSupabase(`/events/${id}`, false);
+            console.log(`[StorageService] Event response:`, response);
+            const event = response?.event;
+            if (!event) {
+                console.warn(`[StorageService] No event in response for ID: ${id}`);
+                return null;
+            }
+            return normalizeEvent(event);
         } catch (e) {
             console.warn("Get Event By ID failed", e);
             return null;
