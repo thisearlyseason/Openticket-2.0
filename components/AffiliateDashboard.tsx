@@ -107,26 +107,37 @@ export const AffiliateDashboard = () => {
         setIsActivating(true);
         setCodeError('');
 
-        // Validate Code Format
-        const formattedCode = customCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (formattedCode.length < 3) {
-            setCodeError("Code must be at least 3 characters.");
-            setIsActivating(false);
-            return;
-        }
+        try {
+            // Validate Code Format
+            const formattedCode = customCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (formattedCode.length < 3) {
+                setCodeError("Code must be at least 3 characters.");
+                setIsActivating(false);
+                return;
+            }
 
-        // Validate Uniqueness
-        const isUnique = await StorageService.checkAffiliateCodeUnique(formattedCode);
-        if (!isUnique) {
-            setCodeError("This code is already taken. Please try another.");
-            setIsActivating(false);
-            return;
-        }
+            // Validate Uniqueness
+            const isUnique = await StorageService.checkAffiliateCodeUnique(formattedCode);
+            if (!isUnique) {
+                setCodeError("This code is already taken. Please try another.");
+                setIsActivating(false);
+                return;
+            }
 
-        // Activate
-        await StorageService.updateUser(user.id, { affiliateCode: formattedCode });
-        await refreshData(user.id);
-        setIsActivating(false);
+            // Activate - update user with affiliate code and role
+            await StorageService.updateUser(user.id, { 
+                affiliateCode: formattedCode,
+                role: 'affiliate' // Ensure role is set to affiliate
+            });
+            
+            // Refresh the user data to show the dashboard
+            await refreshData(user.id);
+        } catch (error: any) {
+            console.error("Failed to activate affiliate code:", error);
+            setCodeError(error.message || "Failed to activate. Please try again.");
+        } finally {
+            setIsActivating(false);
+        }
     };
 
     const handleSaveStripeId = async () => {
