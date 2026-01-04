@@ -38,7 +38,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     const location = useLocation();
     const user = StorageService.getCurrentUser();
     const isOrganizer = user?.role === 'organizer' || user?.isAdmin;
-    const isAffiliate = user?.role === 'affiliate' || user?.isAdmin;
+    const isAffiliate = user?.role === 'affiliate' || user?.affiliateCode || user?.isAdmin;
     const isOffline = StorageService.isOfflineMode();
     const isDemoMode = StorageService.isDemoMode();
 
