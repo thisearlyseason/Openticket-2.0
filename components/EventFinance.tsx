@@ -38,7 +38,7 @@ interface FinancialTransaction {
 }
 
 export const EventFinance = () => {
-    const { eventId } = useParams<{ eventId: string }>();
+    const { id: eventId } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { showToast } = useGlobalUI();
 
