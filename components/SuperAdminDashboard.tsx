@@ -131,16 +131,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const currentUser = StorageService.getCurrentUser();
 
     useEffect(() => {
-        if (!currentUser || !currentUser.isAdmin) {
+        // When embedded, the parent component already verified admin access
+        if (!embedded && (!currentUser || !currentUser.isAdmin)) {
             setUnauthorized(true);
             return;
         }
-        setPlatformStripeId(currentUser.stripeConnectId || '');
-        setPlatformPublishableKey(currentUser.stripePublishableKey || '');
-        setPlatformSecretKey(currentUser.stripeSecretKey || '');
+        setPlatformStripeId(currentUser?.stripeConnectId || '');
+        setPlatformPublishableKey(currentUser?.stripePublishableKey || '');
+        setPlatformSecretKey(currentUser?.stripeSecretKey || '');
         refreshData();
         loadPromoCodes();
-    }, [navigate]);
+    }, [navigate, embedded]);
 
     const refreshData = async () => {
         try {
