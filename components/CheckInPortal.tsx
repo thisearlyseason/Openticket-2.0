@@ -652,7 +652,7 @@ export const CheckInPortal = () => {
     const renderPaymentModalContent = () => {
         if (!paymentContext) return null;
 
-        if (paymentStatus === 'processing' || paymentStatus === 'done') {
+        if (paymentStatus === 'processing' || paymentStatus === 'done' || paymentStatus === 'error') {
             return (
                 <div className="flex flex-col items-center justify-center h-full py-10">
                     {paymentStatus === 'processing' ? (
@@ -660,12 +660,23 @@ export const CheckInPortal = () => {
                             <Loader2 size={48} className="animate-spin text-primary mb-4" />
                             <h3 className="text-xl font-bold">Processing Payment...</h3>
                         </>
-                    ) : (
+                    ) : paymentStatus === 'done' ? (
                         <>
                             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 text-white">
                                 <CheckCircle2 size={32} />
                             </div>
                             <h3 className="text-xl font-bold">Payment Approved!</h3>
+                        </>
+                    ) : (
+                        <>
+                            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mb-4 text-white">
+                                <X size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-red-600">Payment Failed</h3>
+                            {paymentError && (
+                                <p className="text-sm text-zinc-500 mt-2 text-center max-w-xs">{paymentError}</p>
+                            )}
+                            <p className="text-xs text-zinc-400 mt-4">Returning to payment options...</p>
                         </>
                     )}
                 </div>
