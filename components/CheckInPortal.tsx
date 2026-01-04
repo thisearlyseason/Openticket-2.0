@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Settings, Banknote, Smartphone, Receipt, DollarSign, ChevronRight, Calculator, ArrowLeftCircle, Trash2, Loader2, Lock, Ticket, MoreVertical } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Settings, Banknote, Smartphone, Receipt, DollarSign, ChevronRight, Calculator, ArrowLeftCircle, Trash2, Loader2, Lock, Ticket, MoreVertical, Wifi, WifiOff } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
+import { loadStripe, Stripe as StripeType } from '@stripe/stripe-js';
+
+// Get Stripe publishable key from environment
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface CheckInTicket {
     reg: Registration;
