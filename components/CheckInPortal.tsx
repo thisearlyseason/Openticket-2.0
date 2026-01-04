@@ -413,14 +413,6 @@ export const CheckInPortal = () => {
         const { reg, tierId, index } = paymentContext;
 
         try {
-            // Record the payment method used
-            const paymentMetadata = {
-                method: method,
-                source: paymentSource || method,
-                processedAt: new Date().toISOString(),
-                processedBy: StorageService.getCurrentUser()?.id || 'staff'
-            };
-
             await StorageService.updateRegistration(reg.id, {
                 paymentStatus: 'completed',
                 approvalStatus: 'approved',
@@ -453,12 +445,15 @@ export const CheckInPortal = () => {
             setRegistrations(updatedRegs);
             processTickets(updatedRegs);
 
-            setPaymentContext(null);
-            setPaymentMethod(null);
-            setCashTendered('');
-            setPaymentStatus('input');
-            setStripeClientSecret(null);
-            setPaymentError(null);
+            // Show success state before closing
+            setPaymentStatus('done');
+            setTimeout(() => {
+                setPaymentContext(null);
+                setPaymentMethod(null);
+                setCashTendered('');
+                setPaymentStatus('input');
+                setPaymentError(null);
+            }, 1500);
         } catch (e: any) {
             setPaymentError("Payment confirmation failed: " + e.message);
             setPaymentStatus('error');
