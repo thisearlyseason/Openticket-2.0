@@ -448,6 +448,7 @@ export interface SystemNotification {
   type: 'info' | 'warning' | 'success';
   active: boolean;
   timestamp: number;
+  target?: 'all' | 'organizers' | 'affiliates';
 }
 
 export interface Registration {
