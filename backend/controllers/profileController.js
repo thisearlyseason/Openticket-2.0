@@ -1,6 +1,58 @@
 
 import supabase from '../services/supabase.js';
 
+// Special endpoint to set up the first super admin
+// This should only be used once during initial setup
+export const setupSuperAdmin = async (req, res) => {
+    try {
+        const { email, setupKey } = req.body;
+        
+        // Require a setup key for security (use env var or hardcoded for initial setup)
+        const SETUP_KEY = process.env.ADMIN_SETUP_KEY || 'openticket-admin-setup-2026';
+        
+        if (setupKey !== SETUP_KEY) {
+            return res.status(403).json({ error: 'Invalid setup key' });
+        }
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+        
+        // Find the user by email
+        const { data: profile, error: findError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', email)
+            .single();
+        
+        if (findError || !profile) {
+            return res.status(404).json({ error: 'User not found. Please sign up first.' });
+        }
+        
+        // Update to super admin
+        const { data, error } = await supabase
+            .from('profiles')
+            .update({ 
+                is_admin: true, 
+                role: 'organizer',
+                updated_at: new Date() 
+            })
+            .eq('email', email)
+            .select();
+        
+        if (error) throw error;
+        
+        res.json({ 
+            success: true, 
+            message: `User ${email} is now a super admin`,
+            profile: data[0]
+        });
+    } catch (error) {
+        console.error('Setup Super Admin Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const syncProfile = async (req, res) => {
     try {
         const { uid } = req.user;
