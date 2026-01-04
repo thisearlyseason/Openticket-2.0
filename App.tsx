@@ -239,9 +239,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                             )}
                                         </div>
 
-                                        {user?.role === 'superadmin' && (
-                                            <Link to="/admin" className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-1">
-                                                <LayoutDashboard size={14} /> Admin
+                                        {user?.isAdmin && (
+                                            <Link to="/admin" className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center gap-1 bg-red-500/10 px-3 py-1 rounded-full">
+                                                <Shield size={14} /> Super Admin
                                             </Link>
                                         )}
                                         {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
