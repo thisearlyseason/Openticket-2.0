@@ -51,7 +51,23 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 4, 2026)
 
-#### Critical Backend Fix (LATEST)
+#### Affiliate Click Tracking & Analytics (LATEST)
+- [x] `POST /api/admin/affiliate/track-click` - Public endpoint to track affiliate link clicks
+- [x] `GET /api/admin/affiliate/analytics` - Admin endpoint for comprehensive affiliate analytics
+- [x] `GET /api/admin/affiliate/:affiliateId` - Detailed affiliate info with transactions and payouts
+- [x] Frontend `StorageService.trackAffiliateClick()` method implemented
+- [x] `affiliate_clicks` table added to MASTER_MIGRATION.sql for detailed click tracking
+- [x] Clicks increment on profile's `affiliate_clicks` field
+
+#### At-Door Payment Implementation (LATEST)
+- [x] `POST /api/stripe/record-at-door-payment` - Records at-door payments in financial_transactions
+- [x] Supports cash, card (external terminal), and transfer payment methods
+- [x] Creates proper financial transaction records with platform fees calculated
+- [x] Creates audit log entries for all at-door payments
+- [x] Check-in portal UI updated with improved payment confirmation flow
+- [x] Payment method icons and better UX for cash/card/transfer selection
+
+#### Critical Backend Fix (Previous Session)
 - [x] Fixed backend server startup - was configured for Python/uvicorn but app uses Node.js/Express
 - [x] Updated supervisor config: `/etc/supervisor/conf.d/supervisord.conf`
 - [x] Backend now runs via `node /app/api/server.js` on port 8001
