@@ -175,18 +175,9 @@ export const CheckInPortal = () => {
     const [cardDetails, setCardDetails] = useState({ number: '', expiry: '', cvc: '', zip: '' });
     const [paymentStatus, setPaymentStatus] = useState<'input' | 'processing' | 'done' | 'error'>('input');
     const [paymentError, setPaymentError] = useState<string | null>(null);
-    const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
-    const [stripeInstance, setStripeInstance] = useState<StripeType | null>(null);
 
     const [ticketToDelete, setTicketToDelete] = useState<CheckInTicket | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-
-    // Initialize Stripe
-    useEffect(() => {
-        stripePromise.then(stripe => {
-            setStripeInstance(stripe);
-        });
-    }, []);
 
     useEffect(() => {
         const user = StorageService.getCurrentUser();
