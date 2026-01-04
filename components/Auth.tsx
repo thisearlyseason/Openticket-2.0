@@ -55,6 +55,13 @@ export const Auth = () => {
     const redirectPlan = searchParams.get('plan');
     const referralCode = searchParams.get('ref');
 
+    // Track affiliate click when page loads with referral code
+    useEffect(() => {
+        if (referralCode) {
+            StorageService.trackAffiliateClick('auth-page', referralCode);
+        }
+    }, [referralCode]);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
