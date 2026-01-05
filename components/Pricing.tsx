@@ -216,11 +216,15 @@ export const Pricing = () => {
                         </div>
                         <div className="flex items-start text-zinc-600 dark:text-zinc-300">
                             <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span>White Labeling & Custom Domain</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-300">
-                            <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
                             <span>Dedicated Priority Support</span>
+                        </div>
+                        <div className="flex items-start text-zinc-500 dark:text-zinc-400">
+                            <Clock size={18} className="text-amber-500 mr-2 mt-0.5 shrink-0" />
+                            <span>White Labeling <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full ml-1">Coming Soon</span></span>
+                        </div>
+                        <div className="flex items-start text-zinc-500 dark:text-zinc-400">
+                            <Clock size={18} className="text-amber-500 mr-2 mt-0.5 shrink-0" />
+                            <span>Custom Domain <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full ml-1">Coming Soon</span></span>
                         </div>
                         <div className="flex items-start">
                             <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
