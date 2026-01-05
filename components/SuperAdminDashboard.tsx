@@ -1290,6 +1290,61 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </div>
                                     </div>
 
+                                    {/* Affiliate Settings - Commission & Discount */}
+                                    <div className="border border-purple-500/30 bg-purple-900/10 rounded-xl p-4 mb-6">
+                                        <h4 className="font-bold text-purple-400 mb-4 flex items-center gap-2">
+                                            <Percent size={16} /> Affiliate Rates
+                                        </h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                                    Commission Rate
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={editCommissionRate ?? selectedAffiliate.commissionRate}
+                                                        onChange={e => setEditCommissionRate(Number(e.target.value))}
+                                                        className="bg-black border-zinc-700 w-20"
+                                                    />
+                                                    <span className="text-zinc-400">%</span>
+                                                    <span className="text-xs text-zinc-500 ml-2">of referred sales</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                                    User Discount (Pro/Premium)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        value={editDiscountPercent ?? selectedAffiliate.discountPercent}
+                                                        onChange={e => setEditDiscountPercent(Number(e.target.value))}
+                                                        className="bg-black border-zinc-700 w-20"
+                                                    />
+                                                    <span className="text-zinc-400">%</span>
+                                                    <span className="text-xs text-zinc-500 ml-2">off for signups</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            size="sm"
+                                            onClick={handleUpdateAffiliateRates}
+                                            disabled={isSavingRates}
+                                            className="mt-4"
+                                        >
+                                            {isSavingRates ? (
+                                                <><RefreshCw size={14} className="mr-2 animate-spin" /> Saving...</>
+                                            ) : (
+                                                <><Save size={14} className="mr-2" /> Save Rates</>
+                                            )}
+                                        </Button>
+                                    </div>
+
                                     {/* Payout Form */}
                                     {selectedAffiliate.pendingPayout > 0 && (
                                         <div className="border-t border-zinc-800 pt-6">
