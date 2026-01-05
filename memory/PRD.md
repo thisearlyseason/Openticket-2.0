@@ -75,6 +75,16 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] Database updated when admin detected without premium plan
 - [x] Response always returns premium subscription for admin users
 
+#### Platform Donation Feature (LATEST - January 5, 2026)
+- [x] Platform donation UI in EventView checkout with Heart icon
+- [x] Mandatory for Free plan organizers ($1/$2/$5/$10 options, no $0)
+- [x] Optional for Pro/Premium organizers (can toggle via EventBuilder)
+- [x] `hidePlatformDonation` toggle added to EventBuilder pricing section
+- [x] Donation tracked separately in `platform_donation_amount` column
+- [x] Donation added as separate Stripe line item "Support OpenTicket"
+- [x] 100% of donation goes to platform (included in application fee)
+- [x] Subtext explaining purpose: "helps us keep platform fees low"
+
 ### ✅ Completed (January 4, 2026)
 
 #### Affiliate Click Tracking & Analytics
