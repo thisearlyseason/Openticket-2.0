@@ -512,14 +512,29 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <Lock size={32} />
                     </div>
                     <h1 className="text-2xl font-black text-red-500 mb-2">Access Denied</h1>
-                    <p className="text-zinc-500 mb-6">You need Super Admin privileges to view this dashboard.</p>
-                    <Button onClick={async () => { try { await StorageService.logout(); } finally { navigate('/auth'); } }}>Login as Admin</Button>
+                    <p className="text-zinc-500 mb-4">You need Super Admin privileges to view this dashboard.</p>
+                    <p className="text-xs text-zinc-600 mb-6">Make sure your profile has <code className="bg-zinc-800 px-1 rounded">is_admin = true</code> in the database, then log out and back in.</p>
+                    <Button onClick={async () => { try { await StorageService.logout(); } finally { navigate('/auth'); } }}>Login Again</Button>
                 </div>
             </div>
         );
     }
 
-    if (!embedded && !currentUser?.isAdmin) return null;
+    if (!embedded && !currentUser?.isAdmin) {
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
+                <div className="bg-yellow-500/10 p-8 rounded-3xl border border-yellow-500/20 text-center max-w-md">
+                    <div className="w-16 h-16 bg-yellow-500/20 text-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={32} />
+                    </div>
+                    <h1 className="text-2xl font-black text-yellow-500 mb-2">Not Authorized</h1>
+                    <p className="text-zinc-500 mb-4">Your account doesn't have admin privileges.</p>
+                    <p className="text-xs text-zinc-600 mb-6">To become a Super Admin, run this SQL in Supabase:<br/><code className="bg-zinc-800 px-2 py-1 rounded mt-2 block">UPDATE profiles SET is_admin = true WHERE email = 'your@email.com';</code></p>
+                    <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
+                </div>
+            </div>
+        );
+    }
 
     const filteredUsers = (users || []).filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
