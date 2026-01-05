@@ -58,6 +58,26 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] Updated `/app/components/Settings.tsx` - getAccountLabel() now uses isAdmin
 - [x] Admin checks now consistent: `user.isAdmin` (frontend) and `user.is_admin` (backend)
 
+#### Plan Limits Update (LATEST - January 5, 2026)
+- [x] Free plan: 50 tickets per event (default)
+- [x] Pro plan: 10 events per month (changed from unlimited)
+- [x] Limits enforced at event creation in EventBuilder
+- [x] Dynamic upgrade message based on current plan
+- [x] Updated Pricing.tsx UI to show "10 Events / Month" for Pro
+
+#### Donation Analytics in Super Admin (LATEST)
+- [x] Added `platformDonations` field to financial stats
+- [x] Backend `/api/admin/financial-stats` returns donation totals
+- [x] Super Admin Finance tab shows Platform Donations card with Heart icon
+- [x] Pink gradient styling to distinguish from other revenue sources
+
+#### Weekly Affiliate Earnings Summary Email (LATEST)
+- [x] `sendAffiliateWeeklySummary` method in serverEmail.js
+- [x] Beautiful HTML template with weekly stats, top events, conversion funnel
+- [x] Backend endpoint `POST /api/admin/affiliate/send-weekly-summaries`
+- [x] "Send Weekly Summary" button in Super Admin Affiliates tab
+- [x] Calculates per-affiliate weekly earnings, clicks, conversions, pending payout
+
 #### Stripe Connect Phone Number Documentation (LATEST)
 - [x] Added note in Billing.tsx about real phone number requirement
 - [x] Stripe Connect Express requires valid phone numbers (no test numbers)
