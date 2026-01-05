@@ -127,7 +127,7 @@ export const PLANS = {
         priceMonthly: 110,
         priceYearly: 1100,
         feePercent: 0.0075, // 0.75%
-        feeFixed: 0,
+        feeFixed: 0.30, // $0.30 per ticket
         ticketLimit: 999999, // Unlimited
         eventLimit: 9999,
         showDonationButton: false,
