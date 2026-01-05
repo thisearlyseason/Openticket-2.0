@@ -171,7 +171,7 @@ export const Pricing = () => {
                         </div>
                         <div className="flex items-start font-bold text-zinc-900 dark:text-white">
                             <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span>Unlimited Events</span>
+                            <span>10 Events / Month</span>
                         </div>
                         <div className="flex items-start text-zinc-600 dark:text-zinc-400">
                             <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
