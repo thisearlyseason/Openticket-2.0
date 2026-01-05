@@ -1686,8 +1686,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </div>
                                             <Input
                                                 label="Notes (optional)"
-                                                value={payoutNotes}
-                                                onChange={e => setPayoutNotes(e.target.value)}
+                                                value={affiliatePayoutNotes}
+                                                onChange={e => setAffiliatePayoutNotes(e.target.value)}
                                                 placeholder="e.g., Bank transfer, PayPal, etc."
                                                 className="bg-black border-zinc-700 mb-4"
                                             />
