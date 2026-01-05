@@ -253,9 +253,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                             </button>
                                         )}
                                         {isOrganizer && <Link to="/dashboard" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Dashboard</Link>}
+                                        {isAffiliateOnly && <Link to="/affiliate" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">Affiliate Dashboard</Link>}
                                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
                                         <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
-                                        {(isAffiliate || isOrganizer) && <Link to="/affiliate" className="text-zinc-500 dark:text-zinc-400 hover:text-secondary" title="Affiliate Program"><Gift size={20} /></Link>}
                                         <Link to="/settings" className="text-zinc-500 dark:text-zinc-400 hover:text-secondary" title="Settings"><SettingsIcon size={20} /></Link>
                                         <button onClick={handleLogout} className="text-zinc-500 dark:text-zinc-400 hover:text-red-500" title="Logout"><LogOut size={20} /></button>
                                         {isOrganizer && (
