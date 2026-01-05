@@ -576,4 +576,220 @@ router.get('/affiliate/by-code/:code', async (req, res) => {
     }
 });
 
+// ============================================
+// PLATFORM PAYOUT ENDPOINTS
+// ============================================
+
+/**
+ * Get platform payout history
+ * GET /api/admin/platform-payouts
+ */
+router.get('/platform-payouts', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        
+        const { data: payouts, error } = await supabase
+            .from('platform_payouts')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) throw error;
+        res.json(payouts || []);
+    } catch (error) {
+        console.error('Get platform payouts error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get pending payout summary (what's available to pay out)
+ * GET /api/admin/platform-payouts/pending
+ */
+router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        
+        // Get the last completed payout date for each type
+        const { data: lastPayouts } = await supabase
+            .from('platform_payouts')
+            .select('payout_type, executed_at')
+            .eq('status', 'completed')
+            .order('executed_at', { ascending: false });
+
+        const lastPlatformFeePayout = lastPayouts?.find(p => p.payout_type === 'platform_fees')?.executed_at;
+        const lastSubscriptionPayout = lastPayouts?.find(p => p.payout_type === 'subscriptions')?.executed_at;
+
+        // Calculate pending platform fees (from financial_transactions since last payout)
+        let platformFeesQuery = supabase
+            .from('financial_transactions')
+            .select('platform_fee, created_at')
+            .eq('status', 'succeeded')
+            .gt('platform_fee', 0);
+        
+        if (lastPlatformFeePayout) {
+            platformFeesQuery = platformFeesQuery.gt('created_at', lastPlatformFeePayout);
+        }
+        
+        const { data: feeTransactions } = await platformFeesQuery;
+        
+        const pendingPlatformFees = (feeTransactions || []).reduce(
+            (sum, tx) => sum + (Number(tx.platform_fee) || 0), 0
+        );
+        const platformFeeCount = feeTransactions?.length || 0;
+
+        // For subscriptions, we'd need to track subscription payments separately
+        // For now, return a placeholder - this would need integration with Stripe subscriptions
+        const pendingSubscriptionRevenue = 0; // TODO: Calculate from actual subscription payments
+        const subscriptionCount = 0;
+
+        res.json({
+            platformFees: {
+                amount: pendingPlatformFees,
+                transactionCount: platformFeeCount,
+                periodStart: lastPlatformFeePayout || null,
+                periodEnd: new Date().toISOString()
+            },
+            subscriptions: {
+                amount: pendingSubscriptionRevenue,
+                transactionCount: subscriptionCount,
+                periodStart: lastSubscriptionPayout || null,
+                periodEnd: new Date().toISOString()
+            },
+            total: pendingPlatformFees + pendingSubscriptionRevenue
+        });
+    } catch (error) {
+        console.error('Get pending payouts error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Schedule a platform payout
+ * POST /api/admin/platform-payouts/schedule
+ */
+router.post('/platform-payouts/schedule', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { payoutType, amount, scheduledFor, notes, breakdown } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        if (!payoutType || !amount) {
+            return res.status(400).json({ error: 'payoutType and amount are required' });
+        }
+
+        const { data: payout, error } = await supabase
+            .from('platform_payouts')
+            .insert({
+                payout_type: payoutType,
+                amount: Number(amount),
+                status: scheduledFor ? 'scheduled' : 'pending',
+                scheduled_for: scheduledFor || null,
+                notes: notes || null,
+                breakdown: breakdown || null,
+                period_start: breakdown?.periodStart || null,
+                period_end: breakdown?.periodEnd || new Date().toISOString(),
+                transaction_count: breakdown?.transactionCount || 0,
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Log the action
+        await supabase.from('audit_logs').insert({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user?.uid,
+            actor_type: 'admin',
+            action: 'schedule_platform_payout',
+            target_type: 'platform_payout',
+            target_id: payout.id,
+            details: { payoutType, amount, scheduledFor }
+        }).catch(e => console.warn('Audit log failed:', e));
+
+        res.json({ success: true, payout });
+    } catch (error) {
+        console.error('Schedule platform payout error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Execute a platform payout (mark as completed)
+ * POST /api/admin/platform-payouts/:id/execute
+ */
+router.post('/platform-payouts/:id/execute', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { stripePayoutId, destinationAccount } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const { data: payout, error } = await supabase
+            .from('platform_payouts')
+            .update({
+                status: 'completed',
+                executed_at: new Date().toISOString(),
+                executed_by: req.user?.uid,
+                stripe_payout_id: stripePayoutId || null,
+                destination_account: destinationAccount || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Log the action
+        await supabase.from('audit_logs').insert({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user?.uid,
+            actor_type: 'admin',
+            action: 'execute_platform_payout',
+            target_type: 'platform_payout',
+            target_id: id,
+            details: { amount: payout.amount, payoutType: payout.payout_type }
+        }).catch(e => console.warn('Audit log failed:', e));
+
+        res.json({ success: true, payout });
+    } catch (error) {
+        console.error('Execute platform payout error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Cancel a scheduled payout
+ * DELETE /api/admin/platform-payouts/:id
+ */
+router.delete('/platform-payouts/:id', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Only allow canceling scheduled/pending payouts
+        const { data: existing } = await supabase
+            .from('platform_payouts')
+            .select('status')
+            .eq('id', id)
+            .single();
+
+        if (existing?.status === 'completed') {
+            return res.status(400).json({ error: 'Cannot cancel a completed payout' });
+        }
+
+        const { error } = await supabase
+            .from('platform_payouts')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Cancel platform payout error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
