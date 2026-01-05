@@ -27,6 +27,13 @@ router.post('/create-checkout', async (req, res) => {
 
         // For free plan, just update the user directly
         if (planName.toLowerCase() === 'free') {
+            // Get user's email for welcome notification
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('email, name')
+                .eq('id', userId)
+                .single();
+
             const { error } = await supabase
                 .from('profiles')
                 .update({
@@ -41,6 +48,17 @@ router.post('/create-checkout', async (req, res) => {
                 .eq('id', userId);
 
             if (error) throw error;
+
+            // Send welcome email for free plan
+            if (profile?.email) {
+                await EmailService.sendSubscriptionWelcome(
+                    profile.email,
+                    'free',
+                    null,
+                    profile.name
+                ).catch(e => console.warn('Free plan welcome email failed:', e));
+            }
+
             return res.json({ success: true, redirect: '/dashboard' });
         }
 
