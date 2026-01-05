@@ -528,6 +528,7 @@ export const EventView = () => {
                 attendeeEmail: regData.email.trim(),
                 phoneNumber: regData.phoneNumber,
                 donationAmount: Number(regData.donation) || 0,
+                platformDonationAmount: regData.platformDonationAmount || 0,
                 serviceFee,
                 answers: regData.answers,
                 tickets: tickets,
