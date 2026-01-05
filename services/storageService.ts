@@ -696,6 +696,62 @@ export const StorageService = {
         }
     },
 
+    // Platform Payout Methods
+    getPlatformPayouts: async () => {
+        try {
+            return await fetchSupabase('/admin/platform-payouts', true);
+        } catch (e) {
+            console.error("Failed to get platform payouts", e);
+            return [];
+        }
+    },
+
+    getPendingPayoutSummary: async () => {
+        try {
+            return await fetchSupabase('/admin/platform-payouts/pending', true);
+        } catch (e) {
+            console.error("Failed to get pending payout summary", e);
+            return { platformFees: { amount: 0 }, subscriptions: { amount: 0 }, total: 0 };
+        }
+    },
+
+    schedulePlatformPayout: async (payoutType: string, amount: number, scheduledFor?: string, notes?: string, breakdown?: any) => {
+        try {
+            return await postSupabase('/admin/platform-payouts/schedule', 'POST', {
+                payoutType,
+                amount,
+                scheduledFor,
+                notes,
+                breakdown
+            });
+        } catch (e) {
+            console.error("Failed to schedule platform payout", e);
+            throw e;
+        }
+    },
+
+    executePlatformPayout: async (payoutId: string, stripePayoutId?: string, destinationAccount?: string) => {
+        try {
+            return await postSupabase(`/admin/platform-payouts/${payoutId}/execute`, 'POST', {
+                stripePayoutId,
+                destinationAccount
+            });
+        } catch (e) {
+            console.error("Failed to execute platform payout", e);
+            throw e;
+        }
+    },
+
+    cancelPlatformPayout: async (payoutId: string) => {
+        try {
+            await fetchSupabase(`/admin/platform-payouts/${payoutId}`, true, 'DELETE');
+            return true;
+        } catch (e) {
+            console.error("Failed to cancel platform payout", e);
+            throw e;
+        }
+    },
+
     getSuperAdmin: async (): Promise<User | undefined> => {
         // Return current user if admin
         const u = StorageService.getCurrentUser();
