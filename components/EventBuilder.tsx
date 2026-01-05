@@ -261,8 +261,8 @@ export const EventBuilder = () => {
                 return;
             }
 
-            // Check Monthly Event Limit (Free Plan)
-            if (plan === 'free' && !asDraft) {
+            // Check Monthly Event Limit (Free and Pro Plans)
+            if ((plan === 'free' || plan === 'pro') && !asDraft) {
                 const allEvents = await StorageService.getEvents();
                 const myEvents = allEvents.filter(e => e.ownerId === user!.id && !e.isDraft);
                 const currentMonth = new Date().getMonth();
@@ -278,9 +278,12 @@ export const EventBuilder = () => {
                 const isNewPublish = !id || (id && formData.isDraft);
 
                 if (isNewPublish && eventsThisMonth >= planDetails.eventLimit) {
+                    const upgradeMsg = plan === 'free' 
+                        ? 'Upgrade to Pro for 10 events/month or Premium for unlimited events.'
+                        : 'Upgrade to Premium for unlimited events.';
                     showAlert({
                         title: "Monthly Limit Reached",
-                        message: `You have reached the limit of ${planDetails.eventLimit} published events this month on the Free plan. Please upgrade to Pro for unlimited events.`
+                        message: `You have reached the limit of ${planDetails.eventLimit} published events this month on the ${planDetails.name} plan. ${upgradeMsg}`
                     });
                     return;
                 }
