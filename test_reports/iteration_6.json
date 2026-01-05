@@ -1,0 +1,50 @@
+{
+  "summary": "Completed testing of Platform Donation feature for Free/Pro/Premium plans. All 8 backend tests pass (100%). Frontend UI correctly shows mandatory donation for Free plan events (no $0 option) with warning message. Platform donation is properly included in order total and sent to backend.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_platform_donation.py",
+    "/app/test_reports/pytest/pytest_platform_donation.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Platform donation UI correctly implemented in EventView.tsx (lines 1032-1102) with Heart icon and gradient styling",
+    "Mandatory donation for Free plan: $0 option hidden, warning message shown, asterisk indicator present",
+    "Optional donation for Pro/Premium: $0 option available when hidePlatformDonation is false",
+    "EventBuilder.tsx (lines 553-571) correctly shows toggle only for Pro/Premium plans",
+    "Backend stripeController.js properly handles platformDonationAmount: adds as separate Stripe line item (lines 114-128), includes in application fee (line 197), tracks separately in registration (line 239)",
+    "types.ts correctly defines hidePlatformDonation in Event type (line 337) and platformDonationAmount in Registration type (line 465)",
+    "Order total calculation in EventView.tsx (line 341) correctly adds platformDonationAmount to total"
+  ],
+  "updated_files": [
+    "/app/tests/test_platform_donation.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "None required - tested public endpoints and UI",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Platform donation feature is fully implemented and working. Free plan events show mandatory donation ($1-$10 only, no $0). Pro/Premium events can toggle visibility via EventBuilder. Donation is tracked separately in registrations table (platform_donation_amount column) and added to Stripe application fee. Test events used: evt-1766591216974 (Free plan organizer 9iQqNVY6RdesJeBxhnqTjsfMche2).",
+  "features_tested": {
+    "platform_donation_ui_free_plan": "PASS - Shows mandatory donation with $1/$2/$5/$10 options, no $0",
+    "platform_donation_warning_message": "PASS - 'Please select a donation amount to continue' shown when no selection",
+    "platform_donation_in_order_summary": "PASS - Shows 'Platform Donation' with heart icon and amount",
+    "platform_donation_in_total": "PASS - Correctly adds donation to order total",
+    "backend_accepts_platformDonationAmount": "PASS - create-order endpoint accepts the field",
+    "backend_tracks_donation_separately": "PASS - platform_donation_amount field in registration payload",
+    "backend_adds_to_stripe_line_items": "PASS - Separate line item 'Support OpenTicket'",
+    "backend_adds_to_application_fee": "PASS - Donation included in Stripe application fee",
+    "eventbuilder_toggle_pro_premium": "PASS - Toggle only visible for Pro/Premium plans",
+    "types_definition": "PASS - hidePlatformDonation and platformDonationAmount properly typed"
+  }
+}
