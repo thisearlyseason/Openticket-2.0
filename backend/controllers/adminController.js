@@ -24,11 +24,53 @@ export const getAllRegistrations = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('registrations')
-            .select('*')
+            .select(`
+                *,
+                event:events(id, title, owner_id)
+            `)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        res.json(data);
+        
+        // Map snake_case to camelCase for frontend compatibility
+        const mappedData = (data || []).map(reg => ({
+            id: reg.id,
+            eventId: reg.event_id,
+            attendeeName: reg.attendee_name,
+            attendeeEmail: reg.attendee_email,
+            phoneNumber: reg.phone_number,
+            donationAmount: reg.donation_amount || 0,
+            platformDonationAmount: reg.platform_donation_amount || 0,
+            serviceFee: reg.service_fee || 0,
+            taxAmount: reg.tax_amount || 0,
+            customFeesAmount: reg.custom_fees_amount || 0,
+            totalAmount: reg.total_amount || 0,
+            answers: reg.answers || {},
+            selectedDates: reg.selected_dates,
+            tickets: reg.tickets || [],
+            addOns: reg.add_ons || [],
+            promoCodeUsed: reg.promo_code_used,
+            affiliateCode: reg.affiliate_code,
+            discountAmount: reg.discount_amount || 0,
+            timestamp: reg.created_at ? new Date(reg.created_at).getTime() : Date.now(),
+            paymentStatus: reg.payment_status || 'pending',
+            approvalStatus: reg.approval_status || 'pending',
+            checkedIn: reg.checked_in || false,
+            checkInTime: reg.check_in_time,
+            checkInStatuses: reg.check_in_statuses || {},
+            waiverAgreed: reg.waiver_agreed || false,
+            refundedAmount: reg.refunded_amount || 0,
+            refundReason: reg.refund_reason,
+            source: reg.source || 'online',
+            stripePaymentIntentId: reg.stripe_payment_intent_id,
+            stripeCheckoutSessionId: reg.stripe_checkout_session_id,
+            stripeFee: reg.stripe_fee || 0,
+            // Include nested event data
+            eventTitle: reg.event?.title || 'Unknown Event',
+            eventOwnerId: reg.event?.owner_id
+        }));
+        
+        res.json(mappedData);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
