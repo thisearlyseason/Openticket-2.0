@@ -981,7 +981,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees</div>
-                                <div className="text-3xl font-black text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-[#E0FF20]">${stats.platformFees.toFixed(2)}</div>
                                 <div className="text-xs text-zinc-500 mt-1">Revenue to OpenTicket</div>
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
