@@ -167,8 +167,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             // Fetch True Financials
             const financials = await StorageService.getAdminFinancials();
 
-            let ticketRevenue = financials.platformFees || 0;
-            let totalRevenue = financials.totalVolume || 0;
+            // Get actual values from financial transactions
+            const platformFees = financials.platformFees || 0;
+            const totalVolume = financials.totalVolume || 0;
+            const organizerNet = financials.organizerNet || 0;
+            const refundTotal = financials.refundTotal || 0;
             let stripeFees = 0;
 
             // Calculate Stripe fees from transactions
@@ -187,11 +190,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             const pending = allUsers.reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
 
             setStats({
-                ticketRevenue,
+                platformFees,
                 subscriptionRevenue,
-                totalRevenue: totalRevenue + subscriptionRevenue,
+                totalVolume,
+                organizerNet,
                 pendingPayouts: pending,
                 stripeFees,
+                refundTotal,
                 recentTransactions: financials.recentTransactions || [],
                 organizerBreakdown: financials.organizerBreakdown || []
             });
