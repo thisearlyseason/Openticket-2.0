@@ -2,7 +2,7 @@
 -- MASTER MIGRATION SCRIPT FOR OPENTICKET
 -- Run this ONCE in Supabase SQL Editor
 -- This script is IDEMPOTENT (safe to run multiple times)
--- Last Updated: January 4, 2026
+-- Last Updated: January 5, 2026
 -- =====================================================
 
 -- =====================================================
@@ -20,7 +20,8 @@ ADD COLUMN IF NOT EXISTS promo_code_used text,
 ADD COLUMN IF NOT EXISTS affiliate_code text,
 ADD COLUMN IF NOT EXISTS receipt_pdf_url text,
 ADD COLUMN IF NOT EXISTS add_ons jsonb DEFAULT '[]'::jsonb,
-ADD COLUMN IF NOT EXISTS tickets jsonb DEFAULT '[]'::jsonb;
+ADD COLUMN IF NOT EXISTS tickets jsonb DEFAULT '[]'::jsonb,
+ADD COLUMN IF NOT EXISTS platform_donation_amount numeric DEFAULT 0;
 
 DO $$
 BEGIN
