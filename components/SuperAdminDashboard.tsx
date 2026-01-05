@@ -663,7 +663,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                             <Ticket size={12} /> Platform Fees
                         </div>
-                        <div className="text-xl font-bold text-[#E0FF20]">${stats.ticketRevenue.toFixed(2)}</div>
+                        <div className="text-xl font-bold text-[#E0FF20]">${stats.platformFees.toFixed(2)}</div>
                     </div>
                     <div className="text-right bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex-1 min-w-[150px]">
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
@@ -675,7 +675,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                             <TrendingUp size={12} className="text-green-500" /> Total Volume
                         </div>
-                        <div className="text-xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</div>
+                        <div className="text-xl font-bold text-green-400">${stats.totalVolume.toFixed(2)}</div>
                     </div>
                 </div>
             )}
