@@ -112,7 +112,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [selectedAffiliate, setSelectedAffiliate] = useState<AffiliateData | null>(null);
     const [payoutAmount, setPayoutAmount] = useState('');
     const [payoutMethod, setPayoutMethod] = useState<'stripe' | 'offline'>('stripe');
-    const [payoutNotes, setPayoutNotes] = useState('');
+    const [affiliatePayoutNotes, setAffiliatePayoutNotes] = useState('');
     const [isProcessingPayout, setIsProcessingPayout] = useState(false);
     
     // Affiliate rate editing
@@ -125,7 +125,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [pendingPayoutSummary, setPendingPayoutSummary] = useState<any>(null);
     const [showPayoutModal, setShowPayoutModal] = useState(false);
     const [payoutType, setPayoutType] = useState<'platform_fees' | 'subscriptions' | 'combined'>('platform_fees');
-    const [payoutNotes, setPayoutNotes] = useState('');
+    const [platformPayoutNotes, setPlatformPayoutNotes] = useState('');
     const [isProcessingPlatformPayout, setIsProcessingPlatformPayout] = useState(false);
 
     // Promo Code State
