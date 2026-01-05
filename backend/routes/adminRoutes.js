@@ -11,7 +11,7 @@ const requireAdmin = async (req, res, next) => {
         const supabase = (await import('../services/supabase.js')).default;
         const { data: user, error } = await supabase
             .from('profiles')
-            .select('role, is_admin')
+            .select('is_admin')
             .eq('id', req.user.uid)
             .single();
 
@@ -19,7 +19,8 @@ const requireAdmin = async (req, res, next) => {
             return res.status(403).json({ error: 'Access denied.' });
         }
 
-        if (user.role === 'superadmin' || user.role === 'admin' || user.is_admin) {
+        // Standardized admin check: only use is_admin boolean
+        if (user.is_admin === true) {
             next();
         } else {
             return res.status(403).json({ error: 'Requires Admin privileges.' });
