@@ -650,7 +650,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <div className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-end gap-1">
                                 <TrendingUp size={12} className="text-green-500" /> Total Volume
                             </div>
-                            <div className="text-xl font-bold text-green-400">${stats.totalRevenue.toFixed(2)}</div>
+                            <div className="text-xl font-bold text-green-400">${stats.totalVolume.toFixed(2)}</div>
                         </div>
                     </div>
                 </div>
