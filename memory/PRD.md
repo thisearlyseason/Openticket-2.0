@@ -59,6 +59,13 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] `SubscriptionSuccess.tsx` component handles post-payment verification
 - [x] Fixed bug: `StorageService.Stripe.verifySubscription` call path corrected
 
+#### Subscription Email Notifications (LATEST)
+- [x] `sendSubscriptionWelcome` method added to `/app/backend/services/serverEmail.js`
+- [x] Beautiful HTML email template with plan features, quick start tips, and CTA
+- [x] Sent automatically on subscription verification (paid plans)
+- [x] Sent automatically on free plan activation
+- [x] Graceful fallback when EMAIL_USER/EMAIL_APP_PASSWORD not configured
+
 #### Super Admin Premium Auto-Assignment (LATEST)
 - [x] Modified `profileController.js` - `getProfileById` automatically assigns premium subscription to admin users
 - [x] Modified `profileController.js` - `getProfile` (/me) also auto-assigns premium to admins
