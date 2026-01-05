@@ -613,6 +613,31 @@ export const verifySession = async (req, res) => {
         console.log(`[Stripe] Full payment processing complete for session: ${sessionId}`);
         console.log(`[Stripe] Breakdown: Gross=$${grossAmount}, StripeFee=$${stripeFee}, PlatformFee=$${platformFee}, OrganizerNet=$${organizerNet}`);
 
+        // 7. Send affiliate conversion notification if applicable
+        if (affiliateCode && affiliateCommission > 0) {
+            try {
+                const { data: affiliate } = await supabase
+                    .from('profiles')
+                    .select('email, name')
+                    .eq('affiliate_code', affiliateCode)
+                    .single();
+
+                if (affiliate?.email) {
+                    console.log(`[Stripe] Sending affiliate conversion email to: ${affiliate.email}`);
+                    await EmailService.sendAffiliateConversionNotification(
+                        affiliate.email,
+                        affiliate.name,
+                        reg.attendee_name,
+                        reg.event?.title,
+                        grossAmount.toFixed(2),
+                        affiliateCommission
+                    );
+                }
+            } catch (affEmailError) {
+                console.error('[Stripe] Failed to send affiliate notification:', affEmailError.message);
+            }
+        }
+
         res.json({ 
             status: 'success',
             registration: updatedReg
