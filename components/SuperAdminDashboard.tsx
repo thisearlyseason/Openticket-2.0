@@ -120,6 +120,14 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [editDiscountPercent, setEditDiscountPercent] = useState<number | null>(null);
     const [isSavingRates, setIsSavingRates] = useState(false);
 
+    // Platform Payouts State
+    const [platformPayouts, setPlatformPayouts] = useState<any[]>([]);
+    const [pendingPayoutSummary, setPendingPayoutSummary] = useState<any>(null);
+    const [showPayoutModal, setShowPayoutModal] = useState(false);
+    const [payoutType, setPayoutType] = useState<'platform_fees' | 'subscriptions' | 'combined'>('platform_fees');
+    const [payoutNotes, setPayoutNotes] = useState('');
+    const [isProcessingPlatformPayout, setIsProcessingPlatformPayout] = useState(false);
+
     // Promo Code State
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [newPromo, setNewPromo] = useState({
