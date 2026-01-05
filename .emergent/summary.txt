@@ -1,176 +1,176 @@
-<analysis>**original_problem_statement:** The initial user request was a comprehensive audit and fix of all financial systems, which expanded to include a Super Admin dashboard, a full promo code system, and an affiliate tracking system.
-
-The most recent user requests are:
-1.  **Fix Critical Payment Errors:** The user reported that all payment flows are failing. Registering for an event results in a Payment Timeout error, and connecting a Stripe Express account results in a Connection cancelled error. The user has requested a full audit of all payment flows.
-2.  **Continue with New Features:** After the payment flows are fixed, the user wants to proceed with the following tasks:
-    *   Implement the at-door payment feature (currently mocked).
-    *   Develop affiliate click tracking endpoints and subscription attribution features.
-    *   Conduct a full audit and implementation of the affiliate system to ensure correct tracking of revenue, analytics, and payouts, with full auditability for both Stripe and offline payments. The user provided a detailed PRD for this.
+<analysis>**original_problem_statement:** The initial request was a full audit and fix of a ticketing platform's financial, affiliate, and administrative systems. This has evolved through multiple user requests to include:
+- Fixing all payment and Stripe Connect flows.
+- Implementing an at-door payment recording system.
+- Building a complete, auditable affiliate system with click tracking, revenue attribution, and configurable discounts.
+- Building a Super Admin dashboard with analytics for users, events, finances, and registrations.
+- Implementing Super Admin features for managing promo codes and platform/affiliate payouts.
+- Fixing numerous bugs related to role-based access (e.g., Organizer+Affiliate dual roles), data visibility, and Vercel deployment failures.
+- Implementing UI changes, such as a new landing page slogan.
+- **Most Recent Request:**
+    1.  Ensure Super Admins are always assigned the 'Premium' organizer plan.
+    2.  Fix the subscription upgrade flow on the pricing page, which is currently non-functional.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack ticketing platform using Vite/React/TypeScript for the frontend and Node.js/Express.js for the backend, with Supabase/PostgreSQL as the database.
-
-Key features and status:
-- A Super Admin dashboard has been implemented as a toggleable overlay, per a recent user request.
-- A consolidated, idempotent master SQL migration script () has been created to unify all previous database changes.
-- **Critical Environment Fix:** The backend supervisor configuration was corrected. It was misconfigured to run a Python/uvicorn server, but the project uses Node.js/Express.js. This fix has resolved the root cause of the recent payment flow failures.
+The application is a full-stack event ticketing platform using a Vite/React/TypeScript frontend and a Node.js/Express.js backend with a Supabase/PostgreSQL database.
+- Core features like user authentication (Firebase), event registration, and basic payment processing (Stripe) are in place.
+- A Super Admin dashboard exists with tabs for users, events, registrations, finances, affiliates, and promo codes.
+- An affiliate system is implemented, including click tracking, conversion attribution, and admin-configurable commission/discount rates.
+- A platform payout system for both affiliate commissions and platform fees has been built.
+- Role-based access logic for Organizers, Affiliates, and Super Admins has been implemented and refined.
+- The application has been refactored to use environment variables for deployment, and a  and  file are present.
 
 **Last working item**:
-- **Last item agent was working:** The agent was investigating critical payment failures. The user reported a Payment Timeout error during event registration and a Connection cancelled error when setting up a Stripe Express account. The agent correctly identified that the backend server was not running due to an incorrect supervisor configuration ( for a Node.js app).
-- **Status:** USER VERIFICATION PENDING
-- **Agent Testing Done:** Y
-- **Which testing method agent to use?** Manual testing by the user is needed to confirm the payment and Stripe Connect flows are now working. If issues persist, the backend testing agent should be used to perform a full e2e test of the payment flow.
+- **Last item agent was working:** The agent was fixing the broken subscription upgrade flow. It discovered that the backend API endpoint () required to initiate a Stripe subscription checkout session was completely missing. The agent had started creating the necessary files to build this feature.
+    - Created a new backend route file: .
+    - Added the new route to the main server file: .
+    - Created a new frontend component for the post-payment success page: .
+    - Added the  method to .
+- **Status:** IN PROGRESS
+- **Agent Testing Done:** N
+- **Which testing method agent to use?** Backend testing agent to test the new subscription checkout and verification endpoints. Then, the frontend testing agent to simulate a user upgrading their plan via the UI.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** (P0) Critical payment flows (Payment Timeout, Connection cancelled) were failing.
--   **Issue 2:** (P1) Multiple separate SQL migration scripts needed to be consolidated and run by the user.
--   **Issue 3:** (P2) Logic for checking admin privileges is inconsistent across the application.
+- **Issue 1:** (P0) The subscription upgrade flow from the pricing page is broken.
+- **Issue 2:** (P1) Super Admin users are not automatically being assigned the Premium plan status.
+- **Issue 3:** (P2) Inconsistent admin privilege checks exist throughout the codebase ( vs. ).
 
 **Issues Detail:**
--   **Issue 1: Critical payment flows were failing**
-    -   **Attempted fixes:** The agent identified that the backend was not running. The supervisor configuration in  was incorrectly set to use  (for Python) instead of . The agent corrected the command to [dotenv@17.2.3] injecting env (9) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
-Supabase Service Initialized
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
-Firebase Admin Initialized Successfully
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops. The backend is now running, and API endpoints are responsive.
-    -   **Next debug checklist:** The user needs to re-test the payment and Stripe Connect flows to confirm the fix.
-    -   **Why fix this issue and what will be achieved with the fix?** This is a critical, app-breaking bug. Fixing it unblocks all payment and financial features.
-    -   **Status:** USER VERIFICATION PENDING
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Both (user to verify).
-    -   **Blocked on other issue:** None
+- **Issue 1: Subscription upgrade flow is broken**
+    - **Attempted fixes:** The agent identified that the required backend endpoint did not exist and began creating the necessary files (, ) and service methods (). The implementation is incomplete.
+    - **Next debug checklist:**
+        1.  Add the new  route to the router in .
+        2.  Fully implement the logic in  to create a Stripe Checkout session for subscription plans.
+        3.  Implement the logic in  in  to verify the payment and update the user's plan in the database.
+        4.  Test the entire flow end-to-end.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical revenue-generating feature. Fixing it will allow users to upgrade to paid plans, a core part of the business model.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Both
+    - **Blocked on other issue:** None
 
--   **Issue 2: Multiple SQL scripts pending**
-    -   **Attempted fixes:** The agent successfully consolidated all scattered  files into a single, idempotent  script. The user initially could not see the file, so the agent displayed its full content.
-    -   **Next debug checklist:** The user needs to confirm they can see and successfully run the  script in their Supabase SQL Editor.
-    -   **Why fix this issue and what will be achieved with the fix?** This will synchronize the database schema with the application code, enabling promo code, affiliate, and financial tracking features to function correctly.
-    -   **Status:** USER VERIFICATION PENDING
-    -   **Is recurring issue?** N
-    -   **Should Test frontend/backend/both after fix?** Backend
-    -   **Blocked on other issue:** None
+- **Issue 2: Super Admin users are not automatically assigned the Premium plan**
+    - **Attempted fixes:** None.
+    - **Next debug checklist:**
+        1.  Investigate the user login and profile creation/update flow in  and the relevant backend controllers (, ).
+        2.  Add logic to check if a user has .
+        3.  If they are an admin, automatically set their subscription plan to 'premium' in the database.
+    - **Why fix this issue and what will be achieved with the fix?** This ensures Super Admins have full access to all platform features for management and testing without needing to manually subscribe.
+    - **Status:** NOT STARTED
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Backend
+    - **Blocked on other issue:** None
 
--   **Issue 3: Inconsistent Admin Check Logic**
-    -   **Attempted fixes:** None in this session. This is a carry-over issue.
-    -   **Next debug checklist:**
-        1.  Globally search the codebase for  and .
-        2.  Replace all instances with a consistent check for .
-    -   **Why fix this issue and what will be achieved with the fix?** This will prevent recurring bugs where admin-only features are inaccessible due to inconsistent property checks.
-    -   **Status:** NOT STARTED
-    -   **Is recurring issue?** Y
-    -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on other issue:** None
+- **Issue 3: Inconsistent Admin Check Logic**
+    - **Attempted fixes:** None. This is a known technical debt item from a previous session.
+    - **Next debug checklist:**
+        1.  Perform a global search for all instances of  or .
+        2.  Replace them with the standardized check .
+    - **Why fix this issue and what will be achieved with the fix?** Standardizing the check will prevent future bugs related to admin permissions and simplify the codebase.
+    - **Status:** NOT STARTED
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Both (Regression testing)
+    - **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Audit Affiliate System** (P0)
-    -   **Where to resume:** Start by reviewing the existing code for the affiliate system (, , ) against the user's new detailed requirements.
-    -   **What will be achieved with this?** This is the first step towards implementing the user's detailed request for a fully functional and auditable affiliate system.
-    -   **Status:** NOT STARTED
-    -   **Should Test frontend/backend/both after fix?** Both
-    -   **Blocked on something:** User verification of the payment flow fix (Issue 1).
+- **Task 1: Complete Subscription Upgrade Flow Implementation** (P0)
+    - **Where to resume:** Add the route for the new  component to the main router in .
+    - **What will be achieved with this?** A fully functional subscription upgrade path for users.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** Both
+    - **Blocked on something:** None
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks:**
-    -   **P0: Affiliate System Implementation:** Based on the audit, implement the missing features:
-        -   Confirm/build affiliate dashboard and Super Admin views for clicks, conversions, revenue, and commissions.
-        -   Verify/build revenue attribution for signups, subscriptions, and ticket purchases.
-        -   Validate/build the Super Admin payout flow (Stripe & manual).
-        -   Ensure a complete and immutable audit trail for all payouts.
-    -   **P1: Implement at-door payment actions:** The UI in  is mocked. This task involves adding the backend logic and frontend integration to handle live payments at the door.
--   **Future Tasks:**
-    -   Globally fix the inconsistent admin check logic (Issue 3).
-    -   Address the potential issue with Stripe Connect rejecting test phone numbers.
+- **Upcoming Tasks:**
+    - **P1: Implement Automatic Premium Plan for Super Admins:** Modify the login/profile logic to grant premium access to any user with .
+- **Future Tasks:**
+    - **P2: Globally Refactor Admin Check Logic:** Replace all role-based admin checks with the  boolean flag.
+    - **P2: Investigate Stripe Connect Test Phone Numbers:** An old, unaddressed issue where the Stripe Connect onboarding may reject test phone numbers.
 
 **Completed work in this session**
-- **Critical Environment Fix:** Identified and fixed a fundamental misconfiguration in  that was preventing the Node.js backend from starting, which resolved all payment-related errors.
-- **Super Admin UI Enhancement:** Implemented the Super Admin dashboard as a toggleable overlay panel in , based on a specific user request.
-- **Frontend Stability Fix:** Resolved a recurring black screen issue by updating  to include the root  directory in , fixing path resolution for symlinked files.
-- **Database Migration Consolidation:** Combined numerous scattered SQL files into a single, idempotent  script to ensure a consistent database schema.
-- **Testing:** Successfully used the  to validate the new Super Admin UI feature.
-
-**Earlier issues found/mentioned but not fixed**
--   **Issue 1:** The Stripe Connect onboarding flow may still reject test phone numbers. This was mentioned in the initial handoff but has not been revisited.
-
-**Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Black screen issue in the preview environment due to the non-standard project structure and Vite's handling of symlinks. The   fix should prevent this, but it's a known sensitivity.
--   **Recurrence count:** 2+
--   **Status:** RESOLVED (but requires vigilance).
+- **Affiliate & Admin Audits:** Conducted multiple comprehensive audits of the affiliate, role-based access, and Super Admin systems.
+- **Critical Bug Fixes:**
+    - Fixed affiliate activation crash by adding error handling and correcting backend permissions.
+    - Fixed a bug where organizers lost their dashboard access after becoming affiliates, and implemented a better UX for dual-role users.
+    - Fixed a Vercel build failure caused by a duplicate state variable ().
+    - Fixed incorrect financial calculations in the Super Admin dashboard by clarifying  vs. .
+    - Fixed incomplete registration data in the Super Admin panel by correcting the  to  data mapping from the backend.
+- **Feature Implementation:**
+    - Implemented a Super Admin feature to set affiliate-specific discount percentages for plan signups.
+    - Implemented a Super Admin feature to schedule and record platform fee and subscription revenue payouts.
+    - Implemented affiliate click tracking on event pages and during user signup.
+- **Deployment Support:**
+    - Guided the user on how to use Save to GitHub and resolved their unverified commit query.
+    - Used the deployment agent to diagnose Vercel failures, identifying and fixing hardcoded Firebase credentials by migrating them to environment variables.
+- **UI Change:** Updated the landing page slogan as per the user's request.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Frontend:** React, Vite, TypeScript, Tailwind CSS
--   **Backend:** Node.js, Express.js
--   **Database:** Supabase (PostgreSQL)
--   **Authentication:** Firebase
--   **Payments:** Stripe (Connect Express, Checkout)
+- **Frontend:** React, Vite, TypeScript, Tailwind CSS
+- **Backend:** Node.js, Express.js
+- **Database:** Supabase (PostgreSQL)
+- **Authentication:** Firebase
+- **Payments:** Stripe (Connect Express, Checkout)
+- **Deployment:** Configured for Vercel (requires environment variables).
 
 **key DB schema**
--   : { user_id, email, name, stripe_connect_id, is_admin }
--   : { id, title, registered_count, ... }
--   : { id, event_id, payment_status, stripe_checkout_session_id, ... }
--   : { id, registration_id, gross_amount, platform_fee, stripe_fee, organizer_net, ... }
--   : { id, actor_id, action, target_id, details, ... }
--   : { id, code, discount_type, value, uses, max_uses, ... }
--   : { id, affiliate_id, amount, method, status, ... }
+-   : { user_id, email, is_admin, affiliate_code, commission_rate, discount_percent }
+-   : { id, gross_amount, platform_fee, affiliate_commission, ... }
+-   : { id, affiliate_code, event_id, created_at }
+-   : { id, amount, status, notes, payout_type, created_at }
 
 **All files of reference**
--   : **CRITICAL FILE.** Updated to correctly run the Node.js backend.
--   : The main entry point for the Express.js backend.
--   : Updated  to fix the frontend 'black screen' issue.
--   : Modified to implement the Super Admin dashboard as a toggleable panel.
--   : Modified to support being embedded in a modal.
--   : The new consolidated database migration script.
--   : Contains the payment verification logic.
--   : Contains the Stripe Connect onboarding logic.
-
-**Areas that need refactoring**:
-- The inconsistent admin check ( vs ) needs to be standardized globally.
-
-**key api endpoints**
--   : Initiates a payment.
--   : Verifies a payment post-redirect.
--   : Creates a Stripe Connect Express account.
--   : Checks the status of a user's Stripe Connect account.
--   : Various endpoints for the Super Admin dashboard.
+-   : **NEW FILE.** Created to handle subscription checkout logic (in progress).
+-   : **NEW FILE.** Frontend page for post-subscription-payment confirmation (in progress).
+-   : Modified multiple times to fix role-based UI rendering and needs to be modified again to add the new subscription route.
+-   : Heavily modified to add methods for new features (payouts, affiliate rates) and fix data fetching.
+-   : Heavily modified to fix data display bugs, add new UI for payouts and affiliate discounts, and resolve a build error.
+-   : Modified to fix  data mapping and add new financial analytics.
+-   : Modified to add multiple new endpoints for payouts and affiliate management.
+-   : Updated with new tables (, ) and columns ().
+-   : Refactored to use environment variables instead of hardcoded keys.
+-   : **NEW FILE.** Documents all required environment variables for deployment.
 
 **Critical Info for New Agent**
--   **Backend is Node.js:** The supervisor is now correctly configured to run the Node.js server at . Do not change this or attempt to use Python/uvicorn. This was the root cause of the recent payment failures.
--   **DB Migration:** The user must run the  script. It is idempotent and contains all necessary schema changes for recent features.
--   **Frontend Structure:** The project has a non-standard symlinked structure. If a black screen or  error appears, verify the  setting in  is  and consider clearing the vite cache ().
--   **Admin Check:** The correct property for Super Admin is . A global find-and-replace is still needed to fix inconsistencies.
-
-**documents and test reports created in this job**
--   
--   
+-   **In-Progress Feature:** You are in the middle of implementing the subscription upgrade flow. The backend endpoint is missing, and the frontend wiring is incomplete. Your immediate task is to complete this feature.
+-   **Database Migrations:** The  script contains all necessary schema changes. The user has previously failed to run migrations, leading to errors. If they report schema-related errors (e.g., column does not exist), remind them to run the full migration script.
+-   **Super Admin Access:** Super Admin features are only visible if the user's record in the  table has . The user must log out and back in after this flag is set.
+-   **Vercel Deployment:** The project is configured for Vercel. All secrets (Firebase, Supabase, Stripe) MUST be set as environment variables in the Vercel project settings. The  file lists all required variables.
+-   **Dual Roles:** The logic for users who are both an Organizer and an Affiliate has been specifically addressed. Organizers should *always* see the main Dashboard link, with a separate link to their Affiliate Dashboard in the Settings page.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Asks to continue with implementing the at-door payment feature and provides a very detailed PRD for a full audit and implementation of the affiliate system. **(PENDING - Current highest priority task)**
-2.  **User:** Reports critical errors with Stripe Connect and payment timeouts. Asks for a full audit of all payment flows. **(IN PROGRESS - Root cause fixed, pending user verification)**
-3.  **User:** Cannot see the  file. **(RESOLVED - Agent displayed file content)**
-4.  **User:** Signals completion of the Super Admin button feature. **(No action needed)**
-5.  **User:** i dont see the master_migration.sql. **(Same as #3)**
-6.  **User:** After agent finished, signals agent to continue. **(No action needed)**
-7.  **User:** I want you to continue with the entire build, but for the SuperAdmin checkin, I want a button in the current superadmin that they can click and show the entire super admin dashboard, this will only be for one person. **(RESOLVED - Feature was implemented and tested)**
+1.  **User:** Requests fix for Super Admin plan and broken pricing page upgrades. **(PENDING - Current 
+wtmp begins Sun Jan  4 16:41:47 2026)**
+2.  **User:** Reports Vercel build failed due to a duplicate variable error. **(RESOLVED)**
+3.  **User:** Requests a feature for scheduled payouts for platform fees. **(RESOLVED - Implemented)**
+4.  **User:** Requests a fix for incorrect platform fee calculations. **(RESOLVED)**
+5.  **User:** Requests a feature for Super Admins to configure affiliate discount percentages. **(RESOLVED)**
+6.  **User:** Requests a fix for incomplete registration data in the Super Admin panel. **(RESOLVED)**
+7.  **User:** Confirms they will set environment variables and asks to proceed. **(No action needed)**
+8.  **User:** Reports Vercel deployment failed. **(RESOLVED - Hardcoded keys were fixed)**
+9.  **User:** Acknowledges Got commit after being instructed on how to push to GitHub. **(No action needed)**
+10. **User:** Asks for the Git email configured in the environment. **(RESOLVED)**
 
 **Project Health Check:**
--   **Broken:** Payment flows were broken, but the root cause has been addressed. The status is now **USER VERIFICATION PENDING**.
--   **Mocked:** The at-door payment feature in  remains a UI mock without backend functionality.
+-   **Broken:** The subscription upgrade flow is non-functional.
+-   **Mocked:** None.
 
 **3rd Party Integrations**
--   **Supabase (PostgreSQL):** Database.
--   **Firebase (Authentication):** User auth, including Google Sign-In.
--   **Stripe (Payments):** Payment processing (Connect Express & Checkout).
+-   **Supabase (PostgreSQL):** Database
+-   **Firebase (Authentication):** User login and management
+-   **Stripe (Payments):** Handles one-time payments and subscriptions.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (For the Super Admin UI change).
+-   **Testing agent used after significant changes:** YES (but not for the last few features)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** []
--   **Known regressions:** A recurring black screen issue in the preview environment, which is typically related to Vite's cache or path resolution in the project's non-standard structure.
+-   **Known regressions:** None.
 
 **What agent forgot to execute**
--   The agent has not yet performed a global find-and-replace to standardize the admin check logic to .
--   The agent has not yet started the detailed audit and implementation of the affiliate system as per the user's latest request.</analysis>
+- The agent has not yet implemented the user's request to ensure Super Admin accounts are automatically assigned the Premium plan.
+- The global refactoring of inconsistent admin checks ( vs ) is still outstanding.
+- The original issue regarding Stripe Connect rejecting test phone numbers has not been addressed.</analysis>
