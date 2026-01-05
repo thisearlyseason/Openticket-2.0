@@ -181,5 +181,219 @@ export const EmailService = {
             console.error("[EmailService] Subscription Welcome Failed:", error);
             return { sent: false, error: error.message };
         }
+    },
+
+    /**
+     * Send subscription cancellation/downgrade email
+     */
+    sendSubscriptionCancellation: async (to, oldPlan, newPlan, userName, effectiveDate) => {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
+            console.log(`[SIMULATION] Subscription Change to: ${to}, ${oldPlan} → ${newPlan}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = userName || 'there';
+        const isDowngrade = newPlan && newPlan !== 'cancelled';
+        const isCancellation = !newPlan || newPlan === 'cancelled';
+        
+        const subject = isCancellation 
+            ? `Your OpenTicket subscription has been cancelled`
+            : `Your OpenTicket plan has been changed`;
+
+        const oldPlanDisplay = PLAN_FEATURES[oldPlan?.toLowerCase()]?.name || oldPlan || 'Previous';
+        const newPlanDisplay = PLAN_FEATURES[newPlan?.toLowerCase()]?.name || newPlan || 'Free';
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: ${isCancellation ? '#ef4444' : '#f59e0b'}; padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">
+                        ${isCancellation ? 'Subscription Cancelled' : 'Plan Changed'}
+                    </h1>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName},
+                    </p>
+                    
+                    ${isCancellation ? `
+                        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                            We're sorry to see you go! Your <strong>${oldPlanDisplay}</strong> subscription has been cancelled.
+                        </p>
+                        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                            ${effectiveDate ? `Your access to ${oldPlanDisplay} features will continue until <strong>${new Date(effectiveDate).toLocaleDateString()}</strong>.` : 'Your subscription has been cancelled effective immediately.'}
+                        </p>
+                    ` : `
+                        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                            Your plan has been changed from <strong>${oldPlanDisplay}</strong> to <strong>${newPlanDisplay}</strong>.
+                        </p>
+                        <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                            Your new plan features are now active.
+                        </p>
+                    `}
+
+                    <!-- What's Next Box -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 25px; margin: 25px 0;">
+                        <h2 style="margin: 0 0 15px 0; font-size: 18px; color: #111827;">What happens next?</h2>
+                        ${isCancellation ? `
+                            <ul style="margin: 0; padding-left: 20px; color: #374151; line-height: 2;">
+                                <li>Your events will remain visible to attendees</li>
+                                <li>You can still manage existing registrations</li>
+                                <li>You'll keep access to your earnings and payout history</li>
+                                <li>You can resubscribe anytime to unlock all features</li>
+                            </ul>
+                        ` : `
+                            <ul style="margin: 0; padding-left: 20px; color: #374151; line-height: 2;">
+                                <li>Your ${newPlanDisplay} features are now active</li>
+                                <li>Check your dashboard for updated limits</li>
+                                <li>Your billing will reflect the new plan</li>
+                            </ul>
+                        `}
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="display: inline-block; background: ${isCancellation ? '#ec4899' : '#8b5cf6'}; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            ${isCancellation ? 'Resubscribe Now' : 'View Dashboard'}
+                        </a>
+                    </div>
+
+                    ${isCancellation ? `
+                        <p style="font-size: 14px; color: #6b7280; line-height: 1.6; text-align: center;">
+                            Changed your mind? You can resubscribe anytime from your Settings page.
+                        </p>
+                    ` : ''}
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · The boldest ticketing platform for creators
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
+                to,
+                subject,
+                html: htmlBody
+            });
+            console.log(`[EmailService] Subscription Cancellation Sent: ${info.messageId} to ${to}`);
+            return { sent: true, messageId: info.messageId };
+        } catch (error) {
+            console.error("[EmailService] Subscription Cancellation Failed:", error);
+            return { sent: false, error: error.message };
+        }
+    },
+
+    /**
+     * Send affiliate conversion notification when someone signs up with their code
+     */
+    sendAffiliateConversionNotification: async (to, affiliateName, customerName, eventTitle, orderAmount, commission) => {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
+            console.log(`[SIMULATION] Affiliate Conversion to: ${to}, Commission: $${commission}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = affiliateName || 'Partner';
+        const commissionFormatted = typeof commission === 'number' ? commission.toFixed(2) : commission;
+
+        const subject = `🎉 You earned $${commissionFormatted} commission!`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">💰</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Commission Earned!</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Someone used your affiliate link</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName}! 🎊
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Great news! Someone just made a purchase using your affiliate link.
+                    </p>
+
+                    <!-- Commission Box -->
+                    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 30px; margin: 25px 0; text-align: center;">
+                        <p style="margin: 0 0 5px 0; font-size: 14px; color: #059669; text-transform: uppercase; font-weight: bold;">Your Commission</p>
+                        <p style="margin: 0; font-size: 48px; font-weight: 900; color: #047857;">$${commissionFormatted}</p>
+                    </div>
+
+                    <!-- Order Details -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">Order Details</h3>
+                        <table style="width: 100%; font-size: 14px; color: #374151;">
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Customer</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${customerName || 'New Customer'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Event</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${eventTitle || 'Event Ticket'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Order Total</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">$${orderAmount || '0.00'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #059669; font-weight: bold;">Your Earnings</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: 900; color: #059669;">$${commissionFormatted}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Tips -->
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; border-radius: 0 8px 8px 0; margin: 25px 0;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #92400e;">💡 Pro Tip</h3>
+                        <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+                            Share your link on social media and in relevant communities to maximize your earnings!
+                        </p>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            View Affiliate Dashboard →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket Affiliate Program · Keep sharing, keep earning!
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #d1d5db;">
+                        Commission pending payout. View your dashboard for payout schedule.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket Affiliates" <${process.env.EMAIL_USER}>`,
+                to,
+                subject,
+                html: htmlBody
+            });
+            console.log(`[EmailService] Affiliate Conversion Sent: ${info.messageId} to ${to}`);
+            return { sent: true, messageId: info.messageId };
+        } catch (error) {
+            console.error("[EmailService] Affiliate Conversion Failed:", error);
+            return { sent: false, error: error.message };
+        }
     }
 };
