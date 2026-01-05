@@ -181,6 +181,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             const totalVolume = financials.totalVolume || 0;
             const organizerNet = financials.organizerNet || 0;
             const refundTotal = financials.refundTotal || 0;
+            const platformDonations = financials.platformDonations || 0;
             let stripeFees = 0;
 
             // Calculate Stripe fees from transactions
@@ -206,6 +207,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 pendingPayouts: pending,
                 stripeFees,
                 refundTotal,
+                platformDonations,
                 recentTransactions: financials.recentTransactions || [],
                 organizerBreakdown: financials.organizerBreakdown || []
             });
