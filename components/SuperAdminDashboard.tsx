@@ -205,7 +205,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         clicks: aff.clicks || 0,
                         conversions: aff.conversions || 0,
                         conversionRate: aff.conversionRate || 0,
-                        transactions: aff.transactions || []
+                        transactions: aff.transactions || [],
+                        commissionRate: aff.commissionRate || 10,
+                        discountPercent: aff.discountPercent || 0
                     }));
                     setAffiliates(affiliateDataList);
                 } else {
@@ -231,7 +233,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             clicks: aff.affiliateClicks || 0,
                             conversions: affTransactions.length,
                             conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
-                            transactions: affTransactions
+                            transactions: affTransactions,
+                            commissionRate: aff.commissionRate || 10,
+                            discountPercent: aff.discountPercent || 0
                         };
                     });
                     setAffiliates(affiliateDataList);
