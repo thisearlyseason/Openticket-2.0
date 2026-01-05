@@ -61,9 +61,12 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 #### Subscription Email Notifications (LATEST)
 - [x] `sendSubscriptionWelcome` method added to `/app/backend/services/serverEmail.js`
-- [x] Beautiful HTML email template with plan features, quick start tips, and CTA
+- [x] `sendSubscriptionCancellation` method for plan changes/cancellations
+- [x] `sendAffiliateConversionNotification` method for affiliate commission notifications
+- [x] Beautiful HTML email templates with plan features, quick start tips, and CTAs
 - [x] Sent automatically on subscription verification (paid plans)
 - [x] Sent automatically on free plan activation
+- [x] Affiliate notified via email when someone uses their code and commission is earned
 - [x] Graceful fallback when EMAIL_USER/EMAIL_APP_PASSWORD not configured
 
 #### Super Admin Premium Auto-Assignment (LATEST)
