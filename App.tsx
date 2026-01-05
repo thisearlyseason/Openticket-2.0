@@ -273,6 +273,15 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                             </div>
 
                             <div className="md:hidden flex items-center gap-2">
+                                {user?.isAdmin && (
+                                    <button 
+                                        onClick={() => setShowSuperAdminPanel(true)} 
+                                        className="p-2 rounded-full bg-red-500/10 text-red-500"
+                                        data-testid="mobile-super-admin-btn"
+                                    >
+                                        <Shield size={20} />
+                                    </button>
+                                )}
                                 <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
                                     {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-zinc-600" />}
                                 </button>
