@@ -6,7 +6,7 @@ import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
 import { User, EmailTemplate, Socials, CustomFee } from '../types';
 import { Button, Input, Card, Switch, FileDropZone, Badge, RichTextarea } from './UI';
-import { User as UserIcon, Settings as SettingsIcon, LogOut, Camera, Bell, ChevronRight, Palette, CreditCard, Shield, Mail, CheckCircle, XCircle, Plus, Trash2, LayoutTemplate, Globe, Instagram, Facebook, Twitter, Youtube, Smartphone } from 'lucide-react';
+import { User as UserIcon, Settings as SettingsIcon, LogOut, Camera, Bell, ChevronRight, Palette, CreditCard, Shield, Mail, CheckCircle, XCircle, Plus, Trash2, LayoutTemplate, Globe, Instagram, Facebook, Twitter, Youtube, Smartphone, Gift } from 'lucide-react';
 
 export const Settings = () => {
     const navigate = useNavigate();
