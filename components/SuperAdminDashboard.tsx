@@ -1336,6 +1336,32 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <Gift size={24} className="text-purple-400" /> Affiliate Management
                             </h2>
                             <div className="flex gap-2">
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                                    onClick={async () => {
+                                        try {
+                                            const response = await fetch('/api/admin/affiliate/send-weekly-summaries', {
+                                                method: 'POST',
+                                                headers: { 
+                                                    'Content-Type': 'application/json',
+                                                    'Authorization': `Bearer ${await (window as any).firebase?.auth()?.currentUser?.getIdToken()}`
+                                                }
+                                            });
+                                            const result = await response.json();
+                                            if (result.success) {
+                                                alert(`✅ Sent ${result.sent} weekly summaries to affiliates!`);
+                                            } else {
+                                                alert(`❌ Error: ${result.error}`);
+                                            }
+                                        } catch (e: any) {
+                                            alert(`❌ Failed: ${e.message}`);
+                                        }
+                                    }}
+                                >
+                                    <Mail size={14} className="mr-2" /> Send Weekly Summary
+                                </Button>
                                 <Button size="sm" variant="outline" onClick={refreshData}>
                                     <RefreshCw size={14} className="mr-2" /> Refresh
                                 </Button>
