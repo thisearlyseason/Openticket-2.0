@@ -777,8 +777,33 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 {/* REGISTRATIONS TAB */}
                 {activeTab === 'registrations' && (
                     <div className="overflow-x-auto">
-                        <div className="p-4 border-b border-zinc-800">
+                        <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
                             <span className="font-bold text-white">All Registrations ({registrations.length})</span>
+                            <Button size="sm" variant="outline" onClick={() => {
+                                const headers = ['Date', 'Event', 'Attendee Name', 'Email', 'Status', 'Amount', 'Affiliate', 'Promo Code'];
+                                const rows = registrations.map(r => {
+                                    const event = events.find(e => e.id === r.eventId);
+                                    return [
+                                        new Date(r.timestamp).toLocaleDateString(),
+                                        event?.title || r.eventTitle || 'Unknown',
+                                        r.attendeeName,
+                                        r.attendeeEmail,
+                                        r.paymentStatus,
+                                        `$${((r.totalAmount || 0) + (r.taxAmount || 0)).toFixed(2)}`,
+                                        r.affiliateCode || '-',
+                                        r.promoCodeUsed || '-'
+                                    ];
+                                });
+                                const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+                                const blob = new Blob([csv], { type: 'text/csv' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `registrations-${new Date().toISOString().split('T')[0]}.csv`;
+                                a.click();
+                            }}>
+                                <Download size={14} className="mr-2" /> Export CSV
+                            </Button>
                         </div>
                         <table className="w-full text-left text-sm text-zinc-400">
                             <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
@@ -787,42 +812,80 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <th className="p-4">Event</th>
                                     <th className="p-4">Organizer</th>
                                     <th className="p-4">Attendee</th>
+                                    <th className="p-4">Tickets</th>
                                     <th className="p-4">Status</th>
+                                    <th className="p-4">Affiliate</th>
                                     <th className="p-4 text-right">Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {registrations.map(r => {
                                     const event = events.find(e => e.id === r.eventId);
+                                    const ticketCount = r.tickets?.length || 0;
                                     return (
                                         <tr key={r.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                            <td className="p-4 text-xs">{new Date(r.timestamp).toLocaleDateString()}</td>
+                                            <td className="p-4 text-xs">
+                                                <div>{new Date(r.timestamp).toLocaleDateString()}</div>
+                                                <div className="text-zinc-600">{new Date(r.timestamp).toLocaleTimeString()}</div>
+                                            </td>
                                             <td className="p-4 font-bold text-white max-w-[200px] truncate">
-                                                {event?.title || 'Unknown Event'}
+                                                {event?.title || r.eventTitle || 'Unknown Event'}
                                             </td>
                                             <td className="p-4">
-                                                {event ? getOrganizerName(event.ownerId) : '-'}
+                                                {event ? (event.ownerName || getOrganizerName(event.ownerId)) : '-'}
                                             </td>
                                             <td className="p-4">
-                                                <div className="text-white font-medium">{r.attendeeName}</div>
-                                                <div className="text-xs opacity-60">{r.attendeeEmail}</div>
+                                                <div className="text-white font-medium">{r.attendeeName || 'N/A'}</div>
+                                                <div className="text-xs opacity-60">{r.attendeeEmail || 'No email'}</div>
+                                                {r.phoneNumber && <div className="text-xs opacity-40">{r.phoneNumber}</div>}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className="bg-zinc-800 px-2 py-1 rounded text-xs font-mono">
+                                                    {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}
+                                                </span>
                                             </td>
                                             <td className="p-4">
                                                 <Badge color={
                                                     r.paymentStatus === 'paid' || r.paymentStatus === 'completed' ? 'green' : 
                                                     r.paymentStatus === 'refunded' ? 'red' : 'yellow'
                                                 }>
-                                                    {r.paymentStatus}
+                                                    {r.paymentStatus || 'unknown'}
                                                 </Badge>
+                                                {r.checkedIn && (
+                                                    <Badge color="blue" className="ml-1">Checked In</Badge>
+                                                )}
                                             </td>
-                                            <td className="p-4 text-right font-mono text-white">
-                                                ${((r.totalAmount || 0) + (r.taxAmount || 0)).toFixed(2)}
+                                            <td className="p-4">
+                                                {r.affiliateCode ? (
+                                                    <span className="font-mono text-purple-400 text-xs bg-purple-500/10 px-2 py-1 rounded">
+                                                        {r.affiliateCode}
+                                                    </span>
+                                                ) : r.promoCodeUsed ? (
+                                                    <span className="font-mono text-yellow-400 text-xs bg-yellow-500/10 px-2 py-1 rounded">
+                                                        {r.promoCodeUsed}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-zinc-600">-</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <div className="font-mono text-white font-bold">
+                                                    ${((r.totalAmount || 0)).toFixed(2)}
+                                                </div>
+                                                {(r.taxAmount || 0) > 0 && (
+                                                    <div className="text-xs text-zinc-500">+${r.taxAmount?.toFixed(2)} tax</div>
+                                                )}
+                                                {(r.serviceFee || 0) > 0 && (
+                                                    <div className="text-xs text-zinc-600">Fee: ${r.serviceFee?.toFixed(2)}</div>
+                                                )}
                                             </td>
                                         </tr>
                                     );
                                 })}
                                 {registrations.length === 0 && (
-                                    <tr><td colSpan={6} className="p-8 text-center">No registrations found.</td></tr>
+                                    <tr><td colSpan={8} className="p-8 text-center text-zinc-500">
+                                        No registrations found. Registrations will appear here when users purchase tickets.
+                                    </td></tr>
                                 )}
                             </tbody>
                         </table>
