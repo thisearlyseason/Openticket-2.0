@@ -300,6 +300,18 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 console.error("Failed to load affiliate payouts", e);
             }
 
+            // Load platform payouts
+            try {
+                const [payouts, pendingSummary] = await Promise.all([
+                    StorageService.getPlatformPayouts(),
+                    StorageService.getPendingPayoutSummary()
+                ]);
+                setPlatformPayouts(payouts || []);
+                setPendingPayoutSummary(pendingSummary);
+            } catch (e) {
+                console.error("Failed to load platform payouts", e);
+            }
+
             try {
                 setActiveNotification(StorageService.getSystemNotification());
             } catch (e) { console.error(e); }
