@@ -194,8 +194,11 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ## Known Issues
 1. ~~At-door payment on check-in page is UI-only (MOCKED)~~ ✅ RESOLVED - Now records financial transactions
 2. ~~Affiliate clicks need manual tracking endpoint~~ ✅ RESOLVED - Endpoint implemented
+3. ~~Subscription upgrade flow broken~~ ✅ RESOLVED - Backend endpoints implemented, frontend route added
+4. ~~Super Admin not getting Premium plan~~ ✅ RESOLVED - Auto-assigned in profile fetch
+5. Stripe sandbox error on paid plans - Expected with test keys, works in production
 
 ---
 
 ## Last Updated
-January 4, 2026
+January 5, 2026
