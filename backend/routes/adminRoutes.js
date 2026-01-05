@@ -477,6 +477,7 @@ router.get('/affiliate/:affiliateId', verifyToken, requireAdmin, async (req, res
                 affiliateCode: affiliate.affiliate_code,
                 clicks: affiliate.affiliate_clicks || 0,
                 commissionRate: affiliate.commission_rate || 10,
+                discountPercent: affiliate.discount_percent || 0,
                 stripeConnectId: affiliate.stripe_connect_id,
                 stripeOnboardingComplete: affiliate.stripe_onboarding_complete
             },
@@ -492,6 +493,84 @@ router.get('/affiliate/:affiliateId', verifyToken, requireAdmin, async (req, res
         });
     } catch (error) {
         console.error('Get affiliate detail error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Update affiliate rates (commission and discount)
+ * PUT /api/admin/affiliate/:affiliateId/rates
+ */
+router.put('/affiliate/:affiliateId/rates', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { affiliateId } = req.params;
+        const { commissionRate, discountPercent } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const updates = {};
+        if (commissionRate !== undefined) {
+            updates.commission_rate = Math.max(0, Math.min(100, Number(commissionRate)));
+        }
+        if (discountPercent !== undefined) {
+            updates.discount_percent = Math.max(0, Math.min(100, Number(discountPercent)));
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No valid updates provided' });
+        }
+
+        const { error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', affiliateId);
+
+        if (error) throw error;
+
+        // Create audit log
+        await supabase.from('audit_logs').insert({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user?.uid || 'admin',
+            actor_type: 'admin',
+            action: 'update_affiliate_rates',
+            target_type: 'profile',
+            target_id: affiliateId,
+            details: { updates }
+        }).catch(e => console.warn('Audit log failed:', e));
+
+        res.json({ success: true, updates });
+    } catch (error) {
+        console.error('Update affiliate rates error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get affiliate by code (public - for checkout discount lookup)
+ * GET /api/admin/affiliate/by-code/:code
+ */
+router.get('/affiliate/by-code/:code', async (req, res) => {
+    try {
+        const { code } = req.params;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const { data: affiliate, error } = await supabase
+            .from('profiles')
+            .select('id, commission_rate, discount_percent, affiliate_code')
+            .eq('affiliate_code', code.toUpperCase())
+            .single();
+
+        if (error || !affiliate) {
+            return res.status(404).json({ error: 'Affiliate not found' });
+        }
+
+        res.json({
+            affiliateId: affiliate.id,
+            affiliateCode: affiliate.affiliate_code,
+            commissionRate: affiliate.commission_rate || 10,
+            discountPercent: affiliate.discount_percent || 0
+        });
+    } catch (error) {
+        console.error('Get affiliate by code error:', error);
         res.status(500).json({ error: error.message });
     }
 });
