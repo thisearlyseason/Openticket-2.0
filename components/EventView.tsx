@@ -337,6 +337,9 @@ export const EventView = () => {
             total += StorageService.calculateFees(total, plan);
         }
 
+        // Add platform donation (separate from ticket revenue)
+        total += regData.platformDonationAmount || 0;
+
         return Math.max(0, total);
     };
 
