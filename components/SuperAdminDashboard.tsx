@@ -355,7 +355,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 amount: amount,
                 method: payoutMethod,
                 status: payoutMethod === 'stripe' ? 'pending' : 'paid',
-                notes: payoutNotes,
+                notes: affiliatePayoutNotes,
                 createdAt: new Date().toISOString(),
                 paidAt: payoutMethod === 'offline' ? new Date().toISOString() : undefined
             };
@@ -382,7 +382,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             
             // Reset form
             setPayoutAmount('');
-            setPayoutNotes('');
+            setAffiliatePayoutNotes('');
             setSelectedAffiliate(null);
             
             // Refresh data
