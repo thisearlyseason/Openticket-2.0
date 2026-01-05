@@ -676,6 +676,26 @@ export const StorageService = {
         }
     },
 
+    updateAffiliateRates: async (affiliateId: string, rates: { commissionRate?: number, discountPercent?: number }): Promise<boolean> => {
+        try {
+            await postSupabase(`/admin/affiliate/${affiliateId}/rates`, 'PUT', rates);
+            return true;
+        } catch (e) {
+            console.error("Failed to update affiliate rates", e);
+            throw e;
+        }
+    },
+
+    getAffiliateByCode: async (code: string): Promise<{ discountPercent: number, commissionRate: number } | null> => {
+        try {
+            const data = await fetchSupabase(`/admin/affiliate/by-code/${code}`, false);
+            return data;
+        } catch (e) {
+            console.error("Failed to get affiliate by code", e);
+            return null;
+        }
+    },
+
     getSuperAdmin: async (): Promise<User | undefined> => {
         // Return current user if admin
         const u = StorageService.getCurrentUser();
