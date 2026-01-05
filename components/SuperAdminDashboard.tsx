@@ -87,11 +87,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [events, setEvents] = useState<Event[]>([]);
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [stats, setStats] = useState({
-        ticketRevenue: 0,
-        subscriptionRevenue: 0,
-        totalRevenue: 0,
-        pendingPayouts: 0,
-        stripeFees: 0,
+        platformFees: 0,         // What platform earns from ticket sales
+        subscriptionRevenue: 0,  // What platform earns from Pro/Premium subscriptions
+        totalVolume: 0,          // Total gross transaction volume
+        organizerNet: 0,         // Total paid out to organizers
+        pendingPayouts: 0,       // Pending organizer payouts
+        stripeFees: 0,           // Stripe processing fees
+        refundTotal: 0,          // Total refunds issued
         recentTransactions: [] as FinancialTransaction[],
         organizerBreakdown: [] as OrganizerBreakdown[]
     });
