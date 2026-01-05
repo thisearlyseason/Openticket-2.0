@@ -190,6 +190,31 @@ export const getProfileById = async (req, res) => {
             }
             throw error;
         }
+
+        // AUTO-ASSIGN PREMIUM FOR SUPER ADMINS
+        // If user is admin, ensure they always have premium subscription
+        if (data && data.is_admin) {
+            const premiumSubscription = {
+                plan: 'premium',
+                status: 'active',
+                cycle: null,
+                startDate: data.created_at || new Date().toISOString(),
+                isAdminGrant: true
+            };
+
+            // Only update DB if subscription isn't already premium
+            const currentPlan = data.subscription?.plan;
+            if (currentPlan !== 'premium') {
+                await supabase
+                    .from('profiles')
+                    .update({ subscription: premiumSubscription })
+                    .eq('id', id);
+            }
+
+            // Always return premium for admins in response
+            data.subscription = premiumSubscription;
+        }
+
         res.json({ profile: data });
     } catch (error) {
         console.error('getProfileById error:', error);
