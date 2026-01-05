@@ -478,7 +478,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 payoutType,
                 amount,
                 undefined, // scheduledFor - execute immediately
-                payoutNotes,
+                platformPayoutNotes,
                 breakdown
             );
             
@@ -488,7 +488,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             }
             
             setShowPayoutModal(false);
-            setPayoutNotes('');
+            setPlatformPayoutNotes('');
             refreshData();
             alert(`Payout of $${amount.toFixed(2)} has been recorded successfully!`);
         } catch (e) {
