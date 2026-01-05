@@ -112,6 +112,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [payoutMethod, setPayoutMethod] = useState<'stripe' | 'offline'>('stripe');
     const [payoutNotes, setPayoutNotes] = useState('');
     const [isProcessingPayout, setIsProcessingPayout] = useState(false);
+    
+    // Affiliate rate editing
+    const [editCommissionRate, setEditCommissionRate] = useState<number | null>(null);
+    const [editDiscountPercent, setEditDiscountPercent] = useState<number | null>(null);
+    const [isSavingRates, setIsSavingRates] = useState(false);
 
     // Promo Code State
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
