@@ -106,7 +106,7 @@ export const PLANS = {
         priceYearly: 0,
         feePercent: 0.0275, // 2.75%
         feeFixed: 0.99, // $0.99
-        ticketLimit: 50,
+        ticketLimit: 50, // 50 tickets per event
         eventLimit: 3, // per month
         showDonationButton: true,
         features: ['50 Tickets per Event', '3 Events per Month', 'Standard Support', 'Platform Donation Button']
@@ -117,10 +117,10 @@ export const PLANS = {
         priceYearly: 390,
         feePercent: 0.015, // 1.5%
         feeFixed: 0.75, // $0.75
-        ticketLimit: 250,
-        eventLimit: 9999, // Unlimited
+        ticketLimit: 250, // 250 tickets per event
+        eventLimit: 10, // 10 events per month
         showDonationButton: false,
-        features: ['250 Tickets per Event', 'Unlimited Events', 'Priority Support', 'Advanced Analytics']
+        features: ['250 Tickets per Event', '10 Events per Month', 'Priority Support', 'Advanced Analytics']
     },
     premium: {
         name: 'Premium',
@@ -129,7 +129,7 @@ export const PLANS = {
         feePercent: 0.0075, // 0.75%
         feeFixed: 0.30, // $0.30 per ticket
         ticketLimit: 999999, // Unlimited
-        eventLimit: 9999,
+        eventLimit: 9999, // Unlimited
         showDonationButton: false,
         features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling (Coming Soon)', 'Custom Domain (Coming Soon)', 'Lowest Fees']
     }
