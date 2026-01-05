@@ -395,5 +395,152 @@ export const EmailService = {
             console.error("[EmailService] Affiliate Conversion Failed:", error);
             return { sent: false, error: error.message };
         }
+    },
+
+    /**
+     * Send weekly affiliate earnings summary email
+     */
+    sendAffiliateWeeklySummary: async (to, affiliateName, weeklyStats) => {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
+            console.log(`[SIMULATION] Weekly Summary to: ${to}`);
+            return { sent: false, simulated: true };
+        }
+
+        const {
+            totalEarnings = 0,
+            totalClicks = 0,
+            totalConversions = 0,
+            conversionRate = 0,
+            pendingPayout = 0,
+            topEvents = [],
+            weekStart,
+            weekEnd
+        } = weeklyStats;
+
+        const displayName = affiliateName || 'Partner';
+        const hasActivity = totalEarnings > 0 || totalClicks > 0;
+
+        const subject = hasActivity 
+            ? `📊 Your Weekly Earnings: $${totalEarnings.toFixed(2)}`
+            : `📊 Your Weekly Affiliate Summary`;
+
+        const topEventsHtml = topEvents.length > 0 
+            ? topEvents.map((e, i) => `
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">${i + 1}. ${e.eventName || 'Event'}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: center;">${e.conversions || 0}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold; color: #059669;">$${(e.earnings || 0).toFixed(2)}</td>
+                </tr>
+            `).join('')
+            : `<tr><td colspan="3" style="padding: 20px; text-align: center; color: #9ca3af;">No conversions this week</td></tr>`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📊</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Weekly Earnings Summary</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">
+                        ${weekStart || 'This Week'} - ${weekEnd || 'Today'}
+                    </p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName}! 👋
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Here's your affiliate performance summary for this week.
+                    </p>
+
+                    <!-- Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 25px 0;">
+                        <div style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #059669; text-transform: uppercase; font-weight: bold;">Weekly Earnings</p>
+                            <p style="margin: 5px 0 0 0; font-size: 32px; font-weight: 900; color: #047857;">$${totalEarnings.toFixed(2)}</p>
+                        </div>
+                        <div style="background: #faf5ff; border: 2px solid #a855f7; border-radius: 12px; padding: 20px; text-align: center;">
+                            <p style="margin: 0; font-size: 12px; color: #7c3aed; text-transform: uppercase; font-weight: bold;">Pending Payout</p>
+                            <p style="margin: 5px 0 0 0; font-size: 32px; font-weight: 900; color: #6d28d9;">$${pendingPayout.toFixed(2)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">Performance Metrics</h3>
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #6b7280;">Link Clicks</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #374151;">${totalClicks}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #6b7280;">Conversions</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #374151;">${totalConversions}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #6b7280;">Conversion Rate</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${conversionRate > 5 ? '#059669' : '#374151'};">${conversionRate.toFixed(1)}%</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Top Events -->
+                    <div style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">Top Performing Events</h3>
+                        <table style="width: 100%; font-size: 14px;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #e5e7eb;">
+                                    <th style="padding: 10px; text-align: left; color: #6b7280; font-weight: 600;">Event</th>
+                                    <th style="padding: 10px; text-align: center; color: #6b7280; font-weight: 600;">Sales</th>
+                                    <th style="padding: 10px; text-align: right; color: #6b7280; font-weight: 600;">Earnings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${topEventsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    ${!hasActivity ? `
+                        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; border-radius: 0 8px 8px 0; margin: 25px 0;">
+                            <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #92400e;">💡 Boost Your Earnings</h3>
+                            <p style="margin: 0; color: #92400e; font-size: 14px; line-height: 1.6;">
+                                No activity this week? Share your affiliate link on social media, in event communities, or with friends who love events!
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            View Full Dashboard →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket Affiliate Program · Earnings update every Monday
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket Affiliates" <${process.env.EMAIL_USER}>`,
+                to,
+                subject,
+                html: htmlBody
+            });
+            console.log(`[EmailService] Weekly Summary Sent: ${info.messageId} to ${to}`);
+            return { sent: true, messageId: info.messageId };
+        } catch (error) {
+            console.error("[EmailService] Weekly Summary Failed:", error);
+            return { sent: false, error: error.message };
+        }
     }
 };
