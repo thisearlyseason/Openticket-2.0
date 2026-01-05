@@ -695,9 +695,9 @@ export const recordAtDoorPayment = async (req, res) => {
         // Calculate platform fee based on organizer's plan
         const organizerPlan = reg.event?.owner?.subscription?.plan || 'free';
         const PLAN_FEES = {
-            free: { percent: 0.0275, fixed: 1.25 },
+            free: { percent: 0.0275, fixed: 0.99 },
             pro: { percent: 0.015, fixed: 0.75 },
-            premium: { percent: 0.0075, fixed: 0 }
+            premium: { percent: 0.0075, fixed: 0.30 }
         };
         const planFee = PLAN_FEES[organizerPlan] || PLAN_FEES.free;
         const platformFee = Number((amount * planFee.percent + planFee.fixed).toFixed(2));
