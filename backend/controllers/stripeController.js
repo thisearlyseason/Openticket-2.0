@@ -24,6 +24,7 @@ export const createOrder = async (req, res) => {
             addOnSelections,
             promoCode,
             affiliateCode,
+            platformDonationAmount,
             customerEmail,
             customerName,
             successUrl,
