@@ -447,6 +447,50 @@ export const Settings = () => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Affiliate Dashboard Access for Organizers */}
+                                {user.role === 'organizer' && (
+                                    <div className="mt-8 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+                                        <div className="flex items-start gap-4">
+                                            <div className="p-3 bg-white dark:bg-purple-900/50 rounded-xl shadow-sm hidden sm:block">
+                                                <Gift className="text-purple-600 dark:text-purple-400" size={24} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="text-lg font-bold text-purple-900 dark:text-purple-100">Affiliate Program</h3>
+                                                {user.affiliateCode ? (
+                                                    <>
+                                                        <p className="text-sm text-purple-700 dark:text-purple-300 mt-1 mb-2">
+                                                            Your affiliate code: <span className="font-mono font-bold bg-purple-100 dark:bg-purple-800/50 px-2 py-0.5 rounded">{user.affiliateCode}</span>
+                                                        </p>
+                                                        <p className="text-sm text-purple-600 dark:text-purple-400 mb-4">
+                                                            Track your referrals, clicks, and earnings in your affiliate dashboard.
+                                                        </p>
+                                                        <Button
+                                                            onClick={() => navigate('/affiliate')}
+                                                            className="bg-purple-600 hover:bg-purple-700 border-none text-white shadow-lg shadow-purple-200 dark:shadow-none"
+                                                        >
+                                                            <Gift size={16} className="mr-2" />
+                                                            Open Affiliate Dashboard
+                                                        </Button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-sm text-purple-700 dark:text-purple-300 mt-1 mb-4">
+                                                            Join our affiliate program to earn commissions by referring new organizers and promoting events.
+                                                        </p>
+                                                        <Button
+                                                            onClick={() => navigate('/affiliate')}
+                                                            className="bg-purple-600 hover:bg-purple-700 border-none text-white shadow-lg shadow-purple-200 dark:shadow-none"
+                                                        >
+                                                            <Gift size={16} className="mr-2" />
+                                                            Join Affiliate Program
+                                                        </Button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
