@@ -550,6 +550,26 @@ export const EventBuilder = () => {
                     </div>
                 </div>
 
+                {/* Platform Donation Toggle - Only for Pro/Premium */}
+                {(plan === 'pro' || plan === 'premium') && (
+                    <div className="flex items-center justify-between mb-4 p-3 bg-white dark:bg-black rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="flex-1 pr-4">
+                            <div className="flex items-center gap-2">
+                                <Heart size={16} className="text-pink-500" />
+                                <span className="font-bold text-zinc-700 dark:text-zinc-300">Platform Donation</span>
+                            </div>
+                            <p className="text-xs text-zinc-500 mt-1">
+                                Allow attendees to optionally donate to support OpenTicket
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className={`text-xs ${formData.hidePlatformDonation ? 'font-bold text-zinc-500' : 'text-zinc-400'}`}>Hide</span>
+                            <Switch checked={!formData.hidePlatformDonation} onChange={c => setFormData({ ...formData, hidePlatformDonation: !c })} />
+                            <span className={`text-xs ${!formData.hidePlatformDonation ? 'font-bold text-pink-500' : 'text-zinc-400'}`}>Show</span>
+                        </div>
+                    </div>
+                )}
+
                 <div className="space-y-1 mb-2">
                     <div className="flex justify-between">
                         <span>{priceLabel}:</span>
