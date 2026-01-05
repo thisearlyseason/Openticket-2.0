@@ -387,6 +387,9 @@ export const Billing = () => {
                             <p className="text-xs text-white/50 mt-4">
                                 You will be redirected to Stripe to verify your business details.
                             </p>
+                            <p className="text-xs text-white/40 mt-2">
+                                <strong>Note:</strong> Stripe requires a real, valid phone number for verification. Test/fake phone numbers will be rejected.
+                            </p>
                         </div>
                     </div>
                 ) : needsOnboarding ? (
