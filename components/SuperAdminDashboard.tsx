@@ -370,6 +370,49 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
+    const handleUpdateAffiliateRates = async () => {
+        if (!selectedAffiliate) return;
+        
+        setIsSavingRates(true);
+        try {
+            const updates: any = {};
+            
+            if (editCommissionRate !== null && editCommissionRate !== selectedAffiliate.commissionRate) {
+                updates.commissionRate = editCommissionRate;
+            }
+            if (editDiscountPercent !== null && editDiscountPercent !== selectedAffiliate.discountPercent) {
+                updates.discountPercent = editDiscountPercent;
+            }
+            
+            if (Object.keys(updates).length === 0) {
+                alert('No changes to save');
+                setIsSavingRates(false);
+                return;
+            }
+            
+            await StorageService.updateAffiliateRates(selectedAffiliate.id, updates);
+            
+            // Update local state
+            setAffiliates(prev => prev.map(aff => 
+                aff.id === selectedAffiliate.id 
+                    ? { ...aff, ...updates }
+                    : aff
+            ));
+            setSelectedAffiliate(prev => prev ? { ...prev, ...updates } : null);
+            
+            // Reset edit state
+            setEditCommissionRate(null);
+            setEditDiscountPercent(null);
+            
+            alert('Affiliate rates updated successfully!');
+        } catch (e) {
+            console.error('Update rates error:', e);
+            alert('Failed to update rates. Please try again.');
+        } finally {
+            setIsSavingRates(false);
+        }
+    };
+
     const handleSendBroadcast = async () => {
         if (!broadcastMsg.trim()) return;
         
