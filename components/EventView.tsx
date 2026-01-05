@@ -1017,6 +1017,78 @@ export const EventView = () => {
                                                         </div>
                                                     )}
 
+                                                    {/* Platform Donation Section */}
+                                                    {(() => {
+                                                        const organizerPlan = organizerUser?.subscription?.plan || 'free';
+                                                        const isFreePlan = organizerPlan === 'free';
+                                                        const showDonation = isFreePlan || !event.hidePlatformDonation;
+                                                        const isMandatory = isFreePlan;
+
+                                                        if (!showDonation) return null;
+
+                                                        const donationOptions = [
+                                                            { value: 0, label: 'No donation' },
+                                                            { value: 1, label: '$1' },
+                                                            { value: 2, label: '$2' },
+                                                            { value: 5, label: '$5' },
+                                                            { value: 10, label: '$10' },
+                                                        ];
+
+                                                        return (
+                                                            <div className={`p-8 rounded-[2.5rem] border mb-8 ${isMandatory ? 'bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800'}`}>
+                                                                <div className="flex items-start gap-4 mb-6">
+                                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isMandatory ? 'bg-gradient-to-br from-pink-500 to-purple-500' : 'bg-zinc-200 dark:bg-zinc-800'}`}>
+                                                                        <Heart size={24} className={isMandatory ? 'text-white' : 'text-zinc-500'} fill={isMandatory ? 'currentColor' : 'none'} />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <h3 className="font-black text-lg uppercase tracking-tight mb-1 flex items-center gap-2">
+                                                                            Support OpenTicket
+                                                                            {isMandatory && <span className="text-pink-500">*</span>}
+                                                                        </h3>
+                                                                        <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                                                                            Your donation helps us keep platform fees low and supports our team in building better tools for event creators.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-5 gap-2">
+                                                                    {donationOptions.map((opt) => {
+                                                                        // For mandatory (Free plan), don't show $0 option
+                                                                        if (isMandatory && opt.value === 0) return null;
+                                                                        
+                                                                        const isSelected = regData.platformDonationAmount === opt.value;
+                                                                        return (
+                                                                            <button
+                                                                                key={opt.value}
+                                                                                type="button"
+                                                                                onClick={() => setRegData({ ...regData, platformDonationAmount: opt.value })}
+                                                                                className={`py-3 px-2 rounded-xl font-bold text-sm transition-all ${
+                                                                                    isSelected
+                                                                                        ? 'bg-gradient-to-br from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30 scale-105'
+                                                                                        : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-pink-300 dark:hover:border-pink-700'
+                                                                                }`}
+                                                                            >
+                                                                                {opt.label}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+
+                                                                {isMandatory && regData.platformDonationAmount === 0 && (
+                                                                    <p className="mt-4 text-sm text-pink-600 dark:text-pink-400 font-bold flex items-center gap-2">
+                                                                        <AlertCircle size={16} /> Please select a donation amount to continue
+                                                                    </p>
+                                                                )}
+
+                                                                {!isMandatory && (
+                                                                    <p className="mt-4 text-xs text-zinc-400 text-center">
+                                                                        Donations are optional and go directly to supporting the platform.
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+
                                                     {/* Order Summary with Fees */}
                                                     {(getTotalTickets() > 0 || getTotalAddOns() > 0) && calculateTotal() > 0 && (
                                                         <div className="mb-8 p-6 bg-zinc-100 dark:bg-zinc-800/50 rounded-3xl border border-zinc-200 dark:border-zinc-800">
