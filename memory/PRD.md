@@ -51,6 +51,31 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 5, 2026)
 
+#### Admin Check Refactoring (LATEST)
+- [x] Standardized admin check to use only `is_admin` boolean
+- [x] Removed legacy `role === 'admin'` and `role === 'superadmin'` checks
+- [x] Updated `/app/backend/routes/adminRoutes.js` - requireAdmin middleware
+- [x] Updated `/app/components/Settings.tsx` - getAccountLabel() now uses isAdmin
+- [x] Admin checks now consistent: `user.isAdmin` (frontend) and `user.is_admin` (backend)
+
+#### Stripe Connect Phone Number Documentation (LATEST)
+- [x] Added note in Billing.tsx about real phone number requirement
+- [x] Stripe Connect Express requires valid phone numbers (no test numbers)
+- [x] Users informed before starting onboarding process
+
+#### Premium Plan Fee Correction (LATEST)
+- [x] Updated Premium fees to 0.75% + $0.30 per ticket
+- [x] Fixed in `/app/services/storageService.ts` (feeFixed: 0.30)
+- [x] Fixed in `/app/backend/utils/priceCalculator.js` (fixed: 0.30)
+- [x] Fixed in `/app/backend/controllers/stripeController.js`
+- [x] Updated Pricing.tsx display: "0.75% + $0.30 Ticket Fees"
+- [x] Updated email template features list
+
+#### Premium Plan "Coming Soon" Features (LATEST)
+- [x] White Labeling marked as "Coming Soon" with clock icon
+- [x] Custom Domain marked as "Coming Soon" with clock icon
+- [x] Amber badge styling to indicate planned features
+
 #### Subscription Upgrade Flow (LATEST)
 - [x] Backend `/api/subscription/create-checkout` - Creates Stripe Checkout session for paid plans, direct update for free plan
 - [x] Backend `/api/subscription/verify` - Verifies Stripe session and activates subscription
