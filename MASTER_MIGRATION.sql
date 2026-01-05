@@ -40,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id)
 -- 2. EVENTS TABLE ENHANCEMENTS
 -- =====================================================
 ALTER TABLE events ADD COLUMN IF NOT EXISTS registered_count INTEGER DEFAULT 0;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS hide_platform_donation BOOLEAN DEFAULT false;
 
 -- =====================================================
 -- 3. PROFILES TABLE ENHANCEMENTS (for affiliates)
