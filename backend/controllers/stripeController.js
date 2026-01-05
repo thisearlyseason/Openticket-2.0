@@ -111,6 +111,22 @@ export const createOrder = async (req, res) => {
         // 5. Build Stripe line items
         const lineItems = buildStripeLineItems(breakdown, event.title);
 
+        // 5b. Add platform donation as a separate line item (if applicable)
+        const donationAmount = Number(platformDonationAmount) || 0;
+        if (donationAmount > 0) {
+            lineItems.push({
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Support OpenTicket',
+                        description: 'Platform donation to keep fees low',
+                    },
+                    unit_amount: Math.round(donationAmount * 100), // cents
+                },
+                quantity: 1,
+            });
+        }
+
         // 6. Build tickets data for DB
         const ticketsData = [];
         for (const item of breakdown.items) {
