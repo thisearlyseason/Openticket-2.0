@@ -131,7 +131,7 @@ export const PLANS = {
         ticketLimit: 999999, // Unlimited
         eventLimit: 9999,
         showDonationButton: false,
-        features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling', 'Lowest Fees']
+        features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling (Coming Soon)', 'Custom Domain (Coming Soon)', 'Lowest Fees']
     }
 };
 
