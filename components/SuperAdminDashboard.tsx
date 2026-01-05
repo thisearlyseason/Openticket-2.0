@@ -519,16 +519,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = stats.recentTransactions.map(tx => [
-            new Date(tx.created_at).toLocaleDateString(),
-            tx.id,
-            tx.event?.title || 'N/A',
-            tx.event?.owner_id || 'N/A',
-            tx.gross_amount.toFixed(2),
-            tx.platform_fee.toFixed(2),
-            (tx.stripe_fee || 0).toFixed(2),
-            tx.organizer_net.toFixed(2)
-        ]);
+        const rows = stats.recentTransactions.map(tx => {
+            const event = events.find(e => e.id === tx.event_id);
+            return [
+                new Date(tx.created_at).toLocaleDateString(),
+                tx.id,
+                event?.title || 'Unknown',
+                getOrganizerName(event?.ownerId),
+                tx.gross_amount?.toFixed(2) || '0.00',
+                tx.platform_fee?.toFixed(2) || '0.00',
+                tx.stripe_fee?.toFixed(2) || '0.00',
+                tx.organizer_net?.toFixed(2) || '0.00'
+            ];
+        });
 
         // Add summary
         rows.push([]);
