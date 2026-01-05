@@ -151,7 +151,33 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_payouts_status ON affiliate_payouts(sta
 CREATE INDEX IF NOT EXISTS idx_affiliate_payouts_created_at ON affiliate_payouts(created_at);
 
 -- =====================================================
--- 8. DROP OLD FUNCTIONS (for clean recreation)
+-- 8. PLATFORM PAYOUTS TABLE (Admin payouts to company)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.platform_payouts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payout_type TEXT NOT NULL, -- 'platform_fees', 'subscriptions', 'combined'
+    amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    period_start TIMESTAMPTZ,
+    period_end TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'scheduled', -- 'scheduled', 'processing', 'completed', 'failed'
+    stripe_payout_id TEXT,
+    destination_account TEXT,
+    notes TEXT,
+    transaction_count INTEGER DEFAULT 0,
+    breakdown JSONB, -- Details of what's included
+    scheduled_for TIMESTAMPTZ,
+    executed_at TIMESTAMPTZ,
+    executed_by TEXT, -- Admin user ID who executed
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_platform_payouts_status ON platform_payouts(status);
+CREATE INDEX IF NOT EXISTS idx_platform_payouts_type ON platform_payouts(payout_type);
+CREATE INDEX IF NOT EXISTS idx_platform_payouts_created_at ON platform_payouts(created_at);
+
+-- =====================================================
+-- 9. DROP OLD FUNCTIONS (for clean recreation)
 -- =====================================================
 DROP FUNCTION IF EXISTS increment_registered_count(TEXT, INTEGER);
 DROP FUNCTION IF EXISTS process_checkout_success_v2(TEXT, TEXT, NUMERIC, NUMERIC, NUMERIC, NUMERIC, NUMERIC, TEXT, TEXT, JSONB, TEXT, TEXT, NUMERIC, TEXT, NUMERIC);
