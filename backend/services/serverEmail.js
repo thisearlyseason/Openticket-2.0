@@ -32,7 +32,7 @@ const PLAN_FEATURES = {
     premium: {
         name: 'Premium',
         price: '$110/month',
-        features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling', 'Custom Domain', 'Lowest Fees (0.75%)']
+        features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling', 'Custom Domain', 'Lowest Fees (0.75% + $0.30)']
     }
 };
 
