@@ -4,7 +4,45 @@ export const getAllUsers = async (req, res) => {
     try {
         const { data, error } = await supabase.from('profiles').select('*');
         if (error) throw error;
-        res.json(data);
+        
+        // Map snake_case to camelCase for frontend compatibility
+        const mappedUsers = (data || []).map(user => ({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            isAdmin: user.is_admin || false,
+            businessName: user.business_name,
+            businessType: user.business_type,
+            imageUrl: user.image_url,
+            bio: user.bio,
+            socials: user.socials,
+            location: user.location,
+            website: user.website,
+            subscription: user.subscription,
+            stripeConnectId: user.stripe_connect_id,
+            stripeOnboardingComplete: user.stripe_onboarding_complete,
+            stripePublishableKey: user.stripe_publishable_key,
+            stripeSecretKey: user.stripe_secret_key,
+            affiliateCode: user.affiliate_code,
+            affiliateClicks: user.affiliate_clicks || 0,
+            commissionRate: user.commission_rate || 10,
+            totalPaidOut: user.total_paid_out || 0,
+            availablePayout: user.available_payout || 0,
+            balanceDue: user.balance_due || 0,
+            referredBy: user.referred_by,
+            createdAt: user.created_at,
+            onboardingStep: user.onboarding_step,
+            invoices: user.invoices || [],
+            teamMembers: user.team_members || [],
+            notifications: user.notifications,
+            primaryColor: user.primary_color,
+            logoUrl: user.logo_url,
+            headerImageUrl: user.header_image_url,
+            organizerSubtitle: user.organizer_subtitle
+        }));
+        
+        res.json(mappedUsers);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -12,9 +50,37 @@ export const getAllUsers = async (req, res) => {
 
 export const getAllEvents = async (req, res) => {
     try {
-        const { data, error } = await supabase.from('events').select('*');
+        const { data, error } = await supabase.from('events').select(`
+            *,
+            owner:profiles!owner_id(id, name, email, business_name)
+        `);
         if (error) throw error;
-        res.json(data);
+        
+        // Map snake_case to camelCase for frontend compatibility
+        const mappedEvents = (data || []).map(event => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            ownerId: event.owner_id,
+            ownerName: event.owner?.name || event.owner?.business_name || event.owner?.email || 'Unknown',
+            location: event.location,
+            date: event.date,
+            time: event.time,
+            imageUrl: event.image_url,
+            status: event.status,
+            visibility: event.visibility,
+            category: event.category,
+            ticketTiers: event.ticket_tiers || [],
+            addOns: event.add_ons || [],
+            registeredCount: event.registered_count || 0,
+            capacity: event.capacity,
+            customQuestions: event.custom_questions || [],
+            waiverEnabled: event.waiver_enabled,
+            createdAt: event.created_at,
+            updatedAt: event.updated_at
+        }));
+        
+        res.json(mappedEvents);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
