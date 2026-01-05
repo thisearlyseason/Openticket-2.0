@@ -22,7 +22,7 @@ export const SubscriptionSuccess = () => {
             }
 
             try {
-                const result = await StorageService.verifySubscription(sessionId);
+                const result = await StorageService.Stripe.verifySubscription(sessionId);
                 
                 if (result.success) {
                     setPlan(result.plan);
