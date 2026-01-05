@@ -108,6 +108,30 @@ export const getProfile = async (req, res) => {
             .single();
 
         if (error) throw error;
+
+        // AUTO-ASSIGN PREMIUM FOR SUPER ADMINS
+        if (data && data.is_admin) {
+            const premiumSubscription = {
+                plan: 'premium',
+                status: 'active',
+                cycle: null,
+                startDate: data.created_at || new Date().toISOString(),
+                isAdminGrant: true
+            };
+
+            // Only update DB if subscription isn't already premium
+            const currentPlan = data.subscription?.plan;
+            if (currentPlan !== 'premium') {
+                await supabase
+                    .from('profiles')
+                    .update({ subscription: premiumSubscription })
+                    .eq('id', uid);
+            }
+
+            // Always return premium for admins in response
+            data.subscription = premiumSubscription;
+        }
+
         res.json({ profile: data });
     } catch (error) {
         res.status(404).json({ error: 'Profile not found' });
