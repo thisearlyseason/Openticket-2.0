@@ -231,11 +231,12 @@ export const createOrder = async (req, res) => {
             phone_number: phoneNumber,
             promo_code_used: validPromoCode?.code || null,
             discount_amount: breakdown.discountAmount,
-            total_amount: breakdown.grandTotal,
+            total_amount: breakdown.grandTotal + donationAmount, // Include donation in total
             service_fee: breakdown.platformFee,
             tax_amount: breakdown.taxAmount,
             custom_fees_amount: breakdown.customFeesAmount,
             affiliate_code: affiliateCode || null,
+            platform_donation_amount: donationAmount, // Track separately
         };
 
         const { error: insertError } = await supabase
