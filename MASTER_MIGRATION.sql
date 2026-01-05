@@ -44,8 +44,12 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS registered_count INTEGER DEFAULT 0;
 -- 3. PROFILES TABLE ENHANCEMENTS (for affiliates)
 -- =====================================================
 ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS affiliate_code TEXT UNIQUE,
 ADD COLUMN IF NOT EXISTS affiliate_clicks INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS total_paid_out NUMERIC(10, 2) DEFAULT 0;
+ADD COLUMN IF NOT EXISTS commission_rate NUMERIC(5, 2) DEFAULT 10,
+ADD COLUMN IF NOT EXISTS discount_percent NUMERIC(5, 2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS total_paid_out NUMERIC(10, 2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
 
 -- =====================================================
 -- 4. FINANCIAL TRANSACTIONS TABLE
