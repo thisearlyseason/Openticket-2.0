@@ -1,6 +1,7 @@
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
 import { calculateOrderBreakdown, buildStripeLineItems } from '../utils/priceCalculator.js';
+import { EmailService } from '../services/serverEmail.js';
 const require = createRequire(import.meta.url);
 
 /**
