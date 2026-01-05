@@ -533,8 +533,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         // Add summary
         rows.push([]);
         rows.push(['SUMMARY']);
-        rows.push(['Total Gross Volume', '', '', '', stats.totalRevenue.toFixed(2)]);
-        rows.push(['Platform Fees', '', '', '', stats.ticketRevenue.toFixed(2)]);
+        rows.push(['Total Volume', '', '', '', stats.totalVolume.toFixed(2)]);
+        rows.push(['Platform Fees', '', '', '', stats.platformFees.toFixed(2)]);
+        rows.push(['Stripe Fees', '', '', '', stats.stripeFees.toFixed(2)]);
+        rows.push(['Organizer Net', '', '', '', stats.organizerNet.toFixed(2)]);
+        rows.push(['Refunds', '', '', '', stats.refundTotal.toFixed(2)]);
         rows.push(['Subscription Revenue', '', '', '', stats.subscriptionRevenue.toFixed(2)]);
 
         const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
