@@ -59,6 +59,9 @@ export const AffiliateDashboard = () => {
             if (userData) {
                 setUser(userData);
                 setStripeId(userData.stripeConnectId || '');
+                
+                // Update cached user in localStorage to keep app state consistent
+                localStorage.setItem('openticket_current_user', JSON.stringify(userData));
 
                 if (userData.affiliateCode) {
                     setView('dashboard');
