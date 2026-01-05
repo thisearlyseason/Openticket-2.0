@@ -193,8 +193,8 @@ export const createOrder = async (req, res) => {
 
         if (isRealStripeAccount && breakdown.grandTotal > 0) {
             // Calculate application fee (platform commission)
-            // This is the platform fee + any absorbed fees
-            const applicationFeeAmount = Math.round(breakdown.platformFee * 100); // cents
+            // This is the platform fee + platform donation (donation goes 100% to platform)
+            const applicationFeeAmount = Math.round((breakdown.platformFee + donationAmount) * 100); // cents
 
             sessionOptions.payment_intent_data = {
                 application_fee_amount: applicationFeeAmount,
