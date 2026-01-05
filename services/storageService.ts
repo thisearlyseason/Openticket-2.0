@@ -330,6 +330,19 @@ const StripeService = {
     refundSplitPayment: async (paymentIntentId: string) => true,
     
     /**
+     * Verify subscription checkout and activate plan
+     */
+    verifySubscription: async (sessionId: string) => {
+        try {
+            const response = await postSupabase('/subscription/verify', 'POST', { sessionId });
+            return response;
+        } catch (e: any) {
+            console.error('[Subscription] Verification failed:', e);
+            return { success: false, error: e.message };
+        }
+    },
+    
+    /**
      * Create a PaymentIntent for at-door card payments
      * Returns clientSecret for Stripe Elements confirmation
      */
