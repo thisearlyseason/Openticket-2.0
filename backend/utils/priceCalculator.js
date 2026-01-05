@@ -8,7 +8,7 @@
 export const PLAN_FEES = {
     free: { percent: 0.0275, fixed: 0.99 },    // 2.75% + $0.99
     pro: { percent: 0.015, fixed: 0.75 },       // 1.5% + $0.75
-    premium: { percent: 0.0075, fixed: 0 },     // 0.75% + $0
+    premium: { percent: 0.0075, fixed: 0.30 },  // 0.75% + $0.30
 };
 
 /**
