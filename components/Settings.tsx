@@ -256,9 +256,9 @@ export const Settings = () => {
 
     const getAccountLabel = () => {
         if (!user) return null;
+        if (user.isAdmin) return { label: 'Super Admin', color: 'red' };
         if (user.role === 'attendee') return { label: 'Attendee', color: 'gray' };
         if (user.role === 'affiliate') return { label: 'Affiliate', color: 'green' };
-        if (user.role === 'admin') return { label: 'Admin', color: 'red' };
         if (user.role === 'organizer') {
             const plan = user.subscription?.plan || 'free';
             if (plan === 'premium') return { label: 'Organizer (PREMIUM)', color: 'purple' };
