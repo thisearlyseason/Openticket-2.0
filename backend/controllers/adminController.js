@@ -153,6 +153,7 @@ export const getFinancialStats = async (req, res) => {
             platformFees: 0,
             organizerNet: 0,
             refundTotal: 0,
+            platformDonations: 0,
         };
 
         try {
@@ -163,6 +164,7 @@ export const getFinancialStats = async (req, res) => {
                     platformFees: Number(rpcStats.platformFees) || 0,
                     organizerNet: Number(rpcStats.organizerNet) || 0,
                     refundTotal: Number(rpcStats.refundTotal) || 0,
+                    platformDonations: Number(rpcStats.platformDonations) || 0,
                 };
             }
         } catch (rpcErr) {
@@ -184,6 +186,21 @@ export const getFinancialStats = async (req, res) => {
                     }
                 });
             }
+        }
+
+        // 1b. Get platform donations from registrations
+        try {
+            const { data: donationData } = await supabase
+                .from('registrations')
+                .select('platform_donation_amount')
+                .not('platform_donation_amount', 'is', null);
+
+            if (donationData) {
+                stats.platformDonations = donationData.reduce((sum, r) => 
+                    sum + (Number(r.platform_donation_amount) || 0), 0);
+            }
+        } catch (donErr) {
+            console.warn('Donation stats not available:', donErr.message);
         }
 
         // 2. Get recent transactions
