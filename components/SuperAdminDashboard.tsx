@@ -1075,6 +1075,178 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             </Card>
                         </div>
 
+                        {/* Platform Payouts Section */}
+                        <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-500/30 rounded-2xl p-6 mb-8">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Wallet size={20} className="text-green-400" /> Platform Payouts
+                                </h3>
+                                <Button 
+                                    onClick={() => setShowPayoutModal(true)}
+                                    className="bg-green-600 hover:bg-green-700 border-none"
+                                >
+                                    <DollarSign size={16} className="mr-2" /> Schedule Payout
+                                </Button>
+                            </div>
+                            
+                            {/* Pending Amounts */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div className="bg-black/30 rounded-xl p-4">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Pending Platform Fees</div>
+                                    <div className="text-2xl font-black text-[#E0FF20]">
+                                        ${(pendingPayoutSummary?.platformFees?.amount || 0).toFixed(2)}
+                                    </div>
+                                    <div className="text-xs text-zinc-500">
+                                        {pendingPayoutSummary?.platformFees?.transactionCount || 0} transactions
+                                    </div>
+                                </div>
+                                <div className="bg-black/30 rounded-xl p-4">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Pending Subscriptions</div>
+                                    <div className="text-2xl font-black text-purple-400">
+                                        ${(pendingPayoutSummary?.subscriptions?.amount || 0).toFixed(2)}
+                                    </div>
+                                    <div className="text-xs text-zinc-500">
+                                        {pendingPayoutSummary?.subscriptions?.transactionCount || 0} payments
+                                    </div>
+                                </div>
+                                <div className="bg-black/30 rounded-xl p-4">
+                                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Total Pending</div>
+                                    <div className="text-2xl font-black text-green-400">
+                                        ${(pendingPayoutSummary?.total || 0).toFixed(2)}
+                                    </div>
+                                    <div className="text-xs text-zinc-500">Ready to withdraw</div>
+                                </div>
+                            </div>
+
+                            {/* Payout History */}
+                            {platformPayouts.length > 0 && (
+                                <div className="bg-black/20 rounded-xl overflow-hidden">
+                                    <div className="p-3 border-b border-zinc-800 text-xs font-bold text-zinc-500 uppercase">
+                                        Recent Payouts
+                                    </div>
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-black/30 text-zinc-500 text-xs uppercase">
+                                            <tr>
+                                                <th className="p-3 text-left">Date</th>
+                                                <th className="p-3 text-left">Type</th>
+                                                <th className="p-3 text-right">Amount</th>
+                                                <th className="p-3 text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {platformPayouts.slice(0, 5).map((payout: any) => (
+                                                <tr key={payout.id} className="border-t border-zinc-800/50">
+                                                    <td className="p-3 text-zinc-400">
+                                                        {new Date(payout.created_at).toLocaleDateString()}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <span className={`text-xs px-2 py-1 rounded-full ${
+                                                            payout.payout_type === 'platform_fees' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            payout.payout_type === 'subscriptions' ? 'bg-purple-500/20 text-purple-400' :
+                                                            'bg-blue-500/20 text-blue-400'
+                                                        }`}>
+                                                            {payout.payout_type === 'platform_fees' ? 'Platform Fees' :
+                                                             payout.payout_type === 'subscriptions' ? 'Subscriptions' : 'Combined'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono text-white font-bold">
+                                                        ${Number(payout.amount).toFixed(2)}
+                                                    </td>
+                                                    <td className="p-3 text-center">
+                                                        <Badge color={
+                                                            payout.status === 'completed' ? 'green' :
+                                                            payout.status === 'processing' ? 'yellow' :
+                                                            payout.status === 'cancelled' ? 'red' : 'blue'
+                                                        }>
+                                                            {payout.status}
+                                                        </Badge>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Payout Modal */}
+                        {showPayoutModal && (
+                            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                                <div className="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-md w-full p-6">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-lg font-bold text-white">Schedule Payout</h3>
+                                        <button onClick={() => setShowPayoutModal(false)} className="text-zinc-500 hover:text-white">
+                                            <XCircle size={20} />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                                Payout Type
+                                            </label>
+                                            <select
+                                                value={payoutType}
+                                                onChange={e => setPayoutType(e.target.value as any)}
+                                                className="w-full bg-black border border-zinc-700 rounded-lg p-3 text-white"
+                                            >
+                                                <option value="platform_fees">Platform Fees Only (${(pendingPayoutSummary?.platformFees?.amount || 0).toFixed(2)})</option>
+                                                <option value="subscriptions">Subscriptions Only (${(pendingPayoutSummary?.subscriptions?.amount || 0).toFixed(2)})</option>
+                                                <option value="combined">Combined (${(pendingPayoutSummary?.total || 0).toFixed(2)})</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                                Amount to Withdraw
+                                            </label>
+                                            <div className="text-3xl font-black text-green-400 bg-black/50 rounded-lg p-4 text-center">
+                                                ${payoutType === 'platform_fees' 
+                                                    ? (pendingPayoutSummary?.platformFees?.amount || 0).toFixed(2)
+                                                    : payoutType === 'subscriptions'
+                                                    ? (pendingPayoutSummary?.subscriptions?.amount || 0).toFixed(2)
+                                                    : (pendingPayoutSummary?.total || 0).toFixed(2)
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                                Notes (optional)
+                                            </label>
+                                            <Input
+                                                value={payoutNotes}
+                                                onChange={e => setPayoutNotes(e.target.value)}
+                                                placeholder="e.g., Monthly payout for December"
+                                                className="bg-black border-zinc-700"
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-3 mt-6">
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={() => setShowPayoutModal(false)}
+                                                className="flex-1"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button 
+                                                onClick={handleSchedulePlatformPayout}
+                                                disabled={isProcessingPlatformPayout || (pendingPayoutSummary?.total || 0) <= 0}
+                                                className="flex-1 bg-green-600 hover:bg-green-700 border-none"
+                                            >
+                                                {isProcessingPlatformPayout ? (
+                                                    <><RefreshCw size={16} className="mr-2 animate-spin" /> Processing...</>
+                                                ) : (
+                                                    <><CheckCircle size={16} className="mr-2" /> Confirm Payout</>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Organizer Breakdown */}
                         {stats.organizerBreakdown.length > 0 && (
                             <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
