@@ -94,6 +94,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         pendingPayouts: 0,       // Pending organizer payouts
         stripeFees: 0,           // Stripe processing fees
         refundTotal: 0,          // Total refunds issued
+        platformDonations: 0,    // Total platform donations from attendees
         recentTransactions: [] as FinancialTransaction[],
         organizerBreakdown: [] as OrganizerBreakdown[]
     });
