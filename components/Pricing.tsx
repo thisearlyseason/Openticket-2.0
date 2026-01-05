@@ -228,7 +228,7 @@ export const Pricing = () => {
                         </div>
                         <div className="flex items-start">
                             <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span className="text-sm text-green-600 dark:text-secondary font-bold">0.75% Ticket Fees</span>
+                            <span className="text-sm text-green-600 dark:text-secondary font-bold">0.75% + $0.30 Ticket Fees</span>
                         </div>
                     </div>
                     <Button
