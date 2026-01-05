@@ -50,6 +50,8 @@ interface AffiliateData {
     conversions: number;
     conversionRate: number;
     transactions: FinancialTransaction[];
+    commissionRate: number; // Affiliate's commission rate (%)
+    discountPercent: number; // Discount given to users who sign up via this affiliate (%)
 }
 
 interface AffiliatePayout {
