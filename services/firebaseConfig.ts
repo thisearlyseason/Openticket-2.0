@@ -7,19 +7,19 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 // ------------------------------------------------------------------
-// IMPORTANT: REPLACE THIS CONFIGURATION WITH YOUR FIREBASE PROJECT SETTINGS
+// Firebase Configuration - Uses Environment Variables for Deployment
 // ------------------------------------------------------------------
-// The current configuration uses a placeholder or specific project ID.
-// If you see "auth/configuration-not-found", it means Google Auth is not enabled in the Firebase Console
-// for the project ID listed below. You must use your OWN Firebase project where you have enabled Authentication.
+// Set these in your deployment platform (Vercel, etc.) or in .env file:
+// VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, etc.
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDtnbTx4gTAC5ufD173Lt9IaiQfpZOQFyA",
-  authDomain: "openticket-4f5bc.firebaseapp.com",
-  projectId: "openticket-4f5bc",
-  storageBucket: "openticket-4f5bc.firebasestorage.app",
-  messagingSenderId: "926069496604",
-  appId: "1:926069496604:web:d898aa1f91b31db38e78d9",
-  measurementId: "G-S25BFPR85R"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDtnbTx4gTAC5ufD173Lt9IaiQfpZOQFyA",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "openticket-4f5bc.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "openticket-4f5bc",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "openticket-4f5bc.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "926069496604",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:926069496604:web:d898aa1f91b31db38e78d9",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-S25BFPR85R"
 };
 
 // Explicitly initialize with null to avoid "Missing initializer" const errors if variable type changes
