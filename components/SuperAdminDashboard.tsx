@@ -440,6 +440,65 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
+    const handleSchedulePlatformPayout = async () => {
+        if (!pendingPayoutSummary) return;
+        
+        setIsProcessingPlatformPayout(true);
+        try {
+            let amount = 0;
+            let breakdown: any = {};
+            
+            if (payoutType === 'platform_fees') {
+                amount = pendingPayoutSummary.platformFees?.amount || 0;
+                breakdown = {
+                    ...pendingPayoutSummary.platformFees,
+                    type: 'platform_fees'
+                };
+            } else if (payoutType === 'subscriptions') {
+                amount = pendingPayoutSummary.subscriptions?.amount || 0;
+                breakdown = {
+                    ...pendingPayoutSummary.subscriptions,
+                    type: 'subscriptions'
+                };
+            } else {
+                amount = pendingPayoutSummary.total || 0;
+                breakdown = {
+                    platformFees: pendingPayoutSummary.platformFees,
+                    subscriptions: pendingPayoutSummary.subscriptions,
+                    type: 'combined'
+                };
+            }
+            
+            if (amount <= 0) {
+                alert('No pending amount to pay out');
+                return;
+            }
+            
+            const result = await StorageService.schedulePlatformPayout(
+                payoutType,
+                amount,
+                undefined, // scheduledFor - execute immediately
+                payoutNotes,
+                breakdown
+            );
+            
+            if (result?.payout?.id) {
+                // Mark as executed immediately
+                await StorageService.executePlatformPayout(result.payout.id);
+            }
+            
+            setShowPayoutModal(false);
+            setPayoutNotes('');
+            refreshData();
+            alert(`Payout of $${amount.toFixed(2)} has been recorded successfully!`);
+        } catch (e) {
+            console.error('Platform payout error:', e);
+            alert('Failed to process payout. Please try again.');
+        } finally {
+            setIsProcessingPlatformPayout(false);
+        }
+    };
+
     const handleSendBroadcast = async () => {
         if (!broadcastMsg.trim()) return;
         
