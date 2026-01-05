@@ -1215,8 +1215,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 Notes (optional)
                                             </label>
                                             <Input
-                                                value={payoutNotes}
-                                                onChange={e => setPayoutNotes(e.target.value)}
+                                                value={platformPayoutNotes}
+                                                onChange={e => setPlatformPayoutNotes(e.target.value)}
                                                 placeholder="e.g., Monthly payout for December"
                                                 className="bg-black border-zinc-700"
                                             />
