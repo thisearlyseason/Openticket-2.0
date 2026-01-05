@@ -1226,6 +1226,16 @@ export const EventView = () => {
                                                                         </span>
                                                                     </div>
                                                                 )}
+
+                                                                {/* Platform Donation in Summary */}
+                                                                {regData.platformDonationAmount > 0 && (
+                                                                    <div className="flex justify-between text-pink-600 dark:text-pink-400">
+                                                                        <span className="flex items-center gap-1">
+                                                                            <Heart size={14} fill="currentColor" /> Platform Donation
+                                                                        </span>
+                                                                        <span><PriceDisplay amount={regData.platformDonationAmount} /></span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center text-xl font-black">
                                                                 <span>Total</span>
