@@ -101,6 +101,13 @@ router.post('/verify', async (req, res) => {
 
         const { userId, planName, cycle } = session.metadata;
 
+        // Get user's current profile for email
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('email, name')
+            .eq('id', userId)
+            .single();
+
         // Update user's subscription
         const { error } = await supabase
             .from('profiles')
@@ -129,6 +136,17 @@ router.post('/verify', async (req, res) => {
             stripe_session_id: sessionId,
             created_at: new Date().toISOString()
         }).catch(e => console.warn('Invoice creation failed:', e));
+
+        // Send subscription welcome email
+        if (profile?.email) {
+            const emailResult = await EmailService.sendSubscriptionWelcome(
+                profile.email,
+                planName,
+                cycle,
+                profile.name
+            );
+            console.log(`[Subscription] Welcome email result:`, emailResult);
+        }
 
         res.json({ success: true, plan: planName });
     } catch (error) {
