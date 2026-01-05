@@ -496,6 +496,7 @@ export const EventView = () => {
                         addOnSelections: simpleAddOns,
                         promoCode: appliedPromo?.code,
                         affiliateCode: searchParams.get('ref') || undefined, // <--- Pass Affiliate Ref
+                        platformDonationAmount: regData.platformDonationAmount || 0, // <--- Platform Donation
                         customerEmail: regData.email.trim(),
                         customerName: regData.name,
                         assignments: assignments, // Full guest list
