@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import Stripe from 'stripe';
 import supabase from '../services/supabase.js';
+import { EmailService } from '../services/serverEmail.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
