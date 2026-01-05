@@ -1056,7 +1056,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         </div>
 
                         {/* Financial Summary Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
                                 <div className="text-3xl font-black text-white">${stats.totalVolume.toFixed(2)}</div>
@@ -1065,6 +1065,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees</div>
                                 <div className="text-3xl font-black text-[#E0FF20]">${stats.platformFees.toFixed(2)}</div>
                                 <div className="text-xs text-zinc-500 mt-1">Revenue to OpenTicket</div>
+                            </Card>
+                            <Card className="p-6 border-zinc-700 bg-gradient-to-br from-pink-900/30 to-purple-900/30 border-pink-500/30">
+                                <div className="text-xs font-bold text-pink-400 uppercase mb-2 flex items-center gap-1">
+                                    <Heart size={12} fill="currentColor" /> Platform Donations
+                                </div>
+                                <div className="text-3xl font-black text-pink-400">${stats.platformDonations.toFixed(2)}</div>
+                                <div className="text-xs text-zinc-500 mt-1">From attendees</div>
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Stripe Fees</div>
