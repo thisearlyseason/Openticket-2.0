@@ -401,6 +401,7 @@ const MainContent = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/organizer/:id" element={<OrganizerProfile />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/subscription-success" element={<SubscriptionSuccess />} />
             </Routes>
         </Layout>
     );
