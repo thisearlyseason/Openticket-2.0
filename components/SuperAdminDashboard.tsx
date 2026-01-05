@@ -977,7 +977,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
-                                <div className="text-3xl font-black text-white">${stats.totalRevenue.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-white">${stats.totalVolume.toFixed(2)}</div>
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees</div>
