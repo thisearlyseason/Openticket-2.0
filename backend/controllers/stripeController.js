@@ -176,6 +176,7 @@ export const createOrder = async (req, res) => {
                 eventId,
                 userId: userId || 'guest',
                 affiliateCode: affiliateCode || '',
+                platformDonationAmount: donationAmount.toString(),
                 // Store breakdown for webhook reconciliation
                 platformFee: breakdown.platformFee.toString(),
                 taxAmount: breakdown.taxAmount.toString(),
