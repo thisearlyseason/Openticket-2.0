@@ -334,6 +334,7 @@ export interface Event {
   taxRate?: number;
   absorbFees?: boolean;
   customFees?: CustomFee[];
+  hidePlatformDonation?: boolean; // Pro/Premium can hide the platform donation option
 
   // Registration & Policies
   questions?: Question[];
