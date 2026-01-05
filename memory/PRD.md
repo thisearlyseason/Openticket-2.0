@@ -160,6 +160,11 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 - `GET /api/events/public` - List public events
 - `GET /api/events/:id` - Get event details
 
+### Subscription
+- `POST /api/subscription/create-checkout` - Create subscription checkout (free plan: direct update, paid: Stripe redirect)
+- `POST /api/subscription/verify` - Verify subscription payment and activate plan
+- `GET /api/subscription/status/:userId` - Get subscription status (auto-returns premium for admins)
+
 ### Stripe Checkout
 - `POST /api/stripe/create-order` - Create Stripe Checkout session
 - `POST /api/stripe/verify-session` - Verify payment with full financial processing
