@@ -366,6 +366,13 @@ export const EventView = () => {
             return showToast("Please agree to the waiver to continue.", "info");
         }
 
+        // Validate mandatory platform donation for Free plan organizers
+        const organizerPlan = organizerUser?.subscription?.plan || 'free';
+        const isFreePlan = organizerPlan === 'free';
+        if (isFreePlan && regData.platformDonationAmount === 0) {
+            return showToast("Please select a donation amount to support OpenTicket.", "info");
+        }
+
         setIsRegistering(true);
         try {
             const tickets: PurchasedTicket[] = [];
