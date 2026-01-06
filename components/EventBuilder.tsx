@@ -1189,6 +1189,42 @@ export const EventBuilder = () => {
                                                     onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), customMessage: e.target.value } })}
                                                 />
                                             </div>
+
+                                            {/* Save as My Template */}
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    const templateName = prompt('Give your template a name:', `My Template ${(currentUser?.savedTicketTemplates?.length || 0) + 1}`);
+                                                    if (!templateName) return;
+                                                    
+                                                    const newTemplate = {
+                                                        id: `custom_${Date.now()}`,
+                                                        name: templateName,
+                                                        createdAt: Date.now(),
+                                                        design: {
+                                                            logoUrl: formData.ticketDesign?.logoUrl || '',
+                                                            backgroundColor: formData.ticketDesign?.backgroundColor || '#ffffff',
+                                                            textColor: formData.ticketDesign?.textColor || '#000000',
+                                                            accentColor: formData.ticketDesign?.accentColor || '#8b5cf6',
+                                                            customMessage: formData.ticketDesign?.customMessage || '',
+                                                        }
+                                                    };
+                                                    
+                                                    const existingTemplates = currentUser?.savedTicketTemplates || [];
+                                                    const updated = [...existingTemplates, newTemplate];
+                                                    
+                                                    await StorageService.updateUser(currentUser!.id, { savedTicketTemplates: updated });
+                                                    setCurrentUser({ ...currentUser!, savedTicketTemplates: updated });
+                                                    
+                                                    // Select the new template
+                                                    setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), template: newTemplate.id } });
+                                                    
+                                                    alert(`Template "${templateName}" saved! You can now use it for future events.`);
+                                                }}
+                                                className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
+                                            >
+                                                <Heart size={16} /> Save as My Template
+                                            </button>
                                         </div>
                                         
                                         {/* Right: Live Preview */}
