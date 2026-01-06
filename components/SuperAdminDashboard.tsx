@@ -2319,6 +2319,54 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </div>
                             </div>
 
+                            {/* Backend Default Currency */}
+                            <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                    <DollarSign size={20} className="text-green-400" /> Backend Default Currency
+                                </h3>
+                                <p className="text-sm text-zinc-400 mb-6">
+                                    Set the platform's default charge currency. This applies to events that don't specify their own currency.
+                                    <br /><span className="text-amber-400 mt-2 inline-block">⚠️ Stripe charges will use this currency unless the event overrides it.</span>
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Default Charge Currency</label>
+                                        <select
+                                            value={backendDefaultCurrency}
+                                            onChange={e => setBackendDefaultCurrency(e.target.value)}
+                                            className="w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white"
+                                        >
+                                            <option value="USD">🇺🇸 USD - US Dollar ($)</option>
+                                            <option value="EUR">🇪🇺 EUR - Euro (€)</option>
+                                            <option value="GBP">🇬🇧 GBP - British Pound (£)</option>
+                                            <option value="CAD">🇨🇦 CAD - Canadian Dollar (C$)</option>
+                                            <option value="AUD">🇦🇺 AUD - Australian Dollar (A$)</option>
+                                        </select>
+                                    </div>
+                                    <div className="bg-zinc-900/50 p-4 rounded-lg">
+                                        <p className="text-xs text-zinc-400 mb-2 font-bold">Currency Priority Logic:</p>
+                                        <ol className="text-xs text-zinc-500 list-decimal list-inside space-y-1">
+                                            <li>Event's charge currency (if organizer sets one)</li>
+                                            <li>Backend default currency (this setting)</li>
+                                            <li>USD as final fallback</li>
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end">
+                                    <Button 
+                                        onClick={() => {
+                                            localStorage.setItem('openticket_backend_default_currency', backendDefaultCurrency);
+                                            alert(`Backend default currency set to ${backendDefaultCurrency}. All events without a specific currency will use this for charges.`);
+                                        }} 
+                                        className="bg-green-600 hover:bg-green-700 text-white border-none"
+                                    >
+                                        <Save size={16} className="mr-2" /> Save Currency Settings
+                                    </Button>
+                                </div>
+                            </div>
+
                             {/* Mailerlite Email Marketing Settings */}
                             <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
                                 <h3 className="font-bold text-white mb-4 flex items-center gap-2">
