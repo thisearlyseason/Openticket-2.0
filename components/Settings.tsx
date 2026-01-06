@@ -60,6 +60,7 @@ export const Settings = () => {
             setLogoUrl(currentUser.logoUrl || '');
             setHeaderImageUrl(currentUser.headerImageUrl || '');
             setBusinessName(currentUser.businessName || '');
+            setBusinessEmail(currentUser.businessEmail || '');
             setOrganizerSubtitle(currentUser.organizerSubtitle || '');
             setUseBusinessName(currentUser.useBusinessName || false);
             setSocials(currentUser.socials || {});
