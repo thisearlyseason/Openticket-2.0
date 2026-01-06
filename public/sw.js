@@ -1,5 +1,5 @@
-// OpenTicket Service Worker - Offline Support for Check-In
-const CACHE_NAME = 'openticket-v1';
+// OpenTicket Service Worker - PWA with Push Notifications & Offline Support
+const CACHE_NAME = 'openticket-v2';
 const OFFLINE_CACHE = 'openticket-offline-v1';
 
 // Assets to cache for offline use
@@ -11,7 +11,7 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker...');
+  console.log('[SW] Installing Service Worker v2...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -108,15 +108,97 @@ async function syncOfflineCheckIns() {
   });
 }
 
-// Push notifications (future use)
+// Push notification handler
 self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received');
+  
+  let data = {
+    title: 'OpenTicket',
+    body: 'You have a new notification',
+    icon: '/icons/icon-192.svg',
+    badge: '/icons/icon-72.svg',
+    tag: 'openticket',
+    data: {}
+  };
+  
   if (event.data) {
-    const data = event.data.json();
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-72.png',
-      tag: data.tag || 'openticket'
-    });
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+  
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icons/icon-192.svg',
+    badge: data.badge || '/icons/icon-72.svg',
+    tag: data.tag || 'openticket',
+    data: data.data || {},
+    actions: data.actions || [],
+    requireInteraction: data.requireInteraction || false,
+    vibrate: [200, 100, 200],
+    timestamp: data.timestamp || Date.now()
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.notification.tag);
+  
+  event.notification.close();
+  
+  const action = event.action;
+  const data = event.notification.data || {};
+  
+  // Handle specific actions
+  if (action === 'dismiss') {
+    return;
+  }
+  
+  // Determine URL to open
+  let urlToOpen = '/';
+  
+  if (data.url) {
+    urlToOpen = data.url;
+  } else if (data.eventId) {
+    urlToOpen = `/#/event/${data.eventId}`;
+  } else if (data.registrationId) {
+    urlToOpen = `/#/ticket/${data.registrationId}`;
+  }
+  
+  // Focus existing window or open new one
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there's already a window open
+        for (const client of windowClients) {
+          if (client.url.includes(self.registration.scope)) {
+            client.navigate(urlToOpen);
+            return client.focus();
+          }
+        }
+        // Open new window if none exists
+        return clients.openWindow(urlToOpen);
+      })
+  );
+});
+
+// Notification close handler (for analytics)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed:', event.notification.tag);
+});
+
+// Message handler (for communication with main app)
+self.addEventListener('message', (event) => {
+  console.log('[SW] Message received:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
