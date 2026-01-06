@@ -1293,7 +1293,7 @@ export const EventView = () => {
                                                                     return (
                                                                         <div key={addon.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                             <span>{qty} x {addon.name}</span>
-                                                                            <span><PriceDisplay amount={addon.price * qty} /></span>
+                                                                            <span><EventPriceDisplay amount={addon.price * qty} currency={event.currency || 'USD'} /></span>
                                                                         </div>
                                                                     )
                                                                 })}
