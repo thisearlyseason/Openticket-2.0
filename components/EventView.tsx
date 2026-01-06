@@ -1018,7 +1018,6 @@ export const EventView = () => {
                                                             </p>
                                                         </div>
                                                     )}
-                                                )}
 
                                                 {event.addOns && event.addOns.length > 0 && (
                                                     <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800">
