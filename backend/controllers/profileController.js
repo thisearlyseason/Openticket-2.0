@@ -146,36 +146,63 @@ export const updateProfile = async (req, res) => {
         const { uid } = req.user;
         const updates = req.body;
 
-        // SECURITY FIX: Whitelist allowed fields
-        const allowedFields = [
-            'name', 'business_name', 'image_url', 'bio', 'socials', 'location',
-            'onboarding_step', 'payment_methods', 'payout_settings',
+        // Fields that exist as columns in the profiles table
+        const dbColumnFields = [
+            'name', 'business_name', 'image_url', 'socials', 'address',
             'stripe_connect_id', 'stripe_onboarding_complete', 'stripe_publishable_key', 'stripe_secret_key',
-            'favorite_organizers', 'gemini_api_key', 'default_tax_rate', 'default_custom_fees', 'address',
-            'notifications', 'email_templates', 'default_confirmation_template', 'default_waiver',
-            'default_refund_policy', 'default_refund_policy_enabled', 'logo_url', 'header_image_url',
-            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code',
-            'role', // Allow role changes (for affiliate signup)
-            'default_currency'
+            'favorite_organizers', 'commission_rate', 'affiliate_code',
+            'role' // Allow role changes (for affiliate signup)
+        ];
+
+        // Extended settings stored in the 'subscription' JSONB field
+        const extendedSettingsFields = [
+            'default_currency', 'default_tax_rate', 'default_custom_fees', 'default_waiver',
+            'default_refund_policy', 'default_refund_policy_enabled', 'default_confirmation_template',
+            'logo_url', 'header_image_url', 'primary_color', 'organizer_subtitle', 'business_type',
+            'notifications', 'email_templates', 'gemini_api_key', 'gmail_config'
         ];
 
         const safeUpdates = {};
+        const extendedSettings = {};
+        
         Object.keys(updates).forEach(key => {
-            if (allowedFields.includes(key)) {
-                // Security: Only allow specific role values, not 'admin' or 'superadmin'
+            if (dbColumnFields.includes(key)) {
+                // Security: Only allow specific role values
                 if (key === 'role') {
                     const allowedRoles = ['attendee', 'organizer', 'affiliate'];
                     if (!allowedRoles.includes(updates[key])) {
-                        return; // Skip disallowed role values
+                        return;
                     }
                 }
                 safeUpdates[key] = updates[key];
+            } else if (extendedSettingsFields.includes(key)) {
+                extendedSettings[key] = updates[key];
             }
         });
 
-        // Security Check: Ensure user can only update their own profile (unless admin, but for now strict)
+        // Security Check: User can only update their own profile
         if (id !== uid) {
             return res.status(403).json({ error: 'Unauthorized profile update' });
+        }
+
+        // If there are extended settings, merge them into the subscription field
+        if (Object.keys(extendedSettings).length > 0) {
+            // First fetch current subscription to merge
+            const { data: currentProfile } = await supabase
+                .from('profiles')
+                .select('subscription')
+                .eq('id', id)
+                .single();
+            
+            const currentSubscription = currentProfile?.subscription || {};
+            const mergedSubscription = {
+                ...currentSubscription,
+                settings: {
+                    ...(currentSubscription.settings || {}),
+                    ...extendedSettings
+                }
+            };
+            safeUpdates.subscription = mergedSubscription;
         }
 
         const { data, error } = await supabase
