@@ -149,9 +149,6 @@ export interface User {
   defaultPaymentLink?: string;
   defaultPaymentInstructions?: string;
 
-  // Affiliate
-  commissionRate?: number; // percent
-
   // Email Marketing
   gmailConfig?: {
     connected: boolean;
