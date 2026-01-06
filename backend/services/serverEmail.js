@@ -542,5 +542,120 @@ export const EmailService = {
             console.error("[EmailService] Weekly Summary Failed:", error);
             return { sent: false, error: error.message };
         }
+    },
+
+    /**
+     * Send payment failed notification email
+     */
+    sendPaymentFailedNotification: async (to, customerName, eventTitle, amount, failureReason) => {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
+            console.log(`[SIMULATION] Payment Failed to: ${to}, Event: ${eventTitle}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = customerName || 'there';
+        const formattedAmount = typeof amount === 'number' ? amount.toFixed(2) : amount || '0.00';
+        const reason = failureReason || 'Your card was declined or there was an issue processing your payment.';
+
+        const subject = `⚠️ Payment Failed - ${eventTitle || 'Event Registration'}`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">⚠️</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Payment Failed</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">We couldn't process your payment</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName},
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Unfortunately, we were unable to process your payment for <strong>${eventTitle || 'your event registration'}</strong>.
+                    </p>
+
+                    <!-- Order Details -->
+                    <div style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 16px; padding: 25px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #991b1b;">Payment Details</h3>
+                        <table style="width: 100%; font-size: 14px; color: #374151;">
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #fecaca;">Event</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #fecaca; text-align: right; font-weight: bold;">${eventTitle || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #fecaca;">Amount</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #fecaca; text-align: right; font-weight: bold;">$${formattedAmount}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #dc2626;">Issue</td>
+                                <td style="padding: 8px 0; text-align: right; color: #dc2626; font-weight: bold;">${reason}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- What to do -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 25px; margin: 25px 0;">
+                        <h2 style="margin: 0 0 15px 0; font-size: 18px; color: #111827;">What can you do?</h2>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: start; gap: 10px;">
+                                <span style="color: #3b82f6; font-weight: bold;">1.</span> 
+                                <span>Check that your card details are correct and up to date</span>
+                            </li>
+                            <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: start; gap: 10px;">
+                                <span style="color: #3b82f6; font-weight: bold;">2.</span> 
+                                <span>Ensure you have sufficient funds available</span>
+                            </li>
+                            <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; display: flex; align-items: start; gap: 10px;">
+                                <span style="color: #3b82f6; font-weight: bold;">3.</span> 
+                                <span>Contact your bank if the issue persists</span>
+                            </li>
+                            <li style="padding: 10px 0; display: flex; align-items: start; gap: 10px;">
+                                <span style="color: #3b82f6; font-weight: bold;">4.</span> 
+                                <span>Try again with a different payment method</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            Try Again →
+                        </a>
+                    </div>
+
+                    <p style="font-size: 14px; color: #6b7280; line-height: 1.6; text-align: center;">
+                        Need help? Reply to this email and we'll assist you.
+                    </p>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · The boldest ticketing platform for creators
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #d1d5db;">
+                        This is an automated notification about your payment attempt.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
+                to,
+                subject,
+                html: htmlBody
+            });
+            console.log(`[EmailService] Payment Failed Notification Sent: ${info.messageId} to ${to}`);
+            return { sent: true, messageId: info.messageId };
+        } catch (error) {
+            console.error("[EmailService] Payment Failed Notification Error:", error);
+            return { sent: false, error: error.message };
+        }
     }
 };
