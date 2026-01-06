@@ -112,12 +112,14 @@ export const getProfile = async (req, res) => {
 
         // AUTO-ASSIGN PREMIUM FOR SUPER ADMINS
         if (data && data.is_admin) {
+            const currentSettings = data.subscription?.settings || {};
             const premiumSubscription = {
                 plan: 'premium',
                 status: 'active',
                 cycle: null,
                 startDate: data.created_at || new Date().toISOString(),
-                isAdminGrant: true
+                isAdminGrant: true,
+                settings: currentSettings
             };
 
             // Only update DB if subscription isn't already premium
@@ -133,7 +135,30 @@ export const getProfile = async (req, res) => {
             data.subscription = premiumSubscription;
         }
 
-        res.json({ profile: data });
+        // Extract extended settings from subscription.settings and merge into profile response
+        const extendedSettings = data.subscription?.settings || {};
+        const responseProfile = {
+            ...data,
+            // Map extended settings to top-level for frontend compatibility
+            default_currency: extendedSettings.default_currency,
+            default_tax_rate: extendedSettings.default_tax_rate,
+            default_custom_fees: extendedSettings.default_custom_fees,
+            default_waiver: extendedSettings.default_waiver,
+            default_refund_policy: extendedSettings.default_refund_policy,
+            default_refund_policy_enabled: extendedSettings.default_refund_policy_enabled,
+            default_confirmation_template: extendedSettings.default_confirmation_template,
+            logo_url: extendedSettings.logo_url || data.image_url,
+            header_image_url: extendedSettings.header_image_url,
+            primary_color: extendedSettings.primary_color,
+            organizer_subtitle: extendedSettings.organizer_subtitle,
+            business_type: extendedSettings.business_type,
+            notifications: extendedSettings.notifications,
+            email_templates: extendedSettings.email_templates,
+            gemini_api_key: extendedSettings.gemini_api_key,
+            gmail_config: extendedSettings.gmail_config
+        };
+
+        res.json({ profile: responseProfile });
     } catch (error) {
         res.status(404).json({ error: 'Profile not found' });
     }
