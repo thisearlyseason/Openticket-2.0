@@ -56,7 +56,7 @@ export const LandingPage = () => {
                     </h1>
                     <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 font-medium">
                         The boldest ticketing platform for creators. Zero hidden fees.
-                        Instant payouts. <span className="text-white">100% Vibes.</span>
+                        <span className="text-white">100% Vibes.</span>
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                         <button onClick={() => navigate('/auth')} className="px-8 py-4 bg-[#E0FF20] text-black font-black text-xl rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(224,255,32,0.4)]">
@@ -91,7 +91,7 @@ export const LandingPage = () => {
                     ref={marqueeRef}
                     className="flex gap-8 whitespace-nowrap text-black font-black text-2xl uppercase tracking-tighter will-change-transform"
                 >
-                    {Array(20).fill("• No Hidden Fees • Instant Payouts • Custom Branding • QR Check-in • Real-time Analytics ").map((text, i) => (
+                    {Array(20).fill("• No Hidden Fees • Easy Payouts • Custom Branding • QR Check-in • Real-time Analytics ").map((text, i) => (
                         <span key={i}>{text}</span>
                     ))}
                 </div>
@@ -104,8 +104,8 @@ export const LandingPage = () => {
                         <div className="w-14 h-14 bg-[#E0FF20] rounded-2xl flex items-center justify-center mb-6 text-black group-hover:rotate-12 transition-transform">
                             <Zap size={28} fill="currentColor" />
                         </div>
-                        <h3 className="text-2xl font-black mb-2 font-display uppercase">Instant Payouts</h3>
-                        <p className="text-zinc-400">Get paid directly to your bank account via Stripe or Square. No waiting for the event to end.</p>
+                        <h3 className="text-2xl font-black mb-2 font-display uppercase">Easy Payouts</h3>
+                        <p className="text-zinc-400">Get paid directly to your bank account via Stripe.</p>
                     </div>
 
                     <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-[#ff00ff] transition-colors group">
