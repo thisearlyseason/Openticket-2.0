@@ -714,7 +714,36 @@ export const Settings = () => {
                                 <p className="text-sm text-zinc-500 mb-6">These settings will be used as default values for new events.</p>
 
                                 <div className="space-y-6">
-                                    <div>
+                                    {/* Default Currency Section */}
+                                    <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-200 dark:border-blue-800/50">
+                                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                                                    <DollarSign size={24} className="text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-zinc-900 dark:text-white">Default Event Currency</h3>
+                                                    <p className="text-xs text-zinc-500 dark:text-zinc-400">All new events will use this currency for pricing</p>
+                                                </div>
+                                            </div>
+                                            <select
+                                                value={defaultCurrency}
+                                                onChange={(e) => setDefaultCurrency(e.target.value)}
+                                                className="px-4 py-3 rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white font-bold text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-w-[200px]"
+                                            >
+                                                <option value="USD">$ USD - US Dollar</option>
+                                                <option value="EUR">€ EUR - Euro</option>
+                                                <option value="GBP">£ GBP - British Pound</option>
+                                                <option value="CAD">C$ CAD - Canadian Dollar</option>
+                                                <option value="AUD">A$ AUD - Australian Dollar</option>
+                                            </select>
+                                        </div>
+                                        <p className="mt-4 text-xs text-blue-600 dark:text-blue-300">
+                                            💡 You can override this for individual events in the Event Builder. Buyers will be charged in the event's currency.
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
                                         <div className="flex justify-between items-center mb-2">
                                             <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Default Refund Policy</h3>
                                             <Switch checked={defaultRefundPolicyEnabled} onChange={(c) => setDefaultRefundPolicyEnabled(c)} />
