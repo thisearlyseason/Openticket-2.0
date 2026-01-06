@@ -965,35 +965,14 @@ export const CheckInPortal = () => {
                 </div>
             </div>
 
-            {showScanner && (
-                <div className="fixed inset-0 z-50 bg-black flex flex-col">
-                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent">
-                        <h2 className="text-white font-bold text-lg flex items-center gap-2"><QrCode /> Scan Ticket</h2>
-                        <button onClick={stopScanner} className="p-2 bg-white/20 rounded-full text-white"><X size={24} /></button>
-                    </div>
-                    <div className="flex-1 relative flex items-center justify-center">
-                        <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" muted playsInline></video>
-                        <div className="w-64 h-64 border-2 border-[#E0FF20] rounded-3xl relative z-10 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-                            <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-[#E0FF20] -mt-1 -ml-1"></div>
-                            <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-[#E0FF20] -mt-1 -mr-1"></div>
-                            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-[#E0FF20] -mb-1 -ml-1"></div>
-                            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-[#E0FF20] -mb-1 -mr-1"></div>
-
-                            <div className="absolute inset-0 bg-[#E0FF20]/10 animate-pulse"></div>
-                        </div>
-                        {scanError && <div className="absolute bottom-32 bg-red-600 text-white px-4 py-2 rounded-lg font-bold">{scanError}</div>}
-
-                        <div className="absolute bottom-10 left-0 right-0 p-4 flex justify-center z-10">
-                            <button
-                                onClick={stopScanner}
-                                className="bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold py-4 px-8 rounded-full shadow-lg active:scale-95 transition-all flex items-center gap-2"
-                            >
-                                <X size={20} /> Close Scanner
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* New QR Scanner Component */}
+            <QRScanner
+                isOpen={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScan={(result) => {
+                    handleScanInput(result);
+                }}
+            />
 
             {ticketToDelete && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
