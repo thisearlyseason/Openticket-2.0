@@ -1001,9 +1001,16 @@ export const EventView = () => {
                                             <div className="space-y-6">
                                                 {/* Charge Currency Notice + Display Currency Selector */}
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
-                                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center sm:text-left">
-                                                        💳 Charged in {event.currency || 'USD'} (event currency)
-                                                    </span>
+                                                    <div className="text-center sm:text-left">
+                                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm block">
+                                                            💳 Payment charged in {CurrencyService.getChargeCurrency(event.currency)}
+                                                        </span>
+                                                        {displayCurrency && displayCurrency !== CurrencyService.getChargeCurrency(event.currency) && (
+                                                            <span className="text-blue-500 dark:text-blue-300 text-xs">
+                                                                Showing prices in {displayCurrency} (approximate)
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <DisplayCurrencySelector compact className="flex-shrink-0" />
                                                 </div>
                                                 
