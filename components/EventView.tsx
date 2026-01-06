@@ -1313,7 +1313,7 @@ export const EventView = () => {
                                                                                 if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
                                                                                 else sub -= appliedPromo.value;
                                                                             }
-                                                                            return <PriceDisplay amount={Math.max(0, sub)} />;
+                                                                            return <EventPriceDisplay amount={Math.max(0, sub)} currency={event.currency || 'USD'} />;
                                                                         })()}
                                                                     </span>
                                                                 </div>
