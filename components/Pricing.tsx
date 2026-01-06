@@ -114,12 +114,12 @@ export const Pricing = () => {
                 </h1>
                 <p className="text-xl text-gray-500 dark:text-zinc-400 mb-8">Choose the perfect plan for your events.</p>
 
-                {/* Currency Disclaimer - Only show for non-USD */}
+                {/* Currency Info - Only show for non-USD */}
                 {isNonUSD && (
-                    <div className="max-w-2xl mx-auto mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl">
-                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                            <span className="font-bold">Heads up!</span> Prices shown in {CurrencyService.getInfo(currency).name} are estimates based on current exchange rates. 
-                            They might wiggle a bit by the time you checkout. <span className="font-bold">You'll be charged in USD</span> — no surprises, just math.
+                    <div className="max-w-2xl mx-auto mb-8 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800/50 rounded-2xl">
+                        <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <span className="font-bold">Good news!</span> You'll be charged in {CurrencyService.getInfo(currency).name} ({currency}). 
+                            Prices are converted using current exchange rates — Stripe handles the math so you don't have to.
                         </p>
                     </div>
                 )}
