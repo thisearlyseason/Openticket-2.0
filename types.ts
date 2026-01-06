@@ -157,6 +157,10 @@ export interface User {
   };
   emailTemplates?: EmailTemplate[];
 
+  // Email Provider Settings
+  emailProvider?: 'gmail' | 'openticket_mailer'; // Selected email sending provider
+  gmailConnected?: boolean; // Whether Gmail is connected (separate from selection)
+
   defaultConfirmationTemplate?: string;
   defaultWaiver?: {
     enabled?: boolean;
