@@ -91,11 +91,10 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
   - Organizer info persists across event edits (no auto-reset)
   - Editable at any time in EventBuilder (per-event customization allowed)
 
-#### Currency Handling Fixes (January 6, 2026)
-- [x] **Event Currency Defaults**
-  - Event currency defaults to organizer's global default currency
-  - Organizers can override event currency via dropdown (USD, EUR, GBP, CAD, AUD)
-  - Event currency is single source of truth for Stripe charges
+#### Currency Handling (January 6, 2026)
+- [x] **Global Organization Currency**
+  - Organization's `defaultCurrency` is the single source of truth
+  - No per-event currency overrides (removed)
 - [x] **Event Details Display Currency**
   - Display currency defaults to attendee's local currency (geo/locale detection)
   - Attendees can manually switch display currency via dropdown
