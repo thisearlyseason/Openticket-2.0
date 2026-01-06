@@ -160,17 +160,18 @@ export const EventView = () => {
     useEffect(() => {
         const checkSuccess = async () => {
             const success = searchParams.get('success');
-            if (success === 'true' && event && !isSuccess) {
-                const sessionId = searchParams.get('session_id');
-                if (sessionId) {
-                    setIsProcessingPayment(true);
+            const sessionId = searchParams.get('session_id');
+            
+            // Wait for event to be loaded before processing success
+            if (success === 'true' && sessionId && event && !isSuccess && !isProcessingPayment) {
+                setIsProcessingPayment(true);
                     
-                    // Show immediate feedback - payment was successful on Stripe's end
-                    showToast("Payment successful! Preparing your confirmation...", "success");
+                // Show immediate feedback - payment was successful on Stripe's end
+                showToast("Payment successful! Preparing your confirmation...", "success");
                     
-                    const verifyAndConfirm = async () => {
-                        let attempts = 0;
-                        const maxAttempts = 15; // 7.5 seconds max
+                const verifyAndConfirm = async () => {
+                    let attempts = 0;
+                    const maxAttempts = 15; // 7.5 seconds max
                         
                         while (attempts < maxAttempts) {
                             try {
