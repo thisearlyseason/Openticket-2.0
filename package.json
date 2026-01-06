@@ -20,6 +20,8 @@
     "firebase": "^12.6.0",
     "firebase-admin": "^13.6.0",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
+    "idb-keyval": "^6.2.2",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.555.0",
     "node-cron": "^4.2.1",
@@ -28,7 +30,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^6.28.0",
-    "stripe": "^16.0.0"
+    "stripe": "^16.0.0",
+    "workbox-window": "^7.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
