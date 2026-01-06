@@ -341,6 +341,40 @@ export const Dashboard = () => {
                 </div>
             </div>
 
+            {/* Tools Row - Analytics & Marketing */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div 
+                    className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-purple-500/50 transition-colors group"
+                    onClick={() => navigate('/analytics')}
+                >
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <BarChart3 size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                            Advanced Analytics
+                            <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-xs text-zinc-500">Revenue trends, ticket insights & performance metrics</p>
+                    </div>
+                </div>
+                <div 
+                    className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-500/50 transition-colors group"
+                    onClick={() => navigate('/email-marketing')}
+                >
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                        <Mail size={24} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                            Email Marketing
+                            <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-xs text-zinc-500">Campaigns, reminders & attendee engagement</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Getting Started Checklist */}
             {(() => {
                 const dismissed = localStorage.getItem('hide_getting_started') === 'true';
