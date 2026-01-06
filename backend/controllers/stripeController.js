@@ -32,17 +32,11 @@ export const createOrder = async (req, res) => {
             userId,
             assignments,
             phoneNumber,
-            currency = 'usd' // Default to USD, accept customer's chosen currency
+            // Note: We ignore any currency passed from frontend for payments
+            // The charge currency is determined by: Event Currency → Backend Default → USD
         } = req.body;
 
-        // Normalize currency to lowercase (Stripe requires lowercase)
-        const selectedCurrency = (currency || 'usd').toLowerCase();
-        
-        // Supported currencies for checkout
-        const supportedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
-        const checkoutCurrency = supportedCurrencies.includes(selectedCurrency) ? selectedCurrency : 'usd';
-
-        console.log(`[Stripe] createOrder called for event: ${eventId}, currency: ${checkoutCurrency}`);
+        console.log(`[Stripe] createOrder called for event: ${eventId}`);
         console.log(`[Stripe] successUrl: ${successUrl}`);
         console.log(`[Stripe] cancelUrl: ${cancelUrl}`);
 
