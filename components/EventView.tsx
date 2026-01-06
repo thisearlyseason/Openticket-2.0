@@ -1397,7 +1397,7 @@ export const EventView = () => {
 
                                                                                 const plan = organizerUser?.subscription?.plan || 'free';
                                                                                 const fee = StorageService.calculateFees(runningTotal, plan);
-                                                                                return <PriceDisplay amount={fee} />;
+                                                                                return <EventPriceDisplay amount={fee} currency={event.currency || 'USD'} />;
                                                                             })()}
                                                                         </span>
                                                                     </div>
