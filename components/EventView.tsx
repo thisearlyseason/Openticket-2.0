@@ -1282,7 +1282,7 @@ export const EventView = () => {
                                                                     (ticketSelection['general'] || 0) > 0 && (
                                                                         <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                             <span>{(ticketSelection['general'] || 0)} x {event.ticketName || 'Tickets'}</span>
-                                                                            <span>{event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? <PriceDisplay amount={Number(regData.donation) || 0} /> : <PriceDisplay amount={event.price * (ticketSelection['general'] || 0)} />}</span>
+                                                                            <span>{event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? <EventPriceDisplay amount={Number(regData.donation) || 0} currency={event.currency || 'USD'} /> : <EventPriceDisplay amount={event.price * (ticketSelection['general'] || 0)} currency={event.currency || 'USD'} />}</span>
                                                                         </div>
                                                                     )
                                                                 )}
