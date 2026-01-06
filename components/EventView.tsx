@@ -68,6 +68,36 @@ export const EventView = () => {
     const [waitlistData, setWaitlistData] = useState({ name: '', email: '' });
     const { showToast, showAlert, showConfirm } = useGlobalUI();
 
+    // Display Currency State (UI-only, doesn't affect Stripe charges)
+    const [displayCurrency, setDisplayCurrency] = useState<string>('');
+    
+    // Initialize display currency from user's locale/geo detection
+    useEffect(() => {
+        const initDisplayCurrency = async () => {
+            // Check if user has set a manual preference
+            const manualPref = CurrencyService.getUserPreference();
+            if (manualPref) {
+                setDisplayCurrency(manualPref);
+                return;
+            }
+            
+            // Auto-detect from locale/geo
+            const detected = await CurrencyService.autoDetectCurrency();
+            setDisplayCurrency(detected);
+        };
+        
+        initDisplayCurrency();
+        
+        // Listen for currency change events
+        const handleCurrencyChange = () => {
+            const newCurrency = CurrencyService.getDisplayCurrency();
+            setDisplayCurrency(newCurrency);
+        };
+        
+        window.addEventListener('currencyChanged', handleCurrencyChange);
+        return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+    }, []);
+
     // Platform Donation Custom Amount State
     const [showCustomDonationInput, setShowCustomDonationInput] = useState(false);
     const [customDonationAmount, setCustomDonationAmount] = useState('');
