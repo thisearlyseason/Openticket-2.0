@@ -217,7 +217,15 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 refundTotal,
                 platformDonations,
                 recentTransactions: financials.recentTransactions || [],
-                organizerBreakdown: financials.organizerBreakdown || []
+                organizerBreakdown: financials.organizerBreakdown || [],
+                donationBreakdown: financials.donationBreakdown || {
+                    total: 0,
+                    count: 0,
+                    byAmount: { '$1': 0, '$2': 0, '$5': 0, '$10': 0, 'other': 0 },
+                    recent: [],
+                    thisMonth: 0,
+                    lastMonth: 0
+                }
             });
 
             // Load affiliate data from new analytics endpoint
