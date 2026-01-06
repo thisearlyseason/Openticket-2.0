@@ -398,7 +398,6 @@ export interface Event {
   organizerEmail: string;
   organizerPhone?: string;
   organizerWebsite?: string;
-  useOrganizerProfile?: boolean; // Toggle: true = use business profile, false = use personal profile
   visibility: 'public' | 'hidden' | 'private';
   isDraft: boolean;
 
