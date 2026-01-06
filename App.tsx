@@ -299,6 +299,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                             </div>
 
                             <div className="md:hidden flex items-center gap-2">
+                                <CurrencySelector compact />
                                 {user?.isAdmin && (
                                     <button 
                                         onClick={() => setShowSuperAdminPanel(true)} 
