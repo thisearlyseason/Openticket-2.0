@@ -73,7 +73,6 @@ export const Pricing = () => {
         let priceUSD = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
         const currencyInfo = CurrencyService.getInfo(currency);
         const convertedPrice = CurrencyService.convert(priceUSD, currency);
-        const isNonUSD = currency !== 'USD';
         
         if (user?.nonProfitStatus === 'approved' && plan === 'pro') {
             const discountedUSD = priceUSD * 0.75;
@@ -81,16 +80,18 @@ export const Pricing = () => {
             return (
                 <div className="flex flex-col items-center">
                     <span className="text-sm line-through text-gray-400 dark:text-zinc-500">
-                        {isNonUSD && '~'}{currencyInfo.symbol}{convertedPrice.toFixed(0)}
+                        {currencyInfo.symbol}{convertedPrice.toFixed(0)}
                     </span>
-                    <span>{isNonUSD && '~'}{currencyInfo.symbol}{discountedConverted.toFixed(0)}</span>
+                    <span>{currencyInfo.symbol}{discountedConverted.toFixed(0)}</span>
                 </div>
             );
         }
         
         if (priceUSD === 0) return `${currencyInfo.symbol}0`;
-        return `${isNonUSD ? '~' : ''}${currencyInfo.symbol}${convertedPrice.toFixed(0)}`;
+        return `${currencyInfo.symbol}${convertedPrice.toFixed(0)}`;
     };
+
+    const isNonUSD = currency !== 'USD';
 
     return (
         <div className="max-w-7xl mx-auto py-12 px-4">
@@ -112,6 +113,16 @@ export const Pricing = () => {
                     Plans & <span className="text-primary">Pricing</span>
                 </h1>
                 <p className="text-xl text-gray-500 dark:text-zinc-400 mb-8">Choose the perfect plan for your events.</p>
+
+                {/* Currency Disclaimer - Only show for non-USD */}
+                {isNonUSD && (
+                    <div className="max-w-2xl mx-auto mb-8 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 rounded-2xl">
+                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                            <span className="font-bold">Heads up!</span> Prices shown in {CurrencyService.getInfo(currency).name} are estimates based on current exchange rates. 
+                            They might wiggle a bit by the time you checkout. <span className="font-bold">You'll be charged in USD</span> — no surprises, just math.
+                        </p>
+                    </div>
+                )}
 
                 {/* Highlight Free Events Policy */}
                 <div className="inline-block bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 p-[2px] rounded-full mb-8 shadow-lg shadow-pink-500/30">
