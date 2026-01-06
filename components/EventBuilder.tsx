@@ -119,6 +119,7 @@ export const EventBuilder = () => {
                     setFormData(event);
                 }
             } else {
+                // New event - inherit defaults from user settings
                 setFormData(prev => ({
                     ...prev,
                     organizer: updatedUser?.businessName || updatedUser?.name || user.name,
@@ -134,6 +135,7 @@ export const EventBuilder = () => {
                     } : undefined,
                     taxRate: updatedUser?.defaultTaxRate || user.defaultTaxRate || 0,
                     customFees: updatedUser?.defaultCustomFees || user.defaultCustomFees || [],
+                    currency: updatedUser?.defaultCurrency || user.defaultCurrency || 'USD', // Inherit default currency
                     trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' }
                 }));
             }
