@@ -233,6 +233,7 @@ export const Settings = () => {
                 defaultWaiver: finalDefaultWaiver,
                 headerImageUrl: finalHeaderImageUrl,
                 emailTemplates: emailTemplates,
+                emailProvider: emailProvider,
                 socials: socials,
                 defaultTaxRate: Number(defaultTaxRate),
                 defaultCustomFees: defaultCustomFees,
