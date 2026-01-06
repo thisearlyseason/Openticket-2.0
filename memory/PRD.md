@@ -242,7 +242,9 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 - `/app/CREATE_PROMO_CODES_TABLE.sql`
 - `/app/CREATE_AFFILIATE_PAYOUTS_TABLE.sql`
 
-### 📋 Future Tasks
+### 📋 Future Tasks (P1)
+- [ ] Implement "White Labeling" feature for Premium plan
+- [ ] Implement "Custom Domain" feature for Premium plan
 - [ ] Subscription attribution to affiliate (track which subscriptions came from affiliates)
 - [ ] Add automated e2e tests for full payment flows
 - [ ] Stripe Elements integration for in-app card processing at check-in (currently uses external terminal)
