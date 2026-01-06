@@ -804,7 +804,7 @@ export const EventView = () => {
                                                     {(completedRegistration?.serviceFee || 0) > 0 && (
                                                         <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
                                                             <span>Platform & Service Fees</span>
-                                                            <span><PriceDisplay amount={completedRegistration?.serviceFee || 0} /></span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.serviceFee || 0} currency={event.currency || 'USD'} /></span>
                                                         </div>
                                                     )}
 
