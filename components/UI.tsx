@@ -823,15 +823,14 @@ export const ErrorModal = ({ isOpen, onClose, title = "Action Required", message
 };
 
 export const PriceDisplay = ({ amount, className = '' }: { amount: number, className?: string }) => {
-    // Import useCurrency hook dynamically to avoid circular deps
-    const [displayData, setDisplayData] = React.useState({ symbol: '$', converted: amount, isUSD: true });
+    const [displayData, setDisplayData] = React.useState({ symbol: '$', converted: amount, currency: 'USD' });
 
     React.useEffect(() => {
-        // Get currency from localStorage (set by CurrencyProvider)
         const getCurrencyData = () => {
             try {
                 const pref = localStorage.getItem('openticket_currency');
                 const cached = localStorage.getItem('openticket_currency_cache');
+                const ratesCache = localStorage.getItem('openticket_exchange_rates');
                 let currency = 'USD';
                 
                 if (pref) {
@@ -841,7 +840,8 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
                     currency = data.currency || 'USD';
                 }
 
-                const rates: Record<string, { rate: number; symbol: string }> = {
+                // Default rates (updated from backend when available)
+                let rates: Record<string, { rate: number; symbol: string }> = {
                     USD: { rate: 1, symbol: '$' },
                     EUR: { rate: 0.92, symbol: '€' },
                     GBP: { rate: 0.79, symbol: '£' },
@@ -849,24 +849,38 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
                     AUD: { rate: 1.53, symbol: 'A$' },
                 };
 
+                // Use cached rates from backend if available
+                if (ratesCache) {
+                    try {
+                        const ratesData = JSON.parse(ratesCache);
+                        if (ratesData.rates) {
+                            Object.keys(ratesData.rates).forEach(code => {
+                                if (rates[code]) {
+                                    rates[code].rate = ratesData.rates[code];
+                                }
+                            });
+                        }
+                    } catch {
+                        // Use defaults
+                    }
+                }
+
                 const info = rates[currency] || rates.USD;
                 setDisplayData({
                     symbol: info.symbol,
                     converted: amount * info.rate,
-                    isUSD: currency === 'USD',
+                    currency: currency,
                 });
             } catch {
-                setDisplayData({ symbol: '$', converted: amount, isUSD: true });
+                setDisplayData({ symbol: '$', converted: amount, currency: 'USD' });
             }
         };
 
         getCurrencyData();
 
-        // Listen for storage changes (when user changes currency)
+        // Listen for currency changes
         const handleStorage = () => getCurrencyData();
         window.addEventListener('storage', handleStorage);
-        
-        // Also listen for custom event
         window.addEventListener('currencyChanged', handleStorage);
 
         return () => {
@@ -877,9 +891,25 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
 
     if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
 
-    return (
-        <span className={`font-mono ${className}`} title={displayData.isUSD ? undefined : `USD $${amount.toFixed(2)}`}>
-            {displayData.symbol}{displayData.converted.toFixed(2)}
-        </span>
-    );
+    // Format with locale-aware number formatting
+    try {
+        const formatted = new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: displayData.currency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(displayData.converted);
+        
+        return (
+            <span className={`font-mono ${className}`}>
+                {formatted}
+            </span>
+        );
+    } catch {
+        return (
+            <span className={`font-mono ${className}`}>
+                {displayData.symbol}{displayData.converted.toFixed(2)}
+            </span>
+        );
+    }
 };
