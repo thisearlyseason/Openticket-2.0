@@ -53,16 +53,28 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Currency Handling & Profile Persistence Fixes (LATEST - January 6, 2026)
+#### Organizer Profile Settings Fix (LATEST - January 6, 2026)
+- [x] **Profile Toggle Location Fixed**
+  - "Use Business Name publicly" toggle is in Settings → Organizer Profile (NOT in EventBuilder)
+  - Toggle ON: Events use business name
+  - Toggle OFF: Events use personal name (signup name)
+- [x] **EventBuilder Simplified**
+  - Removed "Profile Source" toggle from EventBuilder Step 1
+  - Shows simple Organizer Profile card with editable name/email/website fields
+  - Added hint text: "To change your default name preference, go to Settings → Organizer Profile"
+- [x] **Organizer Name Resolution**
+  - New events default to business name if `useBusinessName` is ON in user profile
+  - New events default to personal name if `useBusinessName` is OFF
+  - Existing event edits preserve the saved organizer name
+- [x] **Profile Data Persistence**
+  - Organizer info persists across event edits (no auto-reset)
+  - Editable at any time in EventBuilder (per-event customization allowed)
+
+#### Currency Handling Fixes (January 6, 2026)
 - [x] **Event Currency Defaults**
   - Event currency defaults to organizer's global default currency
   - Organizers can override event currency via dropdown (USD, EUR, GBP, CAD, AUD)
   - Event currency is single source of truth for Stripe charges
-- [x] **Organizer Profile Persistence**
-  - Added "Profile Source" toggle in EventBuilder Step 1
-  - Toggle between Personal Profile and Organizer Profile
-  - Uses businessName (if set) or personal name based on toggle
-  - Profile data persists across event edits and reloads
 - [x] **Event Details Display Currency**
   - Display currency defaults to attendee's local currency (geo/locale detection)
   - Attendees can manually switch display currency via dropdown
