@@ -427,6 +427,7 @@ const MainContent = () => {
                 <Route path="/manage/:id/addons" element={<AddOnManager />} />
                 <Route path="/manage/:id/finance" element={<EventFinance />} />
                 <Route path="/my-tickets" element={<MyTickets />} />
+                <Route path="/ticket/:registrationId" element={<MobileTicketView />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/checkin/:id" element={<CheckInPortal />} />
