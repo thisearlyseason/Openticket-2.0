@@ -159,8 +159,8 @@ export const calculateOrderBreakdown = ({
         ? breakdown.discountedSubtotal / breakdown.rawSubtotal 
         : 1;
 
-    // Tickets are always taxable, add-ons check taxable flag
-    breakdown.taxableAmount = breakdown.ticketSubtotal * discountRatio;
+    // Tickets and donations are always taxable, add-ons check taxable flag
+    breakdown.taxableAmount = (breakdown.ticketSubtotal + breakdown.donationSubtotal) * discountRatio;
     breakdown.items.forEach(item => {
         if (item.type === 'addon' && item.taxable) {
             breakdown.taxableAmount += item.total * discountRatio;
