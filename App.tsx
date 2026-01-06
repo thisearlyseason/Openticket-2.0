@@ -425,6 +425,8 @@ const MainContent = () => {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/admin" element={<SuperAdminDashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/analytics" element={<AdvancedAnalytics />} />
+                <Route path="/email-marketing" element={<EmailMarketing />} />
                 <Route path="/manage/:id" element={<ManageEvent />} />
                 <Route path="/manage/:id/attendees" element={<AttendeeManager />} />
                 <Route path="/manage/:id/marketing" element={<EventMarketing />} />
