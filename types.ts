@@ -171,6 +171,7 @@ export interface User {
   defaultRefundPolicyEnabled?: boolean;
   defaultTaxRate?: number;
   defaultCustomFees?: CustomFee[];
+  defaultCurrency?: string; // Default currency for new events (USD, EUR, GBP, CAD, AUD)
 
   // Favorites
   favoriteOrganizers?: string[];
