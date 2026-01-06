@@ -1245,19 +1245,22 @@ export const EventView = () => {
                                                                     <div className="flex justify-between text-zinc-500">
                                                                         <span>Tax ({event.taxRate}%)</span>
                                                                         <span>
-                                                                            {(() => {
-                                                                                let sub = 0;
-                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
-                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
-                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
-                                                                                if (appliedPromo) {
-                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
-                                                                                    else sub -= appliedPromo.value;
-                                                                                }
-                                                                                const tax = Math.max(0, sub) * (event.taxRate / 100);
-                                                                                return <PriceDisplay amount={tax} />;
-                                                                            })()}
+                                                                            {orderBreakdown 
+                                                                                ? <PriceDisplay amount={orderBreakdown.taxAmount} />
+                                                                                : (() => {
+                                                                                    let sub = 0;
+                                                                                    if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
+                                                                                    if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
+                                                                                    if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
+                                                                                    event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
+                                                                                    if (appliedPromo) {
+                                                                                        if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
+                                                                                        else sub -= appliedPromo.value;
+                                                                                    }
+                                                                                    const tax = Math.max(0, sub) * (event.taxRate / 100);
+                                                                                    return <PriceDisplay amount={tax} />;
+                                                                                })()
+                                                                            }
                                                                         </span>
                                                                     </div>
                                                                 )}
