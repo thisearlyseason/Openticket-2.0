@@ -53,7 +53,29 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Push Notifications (LATEST - January 6, 2026)
+#### Advanced Analytics Dashboard & Email Marketing (LATEST - January 6, 2026)
+- [x] **Advanced Analytics Dashboard** (`/analytics` route)
+  - KPI cards: Revenue, Tickets Sold, Orders, Avg Order Value
+  - Revenue over time chart (line chart)
+  - Ticket distribution chart (donut chart)
+  - Sales by hour heatmap
+  - Device breakdown (mobile/desktop/tablet)
+  - Top performing events table
+  - Date range filters (7d, 30d, 90d, all time)
+  - CSV export functionality
+- [x] **Email Marketing with Mailerlite** (`/email-marketing` route)
+  - Mailerlite API integration (REST API)
+  - Campaign types: Pre-event reminders, Post-event follow-ups, Abandoned cart, Newsletter, Announcements
+  - Email templates with responsive HTML
+  - Subscriber management (add, remove, bulk import)
+  - Group/list management for events
+  - Sync attendees from events to Mailerlite
+  - Campaign creation and management UI
+- [x] **Dashboard Integration**
+  - Quick access cards for Analytics and Email Marketing
+  - Gradient UI with hover effects
+
+#### Push Notifications (January 6, 2026)
 - [x] **Web Push with VAPID** - Full push notification support
   - VAPID keys generated and stored in .env
   - Backend service using `web-push` library
