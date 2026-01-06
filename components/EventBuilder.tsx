@@ -1230,17 +1230,41 @@ export const EventBuilder = () => {
                                         {/* Right: Live Preview */}
                                         <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
                                             {(() => {
-                                                const templates: Record<string, { gradient: string; bg: string; text: string }> = {
+                                                const defaultTemplates: Record<string, { gradient: string; bg: string; text: string }> = {
                                                     modern: { gradient: 'from-purple-500 to-indigo-600', bg: 'bg-white dark:bg-zinc-800', text: 'text-zinc-900 dark:text-white' },
                                                     classic: { gradient: 'from-zinc-800 to-zinc-900', bg: 'bg-zinc-900', text: 'text-white' },
                                                     minimal: { gradient: 'from-zinc-100 to-zinc-200', bg: 'bg-white', text: 'text-zinc-900' },
                                                     festive: { gradient: 'from-pink-500 to-orange-400', bg: 'bg-pink-50', text: 'text-pink-900' },
                                                 };
-                                                const t = templates[formData.ticketDesign?.template || 'modern'];
+                                                
+                                                const templateId = formData.ticketDesign?.template || 'modern';
+                                                const isCustomTemplate = templateId.startsWith('custom_');
+                                                
+                                                // For custom templates, use the stored colors
+                                                let t = defaultTemplates[templateId] || defaultTemplates.modern;
+                                                let headerStyle: React.CSSProperties = {};
+                                                let bodyStyle: React.CSSProperties = {};
+                                                
+                                                if (isCustomTemplate) {
+                                                    // Use inline styles for custom templates
+                                                    headerStyle = { backgroundColor: formData.ticketDesign?.accentColor || '#8b5cf6' };
+                                                    bodyStyle = { 
+                                                        backgroundColor: formData.ticketDesign?.backgroundColor || '#ffffff',
+                                                        color: formData.ticketDesign?.textColor || '#000000'
+                                                    };
+                                                    t = { gradient: '', bg: '', text: '' };
+                                                }
+                                                
                                                 return (
-                                                    <div className={`w-full max-w-[240px] ${t.bg} rounded-xl shadow-xl overflow-hidden`}>
+                                                    <div 
+                                                        className={`w-full max-w-[240px] rounded-xl shadow-xl overflow-hidden ${!isCustomTemplate ? t.bg : ''}`}
+                                                        style={isCustomTemplate ? bodyStyle : {}}
+                                                    >
                                                         {/* Ticket Header */}
-                                                        <div className={`h-20 bg-gradient-to-br ${t.gradient} flex items-center justify-center p-3`}>
+                                                        <div 
+                                                            className={`h-20 flex items-center justify-center p-3 ${!isCustomTemplate ? `bg-gradient-to-br ${t.gradient}` : ''}`}
+                                                            style={isCustomTemplate ? headerStyle : {}}
+                                                        >
                                                             {formData.ticketDesign?.logoUrl ? (
                                                                 <img src={formData.ticketDesign.logoUrl} className="max-h-full max-w-full object-contain" alt="Ticket" />
                                                             ) : (
@@ -1249,7 +1273,10 @@ export const EventBuilder = () => {
                                                         </div>
                                                         
                                                         {/* Ticket Content */}
-                                                        <div className={`p-3 text-center ${t.text}`}>
+                                                        <div 
+                                                            className={`p-3 text-center ${!isCustomTemplate ? t.text : ''}`}
+                                                            style={isCustomTemplate ? bodyStyle : {}}
+                                                        >
                                                             <div className="font-black text-sm leading-tight mb-0.5">{formData.title || 'Event Title'}</div>
                                                             <div className="text-[10px] opacity-60 mb-2">{formData.date || 'Date'} • {formData.location || 'Location'}</div>
                                                             
