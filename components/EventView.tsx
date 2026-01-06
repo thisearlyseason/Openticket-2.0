@@ -573,6 +573,9 @@ export const EventView = () => {
                     if (val.qty > 0) simpleAddOns[id] = val.qty;
                 });
 
+                // Get user's selected currency for Stripe checkout
+                const selectedCurrency = CurrencyService.getUserCurrency();
+
                 const response = await fetch('/api/stripe/create-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -588,6 +591,7 @@ export const EventView = () => {
                         customerName: regData.name,
                         assignments: assignments,
                         phoneNumber: regData.phoneNumber,
+                        currency: selectedCurrency, // Pass selected currency for Stripe checkout
                         successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
                         cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
                         userId: currentUser?.id
