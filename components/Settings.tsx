@@ -66,6 +66,7 @@ export const Settings = () => {
             setDefaultWaiver(currentUser.defaultWaiver || {});
             setDefaultTaxRate(currentUser.defaultTaxRate || 0);
             setDefaultCustomFees(currentUser.defaultCustomFees || []);
+            setDefaultCurrency(currentUser.defaultCurrency || 'USD');
 
             // Email State
             setGmailConfig(currentUser.gmailConfig || { connected: false });
