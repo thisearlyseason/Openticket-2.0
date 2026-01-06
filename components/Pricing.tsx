@@ -283,9 +283,16 @@ export const Pricing = () => {
 
             </div>
 
-            <div className="mt-8 text-center">
+            {/* USD Billing Notice - Always visible, more prominent for non-USD */}
+            <div className={`mt-8 text-center ${isNonUSD ? 'mb-4' : ''}`}>
+                {isNonUSD && (
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full text-sm font-bold mb-4">
+                        <span>💵</span> You will be charged in USD
+                    </div>
+                )}
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     * Standard credit card processing fees (2.9% + $0.30) apply to all paid online ticket sales via Stripe. Platform fees are separate.
+                    {!isNonUSD && <span className="block mt-1">All prices and charges are in USD.</span>}
                 </p>
                 {user?.businessType === 'nonprofit' && user.nonProfitStatus !== 'approved' && (
                     <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center text-sm text-blue-800 dark:text-blue-200 inline-block">
