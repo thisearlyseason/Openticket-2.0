@@ -396,6 +396,169 @@ export const CurrencyService = {
         const rates = await fetchLiveRates();
         return rates !== null;
     },
+
+    // ==================== BACKEND DEFAULT CURRENCY ====================
+
+    /**
+     * Get the backend default currency (platform-wide setting)
+     * This is used when an event doesn't specify its own currency
+     */
+    getBackendDefaultCurrency: (): string => {
+        try {
+            const saved = localStorage.getItem(BACKEND_DEFAULT_KEY);
+            if (saved && SUPPORTED_CURRENCIES[saved]) {
+                return saved;
+            }
+        } catch (e) {
+            // Silent fail
+        }
+        return 'USD'; // Ultimate fallback
+    },
+
+    /**
+     * Set the backend default currency (admin only)
+     */
+    setBackendDefaultCurrency: (currency: string): void => {
+        try {
+            if (SUPPORTED_CURRENCIES[currency]) {
+                localStorage.setItem(BACKEND_DEFAULT_KEY, currency);
+            }
+        } catch (e) {
+            // Silent fail
+        }
+    },
+
+    // ==================== CHARGE CURRENCY RESOLUTION ====================
+
+    /**
+     * Get the CHARGE currency for an event
+     * This is the currency Stripe will use for payment
+     * 
+     * Priority: Event Currency → Backend Default → USD
+     * 
+     * @param eventCurrency - The event's specified currency (if any)
+     * @returns The currency code to use for Stripe charges
+     */
+    getChargeCurrency: (eventCurrency?: string | null): string => {
+        // Priority 1: Event's own charge currency
+        if (eventCurrency && SUPPORTED_CURRENCIES[eventCurrency]) {
+            return eventCurrency;
+        }
+        
+        // Priority 2: Backend default currency
+        const backendDefault = CurrencyService.getBackendDefaultCurrency();
+        if (backendDefault && SUPPORTED_CURRENCIES[backendDefault]) {
+            return backendDefault;
+        }
+        
+        // Priority 3: USD fallback
+        return 'USD';
+    },
+
+    // ==================== DISPLAY CURRENCY (UI-ONLY) ====================
+
+    /**
+     * Get user's DISPLAY currency preference
+     * This is for UI display only and does NOT affect Stripe charges
+     */
+    getDisplayCurrency: (): string => {
+        // User's manual preference for display
+        const pref = CurrencyService.getUserPreference();
+        if (pref && SUPPORTED_CURRENCIES[pref]) {
+            return pref;
+        }
+        
+        // Fall back to auto-detected currency
+        return CurrencyService.getUserCurrency();
+    },
+
+    /**
+     * Set user's DISPLAY currency preference (UI-only)
+     * This does NOT affect payment currency
+     */
+    setDisplayCurrency: (currency: string): void => {
+        CurrencyService.setUserPreference(currency);
+    },
+
+    // ==================== PRICE FORMATTING ====================
+
+    /**
+     * Format a price in its CHARGE currency (no conversion)
+     * Use this for displaying the actual price that will be charged
+     * 
+     * @param amount - The price amount in the charge currency
+     * @param chargeCurrency - The charge currency code
+     * @param showCode - Whether to show currency code
+     */
+    formatChargeCurrency: (amount: number, chargeCurrency: string = 'USD', showCode: boolean = true): string => {
+        const info = SUPPORTED_CURRENCIES[chargeCurrency] || SUPPORTED_CURRENCIES.USD;
+        
+        try {
+            const formatted = new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: info.code,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+            return formatted;
+        } catch {
+            const fallback = `${info.symbol}${amount.toFixed(2)}`;
+            return showCode ? `${fallback} ${info.code}` : fallback;
+        }
+    },
+
+    /**
+     * Format a price converted to DISPLAY currency (for UI only)
+     * Shows the approximate value in user's preferred currency
+     * 
+     * @param amount - The price amount in the charge currency
+     * @param chargeCurrency - The original charge currency
+     * @param displayCurrency - The user's display currency preference
+     * @param showApproximate - Whether to prefix with ~ for conversions
+     */
+    formatDisplayCurrency: (
+        amount: number, 
+        chargeCurrency: string = 'USD', 
+        displayCurrency?: string,
+        showApproximate: boolean = true
+    ): string => {
+        const display = displayCurrency || CurrencyService.getDisplayCurrency();
+        
+        // If same currency, no conversion needed
+        if (display === chargeCurrency) {
+            return CurrencyService.formatChargeCurrency(amount, chargeCurrency);
+        }
+        
+        // Convert: charge currency → USD → display currency
+        const chargeInfo = SUPPORTED_CURRENCIES[chargeCurrency] || SUPPORTED_CURRENCIES.USD;
+        const displayInfo = SUPPORTED_CURRENCIES[display] || SUPPORTED_CURRENCIES.USD;
+        
+        // Convert to USD first, then to display currency
+        const amountInUsd = chargeInfo.rate !== 0 ? amount / chargeInfo.rate : amount;
+        const convertedAmount = amountInUsd * displayInfo.rate;
+        
+        try {
+            const formatted = new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: displayInfo.code,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(convertedAmount);
+            
+            return showApproximate ? `≈ ${formatted}` : formatted;
+        } catch {
+            const fallback = `${displayInfo.symbol}${convertedAmount.toFixed(2)}`;
+            return showApproximate ? `≈ ${fallback}` : fallback;
+        }
+    },
+
+    /**
+     * Check if display currency differs from charge currency
+     */
+    isDisplayDifferentFromCharge: (chargeCurrency: string): boolean => {
+        const displayCurrency = CurrencyService.getDisplayCurrency();
+        return displayCurrency !== chargeCurrency;
+    },
 };
 
 export default CurrencyService;
