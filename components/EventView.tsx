@@ -67,6 +67,10 @@ export const EventView = () => {
     const [waitlistData, setWaitlistData] = useState({ name: '', email: '' });
     const { showToast, showAlert, showConfirm } = useGlobalUI();
 
+    // Platform Donation Custom Amount State
+    const [showCustomDonationInput, setShowCustomDonationInput] = useState(false);
+    const [customDonationAmount, setCustomDonationAmount] = useState('');
+
     // Favorites
     const [loadingFavorite, setLoadingFavorite] = useState(false);
     const toggleFavorite = async () => {
