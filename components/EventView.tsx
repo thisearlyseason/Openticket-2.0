@@ -969,14 +969,12 @@ export const EventView = () => {
                                             )
                                         ) : (
                                             <div className="space-y-6">
-                                                {/* Currency Notice */}
-                                                {event.currency && event.currency !== 'USD' && (
-                                                    <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
-                                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
-                                                            💳 Prices in {event.currency} — You'll be charged in {event.currency}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                {/* Charge Currency Notice */}
+                                                <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
+                                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                                                        💳 Prices shown in {event.currency || 'USD'} — Payment will be charged in {event.currency || 'USD'}
+                                                    </span>
+                                                </div>
                                                 
                                                 {event.priceType === 'tiered' ? (
                                                     event.ticketTiers?.map(tier => (
