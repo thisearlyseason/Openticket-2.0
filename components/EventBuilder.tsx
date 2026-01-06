@@ -888,10 +888,9 @@ export const EventBuilder = () => {
                                                     </div>
                                                     <div className="flex-1">
                                                         <Input
-                                                            label="Price"
+                                                            label={`Price (${formData.currency || 'USD'})`}
                                                             type="number"
                                                             placeholder="0.00"
-                                                            icon={DollarSign}
                                                             value={tier.price}
                                                             onChange={e => { const n = [...formData.ticketTiers || []]; n[idx].price = parseFloat(e.target.value); setFormData({ ...formData, ticketTiers: n }) }}
                                                             containerClassName="mb-0"
@@ -926,7 +925,7 @@ export const EventBuilder = () => {
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="flex gap-4">
-                                            <Input label="Price" type="number" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
+                                            <Input label={`Price (${formData.currency || 'USD'})`} type="number" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
                                             {/* Capacity for non-tiered events */}
                                             <Input label="Capacity" type="number" value={formData.capacity || ''} onChange={e => setFormData({ ...formData, capacity: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
                                         </div>
