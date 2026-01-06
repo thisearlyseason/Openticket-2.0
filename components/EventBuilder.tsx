@@ -122,15 +122,21 @@ export const EventBuilder = () => {
                 // New event - inherit defaults from user settings
                 // Use businessName if useBusinessName is enabled, otherwise use personal name
                 const useBusinessProfile = updatedUser?.useBusinessName || user.useBusinessName || false;
+                
+                // ALWAYS populate organizer fields - never leave empty
                 const displayName = useBusinessProfile 
                     ? (updatedUser?.businessName || user.businessName || updatedUser?.name || user.name)
                     : (updatedUser?.name || user.name);
                 
+                const displayEmail = useBusinessProfile 
+                    ? (updatedUser?.businessEmail || user.businessEmail || updatedUser?.email || user.email)
+                    : (updatedUser?.email || user.email);
+                
                 setFormData(prev => ({
                     ...prev,
-                    // Organizer name based on useBusinessName setting in profile
-                    organizer: displayName,
-                    organizerEmail: updatedUser?.email || user.email,
+                    // Organizer name and email - ALWAYS populated from user profile
+                    organizer: displayName || 'Your Name',
+                    organizerEmail: displayEmail || user.email || '',
                     paymentConfig: { method: (updatedUser?.defaultPaymentMethod as any) || user.defaultPaymentMethod || 'none', link: updatedUser?.defaultPaymentLink || user.defaultPaymentLink, instructions: updatedUser?.defaultPaymentInstructions || user.defaultPaymentInstructions },
                     confirmationMessage: updatedUser?.defaultConfirmationTemplate || user.defaultConfirmationTemplate,
                     refundPolicy: updatedUser?.defaultRefundPolicy || user.defaultRefundPolicy,
