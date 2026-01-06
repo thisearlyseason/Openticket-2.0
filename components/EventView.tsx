@@ -272,6 +272,55 @@ export const EventView = () => {
         });
     };
 
+    // Fetch server-calculated breakdown whenever selections change
+    const fetchOrderBreakdown = async () => {
+        if (!event) return;
+        
+        // Check if any tickets are selected
+        const hasTickets = Object.values(ticketSelection).some(qty => qty > 0);
+        if (!hasTickets && event.priceType !== 'donation') {
+            setOrderBreakdown(null);
+            return;
+        }
+
+        setIsCalculating(true);
+        try {
+            // Convert addOnSelection to simple qty format
+            const simpleAddOns: Record<string, number> = {};
+            Object.entries(addOnSelection).forEach(([id, val]) => {
+                if (val.qty > 0) simpleAddOns[id] = val.qty;
+            });
+
+            const response = await fetch('/api/stripe/calculate-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId: event.id,
+                    ticketSelections: ticketSelection,
+                    addOnSelections: simpleAddOns,
+                    promoCode: appliedPromo?.code || null,
+                }),
+            });
+
+            if (response.ok) {
+                const breakdown = await response.json();
+                setOrderBreakdown(breakdown);
+            }
+        } catch (error) {
+            console.error('Failed to calculate order:', error);
+        } finally {
+            setIsCalculating(false);
+        }
+    };
+
+    // Debounced fetch when selections change
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchOrderBreakdown();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [ticketSelection, addOnSelection, appliedPromo, event?.id]);
+
     const handleApplyPromo = () => {
         if (!promoCode) return;
         const code = event.promoCodes?.find(p => p.code === promoCode);
