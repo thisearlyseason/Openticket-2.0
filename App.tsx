@@ -292,6 +292,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                     </>
                                 ) : (
                                     <div className="flex items-center space-x-4">
+                                        <CurrencySelector compact className="hidden lg:block" />
                                         <Link to="/auth" className="bg-white dark:bg-white text-black px-5 py-2 rounded-full font-bold text-sm hover:bg-zinc-200 transition-colors shadow-lg border border-zinc-200 dark:border-transparent">Sign In</Link>
                                     </div>
                                 )}
