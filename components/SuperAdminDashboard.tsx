@@ -1101,6 +1101,107 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             </Card>
                         </div>
 
+                        {/* Platform Donations Detail Section */}
+                        <div className="bg-gradient-to-r from-pink-900/20 to-purple-900/20 border border-pink-500/30 rounded-2xl p-6 mb-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Heart size={20} className="text-pink-400" fill="currentColor" /> Total Platform Donations
+                                </h3>
+                                <div className="text-right">
+                                    <div className="text-3xl font-black text-pink-400">${stats.donationBreakdown.total.toFixed(2)}</div>
+                                    <div className="text-xs text-zinc-500">{stats.donationBreakdown.count} donations total</div>
+                                </div>
+                            </div>
+
+                            {/* Monthly Comparison */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">This Month</div>
+                                    <div className="text-2xl font-black text-pink-400">${stats.donationBreakdown.thisMonth.toFixed(2)}</div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Last Month</div>
+                                    <div className="text-2xl font-black text-zinc-400">${stats.donationBreakdown.lastMonth.toFixed(2)}</div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
+                                    <div className="text-2xl font-black text-white">
+                                        ${stats.donationBreakdown.count > 0 
+                                            ? (stats.donationBreakdown.total / stats.donationBreakdown.count).toFixed(2) 
+                                            : '0.00'}
+                                    </div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Growth</div>
+                                    <div className={`text-2xl font-black ${stats.donationBreakdown.thisMonth >= stats.donationBreakdown.lastMonth ? 'text-green-400' : 'text-red-400'}`}>
+                                        {stats.donationBreakdown.lastMonth > 0 
+                                            ? `${((stats.donationBreakdown.thisMonth - stats.donationBreakdown.lastMonth) / stats.donationBreakdown.lastMonth * 100).toFixed(0)}%`
+                                            : stats.donationBreakdown.thisMonth > 0 ? '+100%' : '0%'}
+                                    </div>
+                                </Card>
+                            </div>
+
+                            {/* Donation Amount Distribution */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
+                                    <div className="space-y-2">
+                                        {Object.entries(stats.donationBreakdown.byAmount).map(([amount, count]) => {
+                                            const percentage = stats.donationBreakdown.count > 0 
+                                                ? (count / stats.donationBreakdown.count * 100) 
+                                                : 0;
+                                            return (
+                                                <div key={amount} className="flex items-center gap-3">
+                                                    <span className="w-16 text-sm font-bold text-white">{amount}</span>
+                                                    <div className="flex-1 bg-zinc-700 rounded-full h-4 overflow-hidden">
+                                                        <div 
+                                                            className="bg-gradient-to-r from-pink-500 to-purple-500 h-full rounded-full transition-all duration-500"
+                                                            style={{ width: `${percentage}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="w-12 text-right text-sm text-zinc-400">{count}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Recent Donations */}
+                                <div>
+                                    <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Recent Donations</h4>
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                        {stats.donationBreakdown.recent.length > 0 ? (
+                                            stats.donationBreakdown.recent.map((donation, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-bold text-white truncate">{donation.attendeeName}</div>
+                                                        <div className="text-xs text-zinc-500 truncate">{donation.eventTitle}</div>
+                                                    </div>
+                                                    <div className="text-right ml-2">
+                                                        <div className="text-sm font-black text-pink-400">${donation.amount}</div>
+                                                        <div className="text-xs text-zinc-600">
+                                                            {new Date(donation.createdAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-zinc-500">
+                                                <Heart size={32} className="mx-auto mb-2 opacity-30" />
+                                                <p className="text-sm">No donations yet</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-4 border-t border-zinc-700/50">
+                                <p className="text-xs text-zinc-500 text-center">
+                                    💡 Platform donations are separate from ticket revenue and go directly to supporting OpenTicket operations.
+                                </p>
+                            </div>
+                        </div>
+
                         {/* Platform Payouts Section */}
                         <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-500/30 rounded-2xl p-6 mb-8">
                             <div className="flex justify-between items-center mb-4">
