@@ -2255,6 +2255,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         </h2>
 
                         <div className="max-w-2xl space-y-6">
+                            {/* Stripe Settings */}
                             <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
                                 <h3 className="font-bold text-white mb-4 flex items-center gap-2">
                                     <CreditCard size={20} className="text-blue-400" /> Stripe Connect Integration
@@ -2310,6 +2311,86 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="mt-6 flex justify-end">
                                     <Button onClick={handleSavePlatformSettings} className="bg-[#635BFF] hover:bg-[#534ac2] text-white border-none">
                                         <Save size={16} className="mr-2" /> Save Configuration
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Mailerlite Email Marketing Settings */}
+                            <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                    <Mail size={20} className="text-pink-400" /> Email Marketing (Mailerlite)
+                                </h3>
+                                <p className="text-sm text-zinc-400 mb-6">
+                                    Configure Mailerlite API key for all organizers. This enables email campaigns, reminders, and attendee engagement features.
+                                </p>
+
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <Input
+                                            label="Mailerlite API Key"
+                                            placeholder="Enter your Mailerlite API key..."
+                                            type="password"
+                                            value={localStorage.getItem('platform_mailerlite_key') || ''}
+                                            onChange={e => {
+                                                localStorage.setItem('platform_mailerlite_key', e.target.value);
+                                            }}
+                                            className="bg-black border-zinc-700 text-white"
+                                        />
+                                        <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
+                                            <Lock size={16} />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-zinc-500">
+                                        Get your API key from{' '}
+                                        <a href="https://www.mailerlite.com/help/where-to-find-the-mailerlite-api-key-groupid-and-documentation" target="_blank" className="text-pink-400 underline">
+                                            Mailerlite → Integrations → API
+                                        </a>
+                                    </p>
+                                    
+                                    <div className="mt-4 pt-4 border-t border-zinc-700">
+                                        <h4 className="font-bold text-white text-sm mb-3">Default Email Templates</h4>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-black/50 p-3 rounded-xl">
+                                                <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-1">
+                                                    <Clock size={14} /> Pre-Event Reminder
+                                                </div>
+                                                <p className="text-xs text-zinc-500">Sent 24h before event</p>
+                                            </div>
+                                            <div className="bg-black/50 p-3 rounded-xl">
+                                                <div className="flex items-center gap-2 text-green-400 text-sm font-bold mb-1">
+                                                    <CheckCircle size={14} /> Post-Event Follow-up
+                                                </div>
+                                                <p className="text-xs text-zinc-500">Sent after event ends</p>
+                                            </div>
+                                            <div className="bg-black/50 p-3 rounded-xl">
+                                                <div className="flex items-center gap-2 text-orange-400 text-sm font-bold mb-1">
+                                                    <AlertCircle size={14} /> Abandoned Cart
+                                                </div>
+                                                <p className="text-xs text-zinc-500">Recover lost sales</p>
+                                            </div>
+                                            <div className="bg-black/50 p-3 rounded-xl">
+                                                <div className="flex items-center gap-2 text-purple-400 text-sm font-bold mb-1">
+                                                    <Megaphone size={14} /> Newsletter
+                                                </div>
+                                                <p className="text-xs text-zinc-500">Custom announcements</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end">
+                                    <Button 
+                                        onClick={() => {
+                                            const key = localStorage.getItem('platform_mailerlite_key');
+                                            if (key) {
+                                                alert('Mailerlite API key saved! All organizers can now use email marketing features.');
+                                            } else {
+                                                alert('Please enter a Mailerlite API key');
+                                            }
+                                        }} 
+                                        className="bg-pink-500 hover:bg-pink-600 text-white border-none"
+                                    >
+                                        <Save size={16} className="mr-2" /> Save Email Settings
                                     </Button>
                                 </div>
                             </div>
