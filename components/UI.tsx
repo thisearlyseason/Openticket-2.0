@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, Upload, Image as ImageIcon, X, Trash2, Calendar, Clock, ChevronDown, Check, Copy, Facebook, Twitter, Linkedin, Instagram, Link2, Share2, ZoomIn, ChevronLeft, ChevronRight, Eye, Info, FileText, Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading1, Heading2, Link as LinkIcon, Printer, AlertCircle, CheckCircle2, Download } from 'lucide-react';
-import { Registration, Event, User } from '../types';
+import type { Registration, Event, User } from '../types';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
