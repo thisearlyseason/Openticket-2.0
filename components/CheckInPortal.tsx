@@ -654,15 +654,41 @@ export const CheckInPortal = () => {
                     if (!targetTicket.checkedIn) {
                         handleCheckInToggle(regId, `${tierId}-${index}`, false);
                         if (targetTicket.reg.paymentStatus === 'completed') {
-                            alert(`SUCCESS: Checked in ${targetTicket.attendeeName}`);
-                            stopScanner();
+                            // Close scanner and show success
+                            setShowScanner(false);
+                            // Visual feedback
+                            setTimeout(() => {
+                                alert(`✓ Checked in: ${targetTicket.attendeeName}`);
+                            }, 100);
                         }
                     } else {
-                        alert(`ALREADY CHECKED IN: ${targetTicket.attendeeName}`);
+                        alert(`Already checked in: ${targetTicket.attendeeName}`);
                     }
                 } else {
                     alert("Ticket not found in this event.");
                 }
+            }
+        } else {
+            // Handle other QR formats or direct registration IDs
+            const matchingTicket = allTickets.find(t => 
+                t.reg.id === rawValue || 
+                t.id.includes(rawValue) ||
+                t.reg.id.toLowerCase().includes(rawValue.toLowerCase())
+            );
+            
+            if (matchingTicket) {
+                if (!matchingTicket.checkedIn) {
+                    const ticketKey = matchingTicket.uniqueKeySuffix || `${matchingTicket.tierId}-${matchingTicket.index}`;
+                    handleCheckInToggle(matchingTicket.reg.id, ticketKey, false);
+                    setShowScanner(false);
+                    setTimeout(() => {
+                        alert(`✓ Checked in: ${matchingTicket.attendeeName}`);
+                    }, 100);
+                } else {
+                    alert(`Already checked in: ${matchingTicket.attendeeName}`);
+                }
+            } else {
+                alert("QR code not recognized. Please try again.");
             }
         }
     };
