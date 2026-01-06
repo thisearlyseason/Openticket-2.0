@@ -937,6 +937,7 @@ export const StorageService = {
         if (updates.commissionRate !== undefined) payload.commission_rate = updates.commissionRate;
         if (updates.organizerWebsite) payload.website = updates.organizerWebsite;
         if (updates.affiliateCode) payload.affiliate_code = updates.affiliateCode;
+        if (updates.defaultCurrency) payload.default_currency = updates.defaultCurrency;
 
         try {
             // Use dedicated Update endpoint for robustness

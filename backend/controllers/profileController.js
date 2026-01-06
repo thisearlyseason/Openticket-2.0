@@ -66,7 +66,8 @@ export const syncProfile = async (req, res) => {
             'favorite_organizers', 'gemini_api_key', 'default_tax_rate', 'default_custom_fees', 'address',
             'notifications', 'email_templates', 'default_confirmation_template', 'default_waiver',
             'default_refund_policy', 'default_refund_policy_enabled', 'logo_url', 'header_image_url',
-            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code'
+            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code',
+            'default_currency'
         ];
 
         const safeUpdates = {};
