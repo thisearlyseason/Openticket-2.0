@@ -511,6 +511,24 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 - ✅ POST /api/email/send validates required fields (to, subject, html)
 - ✅ POST /api/email/send-bulk supports batching with personalization
 
+### Currency Handling & Profile Persistence (100% Pass Rate)
+**EventBuilder:**
+- ✅ Profile Source toggle in Step 1 (Personal/Organizer switch)
+- ✅ Profile toggle updates organizer name based on businessName or personal name
+- ✅ Currency dropdown defaults to organizer's defaultCurrency
+- ✅ Currency dropdown shows all 5 currencies (USD, EUR, GBP, CAD, AUD)
+
+**EventView:**
+- ✅ Charge currency notice shows event's charge currency
+- ✅ DisplayCurrencySelector allows attendees to change display currency
+- ✅ displayCurrency initialized from locale/geo auto-detection
+- ✅ EventPriceDisplay shows charge currency with optional display conversion
+
+**Stripe:**
+- ✅ Currency priority: Event Currency > Backend Default > USD
+- ✅ stripeController.js implements correct charge currency resolution
+- ✅ Charge currency stored in session metadata for reference
+
 ### Flexible Currency Handling (100% Pass Rate)
 - ✅ SuperAdmin Dashboard Settings has Backend Default Currency selector (USD/EUR/GBP/CAD/AUD)
 - ✅ Currency Priority Logic explanation displayed (Event → Backend Default → USD)
