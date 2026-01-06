@@ -93,6 +93,7 @@ export interface User {
   isAdmin?: boolean;
   isBanned?: boolean;
   businessName?: string;
+  businessEmail?: string; // Separate email for business/organizer profile
   organizerSubtitle?: string;
   useBusinessName?: boolean;
   businessType?: string;
