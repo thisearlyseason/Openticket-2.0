@@ -2332,10 +2332,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             label="Mailerlite API Key"
                                             placeholder="Enter your Mailerlite API key..."
                                             type="password"
-                                            value={localStorage.getItem('platform_mailerlite_key') || ''}
-                                            onChange={e => {
-                                                localStorage.setItem('platform_mailerlite_key', e.target.value);
-                                            }}
+                                            value={mailerliteApiKey}
+                                            onChange={e => setMailerliteApiKey(e.target.value)}
                                             className="bg-black border-zinc-700 text-white"
                                         />
                                         <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
