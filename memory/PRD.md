@@ -53,7 +53,18 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Organizer-Controlled Event Currency (LATEST)
+#### Currency Code Display & Settings Fix (LATEST - January 6, 2026)
+- [x] Fixed "default_currency column not found" error by storing extended settings in `subscription.settings` JSONB
+- [x] Backend profileController.js now separates DB column fields from extended settings fields
+- [x] Extended settings (default_currency, logo_url, primary_color, etc.) stored in subscription.settings
+- [x] Profile GET endpoints extract extended settings and return as top-level for frontend compatibility
+- [x] **All prices now show currency codes** (e.g., "$20.00 (USD)", "$39 USD")
+- [x] PriceDisplay component: `showCurrencyCode` default changed to `true`
+- [x] EventPriceDisplay component: `showCurrencyCode` default changed to `true`
+- [x] Pricing page: Plan prices show currency code (e.g., "$39 USD /mo")
+- [x] CurrencyService.format() now includes currency code by default
+
+#### Organizer-Controlled Event Currency
 - [x] Added `currency` field to Event interface in types.ts
 - [x] Currency selector in EventBuilder Tickets step (USD, EUR, GBP, CAD, AUD)
 - [x] Persistent notice: "All ticket and add-on prices will be in this currency"
