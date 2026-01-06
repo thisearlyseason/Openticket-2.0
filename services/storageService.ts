@@ -1141,6 +1141,34 @@ export const StorageService = {
         }
     },
 
+    getRegistration: async (registrationId: string): Promise<Registration | null> => {
+        if (!registrationId) return null;
+        
+        // Check local storage first (for offline mode or cached data)
+        if (isOffline) {
+            const local = getLocal<Registration>(LS_REGS_KEY).find(r => r.id === registrationId);
+            return local || null;
+        }
+
+        try {
+            // Try to get from local storage first (might be cached from My Tickets)
+            const local = getLocal<Registration>(LS_REGS_KEY).find(r => r.id === registrationId);
+            if (local) {
+                console.log(`[StorageService] Found registration ${registrationId} in local cache`);
+                return local;
+            }
+
+            // If not in local storage, we need to fetch it
+            // The backend doesn't have a direct /registrations/:id endpoint for public access
+            // So we'll return null and let the component handle it
+            console.log(`[StorageService] Registration ${registrationId} not found in local cache`);
+            return null;
+        } catch (e) {
+            console.error('[StorageService] Get Registration Error:', e);
+            return null;
+        }
+    },
+
     getRegistrationsByEmail: async (email: string) => {
         // Don't call API if email is empty
         if (!email || email.trim() === '') {
