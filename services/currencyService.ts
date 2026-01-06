@@ -326,30 +326,34 @@ export const CurrencyService = {
     },
 
     /**
-     * Format a price for display
+     * Format a price for display - always includes currency code to avoid confusion
      */
-    format: (amountInUsd: number, currency: string = 'USD'): string => {
+    format: (amountInUsd: number, currency: string = 'USD', showCode: boolean = true): string => {
         const info = SUPPORTED_CURRENCIES[currency] || SUPPORTED_CURRENCIES.USD;
         const converted = amountInUsd * info.rate;
-        return `${info.symbol}${converted.toFixed(2)}`;
+        const formattedAmount = `${info.symbol}${converted.toFixed(2)}`;
+        return showCode ? `${formattedAmount} ${info.code}` : formattedAmount;
     },
 
     /**
-     * Format with locale-aware number formatting
+     * Format with locale-aware number formatting - always includes currency code
      */
-    formatLocale: (amountInUsd: number, currency: string = 'USD'): string => {
+    formatLocale: (amountInUsd: number, currency: string = 'USD', showCode: boolean = true): string => {
         const info = SUPPORTED_CURRENCIES[currency] || SUPPORTED_CURRENCIES.USD;
         const converted = amountInUsd * info.rate;
         
         try {
-            return new Intl.NumberFormat(undefined, {
+            const formatted = new Intl.NumberFormat(undefined, {
                 style: 'currency',
                 currency: info.code,
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             }).format(converted);
+            // Intl.NumberFormat already includes currency code for most locales
+            return formatted;
         } catch {
-            return `${info.symbol}${converted.toFixed(2)}`;
+            const fallback = `${info.symbol}${converted.toFixed(2)}`;
+            return showCode ? `${fallback} ${info.code}` : fallback;
         }
     },
 
