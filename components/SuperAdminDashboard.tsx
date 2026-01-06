@@ -174,6 +174,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setPlatformPublishableKey(currentUser?.stripePublishableKey || '');
         setPlatformSecretKey(currentUser?.stripeSecretKey || '');
         setMailerliteApiKey(localStorage.getItem('platform_mailerlite_key') || '');
+        setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
         loadPromoCodes();
     }, [navigate, embedded]);
