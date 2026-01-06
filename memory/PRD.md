@@ -64,6 +64,14 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] Pricing page: Plan prices show currency code (e.g., "$39 USD /mo")
 - [x] CurrencyService.format() now includes currency code by default
 
+#### Live Exchange Rates with Fixer.io (LATEST - January 6, 2026)
+- [x] Integrated Fixer.io API for real-time exchange rates
+- [x] Backend endpoint `/api/stripe/exchange-rates` now uses Fixer.io as primary source
+- [x] Automatic conversion from EUR base (Fixer free tier) to USD base
+- [x] Fallback chain: Fixer.io → exchangerate.host → static rates
+- [x] API key stored in .env as `FIXER_API_KEY`
+- [x] Rates cached on frontend for 1 hour to reduce API calls
+
 #### Organizer-Controlled Event Currency
 - [x] Added `currency` field to Event interface in types.ts
 - [x] Currency selector in EventBuilder Tickets step (USD, EUR, GBP, CAD, AUD)
