@@ -227,6 +227,52 @@ export const EventView = () => {
         if (event) checkSuccess();
     }, [searchParams, event, isSuccess, organizerUser]);
 
+    // Debounced fetch for server-calculated order breakdown
+    useEffect(() => {
+        if (!event) return;
+        
+        // Check if any tickets are selected
+        const hasTickets = Object.values(ticketSelection).some(qty => qty > 0);
+        if (!hasTickets && event.priceType !== 'donation') {
+            setOrderBreakdown(null);
+            return;
+        }
+
+        const fetchBreakdown = async () => {
+            setIsCalculating(true);
+            try {
+                // Convert addOnSelection to simple qty format
+                const simpleAddOns: Record<string, number> = {};
+                Object.entries(addOnSelection).forEach(([id, val]) => {
+                    if (val.qty > 0) simpleAddOns[id] = val.qty;
+                });
+
+                const response = await fetch('/api/stripe/calculate-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: event.id,
+                        ticketSelections: ticketSelection,
+                        addOnSelections: simpleAddOns,
+                        promoCode: appliedPromo?.code || null,
+                    }),
+                });
+
+                if (response.ok) {
+                    const breakdown = await response.json();
+                    setOrderBreakdown(breakdown);
+                }
+            } catch (error) {
+                console.error('Failed to calculate order:', error);
+            } finally {
+                setIsCalculating(false);
+            }
+        };
+
+        const timer = setTimeout(fetchBreakdown, 300);
+        return () => clearTimeout(timer);
+    }, [ticketSelection, addOnSelection, appliedPromo, event?.id, event?.priceType]);
+
     if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black uppercase tracking-widest text-xl">Loading Experience...</div>;
     if (!event) return <div className="p-20 text-center font-black uppercase text-red-500">Event not found.</div>;
 
