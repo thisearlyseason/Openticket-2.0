@@ -60,6 +60,15 @@ export const handleWebhook = async (req, res) => {
                 await handlePayoutPaid(event.data.object);
                 break;
 
+            case 'checkout.session.expired':
+            case 'checkout.session.async_payment_failed':
+                await handlePaymentFailed(stripe, event.data.object);
+                break;
+
+            case 'payment_intent.payment_failed':
+                await handlePaymentIntentFailed(stripe, event.data.object);
+                break;
+
             default:
                 console.log(`[Webhook] Unhandled event type: ${event.type}`);
         }
