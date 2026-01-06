@@ -1055,10 +1055,21 @@ export const Settings = () => {
                                     />
                                 </div>
 
+                                <div className="grid grid-cols-1 gap-6">
+                                    <Input
+                                        label="Business Email"
+                                        type="email"
+                                        value={businessEmail}
+                                        onChange={e => setBusinessEmail(e.target.value)}
+                                        placeholder="e.g. contact@acmecorp.com"
+                                        hint="Used as contact email when 'Use Business Name publicly' is enabled"
+                                    />
+                                </div>
+
                                 <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                                     <div>
                                         <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Use Business Name publicly</h3>
-                                        <p className="text-xs text-zinc-500">Enable to show your business name instead of your personal name on event pages.</p>
+                                        <p className="text-xs text-zinc-500">Enable to show your business name and email instead of personal info on event pages.</p>
                                     </div>
                                     <Switch checked={useBusinessName} onChange={setUseBusinessName} />
                                 </div>
