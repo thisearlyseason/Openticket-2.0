@@ -438,29 +438,23 @@ export const AffiliateDashboard = () => {
                     </Card>
 
                     <Card className="p-6 border-zinc-200 dark:border-zinc-800">
-                        <h3 className="font-bold text-lg mb-4">Marketing Assets</h3>
-                        <div className="space-y-2">
-                            <button className="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white"><Download size={16} /></div>
-                                    <div className="text-left">
-                                        <div className="text-sm font-bold text-zinc-900 dark:text-white">Brand Logos</div>
-                                        <div className="text-xs text-zinc-500">PNG, SVG</div>
-                                    </div>
+                        <h3 className="font-bold text-lg mb-2">Marketing Assets</h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">To access brand guide use password: <span className="font-bold text-zinc-700 dark:text-zinc-300">OpenTicket</span></p>
+                        <a 
+                            href="https://u.pcloud.link/publink/show?code=kZWg7w5ZGMi2YmFHpCbr00vSlkdbypN20vjX" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all group shadow-lg shadow-purple-500/20"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-white"><Download size={20} /></div>
+                                <div className="text-left">
+                                    <div className="text-sm font-bold text-white">Everything you need to Market OpenTicket!</div>
+                                    <div className="text-xs text-white/70">Logos, Templates, Brand Guide & More</div>
                                 </div>
-                                <ExternalLink size={16} className="text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
-                            </button>
-                            <button className="w-full flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors group">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white"><Download size={16} /></div>
-                                    <div className="text-left">
-                                        <div className="text-sm font-bold text-zinc-900 dark:text-white">Social Templates</div>
-                                        <div className="text-xs text-zinc-500">Canva, Figma</div>
-                                    </div>
-                                </div>
-                                <ExternalLink size={16} className="text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white" />
-                            </button>
-                        </div>
+                            </div>
+                            <ExternalLink size={18} className="text-white/70 group-hover:text-white transition-colors" />
+                        </a>
                     </Card>
                 </div>
             </div>
