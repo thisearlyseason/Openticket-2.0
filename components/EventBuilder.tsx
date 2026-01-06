@@ -79,7 +79,6 @@ export const EventBuilder = () => {
         isRecurring: false, date: '', endDate: '', time: '', endTime: '', duration: 1,
         recurringDates: [], timeFormat: '12h', tags: [],
         organizer: '', organizerEmail: '', organizerPhone: '', organizerWebsite: '',
-        useOrganizerProfile: true, // Default to organizer profile
         priceType: 'free', price: 0, currency: 'USD', ticketName: '', ticketTiers: [], promoCodes: [],
         addOns: [], affiliates: [],
         absorbFees: false, taxRate: 0, capacity: 100,
