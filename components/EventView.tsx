@@ -980,46 +980,47 @@ export const EventView = () => {
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <div className={`p-8 border-2 transition-all rounded-[2rem] flex flex-col md:flex-row justify-between items-center ${ticketSelection['general'] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-black/20'}`}>
-                                                        <div className="text-center md:text-left mb-6 md:mb-0">
-                                                            <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{event.ticketName || 'General Admission'}</div>
-                                                            <div className="text-3xl font-black text-primary">
-                                                                {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <PriceDisplay amount={event.price} />}
+                                                    <>
+                                                        <div className={`p-8 border-2 transition-all rounded-[2rem] flex flex-col md:flex-row justify-between items-center ${ticketSelection['general'] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-black/20'}`}>
+                                                            <div className="text-center md:text-left mb-6 md:mb-0">
+                                                                <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{event.ticketName || 'General Admission'}</div>
+                                                                <div className="text-3xl font-black text-primary">
+                                                                    {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <PriceDisplay amount={event.price} />}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl">
+                                                                <button onClick={() => handleTicketChange('general', Math.max(0, (ticketSelection['general'] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection['general']}>-</button>
+                                                                <span className="w-10 text-center font-black text-3xl">{ticketSelection['general'] || 0}</span>
+                                                                <button onClick={() => handleTicketChange('general', (ticketSelection['general'] || 0) + 1)} className="w-12 h-12 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all font-bold text-2xl">+</button>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl">
-                                                            <button onClick={() => handleTicketChange('general', Math.max(0, (ticketSelection['general'] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection['general']}>-</button>
-                                                            <span className="w-10 text-center font-black text-3xl">{ticketSelection['general'] || 0}</span>
-                                                            <button onClick={() => handleTicketChange('general', (ticketSelection['general'] || 0) + 1)} className="w-12 h-12 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all font-bold text-2xl">+</button>
-                                                        </div>
-                                                    </div>
 
-                                                    {/* Donation Amount Input - Only for donation type events */}
-                                                    {event.priceType === 'donation' && ticketSelection['general'] > 0 && (
-                                                        <div className="mt-6 p-6 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-[2rem] border-2 border-pink-200 dark:border-pink-800">
-                                                            <div className="flex items-center gap-3 mb-4">
-                                                                <Heart size={24} className="text-pink-500" fill="currentColor" />
-                                                                <span className="font-black text-lg uppercase tracking-tight">Your Donation Amount</span>
+                                                        {/* Donation Amount Input - Only for donation type events */}
+                                                        {event.priceType === 'donation' && ticketSelection['general'] > 0 && (
+                                                            <div className="mt-6 p-6 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-[2rem] border-2 border-pink-200 dark:border-pink-800">
+                                                                <div className="flex items-center gap-3 mb-4">
+                                                                    <Heart size={24} className="text-pink-500" fill="currentColor" />
+                                                                    <span className="font-black text-lg uppercase tracking-tight">Your Donation Amount</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <span className="text-4xl font-black text-pink-500">$</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        value={regData.donation}
+                                                                        onChange={(e) => setRegData({ ...regData, donation: e.target.value })}
+                                                                        placeholder="0.00"
+                                                                        className="flex-1 h-16 text-3xl font-black bg-white dark:bg-zinc-900 border-2 border-pink-300 dark:border-pink-700 rounded-2xl px-4 text-center focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 outline-none transition-all"
+                                                                    />
+                                                                </div>
+                                                                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3 text-center">
+                                                                    Enter any amount you'd like to contribute
+                                                                </p>
                                                             </div>
-                                                            <div className="flex items-center gap-4">
-                                                                <span className="text-4xl font-black text-pink-500">$</span>
-                                                                <input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    step="0.01"
-                                                                    value={regData.donation}
-                                                                    onChange={(e) => setRegData({ ...regData, donation: e.target.value })}
-                                                                    placeholder="0.00"
-                                                                    className="flex-1 h-16 text-3xl font-black bg-white dark:bg-zinc-900 border-2 border-pink-300 dark:border-pink-700 rounded-2xl px-4 text-center focus:border-pink-500 focus:ring-2 focus:ring-pink-500/30 outline-none transition-all"
-                                                                />
-                                                            </div>
-                                                            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3 text-center">
-                                                                Enter any amount you'd like to contribute
-                                                            </p>
-                                                        </div>
-                                                    )}
-
-                                                {event.addOns && event.addOns.length > 0 && (
+                                                        )}
+                                                    </>
+                                                )}
                                                     <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800">
                                                         <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Gift size={32} className="text-secondary" /> Extra Goodies</h3>
                                                         <div className="space-y-6">
