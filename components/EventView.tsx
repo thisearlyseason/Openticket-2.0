@@ -1274,7 +1274,7 @@ export const EventView = () => {
                                                                         return (
                                                                             <div key={tier.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                                 <span>{qty} x {tier.name}</span>
-                                                                                <span>{tier.price === 0 ? 'FREE' : <PriceDisplay amount={tier.price * qty} />}</span>
+                                                                                <span>{tier.price === 0 ? 'FREE' : <EventPriceDisplay amount={tier.price * qty} currency={event.currency || 'USD'} />}</span>
                                                                             </div>
                                                                         );
                                                                     })
