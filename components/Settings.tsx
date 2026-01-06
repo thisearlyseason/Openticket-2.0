@@ -1060,6 +1060,52 @@ export const Settings = () => {
                                     <Switch checked={useBusinessName} onChange={setUseBusinessName} />
                                 </div>
 
+                                {/* Organizer Profile Preview */}
+                                <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-800/50">
+                                    <h3 className="font-bold text-sm text-purple-900 dark:text-purple-100 mb-3 flex items-center gap-2">
+                                        <Eye size={16} /> Profile Preview
+                                    </h3>
+                                    <p className="text-xs text-purple-600 dark:text-purple-300 mb-4">This is how your organizer profile appears on event pages:</p>
+                                    
+                                    <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-purple-200 dark:border-purple-800/30 shadow-sm">
+                                        <div className="flex items-center gap-4">
+                                            {/* Avatar/Logo */}
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-black shadow-lg overflow-hidden flex-shrink-0">
+                                                {logoUrl ? (
+                                                    <img src={logoUrl} className="w-full h-full object-cover" alt="Profile" />
+                                                ) : (
+                                                    (useBusinessName && businessName ? businessName : name)?.charAt(0)?.toUpperCase() || 'O'
+                                                )}
+                                            </div>
+                                            
+                                            {/* Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-black text-lg text-zinc-900 dark:text-white truncate">
+                                                    {useBusinessName && businessName ? businessName : name || 'Your Name'}
+                                                </div>
+                                                {useBusinessName && organizerSubtitle && (
+                                                    <div className="text-sm text-zinc-600 dark:text-zinc-400 truncate">{organizerSubtitle}</div>
+                                                )}
+                                                <div className="text-xs text-zinc-500 mt-1 truncate">{user?.email}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Social Links Preview */}
+                                        {(socials.website || socials.instagram || socials.facebook || socials.x) && (
+                                            <div className="flex gap-2 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                                                {socials.website && <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Globe size={14} className="text-zinc-500" /></div>}
+                                                {socials.instagram && <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Instagram size={14} className="text-zinc-500" /></div>}
+                                                {socials.facebook && <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Facebook size={14} className="text-zinc-500" /></div>}
+                                                {socials.x && <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center"><Twitter size={14} className="text-zinc-500" /></div>}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <p className="text-[10px] text-purple-500 mt-3">
+                                        💡 Attendees see this on your event pages, tickets, and confirmation emails.
+                                    </p>
+                                </div>
+
                                 <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
                                     <h3 className="font-bold text-sm text-zinc-900 dark:text-white mb-4">Social Media Links</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
