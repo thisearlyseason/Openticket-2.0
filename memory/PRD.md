@@ -51,6 +51,24 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ## Implementation Status
 
+### ✅ Bug Fixes (January 6, 2026 - Latest)
+
+#### Black Screen After Stripe Payment (P0 Bug Fixed)
+- [x] **Root Cause:** Race condition in `EventView.tsx` where payment verification ran before event data loaded
+- [x] **Fix Location:** Lines 160-258 in `/app/components/EventView.tsx`
+- [x] **Solution:** Added `event` check on line 166 ensuring verification only runs after event is loaded
+- [x] **Verification:** Code review confirmed fix; `if (event) checkSuccess()` guards the async flow
+- [x] **Dependency Array:** Correctly includes `[searchParams, event, isSuccess, organizerUser, isProcessingPayment]`
+
+#### Empty Organizer Fields in EventBuilder (P0 Bug Fixed)
+- [x] **Root Cause:** Organizer name/email fields not pre-populated from user profile settings
+- [x] **Fix Location:** Lines 122-139 in `/app/components/EventBuilder.tsx`
+- [x] **Solution:** Logic checks `useBusinessName` flag and populates accordingly:
+  - If `useBusinessName` enabled: Uses `businessName`/`businessEmail`
+  - If disabled: Uses personal `name`/`email`
+  - Fallback to `'Your Name'` and user's email to never leave empty
+- [x] **Settings Integration:** Business name/email and toggle are in Settings → Organizer Page tab
+
 ### ✅ Completed (January 6, 2026)
 
 #### My Templates - Save Custom Ticket Designs (LATEST - January 6, 2026)
