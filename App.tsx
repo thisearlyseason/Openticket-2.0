@@ -282,6 +282,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                         <Link to="/my-tickets" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 hover:text-secondary">My Tickets</Link>
                                         <div className="h-4 w-px bg-zinc-300 dark:bg-zinc-700"></div>
                                         <Link to="/settings" className="text-zinc-500 dark:text-zinc-400 hover:text-secondary" title="Settings"><SettingsIcon size={20} /></Link>
+                                        <CurrencySelector compact className="hidden lg:block" />
                                         <button onClick={handleLogout} className="text-zinc-500 dark:text-zinc-400 hover:text-red-500" title="Logout"><LogOut size={20} /></button>
                                         {isOrganizer && (
                                             <button onClick={() => navigate('/create')} className="bg-secondary text-black px-4 py-2 rounded-full font-bold text-sm hover:bg-[#d2f800] transition-colors shadow-lg">
