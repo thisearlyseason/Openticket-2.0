@@ -117,6 +117,8 @@ export default app;
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 OpenTicket API Server running on http://0.0.0.0:${PORT}`);
+        // Initialize cron jobs after server starts
+        initCronJobs();
     });
 }
 
