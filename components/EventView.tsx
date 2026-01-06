@@ -47,6 +47,20 @@ export const EventView = () => {
     const [completedRegistration, setCompletedRegistration] = useState<Registration | null>(null);
     const [newCredentials, setNewCredentials] = useState<{ email: string, password?: string } | null>(null);
 
+    // Server-calculated order breakdown (single source of truth)
+    const [orderBreakdown, setOrderBreakdown] = useState<{
+        ticketSubtotal: number;
+        addOnSubtotal: number;
+        rawSubtotal: number;
+        discountAmount: number;
+        discountedSubtotal: number;
+        taxAmount: number;
+        customFeesAmount: number;
+        platformFee: number;
+        grandTotal: number;
+    } | null>(null);
+    const [isCalculating, setIsCalculating] = useState(false);
+
     // Waitlist State
     const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
     const [waitlistSuccess, setWaitlistSuccess] = useState(false);
