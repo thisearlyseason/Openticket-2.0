@@ -53,7 +53,31 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Advanced Analytics Dashboard & Email Marketing (LATEST - January 6, 2026)
+#### Flexible Currency Handling System (LATEST - January 6, 2026)
+- [x] **Backend Default Currency** - Platform-wide setting for charge currency
+  - SuperAdmin Dashboard Settings tab with currency selector (USD, EUR, GBP, CAD, AUD)
+  - Currency Priority Logic display: Event → Backend Default → USD
+  - Stored in localStorage as `openticket_backend_default_currency`
+- [x] **Per-Event Charge Currency Override**
+  - EventBuilder Step 3 has currency selector with all 5 options
+  - Event's currency is the SINGLE SOURCE OF TRUTH for Stripe charges
+  - Prices stored in organizer's chosen currency (no conversion)
+- [x] **Display-Only Currency Switching**
+  - DisplayCurrencySelector component with compact mode for headers
+  - Shows 5 currencies with flag emojis (🇺🇸🇪🇺🇬🇧🇨🇦🇦🇺)
+  - Clear warning: "Display only. Payment uses event currency."
+  - Fires 'currencyChanged' event for UI updates
+- [x] **Price Integrity**
+  - EventPriceDisplay shows charge currency with code (e.g., "$50.00 (USD)")
+  - CurrencyService.getChargeCurrency() resolves priority correctly
+  - Backend stripeController.js uses chargeCurrency for all line items
+  - No converted prices are saved or persisted
+- [x] **Stripe Integration**
+  - All Stripe checkout sessions use event's charge currency
+  - Platform donations use same charge currency
+  - Metadata includes `chargeCurrency` for reference
+
+#### Advanced Analytics Dashboard & Email Marketing (January 6, 2026)
 - [x] **Advanced Analytics Dashboard** (`/analytics` route)
   - KPI cards: Revenue, Tickets Sold, Orders, Avg Order Value
   - Revenue over time chart (line chart)
