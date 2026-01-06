@@ -1365,7 +1365,7 @@ export const EventView = () => {
                                                                                     else sub -= appliedPromo.value;
                                                                                 }
                                                                                 const amount = fee.type === 'percent' ? Math.max(0, sub) * (fee.amount / 100) : fee.amount;
-                                                                                return <PriceDisplay amount={amount} />;
+                                                                                return <EventPriceDisplay amount={amount} currency={event.currency || 'USD'} />;
                                                                             })()}
                                                                         </span>
                                                                     </div>
