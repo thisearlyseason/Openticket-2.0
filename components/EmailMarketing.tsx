@@ -54,8 +54,10 @@ export const EmailMarketing = () => {
             return;
         }
 
-        // Check for saved API key
-        const savedApiKey = localStorage.getItem('mailerlite_api_key');
+        // Check for platform API key first, then organizer's own key
+        const platformApiKey = localStorage.getItem('platform_mailerlite_key');
+        const savedApiKey = localStorage.getItem('mailerlite_api_key') || platformApiKey;
+        
         if (savedApiKey) {
             setApiKey(savedApiKey);
             mailerliteService.configure(savedApiKey);
