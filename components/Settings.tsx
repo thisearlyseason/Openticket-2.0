@@ -37,6 +37,7 @@ export const Settings = () => {
 
     // Email Marketing State
     const [gmailConfig, setGmailConfig] = useState<{ connected: boolean, email?: string, lastSynced?: number }>({ connected: false });
+    const [emailProvider, setEmailProvider] = useState<'gmail' | 'openticket_mailer'>('openticket_mailer');
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [isConnectingGmail, setIsConnectingGmail] = useState(false);
