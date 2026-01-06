@@ -573,8 +573,9 @@ export const EventView = () => {
                     if (val.qty > 0) simpleAddOns[id] = val.qty;
                 });
 
-                // Get user's selected currency for Stripe checkout
-                const selectedCurrency = CurrencyService.getUserCurrency();
+                // Use the event's currency for Stripe checkout
+                // This ensures buyers are charged in the currency the organizer set
+                const eventCurrency = event.currency || 'USD';
 
                 const response = await fetch('/api/stripe/create-order', {
                     method: 'POST',
@@ -591,7 +592,7 @@ export const EventView = () => {
                         customerName: regData.name,
                         assignments: assignments,
                         phoneNumber: regData.phoneNumber,
-                        currency: selectedCurrency, // Pass selected currency for Stripe checkout
+                        currency: eventCurrency, // Use event's currency for checkout
                         successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
                         cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
                         userId: currentUser?.id
