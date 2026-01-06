@@ -969,6 +969,15 @@ export const EventView = () => {
                                             )
                                         ) : (
                                             <div className="space-y-6">
+                                                {/* Currency Notice */}
+                                                {event.currency && event.currency !== 'USD' && (
+                                                    <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
+                                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                                                            💳 Prices in {event.currency} — You'll be charged in {event.currency}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                
                                                 {event.priceType === 'tiered' ? (
                                                     event.ticketTiers?.map(tier => (
                                                         <div key={tier.id} className={`group flex flex-col md:flex-row justify-between items-center p-8 border-2 transition-all rounded-[2rem] ${ticketSelection[tier.id] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 bg-zinc-50 dark:bg-black/20'}`}>
