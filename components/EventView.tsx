@@ -813,12 +813,12 @@ export const EventView = () => {
                                                         <div className="text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Amount</div>
                                                         <div className="text-3xl font-black text-secondary">
                                                             {/* Recalculate total from the registration object to be safe */}
-                                                            <PriceDisplay amount={
+                                                            <EventPriceDisplay amount={
                                                                 (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
                                                                 (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
                                                                 (completedRegistration?.serviceFee || 0) +
                                                                 (completedRegistration?.donationAmount || 0)
-                                                            } />
+                                                            } currency={event.currency || 'USD'} />
                                                         </div>
                                                     </div>
                                                 </div>
