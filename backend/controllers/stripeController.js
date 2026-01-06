@@ -185,6 +185,7 @@ export const createOrder = async (req, res) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
+            currency: checkoutCurrency, // Use customer's selected currency
             success_url: finalSuccessUrl,
             cancel_url: cancelUrl,
             customer_email: customerEmail,
