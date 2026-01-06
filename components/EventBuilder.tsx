@@ -121,11 +121,16 @@ export const EventBuilder = () => {
                 }
             } else {
                 // New event - inherit defaults from user settings
+                // Use businessName if useBusinessName is enabled, otherwise use personal name
+                const useBusinessProfile = updatedUser?.useBusinessName || user.useBusinessName || false;
+                const displayName = useBusinessProfile 
+                    ? (updatedUser?.businessName || user.businessName || updatedUser?.name || user.name)
+                    : (updatedUser?.name || user.name);
+                
                 setFormData(prev => ({
                     ...prev,
-                    // Use organizer profile by default (business name if set, else user name)
-                    useOrganizerProfile: true,
-                    organizer: updatedUser?.businessName || updatedUser?.name || user.name,
+                    // Organizer name based on useBusinessName setting in profile
+                    organizer: displayName,
                     organizerEmail: updatedUser?.email || user.email,
                     paymentConfig: { method: (updatedUser?.defaultPaymentMethod as any) || user.defaultPaymentMethod || 'none', link: updatedUser?.defaultPaymentLink || user.defaultPaymentLink, instructions: updatedUser?.defaultPaymentInstructions || user.defaultPaymentInstructions },
                     confirmationMessage: updatedUser?.defaultConfirmationTemplate || user.defaultConfirmationTemplate,
