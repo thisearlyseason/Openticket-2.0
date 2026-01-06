@@ -913,7 +913,7 @@ export const EventBuilder = () => {
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="flex gap-4">
-                                            <Input label={`Price (${formData.currency || 'USD'})`} type="number" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
+                                            <Input label={`Price (${currentUser?.defaultCurrency || 'USD'})`} type="number" value={formData.price || ''} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
                                             {/* Capacity for non-tiered events */}
                                             <Input label="Capacity" type="number" value={formData.capacity || ''} onChange={e => setFormData({ ...formData, capacity: parseFloat(e.target.value) || 0 })} containerClassName="flex-1" />
                                         </div>
