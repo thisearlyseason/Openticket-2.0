@@ -477,8 +477,21 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ---
 
 ## Latest Verification (January 6, 2026)
+
+### Configurable Email Delivery System (100% Pass Rate)
+**Backend: 13/13 tests passed | Frontend: 9/9 features verified**
+- ✅ Settings page 'Email Marketing' tab shows Email Provider Selection section
+- ✅ OpenTicket Mailing Service option available with 'Recommended' badge (green)
+- ✅ Gmail option shows '(Not Connected)' when Gmail not connected
+- ✅ Gmail option disabled (cannot select) when not connected
+- ✅ Gmail Daily Limits disclaimer appears showing 500/2000 limits
+- ✅ "No automatic fallback" warning displayed prominently
+- ✅ Current status badge shows selected provider (🎟️ OpenTicket or 📧 Gmail)
+- ✅ GET /api/email/status returns provider status correctly
+- ✅ POST /api/email/send validates required fields (to, subject, html)
+- ✅ POST /api/email/send-bulk supports batching with personalization
+
 ### Flexible Currency Handling (100% Pass Rate)
-- ✅ Homepage loads correctly
 - ✅ SuperAdmin Dashboard Settings has Backend Default Currency selector (USD/EUR/GBP/CAD/AUD)
 - ✅ Currency Priority Logic explanation displayed (Event → Backend Default → USD)
 - ✅ EventBuilder Step 3 has Event Currency selector with 5 options
