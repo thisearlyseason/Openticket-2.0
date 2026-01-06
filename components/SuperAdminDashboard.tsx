@@ -2381,8 +2381,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="mt-6 flex justify-end">
                                     <Button 
                                         onClick={() => {
-                                            const key = localStorage.getItem('platform_mailerlite_key');
-                                            if (key) {
+                                            if (mailerliteApiKey) {
+                                                localStorage.setItem('platform_mailerlite_key', mailerliteApiKey);
                                                 alert('Mailerlite API key saved! All organizers can now use email marketing features.');
                                             } else {
                                                 alert('Please enter a Mailerlite API key');
