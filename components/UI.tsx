@@ -913,3 +913,57 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
         );
     }
 };
+
+/**
+ * EventPriceDisplay - Displays prices in the event's specified currency
+ * Use this for event tickets, add-ons, and checkout totals
+ * The price shown is the exact price the buyer will be charged
+ */
+export const EventPriceDisplay = ({ 
+    amount, 
+    currency = 'USD', 
+    className = '',
+    showCurrencyCode = false 
+}: { 
+    amount: number, 
+    currency?: string, 
+    className?: string,
+    showCurrencyCode?: boolean 
+}) => {
+    const currencySymbols: Record<string, string> = {
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        CAD: 'C$',
+        AUD: 'A$',
+    };
+
+    if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
+
+    const symbol = currencySymbols[currency] || '$';
+    const validCurrency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(currency) ? currency : 'USD';
+
+    // Format with locale-aware number formatting
+    try {
+        const formatted = new Intl.NumberFormat(undefined, {
+            style: 'currency',
+            currency: validCurrency,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+        
+        return (
+            <span className={`font-mono ${className}`}>
+                {formatted}
+                {showCurrencyCode && <span className="text-xs text-zinc-500 ml-1">{currency}</span>}
+            </span>
+        );
+    } catch {
+        return (
+            <span className={`font-mono ${className}`}>
+                {symbol}{amount.toFixed(2)}
+                {showCurrencyCode && <span className="text-xs text-zinc-500 ml-1">{currency}</span>}
+            </span>
+        );
+    }
+};
