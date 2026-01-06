@@ -878,8 +878,7 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
     if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
 
     return (
-        <span className={`font-mono ${className}`} title={`USD $${amount.toFixed(2)}`}>
-            {!displayData.isUSD && <span className="text-zinc-400 mr-0.5">~</span>}
+        <span className={`font-mono ${className}`} title={displayData.isUSD ? undefined : `USD $${amount.toFixed(2)}`}>
             {displayData.symbol}{displayData.converted.toFixed(2)}
         </span>
     );
