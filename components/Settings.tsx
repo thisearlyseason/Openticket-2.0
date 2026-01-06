@@ -605,6 +605,116 @@ export const Settings = () => {
                                     )}
                                 </div>
 
+                                {/* Email Provider Selection */}
+                                <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                    <h3 className="font-bold flex items-center gap-2 mb-2">
+                                        <Mail size={18} /> Email Delivery Provider
+                                    </h3>
+                                    <p className="text-sm text-zinc-500 mb-4">
+                                        Choose which service sends your event emails (confirmations, reminders, broadcasts).
+                                    </p>
+
+                                    <div className="space-y-3">
+                                        {/* OpenTicket Mailing Service Option */}
+                                        <label 
+                                            className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                emailProvider === 'openticket_mailer' 
+                                                    ? 'border-primary bg-primary/5' 
+                                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="emailProvider"
+                                                value="openticket_mailer"
+                                                checked={emailProvider === 'openticket_mailer'}
+                                                onChange={() => setEmailProvider('openticket_mailer')}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xl">🎟️</span>
+                                                    <span className="font-bold">OpenTicket Mailing Service</span>
+                                                    <Badge variant="success">Recommended</Badge>
+                                                </div>
+                                                <p className="text-sm text-zinc-500 mt-1">
+                                                    Send emails via OpenTicket's reliable email infrastructure. No daily limits. Best deliverability.
+                                                </p>
+                                            </div>
+                                        </label>
+
+                                        {/* Gmail Option */}
+                                        <label 
+                                            className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                                                !gmailConfig.connected ? 'opacity-60 cursor-not-allowed' : ''
+                                            } ${
+                                                emailProvider === 'gmail' 
+                                                    ? 'border-primary bg-primary/5' 
+                                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="emailProvider"
+                                                value="gmail"
+                                                checked={emailProvider === 'gmail'}
+                                                disabled={!gmailConfig.connected}
+                                                onChange={() => {
+                                                    if (gmailConfig.connected) {
+                                                        setEmailProvider('gmail');
+                                                    } else {
+                                                        showToast('Please connect Gmail first', 'error');
+                                                    }
+                                                }}
+                                                className="mt-1"
+                                            />
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xl">📧</span>
+                                                    <span className="font-bold">Gmail</span>
+                                                    {gmailConfig.connected && <CheckCircle className="text-green-500" size={14} />}
+                                                    {!gmailConfig.connected && <span className="text-xs text-amber-500 font-medium">(Not Connected)</span>}
+                                                </div>
+                                                <p className="text-sm text-zinc-500 mt-1">
+                                                    Send emails from your own Gmail address. Emails appear as sent by you.
+                                                </p>
+                                                {gmailConfig.connected && gmailConfig.email && (
+                                                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                                        Will send as: {gmailConfig.email}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    {/* Gmail Limits Disclaimer */}
+                                    {emailProvider === 'gmail' && (
+                                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl">
+                                            <div className="flex items-start gap-2">
+                                                <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-bold text-amber-700 dark:text-amber-400 text-sm">Gmail Daily Sending Limits</h4>
+                                                    <ul className="text-xs text-amber-600 dark:text-amber-500 mt-2 space-y-1 list-disc list-inside">
+                                                        <li><strong>Standard Gmail:</strong> Up to 500 emails per day</li>
+                                                        <li><strong>Google Workspace:</strong> Up to 2,000 emails per day</li>
+                                                    </ul>
+                                                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                                                        ⚠️ If limits are exceeded, emails will fail. There is <strong>no automatic fallback</strong> to OpenTicket Mailing Service.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Current Status */}
+                                    <div className="mt-4 flex items-center gap-2 text-sm">
+                                        <span className="text-zinc-500">Currently sending via:</span>
+                                        <Badge variant={emailProvider === 'gmail' ? 'default' : 'success'}>
+                                            {emailProvider === 'gmail' ? '📧 Gmail' : '🎟️ OpenTicket'}
+                                        </Badge>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
                                         <h3 className="font-bold text-lg">Email Templates</h3>
