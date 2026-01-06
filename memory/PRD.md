@@ -53,7 +53,28 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Organizer Profile Settings Fix (LATEST - January 6, 2026)
+#### Currency & Ticket Design Simplification (LATEST - January 6, 2026)
+- [x] **Global Organization Currency (Event-Level Currency REMOVED)**
+  - Removed event-level currency dropdown from EventBuilder
+  - All events now use organization's `defaultCurrency` (set in Settings)
+  - EventBuilder shows read-only notice: "All prices in [currency] (your organization currency)"
+  - Link to Settings for changing organization currency
+  - Stripe charges use organization's global currency only
+- [x] **Organizer Profile Preview (NEW)**
+  - Added Profile Preview section in Settings → Organizer Profile
+  - Shows avatar/logo, display name (business or personal), subtitle, email
+  - Shows social media links if configured
+  - Real-time preview updates when toggle or fields change
+  - Helps organizers see how their profile appears on event pages
+- [x] **Simplified Ticket Design (EventBuilder)**
+  - Removed complex ticket designer (color pickers, layout controls)
+  - Now only two simple options:
+    1. **Add Image to Ticket** - Single FileDropZone for ticket header image
+    2. **Add Details to Ticket** - Simple textarea for custom message
+  - Live preview shows how ticket will look
+  - Cleaner, faster event creation experience
+
+#### Organizer Profile Settings Fix (January 6, 2026)
 - [x] **Profile Toggle Location Fixed**
   - "Use Business Name publicly" toggle is in Settings → Organizer Profile (NOT in EventBuilder)
   - Toggle ON: Events use business name
