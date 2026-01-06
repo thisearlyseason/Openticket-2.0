@@ -4,7 +4,7 @@
  */
 
 import webPush from 'web-push';
-import supabase from '../controllers/supabaseClient.js';
+import supabase from '../services/supabase.js';
 
 // Initialize web-push with VAPID keys
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
