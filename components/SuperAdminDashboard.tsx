@@ -1109,97 +1109,228 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
                         {/* Platform Donations Detail Section */}
                         <div className="bg-gradient-to-r from-pink-900/20 to-purple-900/20 border border-pink-500/30 rounded-2xl p-6 mb-8">
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                     <Heart size={20} className="text-pink-400" fill="currentColor" /> Total Platform Donations
                                 </h3>
-                                <div className="text-right">
-                                    <div className="text-3xl font-black text-pink-400">${stats.donationBreakdown.total.toFixed(2)}</div>
-                                    <div className="text-xs text-zinc-500">{stats.donationBreakdown.count} donations total</div>
+                                
+                                {/* Date Range Filter */}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {[
+                                        { value: 'all', label: 'All Time' },
+                                        { value: '7d', label: '7 Days' },
+                                        { value: '30d', label: '30 Days' },
+                                        { value: '90d', label: '90 Days' },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => setDonationDateRange(opt.value as any)}
+                                            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                                                donationDateRange === opt.value
+                                                    ? 'bg-pink-500 text-white'
+                                                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => setDonationDateRange('custom')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                                            donationDateRange === 'custom'
+                                                ? 'bg-pink-500 text-white'
+                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        Custom
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Monthly Comparison */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
-                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">This Month</div>
-                                    <div className="text-2xl font-black text-pink-400">${stats.donationBreakdown.thisMonth.toFixed(2)}</div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
-                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Last Month</div>
-                                    <div className="text-2xl font-black text-zinc-400">${stats.donationBreakdown.lastMonth.toFixed(2)}</div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
-                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
-                                    <div className="text-2xl font-black text-white">
-                                        ${stats.donationBreakdown.count > 0 
-                                            ? (stats.donationBreakdown.total / stats.donationBreakdown.count).toFixed(2) 
-                                            : '0.00'}
+                            {/* Custom Date Range Inputs */}
+                            {donationDateRange === 'custom' && (
+                                <div className="flex flex-wrap items-center gap-3 mb-4 p-3 bg-zinc-800/50 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs text-zinc-400">From:</label>
+                                        <input
+                                            type="date"
+                                            value={donationCustomStart}
+                                            onChange={(e) => setDonationCustomStart(e.target.value)}
+                                            className="px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white"
+                                        />
                                     </div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
-                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Growth</div>
-                                    <div className={`text-2xl font-black ${stats.donationBreakdown.thisMonth >= stats.donationBreakdown.lastMonth ? 'text-green-400' : 'text-red-400'}`}>
-                                        {stats.donationBreakdown.lastMonth > 0 
-                                            ? `${((stats.donationBreakdown.thisMonth - stats.donationBreakdown.lastMonth) / stats.donationBreakdown.lastMonth * 100).toFixed(0)}%`
-                                            : stats.donationBreakdown.thisMonth > 0 ? '+100%' : '0%'}
-                                    </div>
-                                </Card>
-                            </div>
-
-                            {/* Donation Amount Distribution */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
-                                    <div className="space-y-2">
-                                        {Object.entries(stats.donationBreakdown.byAmount).map(([amount, count]) => {
-                                            const percentage = stats.donationBreakdown.count > 0 
-                                                ? (count / stats.donationBreakdown.count * 100) 
-                                                : 0;
-                                            return (
-                                                <div key={amount} className="flex items-center gap-3">
-                                                    <span className="w-16 text-sm font-bold text-white">{amount}</span>
-                                                    <div className="flex-1 bg-zinc-700 rounded-full h-4 overflow-hidden">
-                                                        <div 
-                                                            className="bg-gradient-to-r from-pink-500 to-purple-500 h-full rounded-full transition-all duration-500"
-                                                            style={{ width: `${percentage}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="w-12 text-right text-sm text-zinc-400">{count}</span>
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs text-zinc-400">To:</label>
+                                        <input
+                                            type="date"
+                                            value={donationCustomEnd}
+                                            onChange={(e) => setDonationCustomEnd(e.target.value)}
+                                            className="px-2 py-1 text-xs bg-zinc-700 border border-zinc-600 rounded text-white"
+                                        />
                                     </div>
                                 </div>
+                            )}
 
-                                {/* Recent Donations */}
-                                <div>
-                                    <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Recent Donations</h4>
-                                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                        {stats.donationBreakdown.recent.length > 0 ? (
-                                            stats.donationBreakdown.recent.map((donation, idx) => (
-                                                <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-sm font-bold text-white truncate">{donation.attendeeName}</div>
-                                                        <div className="text-xs text-zinc-500 truncate">{donation.eventTitle}</div>
-                                                    </div>
-                                                    <div className="text-right ml-2">
-                                                        <div className="text-sm font-black text-pink-400">${donation.amount}</div>
-                                                        <div className="text-xs text-zinc-600">
-                                                            {new Date(donation.createdAt).toLocaleDateString()}
-                                                        </div>
-                                                    </div>
+                            {/* Filtered Stats Summary */}
+                            {(() => {
+                                // Calculate filtered donation stats
+                                const now = new Date();
+                                let startDate: Date | null = null;
+                                let endDate: Date = now;
+
+                                if (donationDateRange === '7d') {
+                                    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                                } else if (donationDateRange === '30d') {
+                                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                                } else if (donationDateRange === '90d') {
+                                    startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                                } else if (donationDateRange === 'custom' && donationCustomStart) {
+                                    startDate = new Date(donationCustomStart);
+                                    if (donationCustomEnd) {
+                                        endDate = new Date(donationCustomEnd);
+                                        endDate.setHours(23, 59, 59, 999);
+                                    }
+                                }
+
+                                const filteredRecent = stats.donationBreakdown.recent.filter((d: any) => {
+                                    const dDate = new Date(d.createdAt);
+                                    if (startDate && dDate < startDate) return false;
+                                    if (dDate > endDate) return false;
+                                    return true;
+                                });
+
+                                const filteredTotal = filteredRecent.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+                                const filteredCount = filteredRecent.length;
+
+                                return (
+                                    <>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div className="text-xs text-zinc-500">
+                                                {donationDateRange === 'all' ? 'All time' : 
+                                                 donationDateRange === 'custom' && donationCustomStart ? 
+                                                    `${donationCustomStart} to ${donationCustomEnd || 'now'}` :
+                                                 donationDateRange === '7d' ? 'Last 7 days' :
+                                                 donationDateRange === '30d' ? 'Last 30 days' : 'Last 90 days'}
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-3xl font-black text-pink-400">
+                                                    ${donationDateRange === 'all' ? stats.donationBreakdown.total.toFixed(2) : filteredTotal.toFixed(2)}
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-8 text-zinc-500">
-                                                <Heart size={32} className="mx-auto mb-2 opacity-30" />
-                                                <p className="text-sm">No donations yet</p>
+                                                <div className="text-xs text-zinc-500">
+                                                    {donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount} donations
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Monthly Comparison (only show for 'all' time) */}
+                                        {donationDateRange === 'all' && (
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">This Month</div>
+                                                    <div className="text-2xl font-black text-pink-400">${stats.donationBreakdown.thisMonth.toFixed(2)}</div>
+                                                </Card>
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Last Month</div>
+                                                    <div className="text-2xl font-black text-zinc-400">${stats.donationBreakdown.lastMonth.toFixed(2)}</div>
+                                                </Card>
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
+                                                    <div className="text-2xl font-black text-white">
+                                                        ${stats.donationBreakdown.count > 0 
+                                                            ? (stats.donationBreakdown.total / stats.donationBreakdown.count).toFixed(2) 
+                                                            : '0.00'}
+                                                    </div>
+                                                </Card>
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Growth</div>
+                                                    <div className={`text-2xl font-black ${stats.donationBreakdown.thisMonth >= stats.donationBreakdown.lastMonth ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {stats.donationBreakdown.lastMonth > 0 
+                                                            ? `${((stats.donationBreakdown.thisMonth - stats.donationBreakdown.lastMonth) / stats.donationBreakdown.lastMonth * 100).toFixed(0)}%`
+                                                            : stats.donationBreakdown.thisMonth > 0 ? '+100%' : '0%'}
+                                                    </div>
+                                                </Card>
                                             </div>
                                         )}
-                                    </div>
-                                </div>
-                            </div>
+
+                                        {/* Period Stats (show for filtered views) */}
+                                        {donationDateRange !== 'all' && (
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Period Total</div>
+                                                    <div className="text-2xl font-black text-pink-400">${filteredTotal.toFixed(2)}</div>
+                                                </Card>
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Donations</div>
+                                                    <div className="text-2xl font-black text-white">{filteredCount}</div>
+                                                </Card>
+                                                <Card className="p-4 bg-zinc-800/50 border-zinc-700">
+                                                    <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
+                                                    <div className="text-2xl font-black text-white">
+                                                        ${filteredCount > 0 ? (filteredTotal / filteredCount).toFixed(2) : '0.00'}
+                                                    </div>
+                                                </Card>
+                                            </div>
+                                        )}
+
+                                        {/* Donation Amount Distribution */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
+                                                <div className="space-y-2">
+                                                    {Object.entries(stats.donationBreakdown.byAmount).map(([amount, count]) => {
+                                                        const totalCount = donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount;
+                                                        const percentage = totalCount > 0 
+                                                            ? ((count as number) / totalCount * 100) 
+                                                            : 0;
+                                                        return (
+                                                            <div key={amount} className="flex items-center gap-3">
+                                                                <span className="w-16 text-sm font-bold text-white">{amount}</span>
+                                                                <div className="flex-1 bg-zinc-700 rounded-full h-4 overflow-hidden">
+                                                                    <div 
+                                                                        className="bg-gradient-to-r from-pink-500 to-purple-500 h-full rounded-full transition-all duration-500"
+                                                                        style={{ width: `${percentage}%` }}
+                                                                    />
+                                                                </div>
+                                                                <span className="w-12 text-right text-sm text-zinc-400">{count as number}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+
+                                            {/* Recent Donations */}
+                                            <div>
+                                                <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">
+                                                    {donationDateRange === 'all' ? 'Recent Donations' : 'Donations in Period'}
+                                                </h4>
+                                                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                                    {(donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).length > 0 ? (
+                                                        (donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).map((donation: any, idx: number) => (
+                                                            <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="text-sm font-bold text-white truncate">{donation.attendeeName}</div>
+                                                                    <div className="text-xs text-zinc-500 truncate">{donation.eventTitle}</div>
+                                                                </div>
+                                                                <div className="text-right ml-2">
+                                                                    <div className="text-sm font-black text-pink-400">${donation.amount}</div>
+                                                                    <div className="text-xs text-zinc-600">
+                                                                        {new Date(donation.createdAt).toLocaleDateString()}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-center py-8 text-zinc-500">
+                                                            <Heart size={32} className="mx-auto mb-2 opacity-30" />
+                                                            <p className="text-sm">No donations {donationDateRange === 'all' ? 'yet' : 'in this period'}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
 
                             <div className="mt-4 pt-4 border-t border-zinc-700/50">
                                 <p className="text-xs text-zinc-500 text-center">
