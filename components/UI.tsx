@@ -1054,3 +1054,143 @@ export const EventPriceDisplay = ({
         </span>
     );
 };
+
+/**
+ * DisplayCurrencySelector - Allows users to switch their display currency
+ * This is for UI display only and does NOT affect Stripe charges
+ * 
+ * The charge currency is always determined by: Event Currency → Backend Default → USD
+ * This selector only changes how prices are DISPLAYED to the user
+ */
+export const DisplayCurrencySelector = ({ 
+    className = '',
+    compact = false,
+    showLabel = true,
+}: { 
+    className?: string,
+    compact?: boolean,
+    showLabel?: boolean,
+}) => {
+    const [displayCurrency, setDisplayCurrency] = React.useState('USD');
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    const currencies = [
+        { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸' },
+        { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺' },
+        { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧' },
+        { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar', flag: '🇨🇦' },
+        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺' },
+    ];
+
+    React.useEffect(() => {
+        // Load saved display currency preference
+        const loadCurrency = async () => {
+            try {
+                const { CurrencyService } = await import('../services/currencyService');
+                setDisplayCurrency(CurrencyService.getDisplayCurrency());
+            } catch {
+                const pref = localStorage.getItem('openticket_currency');
+                setDisplayCurrency(pref || 'USD');
+            }
+        };
+        loadCurrency();
+    }, []);
+
+    const handleCurrencyChange = async (newCurrency: string) => {
+        setDisplayCurrency(newCurrency);
+        setIsOpen(false);
+        
+        try {
+            const { CurrencyService } = await import('../services/currencyService');
+            CurrencyService.setDisplayCurrency(newCurrency);
+        } catch {
+            localStorage.setItem('openticket_currency', newCurrency);
+        }
+        
+        // Dispatch event to trigger re-renders in price display components
+        window.dispatchEvent(new Event('currencyChanged'));
+    };
+
+    const currentCurrency = currencies.find(c => c.code === displayCurrency) || currencies[0];
+
+    if (compact) {
+        return (
+            <div className={`relative ${className}`}>
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                >
+                    <span>{currentCurrency.flag}</span>
+                    <span>{currentCurrency.code}</span>
+                    <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 min-w-[140px] overflow-hidden">
+                        {currencies.map(currency => (
+                            <button
+                                key={currency.code}
+                                onClick={() => handleCurrencyChange(currency.code)}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors ${displayCurrency === currency.code ? 'bg-primary/10 text-primary font-bold' : ''}`}
+                            >
+                                <span>{currency.flag}</span>
+                                <span>{currency.code}</span>
+                                {displayCurrency === currency.code && <Check size={12} className="ml-auto" />}
+                            </button>
+                        ))}
+                        <div className="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                            <p className="text-[10px] text-zinc-500">Display only. Payment uses event currency.</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className={`${className}`}>
+            {showLabel && (
+                <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-2">
+                    Display Currency
+                </label>
+            )}
+            <div className="relative">
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl transition-colors border border-zinc-200 dark:border-zinc-700"
+                >
+                    <span className="flex items-center gap-2">
+                        <span className="text-lg">{currentCurrency.flag}</span>
+                        <span className="font-bold">{currentCurrency.code}</span>
+                        <span className="text-zinc-500 text-sm">({currentCurrency.symbol})</span>
+                    </span>
+                    <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+                        {currencies.map(currency => (
+                            <button
+                                key={currency.code}
+                                onClick={() => handleCurrencyChange(currency.code)}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors ${displayCurrency === currency.code ? 'bg-primary/10' : ''}`}
+                            >
+                                <span className="text-lg">{currency.flag}</span>
+                                <div className="flex-1">
+                                    <span className="font-bold">{currency.code}</span>
+                                    <span className="text-zinc-500 text-sm ml-2">{currency.name}</span>
+                                </div>
+                                {displayCurrency === currency.code && <Check size={16} className="text-primary" />}
+                            </button>
+                        ))}
+                        <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-amber-50 dark:bg-amber-900/20">
+                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                                ⚠️ This changes display only. Actual payments are charged in the event's currency.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
