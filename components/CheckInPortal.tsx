@@ -835,6 +835,28 @@ export const CheckInPortal = () => {
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white flex flex-col">
+            {/* Offline Status Banner */}
+            {(!isOnline || pendingCheckIns > 0) && (
+                <div className={`${isOnline ? 'bg-yellow-500' : 'bg-red-500'} text-white px-4 py-2 flex items-center justify-between text-sm font-medium`}>
+                    <div className="flex items-center gap-2">
+                        {isOnline ? <CloudOff size={16} /> : <WifiOff size={16} />}
+                        {isOnline 
+                            ? `${pendingCheckIns} check-in${pendingCheckIns > 1 ? 's' : ''} pending sync`
+                            : 'Offline Mode - Check-ins saved locally'}
+                    </div>
+                    {isOnline && pendingCheckIns > 0 && (
+                        <button 
+                            onClick={syncOfflineCheckIns}
+                            disabled={isSyncing}
+                            className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition-colors"
+                        >
+                            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                            {isSyncing ? 'Syncing...' : 'Sync Now'}
+                        </button>
+                    )}
+                </div>
+            )}
+
             <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-30 shadow-sm">
                 <div className="max-w-3xl mx-auto px-4 py-4">
                     <div className="flex items-center justify-between mb-4">
@@ -842,8 +864,10 @@ export const CheckInPortal = () => {
                             <ArrowLeft size={18} className="mr-1" /> Exit Portal
                         </button>
                         <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-[#ec4899] animate-pulse"></div>
-                            <span className="text-xs font-bold uppercase text-zinc-500 tracking-wider">Live Check-In</span>
+                            <div className={`h-2 w-2 rounded-full ${isOnline ? 'bg-[#ec4899]' : 'bg-yellow-500'} animate-pulse`}></div>
+                            <span className="text-xs font-bold uppercase text-zinc-500 tracking-wider">
+                                {isOnline ? 'Live Check-In' : 'Offline Mode'}
+                            </span>
                         </div>
                     </div>
 
@@ -889,7 +913,7 @@ export const CheckInPortal = () => {
                                 </button>
                             )}
                         </div>
-                        <Button onClick={startScanner} className="h-14 w-20 p-0 flex items-center justify-center rounded-2xl shadow-lg bg-[#E0FF20] text-black hover:bg-[#d4f542] border-none">
+                        <Button onClick={() => setShowScanner(true)} className="h-14 w-20 p-0 flex items-center justify-center rounded-2xl shadow-lg bg-[#E0FF20] text-black hover:bg-[#d4f542] border-none">
                             <Camera size={28} strokeWidth={2.5} />
                         </Button>
                     </div>
