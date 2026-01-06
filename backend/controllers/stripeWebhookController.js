@@ -520,3 +520,66 @@ async function handlePayoutPaid(payout) {
     // For now, just log it
     console.log(`[Webhook] Payout ${payout.id} paid: $${payout.amount / 100}`);
 }
+
+
+/**
+ * Handle checkout.session.expired or async payment failed
+ */
+async function handlePaymentFailed(stripe, session) {
+    console.log(`[Webhook] Processing payment failure for session: ${session.id}`);
+
+    try {
+        // Try to get the customer email and event info from metadata
+        const metadata = session.metadata || {};
+        const customerEmail = session.customer_details?.email || session.customer_email || metadata.customerEmail;
+        const eventTitle = metadata.eventTitle || "Event Registration";
+        const amount = session.amount_total ? (session.amount_total / 100) : 0;
+
+        if (customerEmail) {
+            await EmailService.sendPaymentFailedNotification(
+                customerEmail,
+                session.customer_details?.name || metadata.customerName || "Customer",
+                eventTitle,
+                amount,
+                "Your payment session expired or was cancelled."
+            );
+            console.log(`[Webhook] Payment failed notification sent to ${customerEmail}`);
+        }
+    } catch (error) {
+        console.error("[Webhook] Error handling payment failure:", error);
+    }
+}
+
+/**
+ * Handle payment_intent.payment_failed
+ */
+async function handlePaymentIntentFailed(stripe, paymentIntent) {
+    console.log(`[Webhook] Processing payment_intent.payment_failed: ${paymentIntent.id}`);
+
+    try {
+        const customerEmail = paymentIntent.receipt_email || 
+            paymentIntent.metadata?.customerEmail ||
+            paymentIntent.charges?.data?.[0]?.billing_details?.email;
+
+        const failureMessage = paymentIntent.last_payment_error?.message || 
+            "Your card was declined or there was an issue processing your payment.";
+
+        const amount = paymentIntent.amount ? (paymentIntent.amount / 100) : 0;
+        const eventTitle = paymentIntent.metadata?.eventTitle || "Event Registration";
+
+        if (customerEmail) {
+            await EmailService.sendPaymentFailedNotification(
+                customerEmail,
+                paymentIntent.metadata?.customerName || "Customer",
+                eventTitle,
+                amount,
+                failureMessage
+            );
+            console.log(`[Webhook] Payment failed notification sent to ${customerEmail}`);
+        } else {
+            console.log("[Webhook] No customer email found for payment failed notification");
+        }
+    } catch (error) {
+        console.error("[Webhook] Error handling payment intent failure:", error);
+    }
+}
