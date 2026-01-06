@@ -142,8 +142,7 @@ export const EventBuilder = () => {
                     } : undefined,
                     taxRate: updatedUser?.defaultTaxRate || user.defaultTaxRate || 0,
                     customFees: updatedUser?.defaultCustomFees || user.defaultCustomFees || [],
-                    // Currency defaults to organizer's default currency
-                    currency: updatedUser?.defaultCurrency || user.defaultCurrency || 'USD',
+                    // Currency is now global (from user's defaultCurrency), not per-event
                     trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' }
                 }));
             }
