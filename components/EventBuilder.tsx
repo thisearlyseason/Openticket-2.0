@@ -971,7 +971,7 @@ export const EventBuilder = () => {
                                                 containerClassName="flex-[2] mb-0"
                                             />
                                             <Input
-                                                label={`Price (${formData.currency || 'USD'})`}
+                                                label={`Price (${currentUser?.defaultCurrency || 'USD'})`}
                                                 type="number"
                                                 placeholder="25.00"
                                                 value={newAddOn.price || ''}
