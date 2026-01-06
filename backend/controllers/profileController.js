@@ -155,7 +155,8 @@ export const updateProfile = async (req, res) => {
             'notifications', 'email_templates', 'default_confirmation_template', 'default_waiver',
             'default_refund_policy', 'default_refund_policy_enabled', 'logo_url', 'header_image_url',
             'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code',
-            'role' // Allow role changes (for affiliate signup)
+            'role', // Allow role changes (for affiliate signup)
+            'default_currency'
         ];
 
         const safeUpdates = {};
