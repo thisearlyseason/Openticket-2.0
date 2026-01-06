@@ -1288,18 +1288,11 @@ export const EventView = () => {
                                                                         <span>Service Fees</span>
                                                                         <span>
                                                                             {(() => {
-                                                                                // Recalc total for fee logic... simpler to approximate or reuse calculateTotal difference?
-                                                                                // Let's reuse calculateTotal() - subtotal - tax - fees? 
-                                                                                // Easier to just recalc platform fee on TOTAL processed.
-                                                                                const total = calculateTotal();
-                                                                                // BUT calculateTotal includes platform fee.
-                                                                                // So we can find platform fee by deduecting others?
-                                                                                // Or just use StorageService.calculateFees(total, plan) logic again.
-                                                                                // Wait, calculateTotal loops everything.
-                                                                                // Let's just trust calculateTotal() is the final.
-                                                                                // And display 'Fees' as Difference?
-                                                                                // No, that's messy.
-                                                                                // Let's just calculate it.
+                                                                                // Use server breakdown if available
+                                                                                if (orderBreakdown) {
+                                                                                    return <PriceDisplay amount={orderBreakdown.platformFee} />;
+                                                                                }
+                                                                                // Fallback calculation
                                                                                 let sub = 0;
                                                                                 if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
                                                                                 if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
