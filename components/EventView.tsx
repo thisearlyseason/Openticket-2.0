@@ -238,6 +238,12 @@ export const EventView = () => {
             return;
         }
 
+        // For donation events, need donation amount > 0
+        if (event.priceType === 'donation' && (!regData.donation || Number(regData.donation) <= 0)) {
+            setOrderBreakdown(null);
+            return;
+        }
+
         const fetchBreakdown = async () => {
             setIsCalculating(true);
             try {
@@ -255,6 +261,7 @@ export const EventView = () => {
                         ticketSelections: ticketSelection,
                         addOnSelections: simpleAddOns,
                         promoCode: appliedPromo?.code || null,
+                        donationAmount: event.priceType === 'donation' ? Number(regData.donation) || 0 : undefined,
                     }),
                 });
 
@@ -271,7 +278,7 @@ export const EventView = () => {
 
         const timer = setTimeout(fetchBreakdown, 300);
         return () => clearTimeout(timer);
-    }, [ticketSelection, addOnSelection, appliedPromo, event?.id, event?.priceType]);
+    }, [ticketSelection, addOnSelection, appliedPromo, event?.id, event?.priceType, regData.donation]);
 
     if (loading) return <div className="p-20 text-center animate-pulse text-zinc-500 font-black uppercase tracking-widest text-xl">Loading Experience...</div>;
     if (!event) return <div className="p-20 text-center font-black uppercase text-red-500">Event not found.</div>;
