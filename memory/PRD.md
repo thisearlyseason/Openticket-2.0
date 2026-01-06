@@ -53,7 +53,27 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Configurable Email Delivery System (LATEST - January 6, 2026)
+#### Currency Handling & Profile Persistence Fixes (LATEST - January 6, 2026)
+- [x] **Event Currency Defaults**
+  - Event currency defaults to organizer's global default currency
+  - Organizers can override event currency via dropdown (USD, EUR, GBP, CAD, AUD)
+  - Event currency is single source of truth for Stripe charges
+- [x] **Organizer Profile Persistence**
+  - Added "Profile Source" toggle in EventBuilder Step 1
+  - Toggle between Personal Profile and Organizer Profile
+  - Uses businessName (if set) or personal name based on toggle
+  - Profile data persists across event edits and reloads
+- [x] **Event Details Display Currency**
+  - Display currency defaults to attendee's local currency (geo/locale detection)
+  - Attendees can manually switch display currency via dropdown
+  - Display changes are UI-only, never affect stored prices
+  - Clear notice: "Payment charged in [event currency]"
+- [x] **Stripe Multi-Currency Validation**
+  - Currency Priority: Event Currency > Backend Default > USD
+  - Stripe charges processed in resolved charge currency
+  - Charge currency stored in session metadata for reference
+
+#### Configurable Email Delivery System (January 6, 2026)
 - [x] **Email Provider Options**
   - Gmail - Send from organizer's connected Gmail account
   - OpenTicket Mailing Service - Platform's reliable email infrastructure (Recommended)
