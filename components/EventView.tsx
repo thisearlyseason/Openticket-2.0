@@ -581,15 +581,16 @@ export const EventView = () => {
                         ticketSelections: ticketSelection,
                         addOnSelections: simpleAddOns,
                         promoCode: appliedPromo?.code,
-                        affiliateCode: searchParams.get('ref') || undefined, // <--- Pass Affiliate Ref
-                        platformDonationAmount: regData.platformDonationAmount || 0, // <--- Platform Donation
+                        affiliateCode: searchParams.get('ref') || undefined,
+                        platformDonationAmount: regData.platformDonationAmount || 0, // Platform support donation
+                        donationAmount: event.priceType === 'donation' ? Number(regData.donation) || 0 : 0, // Ticket donation amount
                         customerEmail: regData.email.trim(),
                         customerName: regData.name,
-                        assignments: assignments, // Full guest list
+                        assignments: assignments,
                         phoneNumber: regData.phoneNumber,
                         successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
                         cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
-                        userId: currentUser?.id // Optional, for tracking
+                        userId: currentUser?.id
                     }),
                 });
 
