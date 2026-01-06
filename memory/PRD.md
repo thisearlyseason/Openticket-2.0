@@ -17,6 +17,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - **Database:** Supabase (PostgreSQL)
 - **Authentication:** Firebase Auth
 - **Payments:** Stripe (Connect Express, Checkout)
+- **Scheduled Jobs:** node-cron (weekly affiliate emails)
 - **Deployment:** Vercel-compatible structure
 
 ## Architecture
@@ -27,9 +28,10 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 │   ├── controllers/           # Business logic
 │   │   ├── stripeController.js       # Checkout, verify-session
 │   │   ├── stripeConnectController.js # Connect onboarding
-│   │   └── stripeWebhookController.js # Webhook handling
+│   │   └── stripeWebhookController.js # Webhook handling + payment failed emails
 │   ├── routes/               # API routes
-│   ├── services/             # Supabase, audit logging
+│   ├── services/             # Supabase, audit logging, email, cron
+│   │   └── cronService.js    # Scheduled jobs (weekly affiliate emails)
 │   └── utils/                # Price calculator
 ├── components/               # React components
 ├── services/                 # Frontend services
@@ -49,9 +51,41 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ## Implementation Status
 
+### ✅ Completed (January 6, 2026)
+
+#### Platform Donation UI Refactor (LATEST)
+- [x] Made "Support OpenTicket" donation section smaller and more compact
+- [x] Changed donation options to: "No tip", "$5", "$10", "$25", "Other"
+- [x] Made donation OPTIONAL for all users (removed mandatory for Free plan)
+- [x] Added custom amount input via "Other" button
+- [x] Added "(optional)" label next to "Support OpenTicket"
+- [x] Added helper text: "Tips help us keep fees low for organizers 💜"
+- [x] Order summary correctly shows/hides Platform Donation line based on selection
+
+#### Donation Analytics Date Filter (LATEST)
+- [x] Added date range filter to Super Admin donation analytics
+- [x] Filter options: "All Time", "7 Days", "30 Days", "90 Days", "Custom"
+- [x] Custom date range with start/end date inputs
+- [x] Filtered stats update dynamically based on selected range
+- [x] Period-specific metrics when filter is not "All Time"
+
+#### Automated Weekly Affiliate Emails (LATEST)
+- [x] Created `/app/backend/services/cronService.js` with node-cron
+- [x] Weekly affiliate summary emails scheduled for Mondays at 9:00 AM UTC
+- [x] Cron job automatically initialized on server start
+- [x] Calculates weekly earnings, clicks, conversions per affiliate
+- [x] Includes top performing events in summary email
+
+#### Payment Failed Notification Emails (LATEST)
+- [x] Added `sendPaymentFailedNotification` method to serverEmail.js
+- [x] Beautiful HTML email template with order details and next steps
+- [x] Added webhook handlers for `checkout.session.expired` and `checkout.session.async_payment_failed`
+- [x] Added webhook handler for `payment_intent.payment_failed`
+- [x] Emails sent automatically when payment fails
+
 ### ✅ Completed (January 5, 2026)
 
-#### Admin Check Refactoring (LATEST)
+#### Admin Check Refactoring
 - [x] Standardized admin check to use only `is_admin` boolean
 - [x] Removed legacy `role === 'admin'` and `role === 'superadmin'` checks
 - [x] Updated `/app/backend/routes/adminRoutes.js` - requireAdmin middleware
