@@ -197,7 +197,7 @@ export const createOrder = async (req, res) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
-            currency: checkoutCurrency, // Use customer's selected currency
+            currency: chargeCurrency, // Use event's charge currency (single source of truth)
             success_url: finalSuccessUrl,
             cancel_url: cancelUrl,
             customer_email: customerEmail,
@@ -206,6 +206,7 @@ export const createOrder = async (req, res) => {
                 userId: userId || 'guest',
                 affiliateCode: affiliateCode || '',
                 platformDonationAmount: donationAmount.toString(),
+                chargeCurrency: chargeCurrency.toUpperCase(), // Store for reference
                 // Store breakdown for webhook reconciliation
                 platformFee: breakdown.platformFee.toString(),
                 taxAmount: breakdown.taxAmount.toString(),
@@ -217,7 +218,7 @@ export const createOrder = async (req, res) => {
         // 9. CRITICAL: Add Stripe Connect destination for split payments
         const organizerStripeId = event.owner?.stripe_connect_id;
         const isRealStripeAccount = organizerStripeId && 
-            !organizerStripeId.startsWith('mock_') && 
+            !organizerStripeId.startsWith('mock_') &&
             event.owner?.stripe_onboarding_complete;
 
         if (isRealStripeAccount && breakdown.grandTotal > 0) {
