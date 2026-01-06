@@ -30,6 +30,19 @@ const CATEGORIES = [
     { value: 'community', label: 'Community & Culture' },
 ];
 
+// Currency symbols for display
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    CAD: 'C$',
+    AUD: 'A$',
+};
+
+const getCurrencySymbol = (currency: string = 'USD'): string => {
+    return CURRENCY_SYMBOLS[currency] || '$';
+};
+
 export const EventBuilder = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
