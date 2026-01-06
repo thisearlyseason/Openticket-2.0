@@ -38,12 +38,14 @@ export const calculateOrderBreakdown = ({
     ticketSelections = {},
     addOnSelections = {},
     promoCode = null,
-    organizerPlan = 'free'
+    organizerPlan = 'free',
+    donationAmount = 0
 }) => {
     const breakdown = {
         items: [],
         ticketSubtotal: 0,
         addOnSubtotal: 0,
+        donationSubtotal: 0,
         rawSubtotal: 0,
         discountAmount: 0,
         discountedSubtotal: 0,
@@ -55,7 +57,7 @@ export const calculateOrderBreakdown = ({
         currency: 'usd',
     };
 
-    // 1. Calculate ticket totals
+    // 1. Calculate ticket totals (for donation events, use donationAmount)
     for (const [ticketId, qty] of Object.entries(ticketSelections)) {
         const quantity = Number(qty) || 0;
         if (quantity <= 0) continue;
@@ -77,9 +79,14 @@ export const calculateOrderBreakdown = ({
         // Fallback for general admission
         if (!found && ticketId === 'general') {
             tierName = event.ticket_name || 'General Admission';
-            tierPrice = (event.price_type === 'free' || event.price_type === 'donation') 
-                ? 0 
-                : (Number(event.price) || 0);
+            // For donation events, use the passed donationAmount
+            if (event.price_type === 'donation') {
+                tierPrice = 0; // Ticket itself is free, donation is separate
+            } else if (event.price_type === 'free') {
+                tierPrice = 0;
+            } else {
+                tierPrice = Number(event.price) || 0;
+            }
             found = true;
         }
 
