@@ -414,7 +414,7 @@ const MainContent = () => {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/refunds" element={<RefundsPage />} />
                 <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Terms />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/admin" element={<SuperAdminDashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/manage/:id" element={<ManageEvent />} />
