@@ -1021,6 +1021,8 @@ export const EventView = () => {
                                                         )}
                                                     </>
                                                 )}
+
+                                                {event.addOns && event.addOns.length > 0 && (
                                                     <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800">
                                                         <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Gift size={32} className="text-secondary" /> Extra Goodies</h3>
                                                         <div className="space-y-6">
