@@ -876,7 +876,7 @@ export const EventBuilder = () => {
                                                     </div>
                                                     <div className="flex-1">
                                                         <Input
-                                                            label={`Price (${formData.currency || 'USD'})`}
+                                                            label={`Price (${currentUser?.defaultCurrency || 'USD'})`}
                                                             type="number"
                                                             placeholder="0.00"
                                                             value={tier.price}
