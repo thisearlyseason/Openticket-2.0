@@ -550,8 +550,7 @@ export const EventView = () => {
                     const tolerance = 0.02; // Allow 2 cents tolerance for rounding
                     if (Math.abs(serverTotal - calculateTotal()) > tolerance) {
                         console.warn(`Price mismatch detected: UI=${calculateTotal()}, Server=${serverTotal}`);
-                        // Refresh breakdown and retry
-                        await fetchOrderBreakdown();
+                        // The useEffect will automatically refetch when dependencies change
                         showToast("Price updated. Please review and try again.", "info");
                         setIsRegistering(false);
                         return;
