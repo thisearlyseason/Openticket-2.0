@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
+import { QRScanner } from './QRScanner';
+import { OfflineService } from '../services/offlineService';
 
 interface CheckInTicket {
     reg: Registration;
