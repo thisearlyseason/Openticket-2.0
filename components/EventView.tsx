@@ -990,7 +990,7 @@ export const EventView = () => {
                                                             <div className="text-center md:text-left mb-6 md:mb-0">
                                                                 <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{event.ticketName || 'General Admission'}</div>
                                                                 <div className="text-3xl font-black text-primary">
-                                                                    {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <PriceDisplay amount={event.price} />}
+                                                                    {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <EventPriceDisplay amount={event.price} currency={event.currency || 'USD'} />}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl">
