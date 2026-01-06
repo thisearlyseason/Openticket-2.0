@@ -76,6 +76,24 @@ export const createOrder = async (req, res) => {
             return res.status(404).json({ error: "Event not found" });
         }
 
+        // CHARGE CURRENCY RESOLUTION
+        // Priority: Event Currency → Backend Default → USD
+        // This is the SINGLE SOURCE OF TRUTH for payment currency
+        const supportedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
+        
+        // Get backend default currency (from system config or fallback)
+        const backendDefaultCurrency = process.env.DEFAULT_CURRENCY?.toLowerCase() || 'usd';
+        
+        // Resolve charge currency: event override → backend default → USD
+        let chargeCurrency = 'usd';
+        if (event.currency && supportedCurrencies.includes(event.currency.toLowerCase())) {
+            chargeCurrency = event.currency.toLowerCase();
+        } else if (supportedCurrencies.includes(backendDefaultCurrency)) {
+            chargeCurrency = backendDefaultCurrency;
+        }
+        
+        console.log(`[Stripe] Charge currency resolved: ${chargeCurrency} (event: ${event.currency || 'none'}, default: ${backendDefaultCurrency})`);
+
         // 2. Validate Capacity
         let requestedQty = 0;
         Object.values(ticketSelections || {}).forEach((val) => requestedQty += (Number(val) || 0));
