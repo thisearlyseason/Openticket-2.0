@@ -126,30 +126,51 @@ export const Settings = () => {
     const handleLoadDefaults = async () => {
         showConfirm({
             title: "Load Defaults",
-            message: "Load default templates? This will add examples for Confirmation, Reminder, and Broadcast.",
+            message: "Load default templates? This will add examples for Confirmation, Reminders, Follow-ups, and Abandoned Cart.",
             confirmText: "Load Templates",
             onConfirm: async () => {
                 const defaults: EmailTemplate[] = [
                     {
                         id: `tmpl-def-1`,
                         type: 'confirmation',
-                        name: 'Default Confirmation',
-                        subject: 'Order Confirmation: {{event_title}}',
-                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for your order! We are excited to see you at <strong>{{event_title}}</strong>.</p><p><strong>Event Details:</strong><br>Date: {{event_date}}<br>Location: {{event_location}}</p><p>Your tickets are attached to this email. Please present the QR code at the entrance.</p><p>See you there!</p>`
+                        name: 'Order Confirmation',
+                        subject: '✅ Order Confirmed: {{event_title}}',
+                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for your order! We are excited to see you at <strong>{{event_title}}</strong>.</p><p><strong>Event Details:</strong><br>📅 Date: {{event_date}}<br>📍 Location: {{event_location}}</p><p>Your tickets are attached to this email. Please present the QR code at the entrance.</p><p>See you there! 🎉</p>`
                     },
                     {
                         id: `tmpl-def-2`,
                         type: 'reminder',
-                        name: 'Standard Reminder',
-                        subject: 'Reminder: {{event_title}} is coming up!',
-                        body: `<p>Hi {{attendee_name}},</p><p>Just a quick reminder that <strong>{{event_title}}</strong> is happening soon!</p><p><strong>When:</strong> {{event_date}}<br><strong>Where:</strong> {{event_location}}</p><p>Don't forget to bring your ticket (QR code) for smooth entry.</p><p>We look forward to hosting you!</p>`
+                        name: 'Pre-Event Reminder (24h)',
+                        subject: '🎟️ Reminder: {{event_title}} is Tomorrow!',
+                        body: `<p>Hi {{attendee_name}},</p><p>Just a quick reminder that <strong>{{event_title}}</strong> is happening tomorrow!</p><p><strong>When:</strong> {{event_date}}<br><strong>Where:</strong> {{event_location}}</p><p>Don't forget to bring your ticket (QR code) for smooth entry.</p><p>We look forward to hosting you! 🙌</p>`
                     },
                     {
                         id: `tmpl-def-3`,
+                        type: 'reminder',
+                        name: 'Pre-Event Reminder (1h)',
+                        subject: '⏰ {{event_title}} starts in 1 hour!',
+                        body: `<p>Hi {{attendee_name}},</p><p><strong>{{event_title}}</strong> is starting soon!</p><p>📍 <strong>Location:</strong> {{event_location}}</p><p>Make sure you have your QR code ready for entry. See you there!</p>`
+                    },
+                    {
+                        id: `tmpl-def-4`,
                         type: 'broadcast',
-                        name: 'Thank You Message',
-                        subject: 'Thank you for attending {{event_title}}',
-                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for joining us at <strong>{{event_title}}</strong>! We hope you had a great time.</p><p>Stay tuned for our upcoming events.</p><p>Best regards,<br>The Organizers</p>`
+                        name: 'Post-Event Thank You',
+                        subject: '🙏 Thank you for attending {{event_title}}!',
+                        body: `<p>Hi {{attendee_name}},</p><p>Thank you for joining us at <strong>{{event_title}}</strong>! We hope you had an amazing time.</p><p>We'd love to hear your feedback - it helps us improve future events.</p><p>Stay tuned for our upcoming events!</p><p>Best regards,<br>The Organizers</p>`
+                    },
+                    {
+                        id: `tmpl-def-5`,
+                        type: 'broadcast',
+                        name: 'Abandoned Cart Recovery',
+                        subject: '🎟️ You left something behind - {{event_title}}',
+                        body: `<p>Hi there,</p><p>We noticed you started getting tickets for <strong>{{event_title}}</strong> but didn't complete your purchase.</p><p>Tickets are selling fast - don't miss out!</p><p>📅 {{event_date}}<br>📍 {{event_location}}</p><p><a href="#">Complete Your Purchase</a></p><p>Questions? Just reply to this email!</p>`
+                    },
+                    {
+                        id: `tmpl-def-6`,
+                        type: 'waitlist',
+                        name: 'Waitlist Notification',
+                        subject: '🎉 Tickets Available: {{event_title}}',
+                        body: `<p>Great news, {{attendee_name}}!</p><p>Tickets are now available for <strong>{{event_title}}</strong>!</p><p>You were on the waitlist, so you get early access. Grab your tickets before they're gone!</p><p><a href="#">Get Tickets Now</a></p>`
                     }
                 ];
 
