@@ -1378,7 +1378,7 @@ export const EventView = () => {
                                                                             {(() => {
                                                                                 // Use server breakdown if available
                                                                                 if (orderBreakdown) {
-                                                                                    return <PriceDisplay amount={orderBreakdown.platformFee} />;
+                                                                                    return <EventPriceDisplay amount={orderBreakdown.platformFee} currency={event.currency || 'USD'} />;
                                                                                 }
                                                                                 // Fallback calculation
                                                                                 let sub = 0;
