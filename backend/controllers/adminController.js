@@ -188,16 +188,60 @@ export const getFinancialStats = async (req, res) => {
             }
         }
 
-        // 1b. Get platform donations from registrations
+        // 1b. Get platform donations from registrations with detailed breakdown
+        let donationBreakdown = {
+            total: 0,
+            count: 0,
+            byAmount: { '$1': 0, '$2': 0, '$5': 0, '$10': 0, 'other': 0 },
+            recent: [],
+            thisMonth: 0,
+            lastMonth: 0
+        };
+
         try {
             const { data: donationData } = await supabase
                 .from('registrations')
-                .select('platform_donation_amount')
-                .not('platform_donation_amount', 'is', null);
+                .select('platform_donation_amount, created_at, attendee_name, event:events(title)')
+                .not('platform_donation_amount', 'is', null)
+                .gt('platform_donation_amount', 0)
+                .order('created_at', { ascending: false });
 
             if (donationData) {
-                stats.platformDonations = donationData.reduce((sum, r) => 
-                    sum + (Number(r.platform_donation_amount) || 0), 0);
+                const now = new Date();
+                const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+
+                donationData.forEach(r => {
+                    const amount = Number(r.platform_donation_amount) || 0;
+                    donationBreakdown.total += amount;
+                    donationBreakdown.count++;
+
+                    // Group by amount
+                    if (amount === 1) donationBreakdown.byAmount['$1']++;
+                    else if (amount === 2) donationBreakdown.byAmount['$2']++;
+                    else if (amount === 5) donationBreakdown.byAmount['$5']++;
+                    else if (amount === 10) donationBreakdown.byAmount['$10']++;
+                    else donationBreakdown.byAmount['other']++;
+
+                    // Monthly breakdown
+                    const createdAt = new Date(r.created_at);
+                    if (createdAt >= thisMonthStart) {
+                        donationBreakdown.thisMonth += amount;
+                    } else if (createdAt >= lastMonthStart && createdAt <= lastMonthEnd) {
+                        donationBreakdown.lastMonth += amount;
+                    }
+                });
+
+                // Get recent 10 donations
+                donationBreakdown.recent = donationData.slice(0, 10).map(r => ({
+                    amount: r.platform_donation_amount,
+                    attendeeName: r.attendee_name,
+                    eventTitle: r.event?.title || 'Unknown Event',
+                    createdAt: r.created_at
+                }));
+
+                stats.platformDonations = donationBreakdown.total;
             }
         } catch (donErr) {
             console.warn('Donation stats not available:', donErr.message);
