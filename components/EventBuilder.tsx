@@ -750,6 +750,54 @@ export const EventBuilder = () => {
                             {/* ... Organizer Card ... */}
                             <Card className="p-6">
                                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Target className="text-primary" /> Organizer Profile</h2>
+                                
+                                {/* Toggle: Use Organizer Profile vs Personal Profile */}
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 border border-blue-200 dark:border-blue-800/50">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                                                <Users size={20} className="text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <span className="text-sm font-bold text-blue-900 dark:text-blue-100 block">Profile Source</span>
+                                                <span className="text-xs text-blue-600 dark:text-blue-300">
+                                                    {formData.useOrganizerProfile ? 'Using business/organizer profile' : 'Using your personal profile'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs ${!formData.useOrganizerProfile ? 'font-bold text-blue-600' : 'text-zinc-400'}`}>Personal</span>
+                                            <Switch 
+                                                checked={formData.useOrganizerProfile || false} 
+                                                onChange={(checked) => {
+                                                    const user = currentUser;
+                                                    if (checked) {
+                                                        // Use organizer/business profile
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            useOrganizerProfile: true,
+                                                            organizer: user?.businessName || user?.name || prev.organizer,
+                                                            organizerEmail: user?.email || prev.organizerEmail,
+                                                        }));
+                                                    } else {
+                                                        // Use personal profile
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            useOrganizerProfile: false,
+                                                            organizer: user?.name || prev.organizer,
+                                                            organizerEmail: user?.email || prev.organizerEmail,
+                                                        }));
+                                                    }
+                                                }} 
+                                            />
+                                            <span className={`text-xs ${formData.useOrganizerProfile ? 'font-bold text-blue-600' : 'text-zinc-400'}`}>Organizer</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-blue-500 mt-2">
+                                        💡 Tip: The organizer profile will be shown to attendees on the event page.
+                                    </p>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <Input label="Organizer Name" value={formData.organizer} onChange={e => setFormData({ ...formData, organizer: e.target.value })} required />
                                     <Input label="Contact Email" type="email" value={formData.organizerEmail} onChange={e => setFormData({ ...formData, organizerEmail: e.target.value })} required />
