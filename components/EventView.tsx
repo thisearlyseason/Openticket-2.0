@@ -1330,12 +1330,18 @@ export const EventView = () => {
                                                             </div>
                                                             <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 flex justify-between items-center text-xl font-black">
                                                                 <span>Total</span>
-                                                                <span><PriceDisplay amount={calculateTotal()} /></span>
+                                                                <span className="flex items-center gap-2">
+                                                                    {isCalculating && <Loader size={16} className="animate-spin text-zinc-400" />}
+                                                                    <PriceDisplay amount={calculateTotal()} />
+                                                                </span>
                                                             </div>
+                                                            {orderBreakdown && (
+                                                                <p className="text-xs text-zinc-400 mt-2 text-right">✓ Price verified</p>
+                                                            )}
                                                         </div>
                                                     )}
 
-                                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="w-full h-20 text-2xl font-black shadow-2xl shadow-primary/30 rounded-[2rem] uppercase tracking-tighter hover:scale-[1.02] active:scale-95 transition-all">
+                                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} disabled={isCalculating} className="w-full h-20 text-2xl font-black shadow-2xl shadow-primary/30 rounded-[2rem] uppercase tracking-tighter hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
                                                         Complete Order
                                                     </Button>
                                                 </div>
