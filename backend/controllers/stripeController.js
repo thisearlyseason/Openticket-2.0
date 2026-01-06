@@ -794,56 +794,86 @@ export const recordAtDoorPayment = async (req, res) => {
 };
 
 /**
- * Get currency conversion rates from Stripe
+ * Get currency conversion rates from Fixer.io
  * GET /api/stripe/exchange-rates
  * Returns current exchange rates for supported currencies
  */
 export const getExchangeRates = async (req, res) => {
     try {
-        const stripe = getStripe();
-        
-        // Stripe provides exchange rates through the Balance API
-        // For presentment currencies, we use approximate rates
-        // Stripe will use its own rates at checkout time
-        
-        // Fetch Stripe's current exchange rates
-        // Note: Stripe doesn't have a public exchange rates API,
-        // so we'll use a reliable free API and cache results
-        
         const baseCurrency = 'USD';
         const supportedCurrencies = ['EUR', 'GBP', 'CAD', 'AUD'];
+        const FIXER_API_KEY = process.env.FIXER_API_KEY;
         
+        // Try Fixer.io first (primary source)
+        if (FIXER_API_KEY) {
+            try {
+                // Fixer.io free plan only supports EUR as base, so we need to convert
+                const response = await fetch(
+                    `http://data.fixer.io/api/latest?access_key=${FIXER_API_KEY}&symbols=USD,EUR,GBP,CAD,AUD`
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.rates) {
+                        // Fixer returns rates with EUR as base, convert to USD base
+                        const eurToUsd = data.rates.USD;
+                        const rates = {
+                            USD: 1,
+                            EUR: Number((1 / eurToUsd).toFixed(4)),
+                            GBP: Number((data.rates.GBP / eurToUsd).toFixed(4)),
+                            CAD: Number((data.rates.CAD / eurToUsd).toFixed(4)),
+                            AUD: Number((data.rates.AUD / eurToUsd).toFixed(4))
+                        };
+                        
+                        console.log('[ExchangeRates] Fetched live rates from Fixer.io:', rates);
+                        
+                        return res.json({
+                            success: true,
+                            base: baseCurrency,
+                            rates,
+                            source: 'fixer.io',
+                            timestamp: data.timestamp || Date.now()
+                        });
+                    } else {
+                        console.warn('[ExchangeRates] Fixer.io API error:', data.error?.info || 'Unknown error');
+                    }
+                }
+            } catch (fixerError) {
+                console.warn('[ExchangeRates] Fixer.io fetch failed:', fixerError.message);
+            }
+        }
+        
+        // Fallback: Try exchangerate.host (free, no API key required)
         try {
-            // Use exchangerate.host (free, reliable API)
             const response = await fetch(
                 `https://api.exchangerate.host/latest?base=${baseCurrency}&symbols=${supportedCurrencies.join(',')}`
             );
             
             if (response.ok) {
                 const data = await response.json();
-                if (data.success && data.rates) {
+                if (data.success !== false && data.rates) {
                     const rates = {
                         USD: 1,
                         ...data.rates
                     };
                     
-                    console.log('[Stripe] Fetched live exchange rates:', rates);
+                    console.log('[ExchangeRates] Fetched live rates from exchangerate.host:', rates);
                     
                     return res.json({
                         success: true,
                         base: baseCurrency,
                         rates,
-                        source: 'live',
+                        source: 'exchangerate.host',
                         timestamp: data.timestamp || Date.now()
                     });
                 }
             }
-        } catch (fetchError) {
-            console.warn('[Stripe] Failed to fetch live rates, using fallback:', fetchError.message);
+        } catch (fallbackError) {
+            console.warn('[ExchangeRates] Fallback API failed:', fallbackError.message);
         }
         
-        // Fallback to approximate rates if API fails
-        // These are updated periodically and close to market rates
+        // Ultimate fallback to static rates if all APIs fail
+        // These are approximate rates and should be updated periodically
         const fallbackRates = {
             USD: 1,
             EUR: 0.92,
@@ -852,11 +882,13 @@ export const getExchangeRates = async (req, res) => {
             AUD: 1.53
         };
         
+        console.log('[ExchangeRates] Using static fallback rates');
+        
         res.json({
             success: true,
             base: baseCurrency,
             rates: fallbackRates,
-            source: 'fallback',
+            source: 'static_fallback',
             timestamp: Date.now()
         });
         
