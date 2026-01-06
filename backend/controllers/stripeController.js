@@ -136,15 +136,15 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ error: "No items selected" });
         }
 
-        // 5. Build Stripe line items
-        const lineItems = buildStripeLineItems(breakdown, event.title);
+        // 5. Build Stripe line items (with charge currency)
+        const lineItems = buildStripeLineItems(breakdown, event.title, chargeCurrency);
 
         // 5b. Add platform donation as a separate line item (if applicable)
         const donationAmount = Number(platformDonationAmount) || 0;
         if (donationAmount > 0) {
             lineItems.push({
                 price_data: {
-                    currency: 'usd',
+                    currency: chargeCurrency, // Use event's charge currency
                     product_data: {
                         name: 'Support OpenTicket',
                         description: 'Platform donation to keep fees low',
