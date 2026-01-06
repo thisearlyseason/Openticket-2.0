@@ -29,6 +29,7 @@ import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { SubscriptionSuccess } from './components/SubscriptionSuccess';
 import { Terms } from './components/Terms';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { MobileTicketView } from './components/MobileTicketView';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
