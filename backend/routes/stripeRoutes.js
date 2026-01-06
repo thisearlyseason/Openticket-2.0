@@ -11,6 +11,10 @@ router.post('/create-payment-intent', verifyToken, stripeController.createPaymen
 router.post('/calculate-order', stripeController.calculateOrder);
 router.post('/verify-session', stripeController.verifySession);
 
+// ========== CURRENCY ROUTES ==========
+router.get('/exchange-rates', stripeController.getExchangeRates);
+router.post('/convert-price', stripeController.convertPrice);
+
 // ========== AT-DOOR PAYMENT ROUTES ==========
 router.post('/record-at-door-payment', verifyToken, stripeController.recordAtDoorPayment);
 
