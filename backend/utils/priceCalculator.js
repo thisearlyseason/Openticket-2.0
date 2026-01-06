@@ -234,6 +234,8 @@ export const buildStripeLineItems = (breakdown, eventTitle) => {
                 product_data: {
                     name: item.type === 'ticket' 
                         ? `${eventTitle} - ${item.name}`
+                        : item.type === 'donation'
+                        ? 'Donation'
                         : `${item.name} (Add-on)`,
                     metadata: { type: item.type, id: item.id },
                 },
