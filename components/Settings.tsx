@@ -18,6 +18,7 @@ export const Settings = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [businessName, setBusinessName] = useState('');
+    const [businessEmail, setBusinessEmail] = useState('');
     const [organizerSubtitle, setOrganizerSubtitle] = useState('');
     const [useBusinessName, setUseBusinessName] = useState(false);
     const [logoUrl, setLogoUrl] = useState('');
