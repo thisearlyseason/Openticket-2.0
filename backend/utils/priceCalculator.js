@@ -217,8 +217,11 @@ export const calculateOrderBreakdown = ({
  * @param {string} eventTitle - Event title for line item names
  * @returns {Array} Stripe line_items array
  */
-export const buildStripeLineItems = (breakdown, eventTitle) => {
+export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'usd') => {
     const lineItems = [];
+    
+    // Use the provided charge currency, falling back to breakdown.currency
+    const currency = chargeCurrency || breakdown.currency || 'usd';
 
     // Add tickets and add-ons
     breakdown.items.forEach(item => {
@@ -230,7 +233,7 @@ export const buildStripeLineItems = (breakdown, eventTitle) => {
 
         lineItems.push({
             price_data: {
-                currency: breakdown.currency,
+                currency: currency,
                 product_data: {
                     name: item.type === 'ticket' 
                         ? `${eventTitle} - ${item.name}`
@@ -249,7 +252,7 @@ export const buildStripeLineItems = (breakdown, eventTitle) => {
     if (breakdown.taxAmount > 0) {
         lineItems.push({
             price_data: {
-                currency: breakdown.currency,
+                currency: currency,
                 product_data: { name: 'Tax' },
                 unit_amount: Math.round(breakdown.taxAmount * 100),
             },
@@ -261,7 +264,7 @@ export const buildStripeLineItems = (breakdown, eventTitle) => {
     if (breakdown.customFeesAmount > 0) {
         lineItems.push({
             price_data: {
-                currency: breakdown.currency,
+                currency: currency,
                 product_data: { name: 'Additional Fees' },
                 unit_amount: Math.round(breakdown.customFeesAmount * 100),
             },
@@ -273,7 +276,7 @@ export const buildStripeLineItems = (breakdown, eventTitle) => {
     if (breakdown.platformFee > 0) {
         lineItems.push({
             price_data: {
-                currency: breakdown.currency,
+                currency: currency,
                 product_data: { name: 'Service Fee' },
                 unit_amount: Math.round(breakdown.platformFee * 100),
             },
