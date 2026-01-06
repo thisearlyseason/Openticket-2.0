@@ -174,6 +174,9 @@ export interface User {
   defaultCustomFees?: CustomFee[];
   defaultCurrency?: string; // Default currency for new events (USD, EUR, GBP, CAD, AUD)
 
+  // Saved Ticket Templates
+  savedTicketTemplates?: SavedTicketTemplate[];
+
   // Favorites
   favoriteOrganizers?: string[];
 }
