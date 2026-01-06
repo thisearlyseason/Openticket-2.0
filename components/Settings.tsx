@@ -212,6 +212,7 @@ export const Settings = () => {
                 socials: socials,
                 defaultTaxRate: Number(defaultTaxRate),
                 defaultCustomFees: defaultCustomFees,
+                defaultCurrency: defaultCurrency,
                 geminiApiKey: geminiApiKey
             });
 
