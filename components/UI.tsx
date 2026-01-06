@@ -918,12 +918,13 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
  * EventPriceDisplay - Displays prices in the event's specified currency
  * Use this for event tickets, add-ons, and checkout totals
  * The price shown is the exact price the buyer will be charged
+ * Always shows currency code by default to avoid confusion
  */
 export const EventPriceDisplay = ({ 
     amount, 
     currency = 'USD', 
     className = '',
-    showCurrencyCode = false 
+    showCurrencyCode = true  // Changed default to true - always show currency code
 }: { 
     amount: number, 
     currency?: string, 
@@ -952,17 +953,18 @@ export const EventPriceDisplay = ({
             maximumFractionDigits: 2
         }).format(amount);
         
+        // Show currency code explicitly for clarity
         return (
             <span className={`font-mono ${className}`}>
                 {formatted}
-                {showCurrencyCode && <span className="text-xs text-zinc-500 ml-1">{currency}</span>}
+                {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({currency})</span>}
             </span>
         );
     } catch {
         return (
             <span className={`font-mono ${className}`}>
                 {symbol}{amount.toFixed(2)}
-                {showCurrencyCode && <span className="text-xs text-zinc-500 ml-1">{currency}</span>}
+                {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({currency})</span>}
             </span>
         );
     }
