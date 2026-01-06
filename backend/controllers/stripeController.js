@@ -350,7 +350,7 @@ export const createPaymentIntent = async (req, res) => {
  */
 export const calculateOrder = async (req, res) => {
     try {
-        const { eventId, ticketSelections, addOnSelections, promoCode } = req.body;
+        const { eventId, ticketSelections, addOnSelections, promoCode, donationAmount } = req.body;
 
         const { data: event, error } = await supabase
             .from('events')
@@ -381,6 +381,7 @@ export const calculateOrder = async (req, res) => {
             addOnSelections: addOnSelections || {},
             promoCode: validPromoCode,
             organizerPlan,
+            donationAmount: donationAmount || 0, // Pass donation amount for donation-type events
         });
 
         res.json(breakdown);
