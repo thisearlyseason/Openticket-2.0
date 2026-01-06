@@ -25,7 +25,7 @@ class TestCalculateOrderEndpoint:
     
     def test_calculate_order_with_fixed_price_event(self):
         """Test calculation for fixed price event (music fest - $50)"""
-        # Event: music fest - price_type: fixed, price: 50
+        # Event: music fest - price_type: fixed, price: 50, absorb_fees: false
         event_id = "b8739973-fe02-4c11-ae2d-09f42c2d3213"
         
         response = requests.post(f"{BASE_URL}/api/stripe/calculate-order", json={
@@ -51,9 +51,14 @@ class TestCalculateOrderEndpoint:
         assert breakdown["ticketSubtotal"] == 100, f"Expected ticketSubtotal=100, got {breakdown['ticketSubtotal']}"
         assert breakdown["rawSubtotal"] == 100, f"Expected rawSubtotal=100, got {breakdown['rawSubtotal']}"
         
-        # This event has absorb_fees=true, so platformFee should be 0
-        # Actually checking the event data: absorb_fees: true
-        assert breakdown["platformFee"] == 0, f"Expected platformFee=0 (absorb_fees=true), got {breakdown['platformFee']}"
+        # This event has absorb_fees=false, so platformFee should be charged
+        # Free plan fee: 2.75% + $0.99 = 100 * 0.0275 + 0.99 = 3.74
+        expected_fee = round(100 * 0.0275 + 0.99, 2)
+        assert breakdown["platformFee"] == expected_fee, f"Expected platformFee={expected_fee}, got {breakdown['platformFee']}"
+        
+        # Grand total should be subtotal + platform fee
+        expected_total = 100 + expected_fee
+        assert breakdown["grandTotal"] == expected_total, f"Expected grandTotal={expected_total}, got {breakdown['grandTotal']}"
         
         print(f"✓ Fixed price event calculation correct: {json.dumps(breakdown, indent=2)}")
     
@@ -177,9 +182,9 @@ class TestPlatformFeeCalculation:
         assert "platformFee" in breakdown
         print(f"✓ Platform fee field present: ${breakdown['platformFee']}")
     
-    def test_platform_fee_absorbed_by_organizer(self):
-        """Test that absorb_fees=true results in $0 platform fee"""
-        # Event: music fest has absorb_fees: true
+    def test_platform_fee_not_absorbed(self):
+        """Test that absorb_fees=false results in platform fee being charged to buyer"""
+        # Event: music fest has absorb_fees: false
         event_id = "b8739973-fe02-4c11-ae2d-09f42c2d3213"
         
         response = requests.post(f"{BASE_URL}/api/stripe/calculate-order", json={
@@ -191,14 +196,16 @@ class TestPlatformFeeCalculation:
         assert response.status_code == 200
         breakdown = response.json()
         
-        # absorb_fees=true means organizer pays the fee, not buyer
-        assert breakdown["platformFee"] == 0, f"Expected platformFee=0 when absorb_fees=true, got {breakdown['platformFee']}"
+        # absorb_fees=false means buyer pays the fee
+        # Free plan fee: 2.75% + $0.99 on $100 = 3.74
+        expected_fee = round(100 * 0.0275 + 0.99, 2)
+        assert breakdown["platformFee"] == expected_fee, f"Expected platformFee={expected_fee}, got {breakdown['platformFee']}"
         
-        # Grand total should equal discounted subtotal + tax + custom fees (no platform fee)
-        expected_total = breakdown["discountedSubtotal"] + breakdown["taxAmount"] + breakdown.get("customFeesAmount", 0)
+        # Grand total should equal discounted subtotal + tax + custom fees + platform fee
+        expected_total = breakdown["discountedSubtotal"] + breakdown["taxAmount"] + breakdown.get("customFeesAmount", 0) + breakdown["platformFee"]
         assert abs(breakdown["grandTotal"] - expected_total) < 0.01, f"Grand total mismatch: {breakdown['grandTotal']} vs expected {expected_total}"
         
-        print(f"✓ Platform fee correctly absorbed by organizer")
+        print(f"✓ Platform fee correctly charged to buyer when absorb_fees=false")
 
 
 class TestDiscountCalculation:
