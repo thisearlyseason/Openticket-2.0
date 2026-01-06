@@ -1032,9 +1032,9 @@ export const EventBuilder = () => {
                                     <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Sparkles className="text-purple-500" /> Ticket Design</h2>
                                     <p className="text-sm text-zinc-500 mb-6">Choose a template and customize your printable tickets.</p>
                                     
-                                    {/* Template Presets */}
-                                    <div className="mb-6">
-                                        <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block">Choose Template</label>
+                                    {/* Default Template Presets */}
+                                    <div className="mb-4">
+                                        <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block">Default Templates</label>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             {[
                                                 { id: 'modern', name: 'Modern', gradient: 'from-purple-500 to-indigo-600', textColor: '#ffffff', bgColor: '#ffffff', accent: '#8b5cf6' },
@@ -1079,6 +1079,80 @@ export const EventBuilder = () => {
                                             ))}
                                         </div>
                                     </div>
+
+                                    {/* My Saved Templates */}
+                                    {currentUser?.savedTicketTemplates && currentUser.savedTicketTemplates.length > 0 && (
+                                        <div className="mb-6">
+                                            <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block flex items-center gap-2">
+                                                <Heart size={12} className="text-pink-500" /> My Templates
+                                            </label>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                {currentUser.savedTicketTemplates.map(saved => (
+                                                    <div key={saved.id} className="relative group">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData({ 
+                                                                ...formData, 
+                                                                ticketDesign: { 
+                                                                    ...(formData.ticketDesign || {}), 
+                                                                    template: saved.id,
+                                                                    logoUrl: saved.design.logoUrl || formData.ticketDesign?.logoUrl,
+                                                                    backgroundColor: saved.design.backgroundColor || '#ffffff',
+                                                                    textColor: saved.design.textColor || '#000000',
+                                                                    accentColor: saved.design.accentColor || '#8b5cf6',
+                                                                    customMessage: saved.design.customMessage || '',
+                                                                } 
+                                                            })}
+                                                            className={`w-full p-3 rounded-xl border-2 transition-all ${
+                                                                formData.ticketDesign?.template === saved.id 
+                                                                    ? 'border-pink-500 ring-2 ring-pink-500/20' 
+                                                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
+                                                            }`}
+                                                        >
+                                                            {/* Mini Preview */}
+                                                            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden shadow-sm mb-2">
+                                                                <div 
+                                                                    className="h-1/3 flex items-center justify-center"
+                                                                    style={{ backgroundColor: saved.design.accentColor || '#8b5cf6' }}
+                                                                >
+                                                                    {saved.design.logoUrl ? (
+                                                                        <img src={saved.design.logoUrl} className="max-h-full max-w-full object-contain p-1" alt="" />
+                                                                    ) : (
+                                                                        <div className="w-6 h-3 bg-white/30 rounded"></div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="h-2/3 flex flex-col items-center justify-center p-2" style={{ backgroundColor: saved.design.backgroundColor || '#ffffff' }}>
+                                                                    <div className="w-4 h-4 rounded bg-zinc-300 mb-1"></div>
+                                                                    <div className="w-8 h-1 rounded bg-zinc-300"></div>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-xs font-bold truncate block">{saved.name}</span>
+                                                            {formData.ticketDesign?.template === saved.id && (
+                                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
+                                                                    <Check size={12} className="text-white" />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                        {/* Delete Button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (confirm(`Delete template "${saved.name}"?`)) {
+                                                                    const updated = currentUser.savedTicketTemplates?.filter(t => t.id !== saved.id) || [];
+                                                                    await StorageService.updateUser(currentUser.id, { savedTicketTemplates: updated });
+                                                                    setCurrentUser({ ...currentUser, savedTicketTemplates: updated });
+                                                                }
+                                                            }}
+                                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-lg"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Left: Customization Options */}
