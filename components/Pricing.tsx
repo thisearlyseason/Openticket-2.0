@@ -80,15 +80,15 @@ export const Pricing = () => {
             return (
                 <div className="flex flex-col items-center">
                     <span className="text-sm line-through text-gray-400 dark:text-zinc-500">
-                        {currencyInfo.symbol}{convertedPrice.toFixed(0)}
+                        {currencyInfo.symbol}{convertedPrice.toFixed(0)} {currency}
                     </span>
-                    <span>{currencyInfo.symbol}{discountedConverted.toFixed(0)}</span>
+                    <span>{currencyInfo.symbol}{discountedConverted.toFixed(0)} {currency}</span>
                 </div>
             );
         }
         
-        if (priceUSD === 0) return `${currencyInfo.symbol}0`;
-        return `${currencyInfo.symbol}${convertedPrice.toFixed(0)}`;
+        if (priceUSD === 0) return `${currencyInfo.symbol}0 ${currency}`;
+        return `${currencyInfo.symbol}${convertedPrice.toFixed(0)} ${currency}`;
     };
 
     const isNonUSD = currency !== 'USD';
