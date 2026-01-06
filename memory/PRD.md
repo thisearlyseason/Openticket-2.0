@@ -560,6 +560,8 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 4. ~~Super Admin not getting Premium plan~~ ✅ RESOLVED - Auto-assigned in profile fetch
 5. Stripe sandbox error on paid plans - Expected with test keys, works in production
 6. ~~"Please sign in" bug in NotificationSettings~~ ✅ VERIFIED - Bug does not exist, previous report was incorrect
+7. ~~Black screen after Stripe payment~~ ✅ RESOLVED - Race condition fixed in EventView.tsx (line 166)
+8. ~~Empty organizer fields in EventBuilder~~ ✅ RESOLVED - Pre-fill logic fixed in EventBuilder.tsx (lines 122-139)
 
 ---
 
