@@ -1409,7 +1409,7 @@ export const EventView = () => {
                                                                         <span className="flex items-center gap-1">
                                                                             <Heart size={14} fill="currentColor" /> Platform Donation
                                                                         </span>
-                                                                        <span><PriceDisplay amount={regData.platformDonationAmount} /></span>
+                                                                        <span><EventPriceDisplay amount={regData.platformDonationAmount} currency={event.currency || 'USD'} /></span>
                                                                     </div>
                                                                 )}
                                                             </div>
