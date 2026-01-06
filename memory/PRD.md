@@ -53,7 +53,30 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Flexible Currency Handling System (LATEST - January 6, 2026)
+#### Configurable Email Delivery System (LATEST - January 6, 2026)
+- [x] **Email Provider Options**
+  - Gmail - Send from organizer's connected Gmail account
+  - OpenTicket Mailing Service - Platform's reliable email infrastructure (Recommended)
+  - Radio button selection in Settings → Email Marketing tab
+- [x] **Provider Behavior**
+  - Gmail selected: All emails sent via connected Gmail, no fallback
+  - OpenTicket selected: All emails sent via platform, Gmail status ignored
+  - Only one provider active at a time (explicit selection)
+- [x] **Gmail Sending Limits Disclaimer**
+  - Standard Gmail: 500 emails per day
+  - Google Workspace: 2,000 emails per day
+  - Clear warning: "No automatic fallback to OpenTicket Mailing Service"
+  - Disclaimer appears only when Gmail is selected
+- [x] **Default Behavior**
+  - OpenTicket Mailing Service is default provider
+  - Gmail option disabled if not connected
+  - Requires explicit Gmail connection before selection
+- [x] **Backend API Endpoints**
+  - `GET /api/email/status` - Check email service status
+  - `POST /api/email/send` - Send single email
+  - `POST /api/email/send-bulk` - Send bulk emails with batching
+
+#### Flexible Currency Handling System (January 6, 2026)
 - [x] **Backend Default Currency** - Platform-wide setting for charge currency
   - SuperAdmin Dashboard Settings tab with currency selector (USD, EUR, GBP, CAD, AUD)
   - Currency Priority Logic display: Event → Backend Default → USD
