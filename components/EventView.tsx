@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
+import { CurrencyService } from '../services/currencyService';
 import { Event, Registration, PurchasedTicket, PurchasedAddOn, PromoCode, User } from '../types';
 import stripePromise from '../services/stripe';
 import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay, ReceiptModal } from './UI';
