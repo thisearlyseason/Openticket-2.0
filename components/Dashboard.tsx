@@ -10,7 +10,7 @@ import {
     Copy, Trash2, Edit, ExternalLink, QrCode, Download,
     Code, Eye, EyeOff, BarChart3, DollarSign, Ticket, RefreshCw,
     Link as LinkIcon, ArrowRight, Wallet, Megaphone, X, Bell, Globe, MapPin, MoreHorizontal, Settings, Gift,
-    Target, Check, Image as ImageIcon, Mail
+    Target, Check, Image as ImageIcon
 } from 'lucide-react';
 
 export const Dashboard = () => {
