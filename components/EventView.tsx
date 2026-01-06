@@ -969,11 +969,12 @@ export const EventView = () => {
                                             )
                                         ) : (
                                             <div className="space-y-6">
-                                                {/* Charge Currency Notice */}
-                                                <div className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
-                                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
-                                                        💳 Prices shown in {event.currency || 'USD'} — Payment will be charged in {event.currency || 'USD'}
+                                                {/* Charge Currency Notice + Display Currency Selector */}
+                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
+                                                    <span className="text-blue-600 dark:text-blue-400 font-bold text-sm text-center sm:text-left">
+                                                        💳 Charged in {event.currency || 'USD'} (event currency)
                                                     </span>
+                                                    <DisplayCurrencySelector compact className="flex-shrink-0" />
                                                 </div>
                                                 
                                                 {event.priceType === 'tiered' ? (
