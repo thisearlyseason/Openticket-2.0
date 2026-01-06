@@ -424,8 +424,8 @@ export const CheckInPortal = () => {
             return;
         }
 
+        // Optimistic UI update
         setAllTickets(prev => prev.map(t => {
-            // Match by ID instead of components for safety
             if (t.id === ticketUniqueId) {
                 return { ...t, checkedIn: !currentStatus, checkInTime: !currentStatus ? timestamp : undefined };
             }
@@ -446,10 +446,51 @@ export const CheckInPortal = () => {
 
         const anyCheckedIn = Object.values(newStatuses).some((s: any) => s.checkedIn === true);
 
-        await StorageService.updateRegistration(regId, {
-            checkInStatuses: newStatuses,
-            checkedIn: anyCheckedIn
-        });
+        // If offline, save locally and sync later
+        if (!isOnline) {
+            try {
+                await OfflineService.saveOfflineCheckIn({
+                    eventId: id!,
+                    registrationId: regId,
+                    ticketKey,
+                    checkedIn: !currentStatus,
+                    timestamp,
+                    attendeeName: reg.attendeeName
+                });
+                setPendingCheckIns(await OfflineService.getPendingCount());
+                
+                // Update local state
+                setRegistrations(prev => prev.map(r => {
+                    if (r.id === regId) {
+                        return { ...r, checkInStatuses: newStatuses, checkedIn: anyCheckedIn };
+                    }
+                    return r;
+                }));
+            } catch (err) {
+                console.error('[CheckIn] Failed to save offline:', err);
+            }
+            return;
+        }
+
+        // Online - sync immediately
+        try {
+            await StorageService.updateRegistration(regId, {
+                checkInStatuses: newStatuses,
+                checkedIn: anyCheckedIn
+            });
+        } catch (err) {
+            console.error('[CheckIn] Failed to sync, saving offline:', err);
+            // Fallback to offline storage if sync fails
+            await OfflineService.saveOfflineCheckIn({
+                eventId: id!,
+                registrationId: regId,
+                ticketKey,
+                checkedIn: !currentStatus,
+                timestamp,
+                attendeeName: reg.attendeeName
+            });
+            setPendingCheckIns(await OfflineService.getPendingCount());
+        }
     };
 
     const handleProcessPayment = async (method: 'cash' | 'card' | 'transfer') => {
