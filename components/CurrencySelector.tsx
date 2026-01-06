@@ -187,7 +187,7 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({ compact = fa
                 )}
             </div>
             <p className="mt-2 text-xs text-zinc-500">
-                Prices are shown in your selected currency for reference. All payments are processed in USD.
+                You'll be charged in your selected currency. Stripe handles the conversion automatically.
             </p>
         </div>
     );
