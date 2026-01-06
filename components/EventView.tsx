@@ -796,7 +796,7 @@ export const EventView = () => {
                                                             <div>
                                                                 <div className="font-black text-zinc-900 dark:text-white">{addon.name} x{addon.quantity}</div>
                                                             </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><PriceDisplay amount={addon.price * addon.quantity} /></div>
+                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={addon.price * addon.quantity} currency={event.currency || 'USD'} /></div>
                                                         </div>
                                                     ))}
 
