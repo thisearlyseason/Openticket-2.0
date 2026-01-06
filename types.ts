@@ -280,6 +280,7 @@ export interface SEOConfig {
 }
 
 export interface TicketDesign {
+  template?: 'modern' | 'classic' | 'minimal' | 'festive'; // Pre-designed template
   logoUrl?: string;
   backgroundColor?: string;
   textColor?: string;
