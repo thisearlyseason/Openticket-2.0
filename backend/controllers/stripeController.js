@@ -792,3 +792,152 @@ export const recordAtDoorPayment = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Get currency conversion rates from Stripe
+ * GET /api/stripe/exchange-rates
+ * Returns current exchange rates for supported currencies
+ */
+export const getExchangeRates = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        
+        // Stripe provides exchange rates through the Balance API
+        // For presentment currencies, we use approximate rates
+        // Stripe will use its own rates at checkout time
+        
+        // Fetch Stripe's current exchange rates
+        // Note: Stripe doesn't have a public exchange rates API,
+        // so we'll use a reliable free API and cache results
+        
+        const baseCurrency = 'USD';
+        const supportedCurrencies = ['EUR', 'GBP', 'CAD', 'AUD'];
+        
+        try {
+            // Use exchangerate.host (free, reliable API)
+            const response = await fetch(
+                `https://api.exchangerate.host/latest?base=${baseCurrency}&symbols=${supportedCurrencies.join(',')}`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.rates) {
+                    const rates = {
+                        USD: 1,
+                        ...data.rates
+                    };
+                    
+                    console.log('[Stripe] Fetched live exchange rates:', rates);
+                    
+                    return res.json({
+                        success: true,
+                        base: baseCurrency,
+                        rates,
+                        source: 'live',
+                        timestamp: data.timestamp || Date.now()
+                    });
+                }
+            }
+        } catch (fetchError) {
+            console.warn('[Stripe] Failed to fetch live rates, using fallback:', fetchError.message);
+        }
+        
+        // Fallback to approximate rates if API fails
+        // These are updated periodically and close to market rates
+        const fallbackRates = {
+            USD: 1,
+            EUR: 0.92,
+            GBP: 0.79,
+            CAD: 1.36,
+            AUD: 1.53
+        };
+        
+        res.json({
+            success: true,
+            base: baseCurrency,
+            rates: fallbackRates,
+            source: 'fallback',
+            timestamp: Date.now()
+        });
+        
+    } catch (error) {
+        console.error('Get Exchange Rates Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Convert price to target currency
+ * POST /api/stripe/convert-price
+ * Body: { amountUSD, targetCurrency }
+ */
+export const convertPrice = async (req, res) => {
+    try {
+        const { amountUSD, targetCurrency = 'USD' } = req.body;
+        
+        if (typeof amountUSD !== 'number' || amountUSD < 0) {
+            return res.status(400).json({ error: 'Invalid amount' });
+        }
+        
+        const currency = targetCurrency.toUpperCase();
+        const supportedCurrencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
+        
+        if (!supportedCurrencies.includes(currency)) {
+            return res.json({
+                originalAmount: amountUSD,
+                convertedAmount: amountUSD,
+                currency: 'USD',
+                rate: 1,
+                message: 'Unsupported currency, defaulting to USD'
+            });
+        }
+        
+        if (currency === 'USD') {
+            return res.json({
+                originalAmount: amountUSD,
+                convertedAmount: amountUSD,
+                currency: 'USD',
+                rate: 1
+            });
+        }
+        
+        // Fetch current rate
+        try {
+            const response = await fetch(
+                `https://api.exchangerate.host/convert?from=USD&to=${currency}&amount=${amountUSD}`
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.result) {
+                    return res.json({
+                        originalAmount: amountUSD,
+                        convertedAmount: Math.round(data.result * 100) / 100,
+                        currency,
+                        rate: data.info?.rate || data.result / amountUSD,
+                        source: 'live'
+                    });
+                }
+            }
+        } catch (fetchError) {
+            console.warn('[Stripe] Price conversion API failed:', fetchError.message);
+        }
+        
+        // Fallback rates
+        const fallbackRates = { EUR: 0.92, GBP: 0.79, CAD: 1.36, AUD: 1.53 };
+        const rate = fallbackRates[currency] || 1;
+        const convertedAmount = Math.round(amountUSD * rate * 100) / 100;
+        
+        res.json({
+            originalAmount: amountUSD,
+            convertedAmount,
+            currency,
+            rate,
+            source: 'fallback'
+        });
+        
+    } catch (error) {
+        console.error('Convert Price Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
