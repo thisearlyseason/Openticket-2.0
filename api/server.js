@@ -10,6 +10,7 @@ import eventRoutes from '../backend/routes/eventRoutes.js';
 import registrationRoutes from '../backend/routes/registrationRoutes.js';
 import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
+import pushRoutes from '../backend/routes/pushRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
