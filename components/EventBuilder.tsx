@@ -818,41 +818,16 @@ export const EventBuilder = () => {
                             <Card className="p-6">
                                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Ticket className="text-primary" /> Tickets</h2>
                                 
-                                {/* Currency Selection Banner */}
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-xl mb-6 border border-blue-200 dark:border-blue-800/50">
-                                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                                                <Globe size={20} className="text-blue-600 dark:text-blue-400" />
-                                            </div>
-                                            <div>
-                                                <span className="text-sm font-bold text-blue-900 dark:text-blue-100 block">Event Currency</span>
-                                                <span className="text-xs text-blue-600 dark:text-blue-300">All ticket and add-on prices will be in this currency</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <select
-                                                value={formData.currency || 'USD'}
-                                                onChange={(e) => {
-                                                    const newCurrency = e.target.value;
-                                                    const oldCurrency = formData.currency || 'USD';
-                                                    // Warn if prices already set
-                                                    if (oldCurrency !== newCurrency && (formData.price > 0 || (formData.ticketTiers?.some(t => t.price > 0)))) {
-                                                        if (!confirm(`⚠️ Currency Change Warning\n\nYou're changing from ${oldCurrency} to ${newCurrency}.\n\nExisting prices will NOT be auto-converted. You'll need to update your prices manually.\n\nContinue?`)) {
-                                                            return;
-                                                        }
-                                                    }
-                                                    setFormData({ ...formData, currency: newCurrency });
-                                                }}
-                                                className="px-4 py-2 rounded-lg border border-blue-300 dark:border-blue-700 bg-white dark:bg-zinc-800 text-blue-900 dark:text-blue-100 font-bold text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                            >
-                                                <option value="USD">$ USD - US Dollar</option>
-                                                <option value="EUR">€ EUR - Euro</option>
-                                                <option value="GBP">£ GBP - British Pound</option>
-                                                <option value="CAD">C$ CAD - Canadian Dollar</option>
-                                                <option value="AUD">A$ AUD - Australian Dollar</option>
-                                            </select>
-                                        </div>
+                                {/* Organization Currency Notice - Read-only, set in Settings */}
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl mb-6 border border-blue-200 dark:border-blue-800/50 flex items-center gap-3">
+                                    <Globe size={18} className="text-blue-600 dark:text-blue-400" />
+                                    <div>
+                                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                            All prices in <strong>{currentUser?.defaultCurrency || 'USD'}</strong> (your organization currency)
+                                        </span>
+                                        <span className="text-xs text-blue-600 dark:text-blue-300 ml-2">
+                                            Change in <span className="underline cursor-pointer" onClick={() => navigate('/settings')}>Settings</span>
+                                        </span>
                                     </div>
                                 </div>
 
