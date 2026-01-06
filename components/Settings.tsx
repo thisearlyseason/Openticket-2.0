@@ -32,6 +32,7 @@ export const Settings = () => {
     const [defaultWaiver, setDefaultWaiver] = useState<{ enabled?: boolean, text?: string, pdfUrl?: string, fileName?: string }>({});
     const [defaultTaxRate, setDefaultTaxRate] = useState<number>(0);
     const [defaultCustomFees, setDefaultCustomFees] = useState<CustomFee[]>([]);
+    const [defaultCurrency, setDefaultCurrency] = useState<string>('USD');
 
     // Email Marketing State
     const [gmailConfig, setGmailConfig] = useState<{ connected: boolean, email?: string, lastSynced?: number }>({ connected: false });
