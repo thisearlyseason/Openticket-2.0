@@ -1322,7 +1322,7 @@ export const EventView = () => {
                                                                 {appliedPromo && (orderBreakdown?.discountAmount || 0) > 0 && (
                                                                     <div className="flex justify-between text-green-600 dark:text-green-400">
                                                                         <span>Discount ({appliedPromo.code})</span>
-                                                                        <span>-<PriceDisplay amount={orderBreakdown?.discountAmount || 0} /></span>
+                                                                        <span>-<EventPriceDisplay amount={orderBreakdown?.discountAmount || 0} currency={event.currency || 'USD'} /></span>
                                                                     </div>
                                                                 )}
 
