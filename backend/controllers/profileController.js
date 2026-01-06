@@ -58,24 +58,52 @@ export const syncProfile = async (req, res) => {
         const { uid } = req.user;
         const updates = req.body;
 
-        // SECURITY FIX: Whitelist allowed fields to prevent Privilege Escalation
-        const allowedFields = [
-            'email', 'name', 'role', 'business_name', 'image_url', 'bio', 'socials', 'location',
+        // Fields that exist as columns in the profiles table
+        const dbColumnFields = [
+            'email', 'name', 'role', 'business_name', 'image_url', 'socials', 'address',
             'onboarding_step', 'payment_methods', 'payout_settings',
             'stripe_connect_id', 'stripe_onboarding_complete', 'stripe_publishable_key', 'stripe_secret_key',
-            'favorite_organizers', 'gemini_api_key', 'default_tax_rate', 'default_custom_fees', 'address',
-            'notifications', 'email_templates', 'default_confirmation_template', 'default_waiver',
-            'default_refund_policy', 'default_refund_policy_enabled', 'logo_url', 'header_image_url',
-            'primary_color', 'organizer_subtitle', 'business_type', 'commission_rate', 'website', 'affiliate_code',
-            'default_currency'
+            'favorite_organizers', 'commission_rate', 'affiliate_code'
+        ];
+
+        // Extended settings stored in the 'subscription' JSONB field
+        const extendedSettingsFields = [
+            'default_currency', 'default_tax_rate', 'default_custom_fees', 'default_waiver',
+            'default_refund_policy', 'default_refund_policy_enabled', 'default_confirmation_template',
+            'logo_url', 'header_image_url', 'primary_color', 'organizer_subtitle', 'business_type',
+            'notifications', 'email_templates', 'gemini_api_key', 'gmail_config'
         ];
 
         const safeUpdates = {};
+        const extendedSettings = {};
+        
         Object.keys(updates).forEach(key => {
-            if (allowedFields.includes(key)) {
+            if (dbColumnFields.includes(key)) {
                 safeUpdates[key] = updates[key];
+            } else if (extendedSettingsFields.includes(key)) {
+                extendedSettings[key] = updates[key];
             }
         });
+
+        // If there are extended settings, merge them into the subscription field
+        if (Object.keys(extendedSettings).length > 0) {
+            // First fetch current subscription to merge
+            const { data: currentProfile } = await supabase
+                .from('profiles')
+                .select('subscription')
+                .eq('id', uid)
+                .single();
+            
+            const currentSubscription = currentProfile?.subscription || {};
+            const mergedSubscription = {
+                ...currentSubscription,
+                settings: {
+                    ...(currentSubscription.settings || {}),
+                    ...extendedSettings
+                }
+            };
+            safeUpdates.subscription = mergedSubscription;
+        }
 
         const profileData = {
             id: uid,
