@@ -1143,121 +1143,108 @@ export const EventView = () => {
                                                     )}
 
                                                     {/* Platform Donation Section - Compact, Optional for ALL users */}
-                                                    {(() => {
-                                                        const showDonation = !event.hidePlatformDonation;
-                                                        const [showCustomInput, setShowCustomInput] = React.useState(false);
-                                                        const [customAmount, setCustomAmount] = React.useState('');
-
-                                                        if (!showDonation) return null;
-
-                                                        const donationPresets = [
-                                                            { value: 5, label: '$5' },
-                                                            { value: 10, label: '$10' },
-                                                            { value: 25, label: '$25' },
-                                                        ];
-
-                                                        const handleCustomAmountSubmit = () => {
-                                                            const val = parseFloat(customAmount);
-                                                            if (!isNaN(val) && val > 0) {
-                                                                setRegData({ ...regData, platformDonationAmount: val });
-                                                            }
-                                                        };
-
-                                                        const isCustomSelected = regData.platformDonationAmount > 0 && 
-                                                            !donationPresets.some(p => p.value === regData.platformDonationAmount);
-
-                                                        return (
-                                                            <div className="p-4 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 mb-6">
-                                                                <div className="flex items-center gap-3 mb-3">
-                                                                    <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
-                                                                        <Heart size={16} className="text-pink-500" />
-                                                                    </div>
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
-                                                                            Support OpenTicket <span className="text-xs font-normal text-zinc-400">(optional)</span>
-                                                                        </p>
-                                                                    </div>
+                                                    {!event.hidePlatformDonation && (
+                                                        <div className="p-4 rounded-2xl border bg-zinc-50/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 mb-6">
+                                                            <div className="flex items-center gap-3 mb-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                                                                    <Heart size={16} className="text-pink-500" />
                                                                 </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                                                                        Support OpenTicket <span className="text-xs font-normal text-zinc-400">(optional)</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
 
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {/* No Tip option */}
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {/* No Tip option */}
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setRegData({ ...regData, platformDonationAmount: 0 });
+                                                                        setShowCustomDonationInput(false);
+                                                                        setCustomDonationAmount('');
+                                                                    }}
+                                                                    className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                                                        regData.platformDonationAmount === 0
+                                                                            ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200'
+                                                                            : 'bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                                                                    }`}
+                                                                >
+                                                                    No tip
+                                                                </button>
+
+                                                                {/* Preset amounts: $5, $10, $25 */}
+                                                                {[5, 10, 25].map((amount) => (
                                                                     <button
+                                                                        key={amount}
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            setRegData({ ...regData, platformDonationAmount: 0 });
-                                                                            setShowCustomInput(false);
-                                                                            setCustomAmount('');
+                                                                            setRegData({ ...regData, platformDonationAmount: amount });
+                                                                            setShowCustomDonationInput(false);
+                                                                            setCustomDonationAmount('');
                                                                         }}
                                                                         className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                                                                            regData.platformDonationAmount === 0
-                                                                                ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200'
-                                                                                : 'bg-white dark:bg-zinc-800 text-zinc-500 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                                                                            regData.platformDonationAmount === amount
+                                                                                ? 'bg-pink-500 text-white shadow-sm'
+                                                                                : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-pink-300'
                                                                         }`}
                                                                     >
-                                                                        No tip
+                                                                        ${amount}
                                                                     </button>
+                                                                ))}
 
-                                                                    {/* Preset amounts */}
-                                                                    {donationPresets.map((opt) => {
-                                                                        const isSelected = regData.platformDonationAmount === opt.value;
-                                                                        return (
-                                                                            <button
-                                                                                key={opt.value}
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    setRegData({ ...regData, platformDonationAmount: opt.value });
-                                                                                    setShowCustomInput(false);
-                                                                                    setCustomAmount('');
-                                                                                }}
-                                                                                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                                                                                    isSelected
-                                                                                        ? 'bg-pink-500 text-white shadow-sm'
-                                                                                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-pink-300'
-                                                                                }`}
-                                                                            >
-                                                                                {opt.label}
-                                                                            </button>
-                                                                        );
-                                                                    })}
-
-                                                                    {/* Other/Custom button */}
-                                                                    {!showCustomInput ? (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setShowCustomInput(true)}
-                                                                            className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                                                                                isCustomSelected
-                                                                                    ? 'bg-pink-500 text-white shadow-sm'
-                                                                                    : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-pink-300'
-                                                                            }`}
-                                                                        >
-                                                                            {isCustomSelected ? `$${regData.platformDonationAmount}` : 'Other'}
-                                                                        </button>
-                                                                    ) : (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <span className="text-xs text-zinc-400">$</span>
-                                                                            <input
-                                                                                type="number"
-                                                                                min="1"
-                                                                                step="1"
-                                                                                placeholder="Amount"
-                                                                                value={customAmount}
-                                                                                onChange={(e) => setCustomAmount(e.target.value)}
-                                                                                onBlur={handleCustomAmountSubmit}
-                                                                                onKeyDown={(e) => e.key === 'Enter' && handleCustomAmountSubmit()}
-                                                                                className="w-16 py-1.5 px-2 text-xs rounded-lg border border-pink-300 dark:border-pink-700 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-pink-500"
-                                                                                autoFocus
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                <p className="mt-2 text-[10px] text-zinc-400 leading-tight">
-                                                                    Tips help us keep fees low for organizers 💜
-                                                                </p>
+                                                                {/* Other/Custom button */}
+                                                                {!showCustomDonationInput ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setShowCustomDonationInput(true)}
+                                                                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all ${
+                                                                            regData.platformDonationAmount > 0 && ![5, 10, 25].includes(regData.platformDonationAmount)
+                                                                                ? 'bg-pink-500 text-white shadow-sm'
+                                                                                : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:border-pink-300'
+                                                                        }`}
+                                                                    >
+                                                                        {regData.platformDonationAmount > 0 && ![5, 10, 25].includes(regData.platformDonationAmount) 
+                                                                            ? `$${regData.platformDonationAmount}` 
+                                                                            : 'Other'}
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-xs text-zinc-400">$</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            step="1"
+                                                                            placeholder="Amount"
+                                                                            value={customDonationAmount}
+                                                                            onChange={(e) => setCustomDonationAmount(e.target.value)}
+                                                                            onBlur={() => {
+                                                                                const val = parseFloat(customDonationAmount);
+                                                                                if (!isNaN(val) && val > 0) {
+                                                                                    setRegData({ ...regData, platformDonationAmount: val });
+                                                                                }
+                                                                            }}
+                                                                            onKeyDown={(e) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    const val = parseFloat(customDonationAmount);
+                                                                                    if (!isNaN(val) && val > 0) {
+                                                                                        setRegData({ ...regData, platformDonationAmount: val });
+                                                                                    }
+                                                                                }
+                                                                            }}
+                                                                            className="w-16 py-1.5 px-2 text-xs rounded-lg border border-pink-300 dark:border-pink-700 bg-white dark:bg-zinc-800 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                                                                            autoFocus
+                                                                        />
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        );
-                                                    })()}
+
+                                                            <p className="mt-2 text-[10px] text-zinc-400 leading-tight">
+                                                                Tips help us keep fees low for organizers 💜
+                                                            </p>
+                                                        </div>
+                                                    )}
 
                                                     {/* Order Summary with Fees */}
                                                     {(getTotalTickets() > 0 || getTotalAddOns() > 0) && calculateTotal() > 0 && (
