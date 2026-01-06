@@ -4,7 +4,7 @@
 
 import express from 'express';
 import * as pushController from '../controllers/pushController.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import verifyToken from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
