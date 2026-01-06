@@ -280,7 +280,7 @@ export interface SEOConfig {
 }
 
 export interface TicketDesign {
-  template?: 'modern' | 'classic' | 'minimal' | 'festive'; // Pre-designed template
+  template?: 'modern' | 'classic' | 'minimal' | 'festive' | string; // Pre-designed or custom template ID
   logoUrl?: string;
   backgroundColor?: string;
   textColor?: string;
@@ -288,6 +288,21 @@ export interface TicketDesign {
   showCoverImage?: boolean;
   customMessage?: string;
   orientation?: 'portrait' | 'landscape';
+}
+
+// Saved custom ticket template
+export interface SavedTicketTemplate {
+  id: string;
+  name: string;
+  createdAt: number;
+  design: {
+    logoUrl?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    accentColor?: string;
+    customMessage?: string;
+    gradient?: string; // Custom gradient class
+  };
 }
 
 export interface CustomFee {
