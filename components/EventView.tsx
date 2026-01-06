@@ -1045,7 +1045,7 @@ export const EventView = () => {
                                                                     <div className="flex-1 text-center md:text-left">
                                                                         <div className="font-black text-xl flex flex-col md:flex-row items-center gap-3">
                                                                             {addon.name}
-                                                                            <span className="text-secondary font-black bg-secondary/10 px-3 py-1 rounded-full text-lg"><PriceDisplay amount={addon.price} /></span>
+                                                                            <span className="text-secondary font-black bg-secondary/10 px-3 py-1 rounded-full text-lg"><EventPriceDisplay amount={addon.price} currency={event.currency || 'USD'} /></span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-4 bg-white dark:bg-zinc-800 p-2 rounded-[1.5rem] shadow-lg">
