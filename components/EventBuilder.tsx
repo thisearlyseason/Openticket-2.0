@@ -1028,92 +1028,79 @@ export const EventBuilder = () => {
                                     </div>
                                 </div>
 
-                                {/* Ticket Designer Section */}
+                                {/* Simplified Ticket Design Section */}
                                 <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-                                    <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Sparkles className="text-purple-500" /> Ticket Appearance (Pro)</h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Ticket Logo</label>
-                                                <div className="h-32">
+                                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Sparkles className="text-purple-500" /> Ticket Design</h2>
+                                    <p className="text-sm text-zinc-500 mb-6">Customize how your printable tickets look. Keep it simple!</p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Left: Options */}
+                                        <div className="space-y-6">
+                                            {/* A. Add Image to Ticket */}
+                                            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3 block flex items-center gap-2">
+                                                    <ImageIcon size={16} className="text-purple-500" />
+                                                    Add Image to Ticket
+                                                </label>
+                                                <p className="text-xs text-zinc-500 mb-3">This image appears on the ticket header. Recommended: 400x200px</p>
+                                                <div className="h-28">
                                                     <FileDropZone
-                                                        label="Upload Logo"
+                                                        label="Upload Ticket Image"
                                                         currentImage={formData.ticketDesign?.logoUrl}
                                                         onFileSelect={(b64) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } })}
                                                         onClear={() => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: '' } })}
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <Input
-                                                    label="Background"
-                                                    type="color"
-                                                    value={formData.ticketDesign?.backgroundColor || '#ffffff'}
-                                                    onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), backgroundColor: e.target.value } })}
-                                                    containerClassName="h-12 p-1 cursor-pointer overflow-hidden rounded-lg"
-                                                />
-                                                <Input
-                                                    label="Text"
-                                                    type="color"
-                                                    value={formData.ticketDesign?.textColor || '#000000'}
-                                                    onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), textColor: e.target.value } })}
-                                                    containerClassName="h-12 p-1 cursor-pointer overflow-hidden rounded-lg"
-                                                />
-                                                <Input
-                                                    label="Accent"
-                                                    type="color"
-                                                    value={formData.ticketDesign?.accentColor || '#E0FF20'}
-                                                    onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), accentColor: e.target.value } })}
-                                                    containerClassName="h-12 p-1 cursor-pointer overflow-hidden rounded-lg"
+                                            
+                                            {/* B. Add Details to Ticket */}
+                                            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-3 block flex items-center gap-2">
+                                                    <FileText size={16} className="text-blue-500" />
+                                                    Add Details to Ticket
+                                                </label>
+                                                <p className="text-xs text-zinc-500 mb-3">This text appears on the ticket. Great for instructions or reminders.</p>
+                                                <textarea
+                                                    className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm resize-none"
+                                                    rows={3}
+                                                    placeholder="e.g., Please bring valid ID. No refunds. Doors open 30 minutes before showtime."
+                                                    value={formData.ticketDesign?.customMessage || ''}
+                                                    onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), customMessage: e.target.value } })}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 relative overflow-hidden">
-                                            {/* Preview */}
-                                            <div
-                                                className="w-full max-w-[280px] aspect-[3/4] rounded-2xl shadow-xl flex flex-col p-4 relative"
-                                                style={{
-                                                    backgroundColor: formData.ticketDesign?.backgroundColor || '#ffffff',
-                                                    color: formData.ticketDesign?.textColor || '#000000'
-                                                }}
-                                            >
-                                                <div className="h-4 w-4 bg-gray-200 rounded-full absolute -left-2 top-24"></div>
-                                                <div className="h-4 w-4 bg-gray-200 rounded-full absolute -right-2 top-24"></div>
-                                                <div className="border-b-2 border-dashed border-current opacity-20 absolute top-26 left-4 right-4"></div>
-
-                                                <div className="flex justify-between items-center mb-4">
+                                        
+                                        {/* Right: Preview */}
+                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
+                                            <div className="w-full max-w-[260px] bg-white dark:bg-zinc-800 rounded-xl shadow-xl overflow-hidden">
+                                                {/* Ticket Header with Image */}
+                                                <div className="h-24 bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center p-4">
                                                     {formData.ticketDesign?.logoUrl ? (
-                                                        <img src={formData.ticketDesign.logoUrl} className="h-8 object-contain" alt="Logo" />
+                                                        <img src={formData.ticketDesign.logoUrl} className="max-h-full max-w-full object-contain" alt="Ticket" />
                                                     ) : (
-                                                        <div className="h-8 w-8 bg-current opacity-10 rounded-full"></div>
+                                                        <span className="text-white/50 text-xs font-bold uppercase">Your Image Here</span>
                                                     )}
-                                                    <span className="font-mono text-xs opacity-50">#12345</span>
                                                 </div>
-                                                <div className="flex-1 mt-8 text-center space-y-2">
-                                                    <div className="font-black text-xl leading-tight">{formData.title || 'Event Title'}</div>
-                                                    <div className="text-xs opacity-70">{formData.date || 'Date'} • {formData.location || 'Location'}</div>
-                                                </div>
-                                                <div className="mt-auto">
-                                                    <div className="w-full h-24 bg-current opacity-10 rounded-lg flex items-center justify-center">
-                                                        <QrCode className="opacity-50" />
+                                                
+                                                {/* Ticket Content */}
+                                                <div className="p-4 text-center">
+                                                    <div className="font-black text-base leading-tight mb-1 text-zinc-900 dark:text-white">{formData.title || 'Event Title'}</div>
+                                                    <div className="text-xs text-zinc-500 mb-3">{formData.date || 'Date'} • {formData.location || 'Location'}</div>
+                                                    
+                                                    {/* Custom Message */}
+                                                    {formData.ticketDesign?.customMessage && (
+                                                        <div className="text-[10px] text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900 p-2 rounded-lg mb-3 border border-zinc-200 dark:border-zinc-700">
+                                                            {formData.ticketDesign.customMessage}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* QR Code Placeholder */}
+                                                    <div className="w-20 h-20 mx-auto bg-zinc-100 dark:bg-zinc-700 rounded-lg flex items-center justify-center">
+                                                        <QrCode size={40} className="text-zinc-400" />
                                                     </div>
+                                                    <div className="font-mono text-[10px] text-zinc-400 mt-2">#TICKET-12345</div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                        <Input
-                                            label="Custom Message (on ticket)"
-                                            placeholder="e.g. Bring ID, No refunds"
-                                            value={formData.ticketDesign?.customMessage || ''}
-                                            onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), customMessage: e.target.value } })}
-                                        />
-                                        <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl">
-                                            <span className="text-sm font-bold">Show Event Cover Image</span>
-                                            <Switch
-                                                checked={formData.ticketDesign?.showCoverImage !== false}
-                                                onChange={c => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), showCoverImage: c } })}
-                                            />
                                         </div>
                                     </div>
                                 </div>
