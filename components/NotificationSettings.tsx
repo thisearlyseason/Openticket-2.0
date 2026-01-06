@@ -36,12 +36,15 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
         
         try {
             const user = StorageService.getCurrentUser();
-            if (!user?.token) {
-                alert('Please sign in to enable notifications');
+            if (!user?.id) {
+                console.warn('No user found for push subscription');
                 return;
             }
             
-            const success = await PushNotificationService.subscribe(user.token);
+            // Get token from Firebase or stored auth
+            const token = user.token || localStorage.getItem('firebase_token') || user.id;
+            
+            const success = await PushNotificationService.subscribe(token);
             
             if (success) {
                 setIsSubscribed(true);
