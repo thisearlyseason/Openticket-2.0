@@ -113,8 +113,8 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({ compact = fa
                             </div>
                         )}
                         <div className="p-2 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
-                            <p className="text-[10px] text-zinc-400 text-center leading-relaxed">
-                                Prices shown for reference only.<br/>All payments processed in USD.
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 text-center leading-relaxed font-medium">
+                                You will be charged in USD.
                             </p>
                         </div>
                     </div>
