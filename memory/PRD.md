@@ -53,7 +53,27 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Currency & Ticket Design Simplification (LATEST - January 6, 2026)
+#### Ticket Template Presets (LATEST - January 6, 2026)
+- [x] **4 Pre-Designed Ticket Templates**
+  - **Modern** - Purple-indigo gradient, clean white background
+  - **Classic** - Dark zinc/black with gold accent, elegant look
+  - **Minimal** - Light zinc gradient, black text, professional
+  - **Festive** - Pink-orange gradient, warm pink background
+- [x] **Template Selection UI**
+  - Grid of 4 clickable template cards with mini previews
+  - Selected template shows green checkmark indicator
+  - One-click selection updates ticket design instantly
+- [x] **Live Preview Integration**
+  - Real-time preview updates based on selected template
+  - Shows uploaded logo/image in template's header style
+  - Shows custom message in template's content area
+  - QR code placeholder with template styling
+- [x] **Template + Customization**
+  - Templates work alongside image upload and details text
+  - Template sets colors/gradients, organizer adds content
+  - Stored in `ticketDesign.template` field
+
+#### Currency & Ticket Design Simplification (January 6, 2026)
 - [x] **Global Organization Currency (Event-Level Currency REMOVED)**
   - Removed event-level currency dropdown from EventBuilder
   - All events now use organization's `defaultCurrency` (set in Settings)
@@ -66,11 +86,9 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
   - Shows social media links if configured
   - Real-time preview updates when toggle or fields change
   - Helps organizers see how their profile appears on event pages
-- [x] **Simplified Ticket Design (EventBuilder)**
+- [x] **Simplified Ticket Design Base**
   - Removed complex ticket designer (color pickers, layout controls)
-  - Now only two simple options:
-    1. **Add Image to Ticket** - Single FileDropZone for ticket header image
-    2. **Add Details to Ticket** - Simple textarea for custom message
+  - Simple options: Image upload + Details text + Template selection
   - Live preview shows how ticket will look
   - Cleaner, faster event creation experience
 
