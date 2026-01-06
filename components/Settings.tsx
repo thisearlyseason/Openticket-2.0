@@ -683,6 +683,9 @@ export const Settings = () => {
                                     <Switch checked={notifications.newOrder} onChange={c => setNotifications({ ...notifications, newOrder: c })} />
                                 </div>
 
+                                {/* Push Notifications Section */}
+                                <NotificationSettings className="mt-4" />
+
                                 <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
                                     <h2 className="text-xl font-bold mb-4 text-zinc-900 dark:text-white flex items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white">
