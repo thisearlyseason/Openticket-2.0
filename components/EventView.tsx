@@ -1331,7 +1331,7 @@ export const EventView = () => {
                                                                         <span>Tax ({event.taxRate}%)</span>
                                                                         <span>
                                                                             {orderBreakdown 
-                                                                                ? <PriceDisplay amount={orderBreakdown.taxAmount} />
+                                                                                ? <EventPriceDisplay amount={orderBreakdown.taxAmount} currency={event.currency || 'USD'} />
                                                                                 : (() => {
                                                                                     let sub = 0;
                                                                                     if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
