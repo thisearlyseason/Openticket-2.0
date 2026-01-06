@@ -96,12 +96,20 @@ export const createOrder = async (req, res) => {
 
         // 4. Calculate order using SINGLE SOURCE OF TRUTH
         const organizerPlan = event.owner?.subscription?.plan || 'free';
+        
+        // For donation-type events, get the donation amount from the request
+        // This is different from platformDonationAmount which is for platform support
+        const ticketDonationAmount = event.price_type === 'donation' 
+            ? Number(req.body.donationAmount) || 0 
+            : 0;
+
         const breakdown = calculateOrderBreakdown({
             event,
             ticketSelections: ticketSelections || {},
             addOnSelections: addOnSelections || {},
             promoCode: validPromoCode,
             organizerPlan,
+            donationAmount: ticketDonationAmount, // For donation-type tickets
         });
 
         if (breakdown.items.length === 0) {
