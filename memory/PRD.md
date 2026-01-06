@@ -53,8 +53,29 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Ticket Template Presets (LATEST - January 6, 2026)
-- [x] **4 Pre-Designed Ticket Templates**
+#### My Templates - Save Custom Ticket Designs (LATEST - January 6, 2026)
+- [x] **Save as My Template Button**
+  - Pink-purple gradient button with heart icon
+  - Prompts for template name when clicked
+  - Saves logo, colors (background, text, accent), and custom message
+  - Templates stored in `user.savedTicketTemplates` array
+- [x] **My Templates Section**
+  - Appears when user has saved templates
+  - Shows heart icon with "MY TEMPLATES" label
+  - Mini previews display logo and accent/background colors
+  - Pink checkmark indicator on selected custom template
+- [x] **Template Management**
+  - Click to load saved design into form
+  - Delete button (red trash icon) on hover
+  - Confirmation before deleting
+  - Templates persist across sessions
+- [x] **Live Preview Support**
+  - Default templates use Tailwind gradients
+  - Custom templates use inline styles with saved colors
+  - Seamless switching between default and custom
+
+#### 4 Pre-Designed Ticket Templates (January 6, 2026)
+- [x] **Default Templates**
   - **Modern** - Purple-indigo gradient, clean white background
   - **Classic** - Dark zinc/black with gold accent, elegant look
   - **Minimal** - Light zinc gradient, black text, professional
@@ -68,10 +89,6 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
   - Shows uploaded logo/image in template's header style
   - Shows custom message in template's content area
   - QR code placeholder with template styling
-- [x] **Template + Customization**
-  - Templates work alongside image upload and details text
-  - Template sets colors/gradients, organizer adds content
-  - Stored in `ticketDesign.template` field
 
 #### Currency & Ticket Design Simplification (January 6, 2026)
 - [x] **Global Organization Currency (Event-Level Currency REMOVED)**
