@@ -89,6 +89,9 @@ app.use('/api/admin', adminRoutes);
 // notificationRoutes already imported at top
 app.use('/api/notifications', notificationRoutes);
 
+// Push notification routes
+app.use('/api/push', pushRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
