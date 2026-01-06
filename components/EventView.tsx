@@ -173,95 +173,89 @@ export const EventView = () => {
                     let attempts = 0;
                     const maxAttempts = 15; // 7.5 seconds max
                         
-                        while (attempts < maxAttempts) {
-                            try {
-                                // First, try to verify with Stripe directly
-                                const verifyResponse = await fetch('/api/stripe/verify-session', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ sessionId })
-                                });
+                    while (attempts < maxAttempts) {
+                        try {
+                            // First, try to verify with Stripe directly
+                            const verifyResponse = await fetch('/api/stripe/verify-session', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ sessionId })
+                            });
+                            
+                            if (verifyResponse.ok) {
+                                const result = await verifyResponse.json();
                                 
-                                if (verifyResponse.ok) {
-                                    const result = await verifyResponse.json();
+                                if (result.status === 'success' && result.registration) {
+                                    const reg = result.registration;
+                                    // Normalize the registration
+                                    const normalizedReg = {
+                                        ...reg,
+                                        id: reg.id,
+                                        eventId: reg.event_id,
+                                        attendeeName: reg.attendee_name,
+                                        attendeeEmail: reg.attendee_email,
+                                        paymentStatus: reg.payment_status || 'paid',
+                                        tickets: reg.tickets || [],
+                                        addOns: reg.add_ons || [],
+                                        timestamp: new Date(reg.created_at).getTime(),
+                                    };
                                     
-                                    if (result.status === 'success' && result.registration) {
-                                        const reg = result.registration;
-                                        // Normalize the registration
-                                        const normalizedReg = {
-                                            ...reg,
-                                            id: reg.id,
-                                            eventId: reg.event_id,
-                                            attendeeName: reg.attendee_name,
-                                            attendeeEmail: reg.attendee_email,
-                                            paymentStatus: reg.payment_status || 'paid',
-                                            tickets: reg.tickets || [],
-                                            addOns: reg.add_ons || [],
-                                            timestamp: new Date(reg.created_at).getTime(),
-                                        };
-                                        
-                                        setCompletedRegistration(normalizedReg as any);
-                                        setIsSuccess(true);
-                                        setIsProcessingPayment(false);
-                                        window.scrollTo(0, 0);
-
-                                        // Send confirmation email
-                                        if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
-                                            const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
-                                            const body = event.requiresApproval
-                                                ? `Hi ${normalizedReg.attendeeName}, we've received your registration for ${event.title}. This event requires manual approval by the organizer. We'll notify you once your request has been reviewed.`
-                                                : `Hi ${normalizedReg.attendeeName}, you are registered for ${event.title}.`;
-                                            EmailService.sendEmail(organizerUser.id, normalizedReg.attendeeEmail, subject, body).catch(console.error);
-                                        }
-
-                                        // Remove query params
-                                        window.history.replaceState({}, '', `/#/event/${event.id}`);
-                                        return;
-                                    }
-                                }
-                                
-                                // Fallback: poll for registration
-                                const reg = await StorageService.getRegistrationBySessionId(sessionId);
-                                if (reg && (reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed')) {
-                                    setCompletedRegistration(reg);
+                                    setCompletedRegistration(normalizedReg as any);
                                     setIsSuccess(true);
                                     setIsProcessingPayment(false);
                                     window.scrollTo(0, 0);
+
+                                    // Send confirmation email
+                                    if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
+                                        const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
+                                        const body = event.requiresApproval
+                                            ? `Hi ${normalizedReg.attendeeName}, we've received your registration for ${event.title}. This event requires manual approval by the organizer. We'll notify you once your request has been reviewed.`
+                                            : `Hi ${normalizedReg.attendeeName}, you are registered for ${event.title}.`;
+                                        EmailService.sendEmail(organizerUser.id, normalizedReg.attendeeEmail, subject, body).catch(console.error);
+                                    }
+
+                                    // Remove query params
                                     window.history.replaceState({}, '', `/#/event/${event.id}`);
                                     return;
                                 }
-                            } catch (e) {
-                                console.error("Verification error:", e);
                             }
-                            attempts++;
-                            await new Promise(r => setTimeout(r, 500));
+                            
+                            // Fallback: poll for registration
+                            const reg = await StorageService.getRegistrationBySessionId(sessionId);
+                            if (reg && (reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed')) {
+                                setCompletedRegistration(reg);
+                                setIsSuccess(true);
+                                setIsProcessingPayment(false);
+                                window.scrollTo(0, 0);
+                                window.history.replaceState({}, '', `/#/event/${event.id}`);
+                                return;
+                            }
+                        } catch (e) {
+                            console.error("Verification error:", e);
                         }
-                        
-                        // Even if polling times out, payment was successful
-                        showAlert({
-                            title: "Payment Successful!",
-                            message: "Your payment was processed successfully. Your tickets will appear in 'My Tickets' shortly."
-                        });
-                        setIsProcessingPayment(false);
-                        
-                        // Redirect to My Tickets
-                        setTimeout(() => {
-                            window.history.replaceState({}, '', '/#/my-tickets');
-                            window.location.reload();
-                        }, 2000);
-                    };
-                    verifyAndConfirm();
-                } else {
+                        attempts++;
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+                    
+                    // Even if polling times out, payment was successful
                     showAlert({
                         title: "Payment Successful!",
-                        message: "Your payment was processed. Please check 'My Tickets' for your confirmation."
+                        message: "Your payment was processed successfully. Your tickets will appear in 'My Tickets' shortly."
                     });
-                }
+                    setIsProcessingPayment(false);
+                    
+                    // Redirect to My Tickets
+                    setTimeout(() => {
+                        window.history.replaceState({}, '', '/#/my-tickets');
+                        window.location.reload();
+                    }, 2000);
+                };
+                verifyAndConfirm();
             }
         };
 
         if (event) checkSuccess();
-    }, [searchParams, event, isSuccess, organizerUser]);
+    }, [searchParams, event, isSuccess, organizerUser, isProcessingPayment]);
 
     // Debounced fetch for server-calculated order breakdown
     useEffect(() => {
