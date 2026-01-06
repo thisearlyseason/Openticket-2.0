@@ -1,9 +1,17 @@
 /**
- * Currency Service - Handles automatic currency detection and conversion
- * Uses Stripe's exchange rates via backend API for accurate pricing
+ * Currency Service - Handles flexible currency handling for event pricing
  * 
- * NOTE: Customers are charged in their selected currency.
- * Stripe handles FX conversion at checkout.
+ * CURRENCY PRIORITY LOGIC:
+ * 1. Event charge currency (if set) - Single source of truth for payments
+ * 2. Backend default currency (fallback) - Global platform default
+ * 3. USD (ultimate fallback)
+ * 
+ * IMPORTANT DISTINCTION:
+ * - CHARGE CURRENCY: What Stripe uses for payment (never changes based on user preference)
+ * - DISPLAY CURRENCY: What user sees in UI (can be switched, UI-only, no payment impact)
+ * 
+ * Price integrity: Organizer-defined price + charge currency is the source of truth.
+ * Display conversions are estimates only and never affect actual charges.
  */
 
 export interface CurrencyInfo {
@@ -12,6 +20,9 @@ export interface CurrencyInfo {
     name: string;
     rate: number; // Exchange rate from USD
 }
+
+// Backend default currency storage key
+const BACKEND_DEFAULT_KEY = 'openticket_backend_default_currency';
 
 // Supported currencies
 export const SUPPORTED_CURRENCIES: Record<string, CurrencyInfo> = {
