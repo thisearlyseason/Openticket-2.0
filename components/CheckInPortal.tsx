@@ -165,6 +165,11 @@ export const CheckInPortal = () => {
     const [scanError, setScanError] = useState('');
     const [scanResult, setScanResult] = useState('');
 
+    // Offline support state
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [pendingCheckIns, setPendingCheckIns] = useState(0);
+    const [isSyncing, setIsSyncing] = useState(false);
+
     const [paymentContext, setPaymentContext] = useState<{
         reg: Registration;
         ticketId: string;
@@ -180,6 +185,63 @@ export const CheckInPortal = () => {
 
     const [ticketToDelete, setTicketToDelete] = useState<CheckInTicket | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Network status listener
+    useEffect(() => {
+        const cleanup = OfflineService.setupNetworkListeners(
+            async () => {
+                setIsOnline(true);
+                // Auto-sync when coming back online
+                await syncOfflineCheckIns();
+            },
+            () => setIsOnline(false)
+        );
+        
+        // Check pending count on mount
+        OfflineService.getPendingCount().then(setPendingCheckIns);
+        
+        return cleanup;
+    }, []);
+
+    // Sync offline check-ins
+    const syncOfflineCheckIns = async () => {
+        if (!isOnline || isSyncing) return;
+        
+        setIsSyncing(true);
+        try {
+            const pending = await OfflineService.getPendingCheckIns();
+            
+            for (const checkIn of pending) {
+                try {
+                    // Find the registration
+                    const reg = registrations.find(r => r.id === checkIn.registrationId);
+                    if (reg) {
+                        const newStatuses = { ...(reg.checkInStatuses || {}) };
+                        newStatuses[checkIn.ticketKey] = { 
+                            checkedIn: checkIn.checkedIn, 
+                            timestamp: checkIn.timestamp 
+                        };
+                        
+                        await StorageService.updateRegistration(checkIn.registrationId, {
+                            checkInStatuses: newStatuses,
+                            checkedIn: Object.values(newStatuses).some(s => s.checkedIn)
+                        });
+                        
+                        await OfflineService.markCheckInSynced(checkIn.id);
+                    }
+                } catch (err) {
+                    console.error('[CheckIn] Failed to sync:', checkIn.id, err);
+                }
+            }
+            
+            // Refresh data after sync
+            await loadRegistrations();
+            await OfflineService.clearSyncedCheckIns();
+            setPendingCheckIns(await OfflineService.getPendingCount());
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     useEffect(() => {
         const user = StorageService.getCurrentUser();
