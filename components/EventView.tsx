@@ -313,14 +313,6 @@ export const EventView = () => {
         }
     };
 
-    // Debounced fetch when selections change
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            fetchOrderBreakdown();
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [ticketSelection, addOnSelection, appliedPromo, event?.id]);
-
     const handleApplyPromo = () => {
         if (!promoCode) return;
         const code = event.promoCodes?.find(p => p.code === promoCode);
