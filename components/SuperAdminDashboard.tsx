@@ -154,6 +154,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [platformPublishableKey, setPlatformPublishableKey] = useState('');
     const [platformSecretKey, setPlatformSecretKey] = useState('');
 
+    // Donation analytics date range filter
+    const [donationDateRange, setDonationDateRange] = useState<'all' | '7d' | '30d' | '90d' | 'custom'>('all');
+    const [donationCustomStart, setDonationCustomStart] = useState('');
+    const [donationCustomEnd, setDonationCustomEnd] = useState('');
+    const [filteredDonations, setFilteredDonations] = useState<any[]>([]);
+
     const currentUser = StorageService.getCurrentUser();
 
     useEffect(() => {
