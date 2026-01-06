@@ -53,7 +53,30 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Currency Code Display & Settings Fix (LATEST - January 6, 2026)
+#### Mobile PWA & Check-In System (LATEST - January 6, 2026)
+- [x] **Progressive Web App (PWA)** - Full PWA support with manifest.json and service worker
+  - App can be installed on mobile home screen
+  - Custom icons for all device sizes (SVG format)
+  - Shortcuts for quick access to Check-In Scanner
+- [x] **QR Code Scanner** - Enhanced scanner with `html5-qrcode` library
+  - Camera-based live scanning with auto-focus
+  - Image upload fallback for QR codes from gallery
+  - Flash toggle and camera switch (front/back)
+  - Haptic feedback on successful scan
+- [x] **Offline Check-In Support** - Works without internet connection
+  - Check-ins saved locally using IndexedDB (`idb-keyval`)
+  - Automatic sync when back online
+  - Visual indicator for offline mode and pending syncs
+  - Background sync via service worker
+- [x] **Mobile Ticket View** - Attendee-facing ticket display
+  - Route: `/ticket/:registrationId`
+  - QR code generation using `qrcode` library
+  - Ticket details with event info
+  - Save/Share ticket functionality
+  - Visual indicator for checked-in tickets
+- [x] **Mobile-Optimized UI** - Responsive design for all new components
+
+#### Currency Code Display & Settings Fix (January 6, 2026)
 - [x] Fixed "default_currency column not found" error by storing extended settings in `subscription.settings` JSONB
 - [x] Backend profileController.js now separates DB column fields from extended settings fields
 - [x] Extended settings (default_currency, logo_url, primary_color, etc.) stored in subscription.settings
@@ -64,7 +87,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] Pricing page: Plan prices show currency code (e.g., "$39 USD /mo")
 - [x] CurrencyService.format() now includes currency code by default
 
-#### Live Exchange Rates with Fixer.io (LATEST - January 6, 2026)
+#### Live Exchange Rates with Fixer.io (January 6, 2026)
 - [x] Integrated Fixer.io API for real-time exchange rates
 - [x] Backend endpoint `/api/stripe/exchange-rates` now uses Fixer.io as primary source
 - [x] Automatic conversion from EUR base (Fixer free tier) to USD base
