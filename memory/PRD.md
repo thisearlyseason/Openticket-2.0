@@ -53,7 +53,35 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Mobile PWA & Check-In System (LATEST - January 6, 2026)
+#### Push Notifications (LATEST - January 6, 2026)
+- [x] **Web Push with VAPID** - Full push notification support
+  - VAPID keys generated and stored in .env
+  - Backend service using `web-push` library
+  - API endpoints: `/api/push/vapid-key`, `/api/push/subscribe`, `/api/push/unsubscribe`, `/api/push/test`
+- [x] **Notification Templates** - Pre-built notifications for:
+  - Event reminders (🎟️)
+  - Ticket purchase confirmations (✅)
+  - Check-in success (🎉)
+  - Event updates (📢)
+  - Event cancellations (⚠️)
+  - New registrations for organizers (🎟️)
+  - Payment received (💰)
+- [x] **Service Worker Push Handlers** - Updated sw.js with:
+  - Push event handling with JSON payload parsing
+  - Notification click handling with deep linking
+  - Action buttons (view, dismiss)
+  - Vibration feedback
+- [x] **NotificationSettings Component** - UI for managing push notifications
+  - Permission request flow
+  - Subscribe/unsubscribe buttons
+  - Test notification button
+  - Status indicators
+- [x] **InstallPrompt Component** - PWA install prompt
+  - iOS-specific instructions (Share → Add to Home Screen)
+  - Android/Desktop install button
+  - Dismissable with 24h cooldown
+
+#### Mobile PWA & Check-In System (January 6, 2026)
 - [x] **Progressive Web App (PWA)** - Full PWA support with manifest.json and service worker
   - App can be installed on mobile home screen
   - Custom icons for all device sizes (SVG format)
