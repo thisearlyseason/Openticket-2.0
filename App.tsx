@@ -402,6 +402,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                     </div>
                 </div>
             )}
+
+            {/* PWA Install Prompt */}
+            <InstallPrompt />
         </div>
     );
 };
