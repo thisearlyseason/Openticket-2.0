@@ -326,6 +326,7 @@ export interface Event {
   // Tickets & Pricing
   priceType: 'free' | 'fixed' | 'donation' | 'tiered';
   price: number;
+  currency?: string; // Event's base currency (USD, EUR, GBP, CAD, AUD) - all prices in this currency
   ticketName?: string;
   ticketTiers?: TicketTier[];
   addOns?: AddOn[];
