@@ -336,6 +336,12 @@ export const EventView = () => {
     };
 
     const calculateTotal = () => {
+        // Use server-calculated breakdown if available (single source of truth)
+        if (orderBreakdown) {
+            return orderBreakdown.grandTotal + (regData.platformDonationAmount || 0);
+        }
+
+        // Fallback calculation for immediate UI feedback (before API responds)
         let taxableGross = 0;
         let nonTaxableGross = 0;
 
@@ -403,7 +409,7 @@ export const EventView = () => {
         // Add platform donation (separate from ticket revenue)
         total += regData.platformDonationAmount || 0;
 
-        return Math.max(0, total);
+        return Math.max(0, Number(total.toFixed(2)));
     };
 
     const handleRegister = async () => {
