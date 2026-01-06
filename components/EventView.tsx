@@ -1019,7 +1019,7 @@ export const EventView = () => {
                                                         <div key={tier.id} className={`group flex flex-col md:flex-row justify-between items-center p-8 border-2 transition-all rounded-[2rem] ${ticketSelection[tier.id] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 bg-zinc-50 dark:bg-black/20'}`}>
                                                             <div className="flex-1 text-center md:text-left mb-6 md:mb-0">
                                                                 <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{tier.name}</div>
-                                                                <div className="text-3xl font-black text-primary"><EventPriceDisplay amount={tier.price} currency={event.currency || 'USD'} /></div>
+                                                                <div className="text-3xl font-black text-primary"><EventPriceDisplay amount={tier.price} currency={event.currency || 'USD'} showDisplayCurrency={true} /></div>
                                                                 {tier.description && <div className="text-zinc-500 mt-2 max-w-sm font-bold">{tier.description}</div>}
                                                             </div>
                                                             <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-700">
