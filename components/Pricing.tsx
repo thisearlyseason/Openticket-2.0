@@ -4,16 +4,35 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Check, Star, Shield, Zap, Heart, Clock } from 'lucide-react';
 import { Button, Card, Badge } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
+import { CurrencyService } from '../services/currencyService';
 import { PlanType, Invoice } from '../types';
 
 export const Pricing = () => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [currency, setCurrency] = useState('USD');
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const user = StorageService.getCurrentUser();
     // Only consider it a "current plan" if they are already an organizer.
     // If they are an attendee, they have no plan selected yet in this context.
     const currentPlan = user?.role === 'organizer' ? (user.subscription?.plan || 'free') : null;
+
+    // Load currency preference
+    useEffect(() => {
+        const loadCurrency = () => {
+            const curr = CurrencyService.getUserCurrency();
+            setCurrency(curr);
+        };
+        loadCurrency();
+
+        // Listen for currency changes
+        window.addEventListener('currencyChanged', loadCurrency);
+        window.addEventListener('storage', loadCurrency);
+        return () => {
+            window.removeEventListener('currencyChanged', loadCurrency);
+            window.removeEventListener('storage', loadCurrency);
+        };
+    }, []);
 
     // Handle auto-selection returning from Auth
     useEffect(() => {
@@ -42,7 +61,7 @@ export const Pricing = () => {
             price = price * 0.75;
         }
 
-        if (confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} CAD`)) {
+        if (confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} USD`)) {
             // --- STRIPE_INTEGRATION: Process Subscription Fee ---
             // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
             await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
@@ -51,16 +70,26 @@ export const Pricing = () => {
     };
 
     const getPriceDisplay = (plan: keyof typeof PLANS) => {
-        let price = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
+        let priceUSD = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
+        const currencyInfo = CurrencyService.getInfo(currency);
+        const convertedPrice = CurrencyService.convert(priceUSD, currency);
+        const isNonUSD = currency !== 'USD';
+        
         if (user?.nonProfitStatus === 'approved' && plan === 'pro') {
+            const discountedUSD = priceUSD * 0.75;
+            const discountedConverted = CurrencyService.convert(discountedUSD, currency);
             return (
                 <div className="flex flex-col items-center">
-                    <span className="text-sm line-through text-gray-400 dark:text-zinc-500">${price.toFixed(0)}</span>
-                    <span>${(price * 0.75).toFixed(0)}</span>
+                    <span className="text-sm line-through text-gray-400 dark:text-zinc-500">
+                        {isNonUSD && '~'}{currencyInfo.symbol}{convertedPrice.toFixed(0)}
+                    </span>
+                    <span>{isNonUSD && '~'}{currencyInfo.symbol}{discountedConverted.toFixed(0)}</span>
                 </div>
             );
         }
-        return `$${price}`;
+        
+        if (priceUSD === 0) return `${currencyInfo.symbol}0`;
+        return `${isNonUSD ? '~' : ''}${currencyInfo.symbol}${convertedPrice.toFixed(0)}`;
     };
 
     return (
