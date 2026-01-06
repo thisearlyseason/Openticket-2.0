@@ -1343,7 +1343,7 @@ export const EventView = () => {
                                                                                         else sub -= appliedPromo.value;
                                                                                     }
                                                                                     const tax = Math.max(0, sub) * (event.taxRate / 100);
-                                                                                    return <PriceDisplay amount={tax} />;
+                                                                                    return <EventPriceDisplay amount={tax} currency={event.currency || 'USD'} />;
                                                                                 })()
                                                                             }
                                                                         </span>
