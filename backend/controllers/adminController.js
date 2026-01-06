@@ -293,6 +293,7 @@ export const getFinancialStats = async (req, res) => {
             ...stats,
             recentTransactions: recentTransactions || [],
             organizerBreakdown: Object.values(organizerBreakdown),
+            donationBreakdown,
         });
 
     } catch (error) {
