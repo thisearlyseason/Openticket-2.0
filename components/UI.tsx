@@ -822,35 +822,65 @@ export const ErrorModal = ({ isOpen, onClose, title = "Action Required", message
     );
 };
 
-export const PriceDisplay = ({ amount, currency = 'USD', className = '' }: { amount: number, currency?: string, className?: string }) => {
-    // In a real app, this would use a context or hook to get the global selected currency
-    // For now, we detect it once or default to USD
-    const [userCurrency, setUserCurrency] = React.useState('USD');
+export const PriceDisplay = ({ amount, className = '' }: { amount: number, className?: string }) => {
+    // Import useCurrency hook dynamically to avoid circular deps
+    const [displayData, setDisplayData] = React.useState({ symbol: '$', converted: amount, isUSD: true });
 
     React.useEffect(() => {
-        // Simple client-side detection
-        const detected = typeof navigator !== 'undefined' ? (
-            navigator.language?.includes('GB') ? 'GBP' :
-                navigator.language?.includes('DE') || navigator.language?.includes('FR') ? 'EUR' :
-                    navigator.language?.includes('CA') ? 'CAD' : 'USD'
-        ) : 'USD';
-        setUserCurrency(detected);
-    }, []);
+        // Get currency from localStorage (set by CurrencyProvider)
+        const getCurrencyData = () => {
+            try {
+                const pref = localStorage.getItem('openticket_currency');
+                const cached = localStorage.getItem('openticket_currency_cache');
+                let currency = 'USD';
+                
+                if (pref) {
+                    currency = pref;
+                } else if (cached) {
+                    const data = JSON.parse(cached);
+                    currency = data.currency || 'USD';
+                }
 
-    const displayCurrency = currency !== 'USD' ? currency : userCurrency;
+                const rates: Record<string, { rate: number; symbol: string }> = {
+                    USD: { rate: 1, symbol: '$' },
+                    EUR: { rate: 0.92, symbol: '€' },
+                    GBP: { rate: 0.79, symbol: '£' },
+                    CAD: { rate: 1.36, symbol: 'C$' },
+                    AUD: { rate: 1.53, symbol: 'A$' },
+                };
 
-    // Rough static rates for demo
-    const rates: Record<string, number> = { 'USD': 1, 'EUR': 0.92, 'GBP': 0.78, 'CAD': 1.36 };
-    const rate = rates[displayCurrency] || 1;
-    const converted = amount * rate;
-    const symbol = displayCurrency === 'EUR' ? '€' : displayCurrency === 'GBP' ? '£' : '$';
+                const info = rates[currency] || rates.USD;
+                setDisplayData({
+                    symbol: info.symbol,
+                    converted: amount * info.rate,
+                    isUSD: currency === 'USD',
+                });
+            } catch {
+                setDisplayData({ symbol: '$', converted: amount, isUSD: true });
+            }
+        };
+
+        getCurrencyData();
+
+        // Listen for storage changes (when user changes currency)
+        const handleStorage = () => getCurrencyData();
+        window.addEventListener('storage', handleStorage);
+        
+        // Also listen for custom event
+        window.addEventListener('currencyChanged', handleStorage);
+
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('currencyChanged', handleStorage);
+        };
+    }, [amount]);
 
     if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
 
     return (
-        <span className={`font-mono ${className}`} title={`Approx. ${symbol}${converted.toFixed(2)}`}>
-            {displayCurrency !== 'USD' && <span className="text-xs text-zinc-400 mr-1">~</span>}
-            {symbol}{converted.toFixed(2)}
+        <span className={`font-mono ${className}`} title={`USD $${amount.toFixed(2)}`}>
+            {!displayData.isUSD && <span className="text-zinc-400 mr-0.5">~</span>}
+            {displayData.symbol}{displayData.converted.toFixed(2)}
         </span>
     );
 };
