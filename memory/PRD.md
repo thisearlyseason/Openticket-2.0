@@ -53,17 +53,35 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Automatic Currency Detection & Display (LATEST)
+#### Organizer-Controlled Event Currency (LATEST)
+- [x] Added `currency` field to Event interface in types.ts
+- [x] Currency selector in EventBuilder Tickets step (USD, EUR, GBP, CAD, AUD)
+- [x] Persistent notice: "All ticket and add-on prices will be in this currency"
+- [x] Warning dialog when changing currency if prices already set
+- [x] Dynamic price input labels showing selected currency (e.g., "Price (CAD)")
+- [x] EventPriceDisplay component for event-specific pricing with Intl.NumberFormat
+- [x] EventView shows "Prices in X — You'll be charged in X" notice for non-USD events
+- [x] Stripe checkout uses event's currency (buyers charged in event currency)
+- [x] No currency conversion needed - prices stored in organizer's chosen currency
+
+#### Stripe Multi-Currency Payments
+- [x] Backend accepts `currency` parameter in `/api/stripe/create-order`
+- [x] Currency passed to Stripe checkout session
+- [x] Exchange rates API endpoint `/api/stripe/exchange-rates`
+- [x] Customers charged in selected/event currency by Stripe
+- [x] Stripe handles FX conversion automatically
+
+#### Automatic Currency Detection & Display
 - [x] IP-based location detection via ip-api.com with browser geolocation fallback
 - [x] Supported currencies: USD, EUR, GBP, CAD, AUD (defaults to USD for unsupported regions)
 - [x] Currency selector in header with dropdown showing all options
 - [x] User can manually override detected currency
-- [x] Prices displayed with local currency symbol and ~ prefix (e.g., ~€46.00)
-- [x] Note displayed: "Prices shown for reference only. All payments processed in USD."
+- [x] Locale-aware currency formatting using Intl.NumberFormat
 - [x] Currency preference persisted in localStorage
-- [x] PriceDisplay component updated to use new currency service
+- [x] PriceDisplay component for user-preference based display
+- [x] EventPriceDisplay component for event-currency based display
 
-#### Legal Pages UI/UX Redesign (LATEST)
+#### Legal Pages UI/UX Redesign
 - [x] Terms of Service: Violet/purple gradient hero, collapsible accordion sections with icons
 - [x] Privacy Policy: Emerald/teal gradient hero, "Your Privacy Matters" summary card
 - [x] Refunds Page: Orange gradient hero, numbered steps (1-2-3), FAQ accordion section
