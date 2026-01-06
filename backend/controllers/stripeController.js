@@ -77,22 +77,26 @@ export const createOrder = async (req, res) => {
         }
 
         // CHARGE CURRENCY RESOLUTION
-        // Priority: Event Currency → Backend Default → USD
-        // This is the SINGLE SOURCE OF TRUTH for payment currency
+        // GLOBAL ORGANIZATION CURRENCY is the single source of truth
+        // Events no longer have per-event currency overrides
+        // Attendees can view in other currencies (display-only) and pay in their preferred currency
         const supportedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
         
-        // Get backend default currency (from system config or fallback)
+        // Get organization's global default currency from event owner's profile
+        const ownerDefaultCurrency = event.owner?.subscription?.settings?.default_currency?.toLowerCase() || 'usd';
+        
+        // Fallback: Get backend default currency from env (platform default)
         const backendDefaultCurrency = process.env.DEFAULT_CURRENCY?.toLowerCase() || 'usd';
         
-        // Resolve charge currency: event override → backend default → USD
+        // Resolve charge currency: Organization default → Platform default → USD
         let chargeCurrency = 'usd';
-        if (event.currency && supportedCurrencies.includes(event.currency.toLowerCase())) {
-            chargeCurrency = event.currency.toLowerCase();
+        if (supportedCurrencies.includes(ownerDefaultCurrency)) {
+            chargeCurrency = ownerDefaultCurrency;
         } else if (supportedCurrencies.includes(backendDefaultCurrency)) {
             chargeCurrency = backendDefaultCurrency;
         }
         
-        console.log(`[Stripe] Charge currency resolved: ${chargeCurrency} (event: ${event.currency || 'none'}, default: ${backendDefaultCurrency})`);
+        console.log(`[Stripe] Charge currency resolved: ${chargeCurrency} (org default: ${ownerDefaultCurrency}, platform default: ${backendDefaultCurrency})`);
 
         // 2. Validate Capacity
         let requestedQty = 0;
