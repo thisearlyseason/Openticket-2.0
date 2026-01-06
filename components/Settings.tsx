@@ -225,6 +225,7 @@ export const Settings = () => {
             const updatedUser = await StorageService.updateUser(user.id, {
                 name,
                 businessName,
+                businessEmail,
                 organizerSubtitle,
                 useBusinessName,
                 logoUrl: finalLogoUrl,
