@@ -72,6 +72,28 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
         }
     }, [isDark]);
 
+    // Handle Stripe return redirect - redirect to event page with session params
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const stripeReturn = params.get('stripe_return');
+        const eventId = params.get('event_id');
+        const sessionId = params.get('session_id');
+        const success = params.get('success');
+        
+        if (stripeReturn === 'true' && eventId) {
+            // Build the event URL with success params
+            let eventUrl = `/#/event/${eventId}`;
+            if (success === 'true' && sessionId) {
+                eventUrl += `?success=true&session_id=${sessionId}`;
+            } else if (params.get('canceled') === 'true') {
+                eventUrl += `?canceled=true`;
+            }
+            
+            // Redirect to event page
+            window.location.href = eventUrl;
+        }
+    }, []);
+
     // Global UI & Notifications
     const { showAlert, showConfirm } = useGlobalUI();
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
