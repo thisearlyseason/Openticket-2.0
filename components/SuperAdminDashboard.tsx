@@ -96,7 +96,15 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         refundTotal: 0,          // Total refunds issued
         platformDonations: 0,    // Total platform donations from attendees
         recentTransactions: [] as FinancialTransaction[],
-        organizerBreakdown: [] as OrganizerBreakdown[]
+        organizerBreakdown: [] as OrganizerBreakdown[],
+        donationBreakdown: {
+            total: 0,
+            count: 0,
+            byAmount: { '$1': 0, '$2': 0, '$5': 0, '$10': 0, 'other': 0 },
+            recent: [] as { amount: number; attendeeName: string; eventTitle: string; createdAt: string }[],
+            thisMonth: 0,
+            lastMonth: 0
+        }
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'broadcast' | 'promo' | 'settings'>('users');
