@@ -123,6 +123,8 @@ export const EventBuilder = () => {
                 // New event - inherit defaults from user settings
                 setFormData(prev => ({
                     ...prev,
+                    // Use organizer profile by default (business name if set, else user name)
+                    useOrganizerProfile: true,
                     organizer: updatedUser?.businessName || updatedUser?.name || user.name,
                     organizerEmail: updatedUser?.email || user.email,
                     paymentConfig: { method: (updatedUser?.defaultPaymentMethod as any) || user.defaultPaymentMethod || 'none', link: updatedUser?.defaultPaymentLink || user.defaultPaymentLink, instructions: updatedUser?.defaultPaymentInstructions || user.defaultPaymentInstructions },
@@ -136,7 +138,8 @@ export const EventBuilder = () => {
                     } : undefined,
                     taxRate: updatedUser?.defaultTaxRate || user.defaultTaxRate || 0,
                     customFees: updatedUser?.defaultCustomFees || user.defaultCustomFees || [],
-                    currency: updatedUser?.defaultCurrency || user.defaultCurrency || 'USD', // Inherit default currency
+                    // Currency defaults to organizer's default currency
+                    currency: updatedUser?.defaultCurrency || user.defaultCurrency || 'USD',
                     trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' }
                 }));
             }
