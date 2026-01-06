@@ -53,7 +53,24 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ### ✅ Completed (January 6, 2026)
 
-#### Platform Donation UI Refactor (LATEST)
+#### Automatic Currency Detection & Display (LATEST)
+- [x] IP-based location detection via ip-api.com with browser geolocation fallback
+- [x] Supported currencies: USD, EUR, GBP, CAD, AUD (defaults to USD for unsupported regions)
+- [x] Currency selector in header with dropdown showing all options
+- [x] User can manually override detected currency
+- [x] Prices displayed with local currency symbol and ~ prefix (e.g., ~€46.00)
+- [x] Note displayed: "Prices shown for reference only. All payments processed in USD."
+- [x] Currency preference persisted in localStorage
+- [x] PriceDisplay component updated to use new currency service
+
+#### Legal Pages UI/UX Redesign (LATEST)
+- [x] Terms of Service: Violet/purple gradient hero, collapsible accordion sections with icons
+- [x] Privacy Policy: Emerald/teal gradient hero, "Your Privacy Matters" summary card
+- [x] Refunds Page: Orange gradient hero, numbered steps (1-2-3), FAQ accordion section
+- [x] All pages have quick links to other legal pages
+- [x] Modern card-based design with proper dark mode support
+
+#### Platform Donation UI Refactor
 - [x] Made "Support OpenTicket" donation section smaller and more compact
 - [x] Changed donation options to: "No tip", "$5", "$10", "$25", "Other"
 - [x] Made donation OPTIONAL for all users (removed mandatory for Free plan)
@@ -62,21 +79,21 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] Added helper text: "Tips help us keep fees low for organizers 💜"
 - [x] Order summary correctly shows/hides Platform Donation line based on selection
 
-#### Donation Analytics Date Filter (LATEST)
+#### Donation Analytics Date Filter
 - [x] Added date range filter to Super Admin donation analytics
 - [x] Filter options: "All Time", "7 Days", "30 Days", "90 Days", "Custom"
 - [x] Custom date range with start/end date inputs
 - [x] Filtered stats update dynamically based on selected range
 - [x] Period-specific metrics when filter is not "All Time"
 
-#### Automated Weekly Affiliate Emails (LATEST)
+#### Automated Weekly Affiliate Emails
 - [x] Created `/app/backend/services/cronService.js` with node-cron
 - [x] Weekly affiliate summary emails scheduled for Mondays at 9:00 AM UTC
 - [x] Cron job automatically initialized on server start
 - [x] Calculates weekly earnings, clicks, conversions per affiliate
 - [x] Includes top performing events in summary email
 
-#### Payment Failed Notification Emails (LATEST)
+#### Payment Failed Notification Emails
 - [x] Added `sendPaymentFailedNotification` method to serverEmail.js
 - [x] Beautiful HTML email template with order details and next steps
 - [x] Added webhook handlers for `checkout.session.expired` and `checkout.session.async_payment_failed`
