@@ -93,6 +93,9 @@ app.use('/api/notifications', notificationRoutes);
 // Push notification routes
 app.use('/api/push', pushRoutes);
 
+// Email delivery routes
+app.use('/api/email', emailRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
