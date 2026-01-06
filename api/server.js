@@ -14,6 +14,9 @@ import notificationRoutes from '../backend/routes/notificationRoutes.js';
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
 
+// Services
+import { initCronJobs } from '../backend/services/cronService.js';
+
 dotenv.config();
 
 const app = express();
