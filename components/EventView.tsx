@@ -788,7 +788,7 @@ export const EventView = () => {
                                                                 <div className="font-black text-zinc-900 dark:text-white">{ticket.name}</div>
                                                                 <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
                                                             </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><PriceDisplay amount={ticket.pricePerTicket} /></div>
+                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={ticket.pricePerTicket} currency={event.currency || 'USD'} /></div>
                                                         </div>
                                                     ))}
                                                     {completedRegistration?.addOns?.map((addon, idx) => (
