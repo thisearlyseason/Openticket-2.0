@@ -127,7 +127,21 @@ export const calculateOrderBreakdown = ({
         }
     }
 
-    breakdown.rawSubtotal = breakdown.ticketSubtotal + breakdown.addOnSubtotal;
+    // 2b. Handle donation amount for donation-type events
+    if (event.price_type === 'donation' && donationAmount > 0) {
+        breakdown.donationSubtotal = Number(donationAmount) || 0;
+        breakdown.items.push({
+            type: 'donation',
+            id: 'donation',
+            name: 'Donation',
+            unitPrice: breakdown.donationSubtotal,
+            quantity: 1,
+            total: breakdown.donationSubtotal,
+            taxable: true, // Donations are typically taxable
+        });
+    }
+
+    breakdown.rawSubtotal = breakdown.ticketSubtotal + breakdown.addOnSubtotal + breakdown.donationSubtotal;
 
     // 3. Apply promo code discount
     if (promoCode) {
