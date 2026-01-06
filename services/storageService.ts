@@ -551,7 +551,8 @@ export const StorageService = {
                     stripeConnectId: profile.stripe_connect_id,
                     stripeOnboardingComplete: profile.stripe_onboarding_complete,
                     stripePublishableKey: profile.stripe_publishable_key,
-                    stripeSecretKey: profile.stripe_secret_key
+                    stripeSecretKey: profile.stripe_secret_key,
+                    defaultCurrency: profile.default_currency
                 } as User;
             }
             return null;
