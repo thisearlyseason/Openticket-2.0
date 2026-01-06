@@ -547,6 +547,20 @@ export const EventView = () => {
             if (event.paymentConfig.method === 'online' && finalTotal > 0) {
                 if (!organizerUser?.stripeConnectId) throw new Error("Online payments not connected by organizer.");
 
+                // Validate that server breakdown is loaded and total matches
+                if (orderBreakdown) {
+                    const serverTotal = orderBreakdown.grandTotal + (regData.platformDonationAmount || 0);
+                    const tolerance = 0.02; // Allow 2 cents tolerance for rounding
+                    if (Math.abs(serverTotal - calculateTotal()) > tolerance) {
+                        console.warn(`Price mismatch detected: UI=${calculateTotal()}, Server=${serverTotal}`);
+                        // Refresh breakdown and retry
+                        await fetchOrderBreakdown();
+                        showToast("Price updated. Please review and try again.", "info");
+                        setIsRegistering(false);
+                        return;
+                    }
+                }
+
                 // --- REAL STRIPE CHECKOUT ---
                 setIsProcessingPayment(true);
 
