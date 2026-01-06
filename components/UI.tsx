@@ -822,7 +822,7 @@ export const ErrorModal = ({ isOpen, onClose, title = "Action Required", message
     );
 };
 
-export const PriceDisplay = ({ amount, className = '' }: { amount: number, className?: string }) => {
+export const PriceDisplay = ({ amount, className = '', showCurrencyCode = true }: { amount: number, className?: string, showCurrencyCode?: boolean }) => {
     const [displayData, setDisplayData] = React.useState({ symbol: '$', converted: amount, currency: 'USD' });
 
     React.useEffect(() => {
@@ -903,12 +903,14 @@ export const PriceDisplay = ({ amount, className = '' }: { amount: number, class
         return (
             <span className={`font-mono ${className}`}>
                 {formatted}
+                {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({displayData.currency})</span>}
             </span>
         );
     } catch {
         return (
             <span className={`font-mono ${className}`}>
                 {displayData.symbol}{displayData.converted.toFixed(2)}
+                {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({displayData.currency})</span>}
             </span>
         );
     }
