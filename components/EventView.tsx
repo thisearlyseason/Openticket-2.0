@@ -1417,7 +1417,7 @@ export const EventView = () => {
                                                                 <span>Total</span>
                                                                 <span className="flex items-center gap-2">
                                                                     {isCalculating && <Loader size={16} className="animate-spin text-zinc-400" />}
-                                                                    <PriceDisplay amount={calculateTotal()} />
+                                                                    <EventPriceDisplay amount={calculateTotal()} currency={event.currency || 'USD'} />
                                                                 </span>
                                                             </div>
                                                             {orderBreakdown && (
