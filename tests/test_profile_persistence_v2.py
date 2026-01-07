@@ -24,7 +24,7 @@ TEST_EMAIL = "test_organizer_1767755527@test.com"
 TEST_PASSWORD = "TestPassword123!"
 
 # Firebase Auth API for getting tokens
-FIREBASE_API_KEY = "AIzaSyBqLJWJh7Y8RnhMcPAiXvxsLz8QpFvkwqo"  # Public API key from Firebase config
+FIREBASE_API_KEY = "AIzaSyDtnbTx4gTAC5ufD173Lt9IaiQfpZOQFyA"  # Public API key from Firebase config
 
 
 class TestProfilePersistence:
