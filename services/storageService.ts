@@ -920,6 +920,14 @@ export const StorageService = {
         if (updates.defaultCustomFees !== undefined) payload.default_custom_fees = updates.defaultCustomFees;
         if (updates.geminiApiKey !== undefined) payload.gemini_api_key = updates.geminiApiKey;
 
+        // Contact & Bio fields
+        if (updates.phone !== undefined) payload.phone = updates.phone;
+        if (updates.businessPhone !== undefined) payload.business_phone = updates.businessPhone;
+        if (updates.showPhonePublicly !== undefined) payload.show_phone_publicly = updates.showPhonePublicly;
+        if (updates.bio !== undefined) payload.bio = updates.bio;
+        if (updates.businessEmail !== undefined) payload.business_email = updates.businessEmail;
+        if (updates.useBusinessName !== undefined) payload.use_business_name = updates.useBusinessName;
+
         // Payment methods usually handled separately, but if passed:
         if (updates.paymentMethods) payload.payment_methods = updates.paymentMethods; // API handles this?
 
