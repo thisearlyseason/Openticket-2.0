@@ -55,6 +55,8 @@ export const OrganizerProfile = () => {
             const updated = await StorageService.toggleFavoriteOrganizer(organizer.id);
             if (updated) {
                 setCurrentUser(updated);
+                // Update local storage explicitly to ensure consistency across pages
+                localStorage.setItem('openticket_current_user', JSON.stringify(updated));
                 showToast(
                     updated.favoriteOrganizers?.includes(organizer.id) 
                         ? "Added to favorites!" 
@@ -63,6 +65,7 @@ export const OrganizerProfile = () => {
                 );
             }
         } catch (error) {
+            console.error("Toggle favorite error:", error);
             showToast("Failed to update favorites", "error");
         }
         setLoadingFavorite(false);
