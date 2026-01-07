@@ -423,7 +423,7 @@ export const MyTickets = () => {
                                         <div className="text-[10px] font-bold text-zinc-400 uppercase mb-1">Order ID</div>
                                         <div className="font-mono text-sm font-bold tracking-wider mb-2">{ticket.ticketIdDisplay}</div>
                                         <div className="flex flex-col gap-2">
-                                            <button onClick={() => handlePrint([ticket])} className="text-xs text-primary hover:underline flex items-center justify-center gap-1">
+                                            <button onClick={() => handlePrint([ticket])} className="text-xs text-pink-600 dark:text-pink-400 hover:underline flex items-center justify-center gap-1">
                                                 <Printer size={12} /> Print Ticket
                                             </button>
                                             {!ticket.isAddOn && (
