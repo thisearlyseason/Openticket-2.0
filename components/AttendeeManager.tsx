@@ -100,6 +100,7 @@ export const AttendeeManager = () => {
             if (!e) throw new Error("Event not found");
             setEvent(e);
             const regs = await StorageService.getRegistrations(id);
+            setAllRegistrations(regs); // Store for financial calculations
             const wl = await StorageService.getWaitlist(id);
             setWaitlist(wl);
             processAttendees(regs, e);
@@ -115,10 +116,14 @@ export const AttendeeManager = () => {
         try {
             const list: AttendeeItem[] = [];
             regs.forEach(reg => {
-                // Consider paid if status is paid/completed OR has stripe payment intent
-                const isPaid = reg.paymentStatus === 'completed' || reg.paymentStatus === 'paid' || !!(reg as any).stripePaymentIntentId;
-                // If the entire order is refunded, mark as such
-                const isOrderRefunded = reg.paymentStatus === 'refunded';
+                // Use centralized payment status check
+                const paid = isPaidStatus(reg.paymentStatus);
+                const refunded = isRefundedStatus(reg.paymentStatus);
+                
+                // Get add-ons for this registration to attach to guest
+                const regAddOns = reg.addOns && Array.isArray(reg.addOns) 
+                    ? reg.addOns.map(a => ({ name: a.name, quantity: a.quantity || 1, price: a.price || 0 }))
+                    : [];
 
                 if (reg.tickets && Array.isArray(reg.tickets) && reg.tickets.length > 0) {
                     reg.tickets.forEach((t, tIdx) => {
@@ -127,8 +132,8 @@ export const AttendeeManager = () => {
                             const ticketKey = `${t.tierId}-${i}`;
                             const isCheckedIn = (reg.checkInStatuses && reg.checkInStatuses[ticketKey]?.checkedIn) || reg.checkedIn || false;
 
-                            // Check specific ticket status (if individual refund logic exists) or fallback to order status
-                            const status = t.status === 'refunded' ? 'refunded' : (isOrderRefunded ? 'refunded' : (isPaid ? 'paid' : 'pending'));
+                            // Check specific ticket status or fallback to order status
+                            const status = t.status === 'refunded' ? 'refunded' : (refunded ? 'refunded' : (paid ? 'paid' : 'pending'));
 
                             list.push({
                                 id: `${reg.id}-${t.tierId}-${i}`,
@@ -143,12 +148,14 @@ export const AttendeeManager = () => {
                                 orderDate: reg.timestamp,
                                 status: status,
                                 approvalStatus: reg.approvalStatus || 'approved',
-                                checkedIn: isCheckedIn
+                                checkedIn: isCheckedIn,
+                                // Attach add-ons to first ticket of each order for display
+                                addOns: i === 0 && tIdx === 0 ? regAddOns : []
                             });
                         }
                     });
                 } else {
-                    if (!isOrderRefunded) {
+                    if (!refunded) {
                         list.push({
                             id: `${reg.id}-gen`,
                             regId: reg.id,
@@ -160,56 +167,39 @@ export const AttendeeManager = () => {
                             ticketType: evt?.ticketName || 'General Admission',
                             price: evt?.price || 0,
                             orderDate: reg.timestamp,
-                            status: isPaid ? 'paid' : 'pending',
+                            status: paid ? 'paid' : 'pending',
                             approvalStatus: reg.approvalStatus || 'approved',
-                            checkedIn: reg.checkedIn || false
+                            checkedIn: reg.checkedIn || false,
+                            addOns: regAddOns
                         });
                     }
                 }
 
-                // Add-ons Processing
-                if (reg.addOns && Array.isArray(reg.addOns) && reg.addOns.length > 0) {
+                // Only add add-ons as separate rows if showAddOns is enabled
+                // This keeps the guest list clean by default
+                if (showAddOns && reg.addOns && Array.isArray(reg.addOns) && reg.addOns.length > 0) {
                     reg.addOns.forEach((a, aIdx) => {
                         if (!a) return;
-                        // Addons can have quantity > 1. Should we split them?
-                        // Yes, for individual management (mark 1 of 2 fulfilled).
-                        for (let i = 0; i < (a.quantity || 1); i++) {
-                            // Status: Default to reg status, unless specific addon status (defined in types now)
-                            let status: any = isOrderRefunded ? 'refunded' : (isPaid ? 'paid' : 'pending');
-                            if (a.status) status = a.status; // Override if addon has specific status (refunded/cancelled)
+                        let status: any = refunded ? 'refunded' : (paid ? 'paid' : 'pending');
+                        if (a.status) status = a.status;
+                        const isFulfilled = a.fulfilled || false;
 
-                            const isFulfilled = a.fulfilled || false; // We can use bitmask or array if we want per-item fulfillment in multi-qty, but for now assuming all-or-nothing for the line item unless we split the data structure.
-                            // Wait, PurchasedAddOn has `quantity`. If I split visual rows, I can't easily sync back to single object unless I change data structure to be array of single items.
-                            // For now, let's list the *Line Item* as one row if quantity > 1, or split?
-                            // Ticket logic above splits.
-                            // Addon logic: The `PurchasedAddOn` type has `fulfilled?: boolean`. It's a single flag for the whole quantity.
-                            // LIMITATION: "Mark Complete" marks ALL quantity as complete.
-                            // If I want individual, I'd need `fulfilledCount`.
-                            // User asked for "Complete action". Simple is better. One row per Addon Line Item.
-
-                            // Actually, if I split rows, I can't update uniqueness easily.
-                            // Let's keep Addon as ONE row per line item for now (unlike tickets).
-                            // Wait, if quantity is 3, and I verify 1...
-                            // Let's Stick to Line Item for Addons to avoid complex refactor of data structure.
-
-                            list.push({
-                                id: `${reg.id}-addon-${aIdx}`, // Unique ID for list
-                                regId: reg.id,
-                                tierId: a.id, // using addon ID as tierId equivalent
-                                ticketIndex: aIdx,
-                                itemType: 'addon',
-                                name: reg.attendeeName || 'Unknown', // Addons usually don't have separate attendee names, belong to purchaser
-                                email: reg.attendeeEmail || '',
-                                ticketType: `ADD-ON: ${a.name}`, // Visual distinction
-                                price: a.price,
-                                orderDate: reg.timestamp,
-                                status: status,
-                                approvalStatus: 'approved', // Addons don't need approval usually
-                                checkedIn: isFulfilled, // Visual reuse
-                                fulfilled: isFulfilled
-                            });
-                            break; // Only once per line item (ignoring loop i)
-                        }
+                        list.push({
+                            id: `${reg.id}-addon-${aIdx}`,
+                            regId: reg.id,
+                            tierId: a.id,
+                            ticketIndex: aIdx,
+                            itemType: 'addon',
+                            name: reg.attendeeName || 'Unknown',
+                            email: reg.attendeeEmail || '',
+                            ticketType: `ADD-ON: ${a.name} (x${a.quantity || 1})`,
+                            price: (a.price || 0) * (a.quantity || 1),
+                            orderDate: reg.timestamp,
+                            status: status,
+                            approvalStatus: 'approved',
+                            checkedIn: isFulfilled,
+                            fulfilled: isFulfilled
+                        });
                     });
                 }
             });
