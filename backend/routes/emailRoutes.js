@@ -160,6 +160,105 @@ router.post('/send-bulk', async (req, res) => {
 });
 
 /**
+ * POST /api/email/send-test
+ * Send a test email to the organizer using a template
+ * Replaces template variables with sample data
+ */
+router.post('/send-test', async (req, res) => {
+    try {
+        const { to, template } = req.body;
+
+        if (!to || !template) {
+            return res.status(400).json({ error: 'Missing required fields: to, template' });
+        }
+
+        if (!template.subject || !template.body) {
+            return res.status(400).json({ error: 'Template must have subject and body' });
+        }
+
+        // Sample data to replace template variables
+        const sampleData = {
+            attendee_name: 'John Doe',
+            event_title: 'Sample Event - Test',
+            event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }),
+            event_location: '123 Main Street, San Francisco, CA',
+            ticket_type: 'General Admission',
+            ticket_price: '$25.00',
+            order_id: 'TEST-' + Date.now().toString(36).toUpperCase(),
+            organizer_name: 'Test Organizer',
+            venue_name: 'The Grand Venue'
+        };
+
+        // Replace template variables in subject and body
+        let subject = template.subject;
+        let body = template.body;
+
+        Object.entries(sampleData).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            subject = subject.replace(regex, value);
+            body = body.replace(regex, value);
+        });
+
+        // Remove any remaining unreplaced variables
+        subject = subject.replace(/{{.*?}}/g, '[SAMPLE]');
+        body = body.replace(/{{.*?}}/g, '[SAMPLE]');
+
+        // Add test email banner
+        const testBanner = `
+            <div style="background: #FEF3C7; border: 2px solid #F59E0B; padding: 12px 16px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
+                <strong style="color: #92400E;">🧪 TEST EMAIL</strong>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #92400E;">
+                    This is a test email. Template variables have been replaced with sample data.
+                </p>
+            </div>
+        `;
+
+        const htmlBody = testBanner + body;
+        const testSubject = `[TEST] ${subject}`;
+
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailRoutes] Email credentials not configured - simulating test send");
+            return res.json({ 
+                success: true, 
+                simulated: true,
+                messageId: `test-simulated-${Date.now()}`,
+                message: 'Test email simulated (credentials not configured). In production, email would be sent to: ' + to
+            });
+        }
+
+        if (!transporter) {
+            return res.status(503).json({ error: 'Email service not available' });
+        }
+
+        const info = await transporter.sendMail({
+            from: `"OpenTicket Test" <${process.env.EMAIL_USER}>`,
+            to,
+            subject: testSubject,
+            html: htmlBody,
+            text: htmlBody.replace(/<[^>]*>/g, '')
+        });
+
+        console.log(`[EmailRoutes] Test email sent: ${info.messageId} to ${to}`);
+
+        res.json({
+            success: true,
+            messageId: info.messageId,
+            message: `Test email sent successfully to ${to}`
+        });
+    } catch (error) {
+        console.error("[EmailRoutes] Test send failed:", error);
+        res.status(500).json({ error: error.message || 'Failed to send test email' });
+    }
+});
+
+/**
  * GET /api/email/status
  * Check email service status
  */
