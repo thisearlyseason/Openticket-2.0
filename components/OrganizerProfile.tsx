@@ -176,23 +176,22 @@ export const OrganizerProfile = () => {
                                 >
                                     <Share2 size={18} /> Share
                                 </Button>
-                                    <Button
-                                        onClick={toggleFavorite}
-                                        disabled={loadingFavorite}
-                                        className={`flex items-center gap-2 transition-all duration-300 ${
-                                            isFavorited 
-                                                ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.5)]' 
-                                                : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-zinc-700 dark:text-zinc-300'
-                                        }`}
-                                    >
-                                        <Heart 
-                                            size={18} 
-                                            fill={isFavorited ? "currentColor" : "none"}
-                                            className={isFavorited ? 'animate-pulse' : ''}
-                                        />
-                                        {isFavorited ? 'Favorited' : 'Favorite'}
-                                    </Button>
-                                </div>
+                                <Button
+                                    onClick={toggleFavorite}
+                                    disabled={loadingFavorite}
+                                    className={`flex items-center gap-2 transition-all duration-300 ${
+                                        isFavorited 
+                                            ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.5)]' 
+                                            : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-zinc-700 dark:text-zinc-300'
+                                    }`}
+                                >
+                                    <Heart 
+                                        size={18} 
+                                        fill={isFavorited ? "currentColor" : "none"}
+                                        className={isFavorited ? 'animate-pulse' : ''}
+                                    />
+                                    {isFavorited ? 'Favorited' : 'Favorite'}
+                                </Button>
                             </div>
 
                             {/* Share Dropdown */}
@@ -202,22 +201,21 @@ export const OrganizerProfile = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
-                </Card>
+                    </Card>
 
-                {/* Two Column Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column - About & Contact */}
-                    <div className="lg:col-span-1 space-y-6">
-                        {/* About Section - Only show if bio exists */}
-                        {organizer?.bio && organizer.bio.trim() !== '' && (
-                            <Card className="p-6 bg-white dark:bg-zinc-900 rounded-2xl">
-                                <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">About</h2>
-                                <p className="text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed">
-                                    {organizer.bio}
-                                </p>
-                            </Card>
-                        )}
+                    {/* Two Column Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Left Column - About & Contact */}
+                        <div className="lg:col-span-1 space-y-6">
+                            {/* About Section - Only show if bio exists */}
+                            {organizer?.bio && organizer.bio.trim() !== '' && (
+                                <Card className="p-6 bg-white dark:bg-zinc-900 rounded-2xl">
+                                    <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">About</h2>
+                                    <p className="text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed">
+                                        {organizer.bio}
+                                    </p>
+                                </Card>
+                            )}
 
                         {/* Contact Info */}
                         <Card className="p-6 bg-white dark:bg-zinc-900 rounded-2xl">
