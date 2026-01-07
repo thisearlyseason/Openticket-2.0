@@ -67,44 +67,94 @@ export const Settings = () => {
     const [showNewPw, setShowNewPw] = useState(false);
 
     useEffect(() => {
-        const currentUser = StorageService.getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-            setName(currentUser.name || '');
-            setEmail(currentUser.email || '');
-            setLogoUrl(currentUser.logoUrl || '');
-            setHeaderImageUrl(currentUser.headerImageUrl || '');
-            setBusinessName(currentUser.businessName || '');
-            setBusinessEmail(currentUser.businessEmail || '');
-            setOrganizerSubtitle(currentUser.organizerSubtitle || '');
-            setUseBusinessName(currentUser.useBusinessName || false);
-            setSocials(currentUser.socials || {});
-            setPhone(currentUser.phone || '');
-            setBusinessPhone(currentUser.businessPhone || '');
-            setShowPhonePublicly(currentUser.showPhonePublicly || false);
-            setBio(currentUser.bio || '');
-            setPrimaryColor(currentUser.primaryColor || '#E0FF20');
-            setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
-            setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
-            setDefaultWaiver(currentUser.defaultWaiver || {});
-            setDefaultTaxRate(currentUser.defaultTaxRate || 0);
-            setDefaultCustomFees(currentUser.defaultCustomFees || []);
-            setDefaultCurrency(currentUser.defaultCurrency || 'USD');
+        const loadUserData = async () => {
+            const currentUser = StorageService.getCurrentUser();
+            if (currentUser) {
+                // Fetch fresh user data from server to ensure we have latest templates
+                try {
+                    const freshUser = await StorageService.getUserById(currentUser.id);
+                    if (freshUser) {
+                        setUser(freshUser);
+                        setName(freshUser.name || '');
+                        setEmail(freshUser.email || '');
+                        setLogoUrl(freshUser.logoUrl || '');
+                        setHeaderImageUrl(freshUser.headerImageUrl || '');
+                        setBusinessName(freshUser.businessName || '');
+                        setBusinessEmail(freshUser.businessEmail || '');
+                        setOrganizerSubtitle(freshUser.organizerSubtitle || '');
+                        setUseBusinessName(freshUser.useBusinessName || false);
+                        setSocials(freshUser.socials || {});
+                        setPhone(freshUser.phone || '');
+                        setBusinessPhone(freshUser.businessPhone || '');
+                        setShowPhonePublicly(freshUser.showPhonePublicly || false);
+                        setBio(freshUser.bio || '');
+                        setPrimaryColor(freshUser.primaryColor || '#E0FF20');
+                        setDefaultRefundPolicy(freshUser.defaultRefundPolicy || '');
+                        setDefaultRefundPolicyEnabled(freshUser.defaultRefundPolicyEnabled || false);
+                        setDefaultWaiver(freshUser.defaultWaiver || {});
+                        setDefaultTaxRate(freshUser.defaultTaxRate || 0);
+                        setDefaultCustomFees(freshUser.defaultCustomFees || []);
+                        setDefaultCurrency(freshUser.defaultCurrency || 'USD');
 
-            // Email State
-            setGmailConfig(currentUser.gmailConfig || { connected: false });
-            setEmailProvider(currentUser.emailProvider || 'openticket_mailer');
-            setEmailTemplates(currentUser.emailTemplates || []);
+                        // Email State - Load from fresh data
+                        setGmailConfig(freshUser.gmailConfig || { connected: false });
+                        setEmailProvider(freshUser.emailProvider || 'openticket_mailer');
+                        setEmailTemplates(freshUser.emailTemplates || []);
 
-            // Load local preferences
-            const savedCamera = localStorage.getItem('openticket_desktop_camera') === 'true';
-            setDesktopCamera(savedCamera);
+                        // Load local preferences
+                        const savedCamera = localStorage.getItem('openticket_desktop_camera') === 'true';
+                        setDesktopCamera(savedCamera);
 
-            if (currentUser.notifications) {
-                setNotifications(currentUser.notifications);
+                        if (freshUser.notifications) {
+                            setNotifications(freshUser.notifications);
+                        }
+                        setGeminiApiKey(freshUser.geminiApiKey || '');
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch fresh user data, using cached data:", e);
+                }
+                
+                // Fallback to cached user if fetch fails
+                setUser(currentUser);
+                setName(currentUser.name || '');
+                setEmail(currentUser.email || '');
+                setLogoUrl(currentUser.logoUrl || '');
+                setHeaderImageUrl(currentUser.headerImageUrl || '');
+                setBusinessName(currentUser.businessName || '');
+                setBusinessEmail(currentUser.businessEmail || '');
+                setOrganizerSubtitle(currentUser.organizerSubtitle || '');
+                setUseBusinessName(currentUser.useBusinessName || false);
+                setSocials(currentUser.socials || {});
+                setPhone(currentUser.phone || '');
+                setBusinessPhone(currentUser.businessPhone || '');
+                setShowPhonePublicly(currentUser.showPhonePublicly || false);
+                setBio(currentUser.bio || '');
+                setPrimaryColor(currentUser.primaryColor || '#E0FF20');
+                setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
+                setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
+                setDefaultWaiver(currentUser.defaultWaiver || {});
+                setDefaultTaxRate(currentUser.defaultTaxRate || 0);
+                setDefaultCustomFees(currentUser.defaultCustomFees || []);
+                setDefaultCurrency(currentUser.defaultCurrency || 'USD');
+
+                // Email State
+                setGmailConfig(currentUser.gmailConfig || { connected: false });
+                setEmailProvider(currentUser.emailProvider || 'openticket_mailer');
+                setEmailTemplates(currentUser.emailTemplates || []);
+
+                // Load local preferences
+                const savedCamera = localStorage.getItem('openticket_desktop_camera') === 'true';
+                setDesktopCamera(savedCamera);
+
+                if (currentUser.notifications) {
+                    setNotifications(currentUser.notifications);
+                }
+                setGeminiApiKey(currentUser.geminiApiKey || '');
             }
-            setGeminiApiKey(currentUser.geminiApiKey || '');
-        }
+        };
+        
+        loadUserData();
     }, []);
 
     const handleConnectGmail = async () => {
