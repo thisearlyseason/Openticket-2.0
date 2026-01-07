@@ -982,6 +982,46 @@ export const EventView = () => {
                                     </section>
                                 )}
 
+                                {/* Image Gallery Section */}
+                                {(!isWidget || !hideDetails) && event.gallery && event.gallery.length > 0 && (
+                                    <section className="animate-in fade-in duration-1000 delay-250">
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="h-10 w-2 bg-pink-500 rounded-full"></div>
+                                            <h2 className="text-3xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Gallery</h2>
+                                        </div>
+                                        <Card className="p-6 border-zinc-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/50 rounded-[2.5rem]">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                {event.gallery.map((item, idx) => (
+                                                    <div 
+                                                        key={item.id || idx} 
+                                                        className="relative group cursor-pointer overflow-hidden rounded-xl"
+                                                        onClick={() => {
+                                                            setLightboxImage(item.url);
+                                                            setLightboxCaption(item.caption || '');
+                                                        }}
+                                                    >
+                                                        <img 
+                                                            src={item.url} 
+                                                            alt={item.caption || `Gallery image ${idx + 1}`}
+                                                            className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                                                            {item.caption && (
+                                                                <p className="p-4 text-white text-sm font-bold">{item.caption}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                                                                <Eye size={16} className="text-zinc-800" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </Card>
+                                    </section>
+                                )}
+
                                 <section id="tickets" className="animate-in fade-in duration-1000 delay-300">
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="h-10 w-2 bg-primary rounded-full"></div>
