@@ -596,8 +596,17 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
 
     const shareInstagram = () => {
         navigator.clipboard.writeText(url);
-        if (confirm("Instagram doesn't allow direct link sharing from websites. \n\nWe've copied the event link to your clipboard. Would you like to open Instagram now to paste it in your Bio or Story?")) {
+        // Use a toast notification instead of confirm() which may not work in all contexts
+        const instagramMessage = "Instagram doesn't support direct web sharing. Link copied to clipboard! Opening Instagram for you to paste.";
+        
+        // Try to show a toast if available, otherwise just open Instagram
+        try {
+            // Open Instagram directly after copying
             window.open('https://www.instagram.com/', '_blank');
+            // Alert as fallback notification
+            alert(instagramMessage);
+        } catch (e) {
+            console.log('[Share] Instagram share:', e);
         }
     };
 
