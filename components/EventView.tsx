@@ -1142,7 +1142,7 @@ export const EventView = () => {
                                                         <div className={`p-8 border-2 transition-all rounded-[2rem] flex flex-col md:flex-row justify-between items-center ${ticketSelection['general'] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-black/20'}`}>
                                                             <div className="text-center md:text-left mb-6 md:mb-0">
                                                                 <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{event.ticketName || 'General Admission'}</div>
-                                                                <div className="text-3xl font-black text-primary">
+                                                                <div className="text-3xl font-black text-zinc-900 dark:text-white">
                                                                     {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <EventPriceDisplay amount={event.price} currency={organizerUser?.defaultCurrency || 'USD'} showDisplayCurrency={true} />}
                                                                 </div>
                                                             </div>
