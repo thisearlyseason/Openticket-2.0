@@ -1231,7 +1231,7 @@ export const EventView = () => {
                                                                 if (qty <= 0) return null;
                                                                 return (
                                                                     <div key={tier.id} className="space-y-4">
-                                                                        <div className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-4 mt-6">
+                                                                        <div className="text-sm font-black text-pink-500 uppercase tracking-[0.2em] mb-4 mt-6">
                                                                             {tier.name} Participants
                                                                         </div>
                                                                         <div className="grid grid-cols-1 gap-4">
