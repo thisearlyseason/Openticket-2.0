@@ -44,6 +44,7 @@ export const EventView = () => {
 
     const [isRegistering, setIsRegistering] = useState(false);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [completedRegistration, setCompletedRegistration] = useState<Registration | null>(null);
     const [newCredentials, setNewCredentials] = useState<{ email: string, password?: string } | null>(null);
