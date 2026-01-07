@@ -69,6 +69,54 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
   - Fallback to `'Your Name'` and user's email to never leave empty
 - [x] **Settings Integration:** Business name/email and toggle are in Settings → Organizer Page tab
 
+### ✅ New Features (January 7, 2026)
+
+#### Attendee Account Auto-Creation (Critical)
+- [x] **Backend:** Modified `stripeWebhookController.js` to auto-create attendee accounts after successful payment
+- [x] **Account Creation:** Creates Firebase auth user + Supabase profile with role='attendee'
+- [x] **Password Generation:** Secure random password with uppercase, number, special char requirements
+- [x] **Email Service:** New `sendAttendeeCredentials()` function sends login credentials immediately
+- [x] **Email Template:** Beautiful HTML email with credentials box, event details, and login CTA
+- [x] **Atomic:** Account creation tied to successful payment - no partial states
+- [x] **Deduplication:** Checks if attendee account already exists before creating
+
+#### Auth UX Improvements
+- [x] **Removed "or with email" text** from both login and signup flows in `Auth.tsx`
+- [x] **Password Eye Toggle:** Added visibility toggle button with Eye/EyeOff icons
+- [x] **Password Validation Rules:** Real-time validation display:
+  - At least 7 characters
+  - One uppercase letter
+  - One number  
+  - One special character (!@#$%^&*)
+- [x] **Visual Feedback:** Green checkmarks for passing rules, X marks for failing
+
+#### Global Currency Enforcement (Bug Fix)
+- [x] **Root Cause:** Add-ons and summary showing USD even when organizer's global currency is CAD
+- [x] **Fix:** Created `eventCurrency` variable that uses `organizerUser?.defaultCurrency || event.currency || 'USD'`
+- [x] **Applied To:** All `EventPriceDisplay` components throughout `EventView.tsx`
+- [x] **Consistent:** All monetary values now follow organizer's global currency setting
+
+#### Share With Friends Card (Interactive)
+- [x] **Made Clickable:** Share card now has 4 social platform buttons
+- [x] **Platforms:** X (Twitter), Facebook, WhatsApp, Email
+- [x] **Actions:** Each button opens respective share dialog with event URL
+- [x] **Copy Link:** "Copy Magic Link" button copies URL to clipboard with toast notification
+
+#### Stripe Redirect Messaging
+- [x] **New State:** Added `isRedirectingToStripe` state to `EventView.tsx`
+- [x] **Friendly Overlay:** Purple gradient modal with "Hang Tight! 🚀" message
+- [x] **UX Copy:** "Sending you to our secure payment partner - Don't close this window"
+- [x] **Trust Badge:** Shows "Powered by Stripe • 256-bit encryption"
+- [x] **Loading Animation:** Bouncing dots animation during redirect
+- [x] **Timing:** 1.5 second delay to show message before actual redirect
+
+#### Favorite Organizers Feature
+- [x] **Home.tsx:** Added `showFavoriteOrganizers` state and filter
+- [x] **Favorites Button:** Heart icon button appears when user is logged in
+- [x] **Filter Logic:** Filters events to show only those from favorited organizers
+- [x] **Toggle:** Button toggles pink when active
+- [x] **Backend:** Uses existing `toggleFavoriteOrganizer` in StorageService
+
 ### ✅ Completed (January 6, 2026)
 
 #### My Templates - Save Custom Ticket Designs (LATEST - January 6, 2026)
