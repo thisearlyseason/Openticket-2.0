@@ -136,11 +136,13 @@ stripe.webhooks.constructEvent(buf, sig, webhookSecret);
 - Request body validation on critical endpoints
 - SQL injection prevented via Supabase prepared statements
 
-### Rate Limiting ⚠️ NOT IMPLEMENTED
-- No rate limiting currently configured
+### Rate Limiting ✅ IMPLEMENTED
+- General API: 500 requests per 15 minutes
+- Auth endpoints: 10 requests per minute
+- Password changes: 5 requests per 15 minutes
 
 **Recommendation:**
-- 🟡 MEDIUM: Add rate limiting middleware (express-rate-limit)
+- ⚠️ LOW: ValidationError appears in logs for X-Forwarded-For (non-blocking, rate limiting works)
 
 ---
 
