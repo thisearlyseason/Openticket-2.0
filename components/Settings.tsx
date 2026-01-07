@@ -57,6 +57,15 @@ export const Settings = () => {
 
     const [isSaving, setIsSaving] = useState(false);
 
+    // Password Change State
+    const [showPasswordChange, setShowPasswordChange] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [showCurrentPw, setShowCurrentPw] = useState(false);
+    const [showNewPw, setShowNewPw] = useState(false);
+
     useEffect(() => {
         const currentUser = StorageService.getCurrentUser();
         if (currentUser) {
