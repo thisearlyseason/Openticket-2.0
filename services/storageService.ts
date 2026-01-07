@@ -938,10 +938,10 @@ export const StorageService = {
         if (updates.defaultWaiver) payload.default_waiver = updates.defaultWaiver;
         if (updates.defaultRefundPolicy) payload.default_refund_policy = updates.defaultRefundPolicy;
         if (updates.defaultRefundPolicyEnabled !== undefined) payload.default_refund_policy_enabled = updates.defaultRefundPolicyEnabled;
-        if (updates.logoUrl) payload.logo_url = updates.logoUrl;
-        if (updates.headerImageUrl) payload.header_image_url = updates.headerImageUrl;
+        if (updates.logoUrl !== undefined) payload.logo_url = updates.logoUrl;
+        if (updates.headerImageUrl !== undefined) payload.header_image_url = updates.headerImageUrl;
         if (updates.primaryColor) payload.primary_color = updates.primaryColor;
-        if (updates.organizerSubtitle) payload.organizer_subtitle = updates.organizerSubtitle;
+        if (updates.organizerSubtitle !== undefined) payload.organizer_subtitle = updates.organizerSubtitle;
         if (updates.businessType) payload.business_type = updates.businessType;
         if (updates.commissionRate !== undefined) payload.commission_rate = updates.commissionRate;
         if (updates.organizerWebsite) payload.website = updates.organizerWebsite;
