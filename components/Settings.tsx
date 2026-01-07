@@ -324,8 +324,8 @@ export const Settings = () => {
 
         setSendingTestId(template.id);
         try {
-            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-            const response = await fetch(`${backendUrl}/api/email/send-test`, {
+            // Use relative /api path which works with the proxy setup
+            const response = await fetch(`/api/email/send-test`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
