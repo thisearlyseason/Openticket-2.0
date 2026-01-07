@@ -70,14 +70,19 @@ app.use(cors(corsOptions));
 
 // ==================== RATE LIMITING ====================
 
+// Rate limiter options - disable X-Forwarded-For validation as we trust the proxy
+const rateLimitOptions = {
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: false // Disable all validations to prevent errors in proxy environments
+};
+
 // General API rate limiter - 500 requests per 15 minutes
 const generalLimiter = rateLimit({
+    ...rateLimitOptions,
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 500, // limit each IP to 500 requests per window
     message: { error: 'Too many requests, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { xForwardedForHeader: false }, // Disable validation for proxy environments
     skip: (req) => {
         // Skip rate limiting for health checks
         return req.path === '/api/ping' || req.path === '/api/health';
@@ -86,22 +91,18 @@ const generalLimiter = rateLimit({
 
 // Strict rate limiter for auth endpoints - 10 requests per minute
 const authLimiter = rateLimit({
+    ...rateLimitOptions,
     windowMs: 60 * 1000, // 1 minute
     max: 10, // 10 attempts per minute
-    message: { error: 'Too many authentication attempts. Please try again in a minute.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { xForwardedForHeader: false }
+    message: { error: 'Too many authentication attempts. Please try again in a minute.' }
 });
 
 // Strict rate limiter for password changes - 5 requests per 15 minutes
 const passwordLimiter = rateLimit({
+    ...rateLimitOptions,
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // 5 attempts per 15 minutes
-    message: { error: 'Too many password change attempts. Please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { xForwardedForHeader: false }
+    message: { error: 'Too many password change attempts. Please try again later.' }
 });
 
 // Apply general rate limiter to all API routes
