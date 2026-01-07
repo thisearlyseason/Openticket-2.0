@@ -1239,7 +1239,7 @@ export const EventView = () => {
                                                                                 <div key={`${tier.id}-${idx}`} className="p-6 bg-white dark:bg-black/40 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 shadow-sm group hover:border-primary/50 transition-all">
                                                                                     <div className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 flex justify-between">
                                                                                         <span>Participant #{idx + 1}</span>
-                                                                                        {idx === 0 && tier.id === 'general' && <span className="text-primary">Main Buyer</span>}
+                                                                                        {idx === 0 && tier.id === 'general' && <span className="text-pink-500">Main Buyer</span>}
                                                                                     </div>
                                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                                                         <Input
