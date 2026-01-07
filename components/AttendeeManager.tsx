@@ -719,15 +719,34 @@ export const AttendeeManager = () => {
                     <>
                         {/* Toolbar */}
                         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-col gap-3">
-                            <div className="relative w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
-                                <input
-                                    type="text"
-                                    placeholder="Search name, email, order ID..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 h-12 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                                />
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search name, email, order ID..."
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 h-12 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                    />
+                                </div>
+                                {/* Show/Hide Add-ons Toggle */}
+                                <button
+                                    onClick={() => {
+                                        setShowAddOns(!showAddOns);
+                                        // Re-process to include/exclude add-ons
+                                        if (event) processAttendees(allRegistrations, event);
+                                    }}
+                                    className={`px-4 h-12 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border flex items-center gap-2 whitespace-nowrap ${
+                                        showAddOns
+                                            ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-300 dark:border-purple-700'
+                                            : 'bg-white dark:bg-black text-zinc-500 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'
+                                    }`}
+                                >
+                                    <ShoppingBag size={14} />
+                                    {showAddOns ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    Add-ons
+                                </button>
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
                                 {['all', 'approvalPending', 'checkedIn', 'notCheckedIn', 'paid', 'pending', 'refunded'].map(f => (
