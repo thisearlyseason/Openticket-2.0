@@ -1688,7 +1688,7 @@ export const EventView = () => {
                         {/* Location Mini Map */}
                         <Card className="p-1 rounded-[3rem] overflow-hidden border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-black/40">
                             <div className="h-48 bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center rounded-[2.8rem] relative overflow-hidden group">
-                                <MapPin size={48} className="text-primary animate-bounce relative z-10" />
+                                <MapPin size={48} className="text-pink-500 animate-bounce relative z-10" />
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 group-hover:scale-125 transition-transform duration-1000"></div>
                             </div>
                             <div className="p-6 text-center">
