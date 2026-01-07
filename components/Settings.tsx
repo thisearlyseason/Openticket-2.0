@@ -268,8 +268,20 @@ export const Settings = () => {
 
                 const updated = [...emailTemplates, ...defaults];
                 setEmailTemplates(updated);
-                if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
-                showToast("Default templates loaded", "success");
+                if (user) {
+                    try {
+                        await StorageService.updateUser(user.id, { emailTemplates: updated });
+                        // Update local cache
+                        const cachedUser = StorageService.getCurrentUser();
+                        if (cachedUser) {
+                            localStorage.setItem('openticket_user', JSON.stringify({ ...cachedUser, emailTemplates: updated }));
+                        }
+                        showToast("Default templates loaded", "success");
+                    } catch (error) {
+                        console.error("Failed to load default templates:", error);
+                        showToast("Failed to save default templates", "error");
+                    }
+                }
             }
         });
     };
