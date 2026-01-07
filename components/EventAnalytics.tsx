@@ -5,7 +5,7 @@ import { StorageService, PLANS } from '../services/storageService';
 import { isPaidStatus, isRefundedStatus, calculatePaidRevenue, calculatePaidTickets, getAddOnSummary } from '../services/paymentUtils';
 import { Event, Registration } from '../types';
 import { Button, Card, DonutChart, SimpleChart, Badge } from './UI';
-import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar, Download, QrCode, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar, Download, QrCode, ShoppingBag, Ticket as TicketIcon } from 'lucide-react';
 
 export const EventAnalytics = () => {
     const { id } = useParams<{ id: string }>();
