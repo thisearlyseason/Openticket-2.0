@@ -292,7 +292,7 @@ export const OrganizerProfile = () => {
                                 <div className="flex flex-wrap gap-3">
                                     {isValidSocialUrl(organizer?.socials?.instagram) && (
                                         <a 
-                                            href={organizer!.socials!.instagram!} 
+                                            href={normalizeSocialUrl(organizer!.socials!.instagram!)} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -303,7 +303,7 @@ export const OrganizerProfile = () => {
                                     )}
                                     {isValidSocialUrl(organizer?.socials?.facebook) && (
                                         <a 
-                                            href={organizer!.socials!.facebook!} 
+                                            href={normalizeSocialUrl(organizer!.socials!.facebook!)} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -314,7 +314,7 @@ export const OrganizerProfile = () => {
                                     )}
                                     {isValidSocialUrl(organizer?.socials?.x) && (
                                         <a 
-                                            href={organizer!.socials!.x!} 
+                                            href={normalizeSocialUrl(organizer!.socials!.x!)} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -325,7 +325,7 @@ export const OrganizerProfile = () => {
                                     )}
                                     {isValidSocialUrl(organizer?.socials?.youtube) && (
                                         <a 
-                                            href={organizer!.socials!.youtube!} 
+                                            href={normalizeSocialUrl(organizer!.socials!.youtube!)} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -336,7 +336,7 @@ export const OrganizerProfile = () => {
                                     )}
                                     {isValidSocialUrl(organizer?.socials?.tiktok) && (
                                         <a 
-                                            href={organizer!.socials!.tiktok!} 
+                                            href={normalizeSocialUrl(organizer!.socials!.tiktok!)} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
