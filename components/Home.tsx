@@ -140,7 +140,7 @@ export const Home = () => {
                             <button
                                 key={ft}
                                 onClick={() => setFilterType(ft)}
-                                className={`px-5 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all border-2 border-white/20 ${filterType === ft ? 'bg-[#E0FF20] text-black border-transparent' : 'bg-black/20 text-white hover:bg-black/40'}`}
+                                className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all border-2 border-white/20 whitespace-nowrap ${filterType === ft ? 'bg-[#E0FF20] text-black border-transparent' : 'bg-black/20 text-white hover:bg-black/40'}`}
                             >
                                 {ft === 'paid' ? 'Ticketed' : ft}
                             </button>
@@ -150,7 +150,7 @@ export const Home = () => {
                         {currentUser && (
                             <button
                                 onClick={() => setShowFavoriteOrganizers(!showFavoriteOrganizers)}
-                                className={`px-5 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center gap-2 ${
+                                className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${
                                     showFavoriteOrganizers 
                                         ? 'bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)]' 
                                         : currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0
@@ -158,8 +158,8 @@ export const Home = () => {
                                             : 'bg-black/20 text-white/70 hover:bg-black/40 border-white/20 hover:border-white/40'
                                 }`}
                             >
-                                <Heart size={16} className={showFavoriteOrganizers || (currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0) ? 'fill-current' : ''} />
-                                Favorites {currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0 ? `(${currentUser.favoriteOrganizers.length})` : ''}
+                                <Heart size={14} className={showFavoriteOrganizers || (currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0) ? 'fill-current' : ''} />
+                                <span className="hidden xs:inline">Favorites</span> {currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0 ? `(${currentUser.favoriteOrganizers.length})` : ''}
                             </button>
                         )}
                     </div>
@@ -167,7 +167,7 @@ export const Home = () => {
             </div>
 
             {/* Category Scroll Bar */}
-            <div className="flex gap-2 overflow-x-auto pb-4 custom-scrollbar">
+            <div className="flex gap-2 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
                 {CATEGORIES.map(cat => (
                     <button
                         key={cat.value}
