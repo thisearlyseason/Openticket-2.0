@@ -628,6 +628,7 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 6. ~~"Please sign in" bug in NotificationSettings~~ ✅ VERIFIED - Bug does not exist, previous report was incorrect
 7. ~~Black screen after Stripe payment~~ ✅ RESOLVED - Race condition fixed in EventView.tsx (line 166)
 8. ~~Empty organizer fields in EventBuilder~~ ✅ RESOLVED - Pre-fill logic fixed in EventBuilder.tsx (lines 122-139)
+9. ~~Add-ons showing USD instead of global currency~~ ✅ RESOLVED - Currency now uses organizerUser.defaultCurrency throughout
 
 ---
 
