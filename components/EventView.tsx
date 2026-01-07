@@ -1296,7 +1296,7 @@ export const EventView = () => {
                                                                     <div className="w-6 h-6 border-2 border-zinc-300 dark:border-zinc-700 rounded-lg group-hover:border-primary peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
                                                                     <Check size={18} className="absolute inset-0 m-auto text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                                                                 </div>
-                                                                <span className="text-lg font-black tracking-tight leading-tight">I agree to the waiver and release of liability. <span className="text-primary">*</span></span>
+                                                                <span className="text-lg font-black tracking-tight leading-tight">I agree to the waiver and release of liability. <span className="text-pink-500">*</span></span>
                                                             </label>
                                                         </div>
                                                     )}
