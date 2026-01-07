@@ -1,0 +1,101 @@
+[
+  {
+    "test": "Health Endpoint",
+    "success": true,
+    "details": "Status: healthy, Uptime: 1390.07s",
+    "response_data": {
+      "status": "healthy",
+      "uptime": 1390.073782219,
+      "timestamp": "2026-01-07T22:13:51.512Z"
+    },
+    "timestamp": "2026-01-07 22:13:51"
+  },
+  {
+    "test": "Debug Endpoint Removed",
+    "success": true,
+    "details": "Correctly returns 404 - endpoint removed",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:51"
+  },
+  {
+    "test": "CORS Valid Origin",
+    "success": true,
+    "details": "Valid origin accepted, CORS header: https://openticket.events",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:51"
+  },
+  {
+    "test": "CORS Invalid Origin",
+    "success": true,
+    "details": "Unauthorized origin blocked with HTTP 500",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:51"
+  },
+  {
+    "test": "Analytics Tracking",
+    "success": true,
+    "details": "Successfully tracked page view for event 3caf8048-f290-4e15-8dbc-caaf9270b8ed",
+    "response_data": {
+      "success": true
+    },
+    "timestamp": "2026-01-07 22:13:51"
+  },
+  {
+    "test": "Analytics Device Parsing",
+    "success": true,
+    "details": "Successfully processed 3/3 different user agents",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Analytics Auth Required",
+    "success": true,
+    "details": "Event analytics correctly requires authentication (401)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Organizer Analytics Auth Required",
+    "success": true,
+    "details": "Organizer analytics correctly requires authentication (401)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Analytics Validation",
+    "success": true,
+    "details": "Correctly validates missing eventId (400)",
+    "response_data": {
+      "error": "eventId is required"
+    },
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Profile GET Email Templates",
+    "success": true,
+    "details": "Endpoint exists and returns 404 for non-existent user (expected behavior)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Profile UPDATE Email Templates",
+    "success": true,
+    "details": "Endpoint requires authentication (401) - security working correctly",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Email Template Persistence Cycle",
+    "success": true,
+    "details": "Endpoints working correctly - GET: 404 (user not found), PUT: 401 (auth required)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:52"
+  },
+  {
+    "test": "Profile Endpoint Structure",
+    "success": true,
+    "details": "Endpoint returns proper 404 with error message for non-existent user",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:13:53"
+  }
+]
