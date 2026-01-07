@@ -939,7 +939,7 @@ export const EventView = () => {
                                                         {newCredentials.password && (
                                                             <div className="flex justify-between mt-1">
                                                                 <span className="text-zinc-500">PASS:</span>
-                                                                <span className="text-secondary font-black">{newCredentials.password}</span>
+                                                                <span className="text-zinc-900 dark:text-white font-black">{newCredentials.password}</span>
                                                             </div>
                                                         )}
                                                     </div>
