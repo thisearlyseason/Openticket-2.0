@@ -207,37 +207,15 @@ export const Dashboard = () => {
     };
 
     const getEventStats = (eventId: string) => {
-        // AUDIT FIX: Consider paid if status is paid/completed/approved OR has stripe payment intent
+        // AUDIT FIX: Use centralized payment status check
         const eventRegs = registrations.filter(r => 
             r.eventId === eventId && 
-            (['paid', 'completed', 'approved'].includes(r.paymentStatus) || !!(r as any).stripePaymentIntentId)
+            isPaidStatus(r.paymentStatus) &&
+            !isRefundedStatus(r.paymentStatus)
         );
-        const itemsSold = eventRegs.reduce((acc, r) => {
-            if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
-                // Count only valid tickets
-                return acc + r.tickets.reduce((tAcc, t) => {
-                    if (t.status === 'refunded' || t.status === 'cancelled') return tAcc;
-                    return tAcc + (Number(t.quantity) || 0);
-                }, 0);
-            }
-            // Fallback for legacy registrations without tickets array
-            return acc + 1;
-        }, 0);
-
-        const grossRevenue = eventRegs.reduce((acc, r) => {
-            let total = Number(r.donationAmount) || 0;
-
-            // 1. Tickets
-            if (r.tickets && Array.isArray(r.tickets)) {
-                total += r.tickets.reduce((tAcc, t) => {
-                    if (t.status === 'refunded' || t.status === 'cancelled') return tAcc;
-                    return tAcc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0));
-                }, 0);
-            }
-
-            // 2. Add-ons
-            if (r.addOns && Array.isArray(r.addOns)) {
-                total += r.addOns.reduce((aAcc, a) => {
+        
+        const itemsSold = calculatePaidTickets(eventRegs);
+        const grossRevenue = calculatePaidRevenue(eventRegs);
                     if (a.status === 'refunded' || a.status === 'cancelled') return aAcc;
                     return aAcc + (Number(a.price) || 0);
                 }, 0);
