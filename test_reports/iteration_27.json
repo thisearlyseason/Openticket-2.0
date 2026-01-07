@@ -1,0 +1,54 @@
+{
+  "summary": "Profile data persistence testing completed. CRITICAL FINDING: Database schema is missing 6 columns required for profile data persistence (bio, phone, business_email, use_business_name, business_phone, show_phone_publicly). Backend API tests pass for existing fields. Extended settings (logo_url, header_image_url, primary_color) are correctly stored in subscription.settings JSONB and extracted to top-level in API responses.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "PUT /api/auth/profiles/:id",
+        "issue": "Profile fields (bio, phone, business_email, use_business_name, business_phone, show_phone_publicly) cannot be saved because these columns DO NOT EXIST in the Supabase 'profiles' table. The backend code expects these columns but they were never added to the database schema.",
+        "priority": "CRITICAL",
+        "root_cause": "Database schema mismatch - profileController.js lists these as dbColumnFields but they don't exist in Supabase",
+        "fix_required": "Add missing columns to Supabase profiles table using SQL: ALTER TABLE profiles ADD COLUMN bio TEXT; ALTER TABLE profiles ADD COLUMN phone VARCHAR(255); ALTER TABLE profiles ADD COLUMN business_email VARCHAR(255); ALTER TABLE profiles ADD COLUMN business_phone VARCHAR(255); ALTER TABLE profiles ADD COLUMN use_business_name BOOLEAN DEFAULT false; ALTER TABLE profiles ADD COLUMN show_phone_publicly BOOLEAN DEFAULT false;"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Settings page profile save",
+        "issue": "Profile fields (bio, phone, socials, etc.) appear to save but don't persist after page refresh because backend cannot store them in missing database columns",
+        "affected_selectors": ["Settings.tsx handleSave function"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_profile_persistence.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Add missing columns to Supabase 'profiles' table - bio (TEXT), phone (VARCHAR), business_email (VARCHAR), business_phone (VARCHAR), use_business_name (BOOLEAN), show_phone_publicly (BOOLEAN)",
+    "Run SQL migration in Supabase dashboard or via migration script",
+    "After adding columns, restart backend and retest profile persistence"
+  ],
+  "critical_code_review_comments": [
+    "profileController.js at line 213-219 lists dbColumnFields that don't exist in database - this is the root cause of profile data not persisting",
+    "The backend code was updated to handle these fields but the database schema was never updated to match",
+    "Extended settings (logo_url, header_image_url, etc.) are correctly stored in subscription.settings JSONB and working properly",
+    "socials field exists in database and works correctly"
+  ],
+  "updated_files": [
+    "/app/tests/test_profile_persistence.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests pass for existing functionality)",
+    "frontend": "Not fully tested - preview server waking up"
+  },
+  "test_credentials": "test_organizer_1767755527@test.com / TestPassword123! (created during testing)",
+  "seed_data_creation": "Created test organizer account for testing",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The root cause of profile data persistence issue is MISSING DATABASE COLUMNS. The backend profileController.js was updated to handle bio, phone, business_email, use_business_name, business_phone, show_phone_publicly fields but these columns don't exist in the Supabase profiles table. After main agent adds these columns via SQL migration, retest the Settings page save functionality. Extended settings stored in subscription.settings JSONB (logo_url, header_image_url, primary_color, organizer_subtitle) are working correctly.",
+  "database_schema_fix_sql": "ALTER TABLE profiles ADD COLUMN bio TEXT; ALTER TABLE profiles ADD COLUMN phone VARCHAR(255); ALTER TABLE profiles ADD COLUMN business_email VARCHAR(255); ALTER TABLE profiles ADD COLUMN business_phone VARCHAR(255); ALTER TABLE profiles ADD COLUMN use_business_name BOOLEAN DEFAULT false; ALTER TABLE profiles ADD COLUMN show_phone_publicly BOOLEAN DEFAULT false;"
+}
