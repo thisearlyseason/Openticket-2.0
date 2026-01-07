@@ -128,56 +128,54 @@ export const OrganizerProfile = () => {
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-24 relative z-10 pb-20">
                     {/* Profile Header Card */}
                     <Card className="p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8">
-                        <div className="flex flex-col md:flex-row gap-6">
-                            {/* Profile Image - Fixed overflow to show full image */}
-                            <div className="flex-shrink-0 -mt-20 md:-mt-28 mx-auto md:mx-0 relative z-20">
-                                <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
-                                    {organizer?.logoUrl ? (
-                                        <img 
-                                            src={organizer.logoUrl} 
-                                            alt={displayName} 
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600">
-                                            {displayName.charAt(0).toUpperCase()}
-                                        </div>
-                                    )}
+                        {/* Profile Image - Centered above the content */}
+                        <div className="flex justify-center -mt-24 md:-mt-28 mb-6 relative z-20">
+                            <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                                {organizer?.logoUrl ? (
+                                    <img 
+                                        src={organizer.logoUrl} 
+                                        alt={displayName} 
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600">
+                                        {displayName.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Profile Info */}
-                        <div className="flex-1 text-center md:text-left pt-4 md:pt-0">
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                <div>
-                                    <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-white mb-2">
-                                        {displayName}
-                                    </h1>
-                                    {organizer?.organizerSubtitle && organizer.organizerSubtitle.trim() !== '' && (
-                                        <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-4 italic">
-                                            "{organizer.organizerSubtitle}"
-                                        </p>
-                                    )}
-                                    
-                                    {/* Stats Row - Only show events count */}
-                                    <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-4">
-                                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                                            <Calendar size={18} />
-                                            <span className="font-bold">{events.length}</span>
-                                            <span className="text-sm">Upcoming Events</span>
-                                        </div>
+                        {/* Profile Info - Centered */}
+                        <div className="text-center">
+                            <div className="mb-4">
+                                <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-white mb-2">
+                                    {displayName}
+                                </h1>
+                                {organizer?.organizerSubtitle && organizer.organizerSubtitle.trim() !== '' && (
+                                    <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-4 italic">
+                                        "{organizer.organizerSubtitle}"
+                                    </p>
+                                )}
+                                
+                                {/* Stats Row - Only show events count */}
+                                <div className="flex flex-wrap justify-center gap-4 mb-4">
+                                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                                        <Calendar size={18} />
+                                        <span className="font-bold">{events.length}</span>
+                                        <span className="text-sm">Upcoming Events</span>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Action Buttons */}
-                                <div className="flex gap-3 justify-center md:justify-end">
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => setShowShare(!showShare)} 
-                                        className="flex items-center gap-2"
-                                    >
-                                        <Share2 size={18} /> Share
-                                    </Button>
+                            {/* Action Buttons - Centered */}
+                            <div className="flex gap-3 justify-center">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setShowShare(!showShare)} 
+                                    className="flex items-center gap-2"
+                                >
+                                    <Share2 size={18} /> Share
+                                </Button>
                                     <Button
                                         onClick={toggleFavorite}
                                         disabled={loadingFavorite}
