@@ -223,35 +223,66 @@ router.post('/send-test', async (req, res) => {
         const htmlBody = testBanner + body;
         const testSubject = `[TEST] ${subject}`;
 
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-            console.warn("[EmailRoutes] Email credentials not configured - simulating test send");
+        // Check if email credentials are configured
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD || !transporter) {
+            console.log("[EmailRoutes] Email credentials not configured - returning preview");
             return res.json({ 
                 success: true, 
                 simulated: true,
-                messageId: `test-simulated-${Date.now()}`,
-                message: 'Test email simulated (credentials not configured). In production, email would be sent to: ' + to
+                preview: true,
+                messageId: `preview-${Date.now()}`,
+                message: 'Email preview generated. To send real test emails, configure SMTP credentials in your environment.',
+                previewData: {
+                    to,
+                    subject: testSubject,
+                    bodyPreview: body.substring(0, 500) + (body.length > 500 ? '...' : '')
+                }
             });
         }
 
-        if (!transporter) {
-            return res.status(503).json({ error: 'Email service not available' });
+        // Try to send the email
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket Test" <${process.env.EMAIL_USER}>`,
+                to,
+                subject: testSubject,
+                html: htmlBody,
+                text: htmlBody.replace(/<[^>]*>/g, '')
+            });
+
+            console.log(`[EmailRoutes] Test email sent: ${info.messageId} to ${to}`);
+
+            res.json({
+                success: true,
+                messageId: info.messageId,
+                message: `Test email sent successfully to ${to}`
+            });
+        } catch (sendError) {
+            // Handle Gmail authentication errors gracefully
+            console.error("[EmailRoutes] Email send failed:", sendError.message);
+            
+            // Check for common Gmail auth errors
+            if (sendError.message && (
+                sendError.message.includes('Username and Password not accepted') ||
+                sendError.message.includes('Invalid login') ||
+                sendError.message.includes('BadCredentials')
+            )) {
+                return res.json({
+                    success: true,
+                    simulated: true,
+                    preview: true,
+                    messageId: `preview-${Date.now()}`,
+                    message: 'Gmail credentials are invalid or expired. Showing email preview instead. To fix: update EMAIL_USER and EMAIL_APP_PASSWORD in your environment, or use a different email provider.',
+                    previewData: {
+                        to,
+                        subject: testSubject,
+                        bodyPreview: body.substring(0, 500) + (body.length > 500 ? '...' : '')
+                    }
+                });
+            }
+            
+            throw sendError;
         }
-
-        const info = await transporter.sendMail({
-            from: `"OpenTicket Test" <${process.env.EMAIL_USER}>`,
-            to,
-            subject: testSubject,
-            html: htmlBody,
-            text: htmlBody.replace(/<[^>]*>/g, '')
-        });
-
-        console.log(`[EmailRoutes] Test email sent: ${info.messageId} to ${to}`);
-
-        res.json({
-            success: true,
-            messageId: info.messageId,
-            message: `Test email sent successfully to ${to}`
-        });
     } catch (error) {
         console.error("[EmailRoutes] Test send failed:", error);
         res.status(500).json({ error: error.message || 'Failed to send test email' });
