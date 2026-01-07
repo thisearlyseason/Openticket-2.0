@@ -140,6 +140,22 @@ export const EventView = () => {
                     setEvent(ev);
                     const org = await StorageService.getUserById(ev.ownerId);
                     if (org) setOrganizerUser(org);
+                    
+                    // Track page view for analytics
+                    try {
+                        const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                        await fetch(`${API_URL}/api/analytics/track`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                eventId: ev.id,
+                                referrer: document.referrer || null
+                            })
+                        });
+                    } catch (e) {
+                        // Analytics tracking is non-critical, don't break the page
+                        console.debug('[Analytics] Page view tracking failed:', e);
+                    }
                 }
                 setLoading(false);
             });
