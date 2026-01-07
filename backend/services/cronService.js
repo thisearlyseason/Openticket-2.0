@@ -511,25 +511,50 @@ export const initCronJobs = () => {
 
     console.log('[CRON] Initializing scheduled jobs...');
 
+    // Event Reminders - Every hour at minute 0
+    cron.schedule('0 * * * *', async () => {
+        console.log('[CRON] Triggered: Event Reminders (24h check)');
+        await sendEventReminders();
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Event Reminders scheduled (hourly)');
+
+    // Abandoned Cart - Every 6 hours
+    cron.schedule('0 */6 * * *', async () => {
+        console.log('[CRON] Triggered: Abandoned Cart Emails');
+        await sendAbandonedCartEmails();
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)');
+
+    // Post-Event Follow-ups - Every hour at minute 30
+    cron.schedule('30 * * * *', async () => {
+        console.log('[CRON] Triggered: Post-Event Follow-ups');
+        await sendPostEventFollowups();
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Post-Event Follow-ups scheduled (hourly)');
+
     // Weekly affiliate summary - Every Monday at 9:00 AM UTC
-    // Cron format: minute hour day-of-month month day-of-week
     cron.schedule('0 9 * * 1', async () => {
         console.log('[CRON] Triggered: Weekly Affiliate Summary');
         await sendWeeklyAffiliateSummaries();
-    }, {
-        timezone: 'UTC'
-    });
-
-    console.log('[CRON] ✅ Weekly Affiliate Summary scheduled for Mondays at 9:00 AM UTC');
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)');
 
     cronInitialized = true;
+    console.log('[CRON] All jobs initialized successfully');
 };
 
 /**
- * Manually trigger weekly summary (for testing or admin use)
+ * Manually trigger jobs (for testing or admin use)
  */
-export const triggerWeeklySummary = async () => {
-    return await sendWeeklyAffiliateSummaries();
-};
+export const triggerWeeklySummary = async () => await sendWeeklyAffiliateSummaries();
+export const triggerEventReminders = async () => await sendEventReminders();
+export const triggerAbandonedCart = async () => await sendAbandonedCartEmails();
+export const triggerPostEventFollowups = async () => await sendPostEventFollowups();
 
-export default { initCronJobs, triggerWeeklySummary };
+export default { 
+    initCronJobs, 
+    triggerWeeklySummary, 
+    triggerEventReminders, 
+    triggerAbandonedCart, 
+    triggerPostEventFollowups 
+};
