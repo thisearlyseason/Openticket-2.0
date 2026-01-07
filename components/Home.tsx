@@ -31,10 +31,27 @@ export const Home = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Load current user
-        const user = StorageService.getCurrentUser();
-        setCurrentUser(user);
-    }, []);
+        // Load current user initially and on location change (to catch updates from other pages)
+        const loadUser = () => {
+            const user = StorageService.getCurrentUser();
+            setCurrentUser(user);
+        };
+        loadUser();
+
+        // Listen for storage changes (when favorites are updated from other tabs/pages)
+        const handleStorageChange = () => {
+            loadUser();
+        };
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Also check periodically for local updates
+        const interval = setInterval(loadUser, 2000);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            clearInterval(interval);
+        };
+    }, [location.key]);
 
     useEffect(() => {
         const loadEvents = async () => {
