@@ -129,10 +129,6 @@ app.get('/api/ping', (req, res) => {
     res.send('pong');
 });
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 // Health check endpoint (safe for production)
 app.get('/api/health', (req, res) => {
     res.json({
