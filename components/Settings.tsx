@@ -24,6 +24,12 @@ export const Settings = () => {
     const [logoUrl, setLogoUrl] = useState('');
     const [headerImageUrl, setHeaderImageUrl] = useState('');
     const [socials, setSocials] = useState<Socials>({});
+    
+    // New fields for organizer profile
+    const [phone, setPhone] = useState('');
+    const [businessPhone, setBusinessPhone] = useState('');
+    const [showPhonePublicly, setShowPhonePublicly] = useState(false);
+    const [bio, setBio] = useState('');
 
     // Branding State
     const [primaryColor, setPrimaryColor] = useState('#E0FF20');
