@@ -420,6 +420,57 @@ export const Settings = () => {
                                     )}
                                 </div>
 
+                                {/* Profile Completeness Card - Only for organizers */}
+                                {profileCompleteness && (
+                                    <div className={`p-4 rounded-xl border-2 mb-6 ${
+                                        profileCompleteness.percentage === 100 
+                                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                                            : profileCompleteness.percentage >= 60 
+                                                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                                                : 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800'
+                                    }`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                                                {profileCompleteness.percentage === 100 ? (
+                                                    <CheckCircle size={18} className="text-green-500" />
+                                                ) : (
+                                                    <AlertCircle size={18} className={profileCompleteness.percentage >= 60 ? 'text-yellow-500' : 'text-pink-500'} />
+                                                )}
+                                                Profile Completeness
+                                            </span>
+                                            <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                                                {profileCompleteness.filledCount}/{profileCompleteness.total} fields
+                                            </span>
+                                        </div>
+                                        
+                                        {/* Progress Bar */}
+                                        <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden mb-3">
+                                            <div 
+                                                className={`h-full transition-all duration-500 ${
+                                                    profileCompleteness.percentage === 100 
+                                                        ? 'bg-green-500' 
+                                                        : profileCompleteness.percentage >= 60 
+                                                            ? 'bg-yellow-500'
+                                                            : 'bg-pink-500'
+                                                }`}
+                                                style={{ width: `${profileCompleteness.percentage}%` }}
+                                            />
+                                        </div>
+                                        
+                                        {profileCompleteness.percentage < 100 && (
+                                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                                                <span className="font-bold">Complete your profile to attract more attendees!</span>
+                                                {' '}Missing: {profileCompleteness.emptyFields.join(', ')}
+                                            </p>
+                                        )}
+                                        {profileCompleteness.percentage === 100 && (
+                                            <p className="text-xs text-green-600 dark:text-green-400 font-bold">
+                                                Your profile is complete! Attendees will see all your information.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col items-center md:flex-row gap-6 mb-6">
                                     <div className="w-24 h-24 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative group shrink-0 border-2 border-zinc-200 dark:border-zinc-700">
                                         {logoUrl ? (
