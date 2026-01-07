@@ -60,7 +60,9 @@ export const syncProfile = async (req, res) => {
 
         // Fields that exist as columns in the profiles table
         const dbColumnFields = [
-            'email', 'name', 'role', 'business_name', 'image_url', 'socials', 'address',
+            'email', 'name', 'role', 'business_name', 'business_email', 'use_business_name',
+            'phone', 'business_phone', 'show_phone_publicly', 'bio',
+            'image_url', 'socials', 'address',
             'onboarding_step', 'payment_methods', 'payout_settings',
             'stripe_connect_id', 'stripe_onboarding_complete', 'stripe_publishable_key', 'stripe_secret_key',
             'favorite_organizers', 'commission_rate', 'affiliate_code'
