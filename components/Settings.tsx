@@ -197,6 +197,14 @@ export const Settings = () => {
         if (user) {
             try {
                 await StorageService.updateUser(user.id, { emailTemplates: updated });
+                // Update local user cache with new templates
+                const updatedUser = { ...user, emailTemplates: updated };
+                setUser(updatedUser);
+                // Also update localStorage cache
+                const cachedUser = StorageService.getCurrentUser();
+                if (cachedUser) {
+                    localStorage.setItem('openticket_user', JSON.stringify({ ...cachedUser, emailTemplates: updated }));
+                }
                 showToast("Template saved successfully!", "success");
             } catch (error: any) {
                 console.error("Failed to save template:", error);
