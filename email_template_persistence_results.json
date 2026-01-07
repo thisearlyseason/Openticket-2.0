@@ -1,0 +1,50 @@
+[
+  {
+    "test": "Backend Service Health",
+    "success": false,
+    "details": "Backend responds but status not 'ok'",
+    "response_data": {
+      "status": "healthy",
+      "uptime": 3187.860997546,
+      "timestamp": "2026-01-07T23:43:44.302Z"
+    },
+    "timestamp": "2026-01-07 23:43:44"
+  },
+  {
+    "test": "GET Profile Templates",
+    "success": true,
+    "details": "Found 6 templates, all with required fields (id, name, type, subject, body)",
+    "response_data": {
+      "template_count": 6,
+      "valid_templates": 6
+    },
+    "timestamp": "2026-01-07 23:43:44"
+  },
+  {
+    "test": "PUT Profile Auth Required",
+    "success": true,
+    "details": "Endpoint correctly requires authentication (401)",
+    "response_data": {
+      "status_code": 401
+    },
+    "timestamp": "2026-01-07 23:43:44"
+  },
+  {
+    "test": "Email Templates Field Mapping",
+    "success": true,
+    "details": "email_templates correctly mapped from subscription.settings to top level",
+    "response_data": {
+      "mapping_verified": true
+    },
+    "timestamp": "2026-01-07 23:43:44"
+  },
+  {
+    "test": "User With No Templates",
+    "success": true,
+    "details": "Non-existent user correctly returns 404",
+    "response_data": {
+      "status_code": 404
+    },
+    "timestamp": "2026-01-07 23:43:45"
+  }
+]
