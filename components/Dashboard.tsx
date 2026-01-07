@@ -216,13 +216,6 @@ export const Dashboard = () => {
         
         const itemsSold = calculatePaidTickets(eventRegs);
         const grossRevenue = calculatePaidRevenue(eventRegs);
-                    if (a.status === 'refunded' || a.status === 'cancelled') return aAcc;
-                    return aAcc + (Number(a.price) || 0);
-                }, 0);
-            }
-
-            return acc + total;
-        }, 0);
         return { itemsSold, grossRevenue };
     };
 
@@ -242,24 +235,12 @@ export const Dashboard = () => {
         return matchesSearch && matchesTab;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    // Aggregate Stats - consider paid if status is paid/completed OR has stripe payment intent
+    // Aggregate Stats - Use centralized payment status check
     const paidRegistrations = registrations.filter(r => 
-        r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!(r as any).stripePaymentIntentId
+        isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus)
     );
-    const totalRevenue = paidRegistrations.reduce((acc, r) => {
-        let total = Number(r.donationAmount) || 0;
-        if (r.tickets && Array.isArray(r.tickets)) {
-            total += r.tickets.reduce((tAcc, t) => tAcc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
-        }
-
-        const addOns = r.addOns || (r as any).add_ons;
-        if (addOns && Array.isArray(addOns)) {
-            total += addOns.reduce((aAcc: number, a: any) => aAcc + ((Number(a.price) || 0) * (Number(a.quantity) || 0)), 0);
-        }
-        return acc + (Number(total) || 0);
-    }, 0);
-
-    const totalTicketsSold = paidRegistrations.reduce((acc, r) => acc + (r.tickets?.reduce((tAcc, t) => tAcc + (Number(t.quantity) || 0), 0) || 1), 0);
+    const totalRevenue = calculatePaidRevenue(paidRegistrations);
+    const totalTicketsSold = calculatePaidTickets(paidRegistrations);
 
     if (!currentUser) return null; // Don't render while redirecting
 
