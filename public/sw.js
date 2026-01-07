@@ -71,7 +71,57 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets - cache first
+  // HTML and navigation requests - ALWAYS network first to ensure fresh content
+  // This prevents stale HTML serving old JS bundle references
+  if (request.mode === 'navigate' || 
+      url.pathname === '/' || 
+      url.pathname.endsWith('.html') ||
+      url.search.includes('success=') ||
+      url.search.includes('stripe_return=') ||
+      url.search.includes('session_id=')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache the fresh response for offline use
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Only use cache as fallback when offline
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || new Response('Offline', { status: 503 });
+          });
+        })
+    );
+    return;
+  }
+
+  // JS and CSS files - network first for freshness, cache as fallback
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+
+  // Other static assets (images, fonts) - cache first for performance
   event.respondWith(
     caches.match(request)
       .then((cachedResponse) => {
