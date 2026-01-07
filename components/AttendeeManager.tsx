@@ -213,6 +213,12 @@ export const AttendeeManager = () => {
 
     useEffect(() => {
         let res = attendees;
+        
+        // Filter out add-ons from main list unless showAddOns is enabled
+        if (!showAddOns) {
+            res = res.filter(a => a.itemType === 'ticket');
+        }
+        
         if (searchTerm) {
             const lower = searchTerm.toLowerCase();
             res = res.filter(a => (a.name || '').toLowerCase().includes(lower) || (a.email || '').toLowerCase().includes(lower) || (a.regId || '').toLowerCase().includes(lower));
@@ -234,7 +240,7 @@ export const AttendeeManager = () => {
         }
 
         setFilteredAttendees(res);
-    }, [searchTerm, filterStatus, attendees]);
+    }, [searchTerm, filterStatus, attendees, showAddOns]);
 
     const handleSelectRow = (id: string) => {
         const newSelected = new Set(selectedIds);
