@@ -70,6 +70,10 @@ export const Settings = () => {
             setOrganizerSubtitle(currentUser.organizerSubtitle || '');
             setUseBusinessName(currentUser.useBusinessName || false);
             setSocials(currentUser.socials || {});
+            setPhone(currentUser.phone || '');
+            setBusinessPhone(currentUser.businessPhone || '');
+            setShowPhonePublicly(currentUser.showPhonePublicly || false);
+            setBio(currentUser.bio || '');
             setPrimaryColor(currentUser.primaryColor || '#E0FF20');
             setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
             setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
