@@ -333,11 +333,6 @@ export const Auth = () => {
                             {/* STEP 0: SELECT ROLE */}
                             {step === 0 && (
                                 <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
-                                    <div className="relative flex items-center justify-center mb-4">
-                                        <span className="absolute w-full h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                        <span className="relative bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-500 uppercase">Or with email</span>
-                                    </div>
-
                                     <button
                                         type="button"
                                         onClick={() => { setRole('attendee'); setStep(1); }}
@@ -386,11 +381,6 @@ export const Auth = () => {
                                         Sign Up with Google
                                     </button>
 
-                                    <div className="relative flex items-center justify-center mb-6">
-                                        <span className="absolute w-full h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                                        <span className="relative bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-500 uppercase">Or with email</span>
-                                    </div>
-
                                     <Input
                                         label="Full Name"
                                         required
@@ -404,12 +394,12 @@ export const Auth = () => {
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     />
-                                    <Input
+                                    <PasswordInput
                                         label="Password"
-                                        type="password"
-                                        required
                                         value={formData.password}
                                         onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                        required
+                                        showValidation
                                     />
                                     <div className="flex gap-2 mt-4">
                                         <Button type="button" variant="ghost" onClick={() => setStep(0)} className="flex-1">Back</Button>
