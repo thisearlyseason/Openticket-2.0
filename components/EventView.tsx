@@ -113,8 +113,23 @@ export const EventView = () => {
         if (!currentUser) return showToast("Please login to favorite organizers.", "info");
         if (!organizerUser) return;
         setLoadingFavorite(true);
-        const updated = await StorageService.toggleFavoriteOrganizer(organizerUser.id);
-        if (updated) setCurrentUser(updated);
+        try {
+            const updated = await StorageService.toggleFavoriteOrganizer(organizerUser.id);
+            if (updated) {
+                setCurrentUser(updated);
+                // Update local storage explicitly to ensure consistency
+                localStorage.setItem('openticket_current_user', JSON.stringify(updated));
+                showToast(
+                    updated.favoriteOrganizers?.includes(organizerUser.id) 
+                        ? "Added to favorites!" 
+                        : "Removed from favorites",
+                    "success"
+                );
+            }
+        } catch (error) {
+            console.error("Toggle favorite error:", error);
+            showToast("Failed to update favorites", "error");
+        }
         setLoadingFavorite(false);
     };
 
