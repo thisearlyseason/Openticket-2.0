@@ -1205,7 +1205,7 @@ export const EventView = () => {
 
                                                 <div className="mt-12 p-8 bg-zinc-100 dark:bg-zinc-800/50 rounded-[2.5rem] border-2 border-dashed border-zinc-300 dark:border-zinc-700 group hover:border-primary/50 transition-colors">
                                                     <div className="text-sm font-black text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                                        <Target size={20} className="text-primary" /> Got a promo code?
+                                                        <Target size={20} className="text-pink-500" /> Got a promo code?
                                                     </div>
                                                     <div className="flex gap-4">
                                                         <Input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="ENTER CODE" containerClassName="mb-0 flex-1" disabled={!!appliedPromo} className="bg-white dark:bg-black border-none shadow-xl h-14 text-lg font-black tracking-widest rounded-2xl" />
