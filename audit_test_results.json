@@ -1,64 +1,65 @@
 [
   {
     "test": "Health Endpoint",
-    "success": false,
-    "details": "Missing required fields (status, uptime)",
+    "success": true,
+    "details": "Status: healthy, Uptime: 16.33s",
     "response_data": {
-      "status": "ok",
-      "timestamp": "2026-01-07T16:27:59.841Z"
+      "status": "healthy",
+      "uptime": 16.327146189,
+      "timestamp": "2026-01-07T16:28:36.392Z"
     },
-    "timestamp": "2026-01-07 16:27:59"
+    "timestamp": "2026-01-07 16:28:36"
   },
   {
     "test": "Debug Endpoint Removed",
     "success": true,
     "details": "Correctly returns 404 - endpoint removed",
     "response_data": null,
-    "timestamp": "2026-01-07 16:27:59"
+    "timestamp": "2026-01-07 16:28:36"
   },
   {
     "test": "CORS Valid Origin",
     "success": true,
     "details": "Valid origin accepted, CORS header: https://openticket.events",
     "response_data": null,
-    "timestamp": "2026-01-07 16:27:59"
+    "timestamp": "2026-01-07 16:28:36"
   },
   {
     "test": "CORS Invalid Origin",
     "success": true,
     "details": "Unauthorized origin blocked with HTTP 500",
     "response_data": null,
-    "timestamp": "2026-01-07 16:27:59"
+    "timestamp": "2026-01-07 16:28:36"
   },
   {
     "test": "Analytics Tracking",
     "success": true,
-    "details": "Successfully tracked page view for event f8b3a04d-60b6-42d0-8eb9-244ffd1a4023",
+    "details": "Successfully tracked page view for event 21332b68-c615-4902-8c30-3b61d2f3eaba",
     "response_data": {
       "success": true
     },
-    "timestamp": "2026-01-07 16:28:00"
+    "timestamp": "2026-01-07 16:28:36"
   },
   {
     "test": "Analytics Device Parsing",
     "success": true,
     "details": "Successfully processed 3/3 different user agents",
     "response_data": null,
-    "timestamp": "2026-01-07 16:28:00"
+    "timestamp": "2026-01-07 16:28:37"
   },
   {
     "test": "Analytics Auth Required",
     "success": true,
     "details": "Event analytics correctly requires authentication (401)",
     "response_data": null,
-    "timestamp": "2026-01-07 16:28:00"
+    "timestamp": "2026-01-07 16:28:37"
   },
   {
     "test": "Organizer Analytics Auth Required",
     "success": true,
     "details": "Organizer analytics correctly requires authentication (401)",
     "response_data": null,
-    "timestamp": "2026-01-07 16:28:00"
+    "timestamp": "2026-01-07 16:28:37"
   },
   {
     "test": "Analytics Validation",
@@ -67,6 +68,6 @@
     "response_data": {
       "error": "eventId is required"
     },
-    "timestamp": "2026-01-07 16:28:00"
+    "timestamp": "2026-01-07 16:28:37"
   }
 ]
