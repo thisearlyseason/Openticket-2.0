@@ -315,6 +315,29 @@ export const Settings = () => {
 
     const accountType = getAccountLabel();
 
+    // Calculate profile completeness for organizers
+    const getProfileCompleteness = () => {
+        if (user?.role !== 'organizer') return null;
+        
+        const fields = [
+            { name: 'Profile Image', filled: !!logoUrl },
+            { name: 'Header Image', filled: !!headerImageUrl },
+            { name: 'Business Name', filled: !!businessName?.trim() },
+            { name: 'Organizer Subtitle', filled: !!organizerSubtitle?.trim() },
+            { name: 'Bio', filled: !!bio?.trim() },
+            { name: 'Phone Number', filled: !!phone?.trim() },
+            { name: 'Social Links', filled: !!(socials?.instagram || socials?.facebook || socials?.twitter || socials?.website) },
+        ];
+        
+        const filledCount = fields.filter(f => f.filled).length;
+        const percentage = Math.round((filledCount / fields.length) * 100);
+        const emptyFields = fields.filter(f => !f.filled).map(f => f.name);
+        
+        return { percentage, filledCount, total: fields.length, emptyFields };
+    };
+
+    const profileCompleteness = getProfileCompleteness();
+
     return (
         <div className="max-w-5xl mx-auto py-12 px-4 pb-24">
             <div className="flex justify-between items-end mb-8">
