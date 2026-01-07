@@ -146,7 +146,8 @@ app.get('/api/debug', (req, res) => {
     }
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth/change-password', passwordLimiter); // Extra strict for password changes
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 
