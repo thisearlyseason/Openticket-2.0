@@ -167,6 +167,9 @@ app.use('/api/push', pushRoutes);
 // Email delivery routes
 app.use('/api/email', emailRoutes);
 
+// Analytics tracking routes
+app.use('/api/analytics', analyticsRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
