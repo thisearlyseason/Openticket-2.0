@@ -582,35 +582,47 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
     const encodedTitle = encodeURIComponent(title);
 
     const handleNativeShare = async () => {
-        if (navigator.share) {
+        if (typeof navigator !== 'undefined' && navigator.share) {
             try {
                 await navigator.share({ title, url });
-            } catch (err) {
-                console.log('Error sharing:', err);
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    // Fallback to clipboard
+                    await copyToClipboardSafe(url);
+                }
             }
         } else {
-            navigator.clipboard.writeText(url);
-            alert("Link copied to clipboard!");
+            await copyToClipboardSafe(url);
         }
     };
 
-    const shareInstagram = () => {
-        navigator.clipboard.writeText(url);
-        // Use a toast notification instead of confirm() which may not work in all contexts
-        const instagramMessage = "Instagram doesn't support direct web sharing. Link copied to clipboard! Opening Instagram for you to paste.";
-        
-        // Try to show a toast if available, otherwise just open Instagram
+    const copyToClipboardSafe = async (text: string) => {
         try {
-            // Open Instagram directly after copying
-            window.open('https://www.instagram.com/', '_blank');
-            // Alert as fallback notification
-            alert(instagramMessage);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                alert("Link copied to clipboard!");
+            }
+        } catch (e) {
+            console.log('[Share] Clipboard copy failed:', e);
+        }
+    };
+
+    const shareInstagram = async () => {
+        // Instagram doesn't support direct sharing - copy link and guide user
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(url);
+            }
+            // Open Instagram in new tab
+            window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+            alert("Link copied! Instagram doesn't support direct sharing. Paste the link in your Story or Bio.");
         } catch (e) {
             console.log('[Share] Instagram share:', e);
+            alert("Please copy the event link manually and paste it on Instagram.");
         }
     };
 
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
     return (
         <div className="space-y-4">
