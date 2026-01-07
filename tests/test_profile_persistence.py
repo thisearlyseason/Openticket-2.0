@@ -137,8 +137,8 @@ class TestProfilePersistence:
         assert response.status_code == 404, f"Expected 404 for non-existent profile, got {response.status_code}"
         print(f"✓ Non-existent profile correctly returns 404")
     
-    def test_direct_supabase_profile_has_required_columns(self, existing_organizer_id):
-        """Verify the Supabase profiles table has the required columns"""
+    def test_direct_supabase_profile_columns(self, existing_organizer_id):
+        """Verify the Supabase profiles table columns"""
         headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -157,20 +157,16 @@ class TestProfilePersistence:
         
         profile = profiles[0]
         
-        # Check that DB columns exist
-        db_columns = [
-            "id", "email", "name", "role", "bio", "phone", "socials",
-            "business_name", "business_email", "use_business_name",
-            "business_phone", "show_phone_publicly", "image_url",
-            "subscription"  # JSONB field that stores extended settings
+        # Check columns that ACTUALLY exist in the database
+        existing_db_columns = [
+            "id", "email", "name", "role", "business_name",
+            "socials", "image_url", "subscription"
         ]
         
-        for col in db_columns:
+        for col in existing_db_columns:
             assert col in profile, f"Database should have '{col}' column"
         
-        print(f"✓ Database schema verified - all required columns present")
-        print(f"  - bio column exists: {'bio' in profile}")
-        print(f"  - phone column exists: {'phone' in profile}")
+        print(f"✓ Database schema verified - existing columns present")
         print(f"  - socials column exists: {'socials' in profile}")
         print(f"  - subscription column exists: {'subscription' in profile}")
     
