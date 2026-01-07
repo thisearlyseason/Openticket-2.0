@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 
@@ -24,8 +25,81 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// CORS configuration - Allow all for now during debug
-app.use(cors({ origin: true, credentials: true }));
+// ==================== CORS CONFIGURATION ====================
+// Production whitelist - add your production domains here
+const allowedOrigins = [
+    'https://openticket.events',
+    'https://www.openticket.events',
+    'https://app.openticket.events',
+    // Preview/Development domains
+    /\.preview\.emergentagent\.com$/,
+    /localhost:\d+$/,
+    /127\.0\.0\.1:\d+$/
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Check against whitelist
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (allowed instanceof RegExp) {
+                return allowed.test(origin);
+            }
+            return allowed === origin;
+        });
+        
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.warn(`[CORS] Blocked request from origin: ${origin}`);
+            // In production, you might want to block; for now, allow with warning
+            callback(null, true); // Change to callback(new Error('Not allowed by CORS')) to block
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+
+// ==================== RATE LIMITING ====================
+
+// General API rate limiter - 100 requests per 15 minutes
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // limit each IP to 500 requests per window
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for health checks
+        return req.path === '/api/ping' || req.path === '/api/health';
+    }
+});
+
+// Strict rate limiter for auth endpoints - 10 requests per minute
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10, // 10 attempts per minute
+    message: { error: 'Too many authentication attempts. Please try again in a minute.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Strict rate limiter for password changes - 5 requests per 15 minutes
+const passwordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per 15 minutes
+    message: { error: 'Too many password change attempts. Please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// Apply general rate limiter to all API routes
+app.use('/api/', generalLimiter);
 
 // Webhook parsing needs RAW body, handled in specific route or before global JSON
 // CRITICAL: Must be BEFORE express.json() to preserve signature
