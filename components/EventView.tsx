@@ -909,7 +909,7 @@ export const EventView = () => {
                                                     {/* Total Calculation based on saved registration data, NOT current state */}
                                                     <div className="mt-6 flex justify-between items-center pt-6 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
                                                         <div className="text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Amount</div>
-                                                        <div className="text-3xl font-black text-secondary">
+                                                        <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
                                                             {/* Recalculate total from the registration object to be safe */}
                                                             <EventPriceDisplay amount={
                                                                 (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
