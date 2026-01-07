@@ -1224,7 +1224,7 @@ export const EventView = () => {
 
                                                 {(getTotalTickets() >= 1 && event.collectGuestInfo !== false) && (
                                                     <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in">
-                                                        <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Users size={32} className="text-primary" /> Guest List</h3>
+                                                        <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Users size={32} className="text-pink-500" /> Guest List</h3>
                                                         <div className="space-y-6">
                                                             {(event.ticketTiers?.length ? event.ticketTiers : [{ id: 'general', name: event.ticketName || 'General Admission' }]).map(tier => {
                                                                 const qty = ticketSelection[tier.id] || (tier.id === 'general' ? ticketSelection['general'] : 0) || 0;
