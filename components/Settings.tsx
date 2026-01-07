@@ -316,6 +316,50 @@ export const Settings = () => {
         });
     };
 
+    const handleSendTestEmail = async (template: EmailTemplate) => {
+        if (!user?.email) {
+            showToast("No email address found. Please update your profile.", "error");
+            return;
+        }
+
+        setSendingTestId(template.id);
+        try {
+            const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+            const response = await fetch(`${backendUrl}/api/email/send-test`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to: user.email,
+                    template: {
+                        subject: template.subject,
+                        body: template.body,
+                        name: template.name,
+                        type: template.type
+                    }
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to send test email');
+            }
+
+            if (data.simulated) {
+                showToast(`Test email simulated! (Email service not configured)`, "info");
+            } else {
+                showToast(`Test email sent to ${user.email}!`, "success");
+            }
+        } catch (error: any) {
+            console.error("Failed to send test email:", error);
+            showToast(error.message || "Failed to send test email", "error");
+        } finally {
+            setSendingTestId(null);
+        }
+    };
+
     const handleSave = async () => {
         if (!user) return;
         setIsSaving(true);
