@@ -143,7 +143,18 @@ export const Settings = () => {
 
         setEmailTemplates(updated);
         setEditingTemplate(null);
-        if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
+        
+        if (user) {
+            try {
+                await StorageService.updateUser(user.id, { emailTemplates: updated });
+                showToast("Template saved successfully!", "success");
+            } catch (error: any) {
+                console.error("Failed to save template:", error);
+                showToast("Failed to save template. Please try again.", "error");
+                // Revert on failure
+                setEmailTemplates(emailTemplates);
+            }
+        }
     };
 
     const handleLoadDefaults = async () => {
