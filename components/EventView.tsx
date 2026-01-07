@@ -804,7 +804,7 @@ export const EventView = () => {
                                     <div className="flex flex-wrap gap-6 items-center text-white/90 font-bold bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10 w-fit animate-in fade-in zoom-in-95 duration-1000">
                                         <div className="flex items-center gap-3"><Calendar size={28} className="text-primary" /> {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
                                         <div className="w-px h-8 bg-white/20 hidden md:block"></div>
-                                        <div className="flex items-center gap-3"><Clock size={28} className="text-secondary" /> {formatTime(event.time, event.timeFormat)}</div>
+                                        <div className="flex items-center gap-3"><Clock size={28} className="text-primary" /> {formatTime(event.time, event.timeFormat)}</div>
                                         <div className="w-px h-8 bg-white/20 hidden md:block"></div>
                                         <div className="flex items-center gap-3"><MapPin size={28} className="text-blue-400" /> {event.location}</div>
                                     </div>
