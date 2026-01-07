@@ -102,6 +102,12 @@ export interface User {
   logoUrl?: string;
   headerImageUrl?: string;
   primaryColor?: string;
+  
+  // Contact Info
+  phone?: string; // Personal phone
+  businessPhone?: string; // Business phone
+  showPhonePublicly?: boolean; // Whether to show phone on public profile
+  bio?: string; // Full bio/description
 
   // Financials
   balanceDue: number;
