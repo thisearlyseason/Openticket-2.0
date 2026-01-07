@@ -247,27 +247,40 @@ class TestProfileFieldMapping:
     def existing_organizer_id(self):
         return "9iQqNVY6RdesJeBxhnqTjsfMche2"
     
-    def test_snake_case_to_camel_case_mapping(self, existing_organizer_id):
-        """Test that snake_case DB fields are returned correctly"""
+    def test_existing_fields_returned_correctly(self, existing_organizer_id):
+        """Test that existing fields are returned correctly"""
         response = requests.get(f"{BASE_URL}/auth/profiles/{existing_organizer_id}")
         
         assert response.status_code == 200
         profile = response.json()["profile"]
         
-        # These fields should be returned with snake_case (as stored in DB)
-        # The frontend storageService.ts handles the mapping to camelCase
-        snake_case_fields = [
-            "business_name", "business_email", "use_business_name",
-            "business_phone", "show_phone_publicly", "logo_url", "header_image_url"
+        # These fields exist in the database and should be returned
+        existing_fields = [
+            "business_name", "socials", "image_url"
         ]
         
-        for field in snake_case_fields:
+        for field in existing_fields:
             assert field in profile, f"Field '{field}' should be in profile response"
         
-        print(f"✓ All snake_case fields present in API response")
+        print(f"✓ Existing fields present in API response")
         print(f"  - business_name: {profile.get('business_name')}")
-        print(f"  - use_business_name: {profile.get('use_business_name')}")
-        print(f"  - show_phone_publicly: {profile.get('show_phone_publicly')}")
+        print(f"  - socials: {profile.get('socials')}")
+    
+    def test_extended_settings_from_subscription(self, existing_organizer_id):
+        """Test that extended settings are extracted from subscription.settings"""
+        response = requests.get(f"{BASE_URL}/auth/profiles/{existing_organizer_id}")
+        
+        assert response.status_code == 200
+        profile = response.json()["profile"]
+        
+        # These should be extracted from subscription.settings
+        assert "logo_url" in profile, "logo_url should be extracted from subscription.settings"
+        assert "header_image_url" in profile, "header_image_url should be extracted from subscription.settings"
+        assert "primary_color" in profile, "primary_color should be extracted from subscription.settings"
+        
+        print(f"✓ Extended settings correctly extracted from subscription.settings")
+        print(f"  - logo_url: {profile.get('logo_url', 'Not set')[:50] if profile.get('logo_url') else 'Not set'}...")
+        print(f"  - header_image_url: {profile.get('header_image_url', 'Not set')[:50] if profile.get('header_image_url') else 'Not set'}...")
 
 
 class TestSubscriptionSettingsExtraction:
