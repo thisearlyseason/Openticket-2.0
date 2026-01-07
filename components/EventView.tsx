@@ -1035,9 +1035,9 @@ export const EventView = () => {
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
                                                     <div className="text-center sm:text-left">
                                                         <span className="text-blue-600 dark:text-blue-400 font-bold text-sm block">
-                                                            💳 Prices in {organizerUser?.defaultCurrency || 'USD'}
+                                                            💳 Prices in {eventCurrency}
                                                         </span>
-                                                        {displayCurrency && displayCurrency !== (organizerUser?.defaultCurrency || 'USD') && (
+                                                        {displayCurrency && displayCurrency !== eventCurrency && (
                                                             <span className="text-blue-500 dark:text-blue-300 text-xs">
                                                                 Viewing in {displayCurrency} (approximate)
                                                             </span>
