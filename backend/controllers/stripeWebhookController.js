@@ -261,7 +261,122 @@ async function handleCheckoutCompleted(stripe, session) {
         console.error("[AuditLog] Failed to log ticket purchase:", auditError.message);
     }
 
-    // 9. Send confirmation email
+    // 9. AUTO-CREATE ATTENDEE ACCOUNT (Critical Feature)
+    try {
+        console.log(`[Webhook] Checking if attendee account exists: ${reg.attendee_email}`);
+        
+        // Check if user already exists
+        const { data: existingUser } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .eq('email', reg.attendee_email.toLowerCase())
+            .single();
+
+        if (!existingUser) {
+            // Generate a random password
+            const generatePassword = () => {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+                let password = '';
+                // Ensure at least one of each required type
+                password += 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]; // uppercase
+                password += '23456789'[Math.floor(Math.random() * 8)]; // number
+                password += '!@#$%'[Math.floor(Math.random() * 5)]; // special
+                // Fill the rest
+                for (let i = 0; i < 5; i++) {
+                    password += chars[Math.floor(Math.random() * chars.length)];
+                }
+                // Shuffle the password
+                return password.split('').sort(() => Math.random() - 0.5).join('');
+            };
+
+            const tempPassword = generatePassword();
+            
+            // Create Firebase auth user
+            const { createUserWithEmailAndPassword, getAuth } = await import('firebase-admin/auth');
+            const admin = (await import('firebase-admin')).default;
+            
+            // Initialize Firebase Admin if not already done
+            if (!admin.apps.length) {
+                admin.initializeApp({
+                    credential: admin.credential.applicationDefault()
+                });
+            }
+            
+            let firebaseUid = null;
+            try {
+                // Try to create Firebase user
+                const userRecord = await admin.auth().createUser({
+                    email: reg.attendee_email.toLowerCase(),
+                    password: tempPassword,
+                    displayName: reg.attendee_name
+                });
+                firebaseUid = userRecord.uid;
+                console.log(`[Webhook] Created Firebase user: ${firebaseUid}`);
+            } catch (firebaseError) {
+                // If Firebase user already exists, get their UID
+                if (firebaseError.code === 'auth/email-already-exists') {
+                    try {
+                        const existingFirebaseUser = await admin.auth().getUserByEmail(reg.attendee_email.toLowerCase());
+                        firebaseUid = existingFirebaseUser.uid;
+                        console.log(`[Webhook] Firebase user already exists: ${firebaseUid}`);
+                    } catch (e) {
+                        console.error('[Webhook] Could not get existing Firebase user:', e.message);
+                    }
+                } else {
+                    console.error('[Webhook] Firebase user creation failed:', firebaseError.message);
+                }
+            }
+
+            // Create profile in Supabase
+            const newUserId = firebaseUid || `attendee-${crypto.randomUUID()}`;
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: newUserId,
+                    email: reg.attendee_email.toLowerCase(),
+                    name: reg.attendee_name,
+                    role: 'attendee',
+                    balance_due: 0,
+                    available_payout: 0,
+                    created_at: new Date().toISOString()
+                });
+
+            if (profileError) {
+                console.error('[Webhook] Profile creation failed:', profileError.message);
+            } else {
+                console.log(`[Webhook] Created attendee profile: ${newUserId}`);
+                
+                // Send credentials email
+                try {
+                    const eventDate = reg.event?.date ? new Date(reg.event.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }) : null;
+                    
+                    await EmailService.sendAttendeeCredentials(
+                        reg.attendee_email,
+                        reg.attendee_name,
+                        tempPassword,
+                        reg.event?.title,
+                        eventDate,
+                        reg.event?.location
+                    );
+                    console.log(`[Webhook] Sent credentials email to: ${reg.attendee_email}`);
+                } catch (credEmailError) {
+                    console.error('[Email] Failed to send credentials:', credEmailError.message);
+                }
+            }
+        } else {
+            console.log(`[Webhook] Attendee account already exists: ${existingUser.id}`);
+        }
+    } catch (accountError) {
+        console.error('[Webhook] Auto-account creation failed:', accountError.message);
+        // Non-blocking - continue with the rest of the webhook
+    }
+
+    // 10. Send confirmation email
     try {
         console.log(`[Webhook] Sending confirmation email to: ${reg.attendee_email}`);
         await EmailService.sendConfirmation(reg.attendee_email, finalizedTickets, reg.event);
@@ -269,7 +384,7 @@ async function handleCheckoutCompleted(stripe, session) {
         console.error("[Email] Failed to send confirmation:", emailError.message);
     }
 
-    // 10. Send affiliate conversion notification if applicable
+    // 11. Send affiliate conversion notification if applicable
     if (affiliateCode && affiliateCommission > 0) {
         try {
             // Get affiliate's email
