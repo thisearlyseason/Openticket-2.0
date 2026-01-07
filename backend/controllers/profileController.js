@@ -213,22 +213,26 @@ export const updateProfile = async (req, res) => {
         const { uid } = req.user;
         const updates = req.body;
 
-        // Fields that exist as columns in the profiles table
+        // Fields that exist as columns in the profiles table (verified in DB schema)
         const dbColumnFields = [
-            'name', 'business_name', 'business_email', 'use_business_name',
-            'phone', 'business_phone', 'show_phone_publicly', 'bio',
+            'name', 'business_name',
             'image_url', 'socials', 'address',
             'stripe_connect_id', 'stripe_onboarding_complete', 'stripe_publishable_key', 'stripe_secret_key',
             'favorite_organizers', 'commission_rate', 'affiliate_code',
             'role' // Allow role changes (for affiliate signup)
         ];
 
-        // Extended settings stored in the 'subscription' JSONB field
+        // Extended settings stored in the 'subscription.settings' JSONB field
+        // NOTE: bio, phone, business_email, etc. are stored here because these columns
+        // don't exist in the profiles table - they are organizer profile extensions
         const extendedSettingsFields = [
             'default_currency', 'default_tax_rate', 'default_custom_fees', 'default_waiver',
             'default_refund_policy', 'default_refund_policy_enabled', 'default_confirmation_template',
             'logo_url', 'header_image_url', 'primary_color', 'organizer_subtitle', 'business_type',
-            'notifications', 'email_templates', 'gemini_api_key', 'gmail_config'
+            'notifications', 'email_templates', 'gemini_api_key', 'gmail_config',
+            // Organizer profile fields (stored in subscription.settings JSONB)
+            'bio', 'phone', 'business_email', 'business_phone', 
+            'use_business_name', 'show_phone_publicly'
         ];
 
         const safeUpdates = {};
