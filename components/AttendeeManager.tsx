@@ -624,8 +624,13 @@ export const AttendeeManager = () => {
 
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
 
-    const totalRevenue = attendees.filter(a => a.status === 'paid').length * (event?.price || 0);
-    const checkInCount = attendees.filter(a => a.checkedIn && a.status !== 'refunded' && a.status !== 'cancelled').length;
+    // Calculate accurate financial totals using paid registrations only
+    const paidRegs = allRegistrations.filter(r => isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus));
+    const totalRevenue = calculatePaidRevenue(paidRegs);
+    const totalTickets = calculatePaidTickets(paidRegs);
+    const addOnSummary = getAddOnSummary(paidRegs);
+    const totalAddOnRevenue = addOnSummary.reduce((sum, a) => sum + a.totalRevenue, 0);
+    const checkInCount = attendees.filter(a => a.checkedIn && a.status !== 'refunded' && a.status !== 'cancelled' && a.itemType === 'ticket').length;
 
     return (
         <div className="max-w-7xl mx-auto py-6 px-4 pb-24 md:py-8">
