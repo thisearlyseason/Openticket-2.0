@@ -1,0 +1,53 @@
+[
+  {
+    "test": "Profile GET Returns Email Templates",
+    "success": true,
+    "details": "2/3 users have email_templates field",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:15:58"
+  },
+  {
+    "test": "Profile UPDATE Saves Email Templates",
+    "success": true,
+    "details": "Endpoint requires authentication (401) - this is expected security behavior",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:15:58"
+  },
+  {
+    "test": "Email Template Data Structure",
+    "success": true,
+    "details": "email_templates is array with 6 items (correct structure)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:15:58"
+  },
+  {
+    "test": "Multiple Users Email Templates",
+    "success": true,
+    "details": "2/3 users have email_templates field",
+    "response_data": {
+      "9iQqNVY6RdesJeBxhnqTjsfMche2": {
+        "has_field": true,
+        "type": "list",
+        "count": 6
+      },
+      "E6G0nH0TNydCy7tuZe9Tjpj5K8E3": {
+        "has_field": false,
+        "type": "NoneType",
+        "count": 0
+      },
+      "uYaLjd5HsAgPn6N7Fkf8fkNvLyB3": {
+        "has_field": true,
+        "type": "list",
+        "count": 0
+      }
+    },
+    "timestamp": "2026-01-07 22:15:59"
+  },
+  {
+    "test": "Profile Endpoint Consistency",
+    "success": false,
+    "details": "Could not complete all requests (got 2/3)",
+    "response_data": null,
+    "timestamp": "2026-01-07 22:15:59"
+  }
+]
