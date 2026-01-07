@@ -38,35 +38,33 @@ export const AddOnManager = () => {
 
     const loadData = async () => {
         if (!id) return;
+        
+        // Fetch event and registrations for this specific event
         const [evt, regs] = await Promise.all([
             StorageService.getEventFull(id),
-            StorageService.getRegistrations() // This might need eventId filter if API supports it, currently fetches all and client filters
+            StorageService.getRegistrations(id) // Pass event ID to filter on server
         ]);
 
         if (evt) setEvent(evt);
 
-        // Show all addons unless refunded? Or show refunded too?
-        // User wants to refund them here. So we should show active ones.
-        // If already refunded, maybe show status?
-        // Logic below: filters out `paymentStatus === 'refunded'`. This is REG registration status.
-        // But what about ADDON status?
-        const eventRegs = regs.filter(r => r.eventId === id && r.paymentStatus !== 'refunded');
+        // Build add-on items from registrations
         const items: AddOnItem[] = [];
 
+        // Filter to paid registrations only (not refunded at reg level)
+        const eventRegs = regs.filter(r => 
+            r.paymentStatus === 'paid' || 
+            r.paymentStatus === 'succeeded' || 
+            r.paymentStatus === 'completed'
+        );
+        
+        console.log('[AddOnManager] Found registrations:', eventRegs.length);
+
         eventRegs.forEach(reg => {
-            if (reg.addOns && reg.addOns.length > 0) {
+            console.log('[AddOnManager] Reg addOns:', reg.addOns);
+            
+            if (reg.addOns && Array.isArray(reg.addOns) && reg.addOns.length > 0) {
                 reg.addOns.forEach((addon, idx) => {
-                    // Filter out already refunded addons? Or show them?
-                    // If filtering, user can't see verification.
-                    // AttendeeManager hides refunded by default but has filter.
-                    // Here, we'll exclude refunded addons from this default view to keep it clean, 
-                    // BUT maybe we need a toggle?
-                    // For now, let's include all so user can see them, filtering visually?
-                    // Actually, if I delete/refund, it should change status.
-                    // Let's exclude refunded addons if the user desires "Management of active items".
-                    // But if I want to delete valid items...
-                    // Let's Include ALL for now, maybe filtered visually.
-                    // Wait, `PurchasedAddOn` has status.
+                    // Skip refunded or cancelled add-ons
                     if (addon.status === 'refunded' || addon.status === 'cancelled') return;
 
                     items.push({
@@ -82,6 +80,7 @@ export const AddOnManager = () => {
             }
         });
 
+        console.log('[AddOnManager] Total add-on items:', items.length);
         setAddOnItems(items.sort((a, b) => b.timestamp - a.timestamp));
         setIsLoading(false);
     };
