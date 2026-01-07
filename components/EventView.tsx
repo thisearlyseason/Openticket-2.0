@@ -1684,13 +1684,13 @@ export const EventView = () => {
                 }
             </div >
 
-            {/* Simulated Payment Overlay */}
+            {/* Post-Stripe Payment Verification Overlay - Shows ONLY after returning from Stripe */}
             {
                 isProcessingPayment && (
                     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-                        <div className="max-w-md w-full bg-zinc-900 border border-white/10 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(224,255,32,0.15)] relative overflow-hidden">
+                        <div className="max-w-md w-full bg-zinc-900 border border-white/10 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(34,197,94,0.15)] relative overflow-hidden">
                             {/* Animated gradient ring */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent"></div>
 
                             <div className="relative">
                                 <div className="w-24 h-24 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(34,197,94,0.2)]"></div>
@@ -1699,16 +1699,16 @@ export const EventView = () => {
                                 </div>
 
                                 <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
-                                    Payment Successful!
+                                    Verifying Payment...
                                 </h2>
                                 <p className="text-zinc-400 font-bold mb-8">
-                                    Preparing your tickets and confirmation...
+                                    Almost there! Confirming your purchase with Stripe...
                                 </p>
 
                                 <div className="flex items-center justify-center gap-6 px-4 py-3 bg-green-500/10 rounded-2xl border border-green-500/20">
-                                    <span className="text-xs font-black uppercase tracking-widest text-green-500">Payment Confirmed</span>
-                                    <div className="h-1 w-1 bg-green-500 rounded-full"></div>
-                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Generating Tickets...</span>
+                                    <span className="text-xs font-black uppercase tracking-widest text-green-500">Processing</span>
+                                    <div className="h-1 w-1 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Please Wait...</span>
                                 </div>
                             </div>
                         </div>
