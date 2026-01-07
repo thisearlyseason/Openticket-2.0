@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Audit Fixes
-Tests CORS security, analytics tracking, health endpoint, and analytics retrieval
+Backend API Testing for OpenTicket Platform - Email Template Persistence
+Tests email template save/load functionality and profile endpoints
 """
 
 import requests
