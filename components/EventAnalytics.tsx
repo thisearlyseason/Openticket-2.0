@@ -295,13 +295,20 @@ export const EventAnalytics = () => {
                     )}
                 </div>
 
-                {/* Views Count (Mock) */}
+                {/* Views Count (Real Data) */}
                 <div className="md:col-span-1 p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
                     <Users size={32} className="text-zinc-300 mb-2" />
                     <div className="text-xs font-bold uppercase text-zinc-500 mb-1">Page Views</div>
                     <div className="text-3xl font-black text-zinc-900 dark:text-white">
-                        {isPro ? (1240 + totalSales * 5) : <span className="blur-sm select-none">1240</span>}
+                        {isPro ? pageViews.total : <span className="blur-sm select-none">{pageViews.total || 0}</span>}
                     </div>
+                    {isPro && Object.keys(pageViews.byDevice).length > 0 && (
+                        <div className="text-[10px] text-zinc-400 mt-2">
+                            {Object.entries(pageViews.byDevice).map(([device, count]) => (
+                                <span key={device} className="mr-2">{device}: {count}</span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
             </div>
