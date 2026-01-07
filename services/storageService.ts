@@ -566,7 +566,22 @@ export const StorageService = {
                     stripeSecretKey: profile.stripe_secret_key,
                     defaultCurrency: profile.default_currency,
                     favoriteOrganizers: profile.favorite_organizers,
-                    savedTicketTemplates: profile.saved_ticket_templates
+                    savedTicketTemplates: profile.saved_ticket_templates,
+                    // Email-related fields
+                    emailTemplates: profile.email_templates || [],
+                    defaultConfirmationTemplate: profile.default_confirmation_template,
+                    gmailConfig: profile.gmail_config,
+                    emailProvider: profile.email_provider,
+                    // Other settings
+                    notifications: profile.notifications,
+                    geminiApiKey: profile.gemini_api_key,
+                    defaultTaxRate: profile.default_tax_rate,
+                    defaultCustomFees: profile.default_custom_fees,
+                    defaultWaiver: profile.default_waiver,
+                    defaultRefundPolicy: profile.default_refund_policy,
+                    defaultRefundPolicyEnabled: profile.default_refund_policy_enabled,
+                    businessType: profile.business_type,
+                    commissionRate: profile.commission_rate
                 } as User;
             }
             return null;
