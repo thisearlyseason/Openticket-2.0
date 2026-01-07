@@ -25,6 +25,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Trust proxy - required for rate limiting behind reverse proxy (Kubernetes/nginx)
+app.set('trust proxy', 1);
+
 // ==================== CORS CONFIGURATION ====================
 // Production whitelist - add your production domains here
 const allowedOrigins = [
