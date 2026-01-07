@@ -1166,14 +1166,29 @@ export const Settings = () => {
                                             )}
                                             {emailTemplates.map(t => (
                                                 <div key={t.id} className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
-                                                    <div>
-                                                        <div className="font-bold flex items-center gap-2">
-                                                            {t.name}
+                                                    <div className="flex-1 min-w-0 mr-4">
+                                                        <div className="font-bold flex items-center gap-2 flex-wrap">
+                                                            <span className="truncate">{t.name}</span>
                                                             <Badge color={t.type === 'confirmation' ? 'green' : t.type === 'broadcast' ? 'blue' : 'gray'}>{t.type}</Badge>
                                                         </div>
-                                                        <div className="text-xs text-zinc-500 mt-1">{t.subject}</div>
+                                                        <div className="text-xs text-zinc-500 mt-1 truncate">{t.subject}</div>
                                                     </div>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-2 shrink-0">
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline" 
+                                                            onClick={() => handleSendTestEmail(t)}
+                                                            disabled={sendingTestId === t.id}
+                                                            className="flex items-center gap-1.5"
+                                                            title="Send test email to yourself"
+                                                        >
+                                                            {sendingTestId === t.id ? (
+                                                                <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                            ) : (
+                                                                <Send size={14} />
+                                                            )}
+                                                            <span className="hidden sm:inline">Test</span>
+                                                        </Button>
                                                         <Button size="sm" variant="outline" onClick={() => setEditingTemplate(t)}>Edit</Button>
                                                         <Button size="sm" variant="danger" onClick={() => handleDeleteTemplate(t.id)} className="w-8 h-8 p-0 flex items-center justify-center"><Trash2 size={14} /></Button>
                                                     </div>
