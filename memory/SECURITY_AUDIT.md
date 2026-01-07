@@ -183,10 +183,10 @@ stripe.webhooks.constructEvent(buf, sig, webhookSecret);
 
 | Severity | Issue | Status | Recommendation |
 |----------|-------|--------|----------------|
-| 🔴 HIGH | CORS unrestricted | TODO | Whitelist production domains |
-| 🟡 MEDIUM | No rate limiting | TODO | Add express-rate-limit |
-| 🟡 MEDIUM | Profile endpoint enumeration | TODO | Add rate limiting |
-| ⚠️ LOW | Auth brute force possible | TODO | Rate limit auth endpoints |
+| ✅ DONE | CORS unrestricted | FIXED | Whitelist configured |
+| ✅ DONE | No rate limiting | FIXED | express-rate-limit added |
+| ⚠️ LOW | Profile endpoint enumeration | MITIGATED | Rate limited to 10/min |
+| ⚠️ LOW | Auth brute force possible | MITIGATED | Rate limited to 10/min |
 | ⚠️ LOW | localStorage not encrypted | ACCEPTABLE | Consider encryption |
 
 ---
