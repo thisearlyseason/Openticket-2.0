@@ -200,6 +200,21 @@ export const Auth = () => {
                 setError("Please fill all fields");
                 return;
             }
+            
+            // Password validation
+            const password = formData.password;
+            const validations = {
+                minLength: password.length >= 7,
+                hasUppercase: /[A-Z]/.test(password),
+                hasNumber: /[0-9]/.test(password),
+                hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+            
+            if (!validations.minLength || !validations.hasUppercase || !validations.hasNumber || !validations.hasSpecial) {
+                setError("Password must be at least 7 characters with 1 uppercase, 1 number, and 1 special character");
+                return;
+            }
+            
             if (role === 'organizer') {
                 setStep(2); // Go to Business Onboarding
             } else {
