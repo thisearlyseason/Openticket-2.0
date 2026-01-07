@@ -82,12 +82,18 @@ export const removeSubscription = async (userId) => {
             .delete()
             .eq('user_id', userId);
 
-        if (error && error.code !== '42P01') throw error;
+        if (error && error.code !== '42P01' && error.code !== 'PGRST205') throw error;
+        
+        // Also remove from in-memory storage
+        inMemorySubscriptions.delete(userId);
+        
         console.log('[PushService] Subscription removed for user:', userId);
         return true;
     } catch (err) {
         console.error('[PushService] Error removing subscription:', err);
-        return false;
+        // Still remove from in-memory
+        inMemorySubscriptions.delete(userId);
+        return true;
     }
 };
 
