@@ -736,6 +736,9 @@ export const EventView = () => {
     const getTotalTickets = () => Object.values(ticketSelection).reduce((a, b) => a + (b || 0), 0);
     const getTotalAddOns = () => Object.values(addOnSelection).reduce((a, b) => a + (b.qty || 0), 0);
 
+    // Global currency for this event - use organizer's default currency as source of truth
+    const eventCurrency = organizerUser?.defaultCurrency || event.currency || 'USD';
+
     const shareUrl = `${window.location.origin}/#/event/${event.id}`;
     const metaTitle = event.seo?.metaTitle || event.title;
     const metaDesc = event.seo?.metaDescription || event.subtitle || event.description?.substring(0, 160) || "Check out this event!";
