@@ -35,8 +35,269 @@ class OpenTicketAPITester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
+    def test_send_test_email_full_template(self):
+        """Test 1: Send Test Email - Full template with all variables"""
+        try:
+            payload = {
+                "to": "organizer@example.com",
+                "template": {
+                    "name": "Order Confirmation",
+                    "type": "confirmation",
+                    "subject": "Your ticket for {{event_title}}",
+                    "body": "<p>Hi {{attendee_name}},</p><p>Thanks for your purchase for {{event_title}} on {{event_date}} at {{event_location}}.</p><p>Ticket: {{ticket_type}} - {{ticket_price}}</p><p>Order ID: {{order_id}}</p>"
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') == True:
+                    if data.get('simulated') == True:
+                        self.log_result(
+                            "Send Test Email - Full Template", 
+                            True, 
+                            f"Successfully simulated test email send (no credentials configured)",
+                            data
+                        )
+                    else:
+                        self.log_result(
+                            "Send Test Email - Full Template", 
+                            True, 
+                            f"Successfully sent test email: {data.get('messageId')}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Send Test Email - Full Template", 
+                        False, 
+                        "Response doesn't indicate success",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Send Test Email - Full Template", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Send Test Email - Full Template", False, f"Exception: {str(e)}")
+
+    def test_send_test_email_minimal_template(self):
+        """Test 2: Send Test Email - Minimal template"""
+        try:
+            payload = {
+                "to": "user@test.com",
+                "template": {
+                    "subject": "Test Subject",
+                    "body": "<p>Simple test body</p>"
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('success') == True:
+                    if data.get('simulated') == True:
+                        self.log_result(
+                            "Send Test Email - Minimal Template", 
+                            True, 
+                            f"Successfully simulated minimal template test email",
+                            data
+                        )
+                    else:
+                        self.log_result(
+                            "Send Test Email - Minimal Template", 
+                            True, 
+                            f"Successfully sent minimal template test email: {data.get('messageId')}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Send Test Email - Minimal Template", 
+                        False, 
+                        "Response doesn't indicate success",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Send Test Email - Minimal Template", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Send Test Email - Minimal Template", False, f"Exception: {str(e)}")
+
+    def test_send_test_email_missing_to_field(self):
+        """Test 3: Send Test Email - Error case missing 'to' field"""
+        try:
+            payload = {
+                "template": {
+                    "subject": "Test",
+                    "body": "<p>Body</p>"
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 400:
+                data = response.json()
+                if 'error' in data and 'to' in data['error']:
+                    self.log_result(
+                        "Send Test Email - Missing To Field", 
+                        True, 
+                        "Correctly validates missing 'to' field (400)",
+                        data
+                    )
+                else:
+                    self.log_result(
+                        "Send Test Email - Missing To Field", 
+                        False, 
+                        "Returns 400 but error message unclear",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Send Test Email - Missing To Field", 
+                    False, 
+                    f"Expected 400, got HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Send Test Email - Missing To Field", False, f"Exception: {str(e)}")
+
+    def test_send_test_email_missing_template(self):
+        """Test 4: Send Test Email - Error case missing template"""
+        try:
+            payload = {
+                "to": "user@test.com"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 400:
+                data = response.json()
+                if 'error' in data and 'template' in data['error']:
+                    self.log_result(
+                        "Send Test Email - Missing Template", 
+                        True, 
+                        "Correctly validates missing template (400)",
+                        data
+                    )
+                else:
+                    self.log_result(
+                        "Send Test Email - Missing Template", 
+                        False, 
+                        "Returns 400 but error message unclear",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Send Test Email - Missing Template", 
+                    False, 
+                    f"Expected 400, got HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Send Test Email - Missing Template", False, f"Exception: {str(e)}")
+
+    def test_send_test_email_template_without_subject(self):
+        """Test 5: Send Test Email - Error case template without subject"""
+        try:
+            payload = {
+                "to": "user@test.com",
+                "template": {
+                    "body": "<p>Body only</p>"
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 400:
+                data = response.json()
+                if 'error' in data and 'subject' in data['error']:
+                    self.log_result(
+                        "Send Test Email - Template Without Subject", 
+                        True, 
+                        "Correctly validates missing subject in template (400)",
+                        data
+                    )
+                else:
+                    self.log_result(
+                        "Send Test Email - Template Without Subject", 
+                        False, 
+                        "Returns 400 but error message unclear",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Send Test Email - Template Without Subject", 
+                    False, 
+                    f"Expected 400, got HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Send Test Email - Template Without Subject", False, f"Exception: {str(e)}")
+
+    def test_email_status_endpoint(self):
+        """Test 6: Email Status endpoint verification"""
+        try:
+            response = self.session.get(f"{BACKEND_URL}/api/email/status")
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['configured', 'available', 'provider', 'message']
+                
+                if all(field in data for field in required_fields):
+                    self.log_result(
+                        "Email Status Endpoint", 
+                        True, 
+                        f"Status: configured={data.get('configured')}, available={data.get('available')}, provider={data.get('provider')}",
+                        data
+                    )
+                else:
+                    missing_fields = [field for field in required_fields if field not in data]
+                    self.log_result(
+                        "Email Status Endpoint", 
+                        False, 
+                        f"Missing required fields: {missing_fields}",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Email Status Endpoint", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Email Status Endpoint", False, f"Exception: {str(e)}")
+
     def test_health_endpoint(self):
-        """Test 1: Health endpoint should return status and uptime"""
+        """Test 7: Health endpoint should return status and uptime"""
         try:
             response = self.session.get(f"{BACKEND_URL}/api/health")
             
