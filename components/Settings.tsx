@@ -350,8 +350,8 @@ export const Settings = () => {
             if (data.preview) {
                 // Show preview mode message - email not actually sent
                 showAlert({
-                    title: "📧 Email Preview",
-                    message: `Your template looks great! Since Mailerlite is configured for campaigns (not transactional emails), here's a preview:\n\n**To:** ${user.email}\n**Subject:** ${data.previewData?.subject || template.subject}\n\nNote: Mailerlite sends emails via campaigns, not individual test sends. Your templates will work correctly when sending to attendees through broadcasts.`,
+                    title: "📧 Template Preview",
+                    message: `Your template is ready! Here's how it will look:\n\n**To:** ${user.email}\n**Subject:** ${data.previewData?.subject || template.subject}\n\n✅ Template variables replaced with sample data\n✅ Ready to use in broadcasts and automated emails\n\nNote: Test emails require SMTP credentials to be configured. Your templates will work when sending real emails to attendees.`,
                     confirmText: "Got it!"
                 });
             } else if (data.simulated) {
