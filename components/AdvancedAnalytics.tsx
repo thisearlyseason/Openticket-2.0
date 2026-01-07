@@ -71,7 +71,8 @@ export const AdvancedAnalytics = () => {
             const allRegs: Registration[] = [];
             for (const event of myEvents) {
                 const regs = await StorageService.getRegistrations(event.id);
-                allRegs.push(...regs.filter(r => r.paymentStatus !== 'refunded'));
+                // Only include PAID registrations (not refunded) for accurate analytics
+                allRegs.push(...regs.filter(r => isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus)));
             }
 
             // Filter by date range
