@@ -1283,7 +1283,7 @@ export const EventView = () => {
                                                                         href={event.waiverConfig?.pdfUrl || event.specificWaiverPdfUrl}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="flex items-center gap-2 text-primary text-xs font-bold hover:underline"
+                                                                        className="flex items-center gap-2 text-pink-500 text-xs font-bold hover:underline"
                                                                     >
                                                                         <Download size={14} /> Download PDF
                                                                     </a>
