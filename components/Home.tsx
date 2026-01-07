@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Search, Filter, Ticket, Image as ImageIcon, Heart, Users } from 'lucide-react';
+import { MapPin, Search, Filter, Ticket, Image as ImageIcon, Heart, Users, Share2 } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { Event, User } from '../types';
 import { Card, Badge, Button, formatTime } from './UI';
