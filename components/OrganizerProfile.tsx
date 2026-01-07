@@ -151,18 +151,18 @@ export const OrganizerProfile = () => {
                 {/* Profile Content */}
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-16 relative z-10 pb-20">
                     {/* Profile Header Card - Added extra top padding to fit entire image */}
-                    <Card className="pt-24 md:pt-28 p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8 relative">
-                        {/* Profile Image - Positioned absolutely above the card */}
-                        <div className="absolute left-1/2 -translate-x-1/2 -top-20 md:-top-24">
-                            <div className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                    <Card className="pt-28 md:pt-32 p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8 relative">
+                        {/* Profile Image - Positioned absolutely above the card, NO CROPPING */}
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-24 md:-top-28 z-20">
+                            <div className="w-44 h-44 md:w-52 md:h-52 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-white dark:bg-zinc-800 p-2 flex items-center justify-center">
                                 {organizer?.logoUrl ? (
                                     <img 
                                         src={organizer.logoUrl} 
                                         alt={displayName} 
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain rounded-full"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600">
+                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-700 rounded-full">
                                         {displayName.charAt(0).toUpperCase()}
                                     </div>
                                 )}
