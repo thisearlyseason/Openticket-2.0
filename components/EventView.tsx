@@ -1562,18 +1562,32 @@ export const EventView = () => {
                                             <img src={organizerUser.logoUrl} alt={organizerUser.businessName || organizerUser.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <span className="text-5xl font-black text-white/80">
-                                                {(organizerUser?.useBusinessName ? (organizerUser.businessName || organizerUser.name) : (organizerUser?.name || event.organizer))?.charAt(0)?.toUpperCase() || 'O'}
+                                                {(() => {
+                                                    const name = organizerUser?.useBusinessName 
+                                                        ? (organizerUser.businessName || organizerUser.name) 
+                                                        : (organizerUser?.name || '');
+                                                    // Ensure we get a letter, not a number
+                                                    const firstChar = name?.charAt(0)?.toUpperCase();
+                                                    return firstChar && /[A-Z]/.test(firstChar) ? firstChar : 'O';
+                                                })()}
                                             </span>
                                         )}
                                     </div>
                                 </div>
                                 <div className="text-xs font-black uppercase tracking-[3px] text-zinc-500 mb-2">Hosted by</div>
                                 <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">
-                                    {organizerUser?.useBusinessName ? (organizerUser.businessName || organizerUser.name) : (organizerUser?.name || event.organizer)}
+                                    {organizerUser?.useBusinessName 
+                                        ? (organizerUser.businessName || organizerUser.name) 
+                                        : (organizerUser?.name || 'Event Organizer')}
                                 </h3>
-                                <p className="text-zinc-400 font-medium mb-6 italic text-sm">
-                                    "{organizerUser?.organizerSubtitle || `Building the future of ${event.category?.toLowerCase() || 'events'}`}"
-                                </p>
+                                {organizerUser?.organizerSubtitle && (
+                                    <p className="text-zinc-400 font-medium mb-6 italic text-sm">
+                                        "{organizerUser.organizerSubtitle}"
+                                    </p>
+                                )}
+                                {!organizerUser?.organizerSubtitle && (
+                                    <div className="mb-6"></div>
+                                )}
                                 <div className="flex gap-3">
                                     <Button
                                         variant="outline"
