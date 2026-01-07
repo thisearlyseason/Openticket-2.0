@@ -13,6 +13,7 @@ import adminRoutes from '../backend/routes/adminRoutes.js';
 import notificationRoutes from '../backend/routes/notificationRoutes.js';
 import pushRoutes from '../backend/routes/pushRoutes.js';
 import emailRoutes from '../backend/routes/emailRoutes.js';
+import analyticsRoutes from '../backend/routes/analyticsRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
