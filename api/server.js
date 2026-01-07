@@ -56,9 +56,8 @@ const corsOptions = {
         if (isAllowed) {
             callback(null, true);
         } else {
-            console.warn(`[CORS] Blocked request from origin: ${origin}`);
-            // In production, you might want to block; for now, allow with warning
-            callback(null, true); // Change to callback(new Error('Not allowed by CORS')) to block
+            console.warn(`[CORS] Blocked request from unauthorized origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
@@ -133,24 +132,13 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/debug', (req, res) => {
-    try {
-        res.json({
-            env: {
-                SUPABASE_URL: !!process.env.SUPABASE_URL,
-                SUPABASE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
-                FIREBASE_CLIENT_EMAIL: !!process.env.FIREBASE_CLIENT_EMAIL,
-                FIREBASE_PRIVATE_KEY: !!process.env.FIREBASE_PRIVATE_KEY,
-                NODE_ENV: process.env.NODE_ENV,
-                VERCEL: process.env.VERCEL
-            },
-            uptime: process.uptime(),
-            timestamp: new Date().toISOString()
-        });
-    } catch (e) {
-        res.status(500).send(`Debug Error: ${e.message}`);
-    }
+// Health check endpoint (safe for production)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
 });
 
 app.use('/api/auth', authLimiter, authRoutes);
