@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Email Template Persistence
-Tests email template save/load functionality and profile endpoints
+Backend API Testing for OpenTicket Platform - Send Test Email Feature
+Tests the new "Send Test Email" API endpoint functionality
 """
 
 import requests
