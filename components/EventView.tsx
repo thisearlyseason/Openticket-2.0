@@ -1761,6 +1761,38 @@ export const EventView = () => {
                     </div>
                 )
             }
+
+            {/* Image Lightbox Modal */}
+            {
+                lightboxImage && (
+                    <div 
+                        className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        onClick={() => setLightboxImage(null)}
+                    >
+                        <button 
+                            className="absolute top-4 right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+                            onClick={() => setLightboxImage(null)}
+                        >
+                            <X size={24} className="text-white" />
+                        </button>
+                        <div 
+                            className="max-w-5xl max-h-[85vh] relative"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <img 
+                                src={lightboxImage} 
+                                alt={lightboxCaption}
+                                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                            />
+                            {lightboxCaption && (
+                                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-lg">
+                                    <p className="text-white text-lg font-bold text-center">{lightboxCaption}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
         </>
     );
 };
