@@ -657,9 +657,14 @@ export const EventView = () => {
                 if (sessionData.error) throw new Error(sessionData.error);
 
                 if (sessionData.url) {
-                    // No need to save pending state for recreation - backend has the pending registration now.
-                    // We just redirect.
-                    window.location.href = sessionData.url;
+                    // Show friendly redirect message before sending to Stripe
+                    setIsRedirectingToStripe(true);
+                    setIsRegistering(false);
+                    
+                    // Brief delay to show the message, then redirect
+                    setTimeout(() => {
+                        window.location.href = sessionData.url;
+                    }, 1500);
                     return;
                 }
                 return; // Redirect happens here
