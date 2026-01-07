@@ -427,7 +427,7 @@ export const MyTickets = () => {
                                                 <Printer size={12} /> Print Ticket
                                             </button>
                                             {!ticket.isAddOn && (
-                                                <button onClick={() => setTransferModal({ isOpen: true, ticket: ticket, name: '', email: '' })} className="text-xs text-secondary hover:underline flex items-center justify-center gap-1">
+                                                <button onClick={() => setTransferModal({ isOpen: true, ticket: ticket, name: '', email: '' })} className="text-xs text-primary hover:underline flex items-center justify-center gap-1">
                                                     <Send size={12} /> Transfer Ticket
                                                 </button>
                                             )}
