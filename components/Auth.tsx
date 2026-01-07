@@ -3,7 +3,79 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Button, Input, Card, Select, FileDropZone } from './UI';
-import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome } from 'lucide-react';
+import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome, Eye, EyeOff, Check, X } from 'lucide-react';
+
+// Password Input with visibility toggle and validation
+const PasswordInput = ({ 
+    label, 
+    value, 
+    onChange, 
+    required = false, 
+    showValidation = false 
+}: { 
+    label: string; 
+    value: string; 
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
+    required?: boolean;
+    showValidation?: boolean;
+}) => {
+    const [showPassword, setShowPassword] = useState(false);
+    
+    // Password validation rules
+    const validations = {
+        minLength: value.length >= 7,
+        hasUppercase: /[A-Z]/.test(value),
+        hasNumber: /[0-9]/.test(value),
+        hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(value)
+    };
+    
+    const isValid = validations.minLength && validations.hasUppercase && validations.hasNumber && validations.hasSpecial;
+    
+    return (
+        <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wide mb-1">
+                {label}
+            </label>
+            <div className="relative">
+                <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={value}
+                    onChange={onChange}
+                    required={required}
+                    className="w-full px-4 py-3 pr-12 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent outline-none transition-all"
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+            </div>
+            
+            {showValidation && value.length > 0 && (
+                <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg space-y-1">
+                    <div className={`flex items-center gap-2 text-xs ${validations.minLength ? 'text-green-600' : 'text-zinc-400'}`}>
+                        {validations.minLength ? <Check size={12} /> : <X size={12} />}
+                        <span>At least 7 characters</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs ${validations.hasUppercase ? 'text-green-600' : 'text-zinc-400'}`}>
+                        {validations.hasUppercase ? <Check size={12} /> : <X size={12} />}
+                        <span>One uppercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs ${validations.hasNumber ? 'text-green-600' : 'text-zinc-400'}`}>
+                        {validations.hasNumber ? <Check size={12} /> : <X size={12} />}
+                        <span>One number</span>
+                    </div>
+                    <div className={`flex items-center gap-2 text-xs ${validations.hasSpecial ? 'text-green-600' : 'text-zinc-400'}`}>
+                        {validations.hasSpecial ? <Check size={12} /> : <X size={12} />}
+                        <span>One special character (!@#$%^&*)</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const Auth = () => {
     const [searchParams] = useSearchParams();
