@@ -31,6 +31,9 @@ export const NotificationTypes = {
     NEW_REGISTRATION: 'new_registration'
 };
 
+// In-memory fallback storage when database table doesn't exist
+const inMemorySubscriptions = new Map();
+
 /**
  * Save push subscription for a user
  */
@@ -49,10 +52,11 @@ export const saveSubscription = async (userId, subscription) => {
             .select();
 
         if (error) {
-            // Table might not exist, try to handle gracefully
-            if (error.code === '42P01') {
-                console.warn('[PushService] push_subscriptions table does not exist');
-                return null;
+            // Table might not exist, use in-memory fallback
+            if (error.code === '42P01' || error.code === 'PGRST205') {
+                console.warn('[PushService] push_subscriptions table does not exist, using in-memory storage');
+                inMemorySubscriptions.set(userId, subscription);
+                return { user_id: userId, subscription };
             }
             throw error;
         }
@@ -61,7 +65,10 @@ export const saveSubscription = async (userId, subscription) => {
         return data[0];
     } catch (err) {
         console.error('[PushService] Error saving subscription:', err);
-        return null;
+        // Fallback to in-memory storage
+        inMemorySubscriptions.set(userId, subscription);
+        console.log('[PushService] Using in-memory fallback for user:', userId);
+        return { user_id: userId, subscription };
     }
 };
 
