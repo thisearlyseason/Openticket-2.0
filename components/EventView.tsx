@@ -327,13 +327,13 @@ export const EventView = () => {
                     <div className="relative">
                         <div className="w-24 h-24 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin mx-auto mb-8 shadow-[0_0_30px_rgba(34,197,94,0.2)]"></div>
                         <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
-                            Payment Successful!
+                            Verifying Your Payment
                         </h2>
                         <p className="text-zinc-400 font-bold mb-8">
-                            Preparing your tickets and confirmation...
+                            Confirming your purchase and preparing tickets...
                         </p>
                         <div className="flex items-center justify-center gap-6 px-4 py-3 bg-green-500/10 rounded-2xl border border-green-500/20">
-                            <span className="text-xs font-black uppercase tracking-widest text-green-500">Payment Confirmed</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-green-500">Processing</span>
                             <div className="h-1 w-1 bg-green-500 rounded-full animate-pulse"></div>
                             <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Loading Event...</span>
                         </div>
