@@ -5,7 +5,7 @@ import { Calendar, MapPin, Share2, Globe, Facebook, Instagram, Twitter, Youtube,
 import { StorageService } from '../services/storageService';
 import { Event, User } from '../types';
 import { Card, Badge, Button, ShareButtons, formatTime } from './UI';
-import { useGlobalUI } from '../App';
+import { useGlobalUI } from './GlobalUIProvider';
 
 export const OrganizerProfile = () => {
     const { id } = useParams<{ id: string }>();
