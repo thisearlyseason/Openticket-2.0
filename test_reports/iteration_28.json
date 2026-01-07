@@ -1,0 +1,52 @@
+{
+  "summary": "Profile data persistence fix VERIFIED. Backend tests confirm bio, phone, business_email, business_phone, use_business_name, show_phone_publicly, logo_url, header_image_url, and socials are now correctly stored in subscription.settings JSONB and returned at top-level in API responses. All 8 backend tests passed (100%). Frontend Settings page loads but Playwright session management prevented full E2E UI testing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_profile_persistence_v2.py",
+    "/app/test_reports/pytest/pytest_profile_v2.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "profileController.js correctly stores bio, phone, business_email, business_phone, use_business_name, show_phone_publicly in subscription.settings JSONB field",
+    "getProfile and getProfileById correctly extract extended settings from subscription.settings and return them at top-level for frontend compatibility",
+    "updateProfile and syncProfile correctly merge extended settings into subscription.settings JSONB",
+    "storageService.ts correctly maps snake_case API fields to camelCase frontend fields"
+  ],
+  "updated_files": [
+    "/app/tests/test_profile_persistence_v2.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "Partial - Login/Dashboard work, Settings page loads but session management prevented full E2E test"
+  },
+  "test_credentials": "test_organizer_1767755527@test.com / TestPassword123!",
+  "seed_data_creation": "Profile data updated via pytest tests - bio, phone, socials, logo_url, header_image_url all persisted",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Profile data persistence fix is COMPLETE and VERIFIED. The root cause (missing DB columns) was resolved by storing bio, phone, business_email, business_phone, use_business_name, show_phone_publicly in the existing subscription.settings JSONB field. Backend API tests confirm: 1) PUT /api/auth/profiles/:id correctly saves these fields, 2) GET /api/auth/profiles/:id correctly returns them at top-level. Frontend Settings page loads correctly but full E2E UI testing was limited by Playwright session management. The fix is working - no further action needed on profile persistence.",
+  "verified_profile_fields": {
+    "bio": "Updated bio at 1767756249 - Testing persistence cycle",
+    "phone": "+1-999-6249",
+    "business_email": "business_1767756248@test.com",
+    "business_phone": "+1-800-6248",
+    "use_business_name": true,
+    "show_phone_publicly": false,
+    "logo_url": "https://example.com/logo_1767756252.png",
+    "header_image_url": "https://example.com/header_1767756252.jpg",
+    "socials": {
+      "twitter": "test_tw_1767756251",
+      "website": "https://test-1767756251.com",
+      "youtube": "test_yt_1767756251",
+      "facebook": "test_fb_1767756251",
+      "instagram": "test_ig_1767756251"
+    }
+  }
+}
