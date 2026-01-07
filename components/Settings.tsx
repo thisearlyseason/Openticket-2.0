@@ -288,6 +288,71 @@ export const Settings = () => {
         }
     };
 
+    // Password change handler
+    const handleChangePassword = async () => {
+        // Validation
+        if (!currentPassword) {
+            showToast("Please enter your current password", "error");
+            return;
+        }
+        if (!newPassword) {
+            showToast("Please enter a new password", "error");
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showToast("New passwords don't match", "error");
+            return;
+        }
+        
+        // Password strength validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            showToast("Password must be at least 8 characters with uppercase, lowercase, number, and special character", "error");
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            // Import Firebase auth for re-authentication
+            const { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } = await import('firebase/auth');
+            const auth = getAuth();
+            const firebaseUser = auth.currentUser;
+
+            if (!firebaseUser || !firebaseUser.email) {
+                showToast("Not authenticated. Please log in again.", "error");
+                return;
+            }
+
+            // Re-authenticate with current password
+            const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+            await reauthenticateWithCredential(firebaseUser, credential);
+
+            // Update password
+            await updatePassword(firebaseUser, newPassword);
+
+            // Clear form
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setShowPasswordChange(false);
+
+            showToast("Password changed successfully!", "success");
+        } catch (error: any) {
+            console.error("Password change error:", error);
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                showToast("Current password is incorrect", "error");
+            } else if (error.code === 'auth/weak-password') {
+                showToast("New password is too weak", "error");
+            } else if (error.code === 'auth/requires-recent-login') {
+                showToast("Please log out and log back in before changing your password", "error");
+            } else {
+                showToast(error.message || "Failed to change password", "error");
+            }
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
     const handleLogout = async () => {
         showConfirm({
             title: "Log Out",
