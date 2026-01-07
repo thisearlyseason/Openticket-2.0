@@ -45,14 +45,26 @@ export const OrganizerProfile = () => {
 
     const toggleFavorite = async () => {
         if (!currentUser) {
-            showToast("Please login to favorite organizers.", "info");
+            showToast("Please sign in to favorite organizers.", "info");
             return;
         }
         if (!organizer) return;
         
         setLoadingFavorite(true);
-        const updated = await StorageService.toggleFavoriteOrganizer(organizer.id);
-        if (updated) setCurrentUser(updated);
+        try {
+            const updated = await StorageService.toggleFavoriteOrganizer(organizer.id);
+            if (updated) {
+                setCurrentUser(updated);
+                showToast(
+                    updated.favoriteOrganizers?.includes(organizer.id) 
+                        ? "Added to favorites!" 
+                        : "Removed from favorites", 
+                    "success"
+                );
+            }
+        } catch (error) {
+            showToast("Failed to update favorites", "error");
+        }
         setLoadingFavorite(false);
     };
 
@@ -62,7 +74,7 @@ export const OrganizerProfile = () => {
         return <div className="text-center py-20 text-gray-500">Organizer not found.</div>;
     }
 
-    // Determine display name and email based on settings
+    // Determine display name and email based on useBusinessName setting
     const displayName = organizer?.useBusinessName 
         ? (organizer.businessName || organizer.name) 
         : (organizer?.name || 'Organizer');
@@ -75,7 +87,23 @@ export const OrganizerProfile = () => {
         ? (organizer.businessPhone || organizer.phone) 
         : organizer?.phone;
 
-    const totalAttendees = events.reduce((sum, e) => sum + (e.registeredCount || 0), 0);
+    // Check if organizer has any social links set (not empty strings)
+    const hasSocialLinks = organizer?.socials && (
+        (organizer.socials.instagram && organizer.socials.instagram.trim() !== '') ||
+        (organizer.socials.facebook && organizer.socials.facebook.trim() !== '') ||
+        (organizer.socials.x && organizer.socials.x.trim() !== '') ||
+        (organizer.socials.youtube && organizer.socials.youtube.trim() !== '') ||
+        (organizer.socials.tiktok && organizer.socials.tiktok.trim() !== '') ||
+        (organizer.socials.website && organizer.socials.website.trim() !== '')
+    );
+
+    // Helper to check if a social URL is valid (not empty and not just the domain)
+    const isValidSocialUrl = (url?: string): boolean => {
+        if (!url || url.trim() === '') return false;
+        // Don't show if it's just pointing to openticket.events
+        if (url.includes('openticket.events')) return false;
+        return true;
+    };
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -98,17 +126,17 @@ export const OrganizerProfile = () => {
                 {/* Profile Header Card */}
                 <Card className="p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8">
                     <div className="flex flex-col md:flex-row gap-6">
-                        {/* Profile Image */}
-                        <div className="flex-shrink-0 -mt-20 md:-mt-24 mx-auto md:mx-0">
-                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white dark:border-zinc-900 shadow-xl overflow-hidden bg-zinc-200 dark:bg-zinc-800">
+                        {/* Profile Image - Fixed z-index and overflow */}
+                        <div className="flex-shrink-0 -mt-20 md:-mt-24 mx-auto md:mx-0 relative z-20">
+                            <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 relative">
                                 {organizer?.logoUrl ? (
                                     <img 
                                         src={organizer.logoUrl} 
                                         alt={displayName} 
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-cover rounded-full"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-5xl md:text-6xl font-black text-zinc-400 dark:text-zinc-600">
+                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600 rounded-full">
                                         {displayName.charAt(0).toUpperCase()}
                                     </div>
                                 )}
@@ -116,29 +144,24 @@ export const OrganizerProfile = () => {
                         </div>
 
                         {/* Profile Info */}
-                        <div className="flex-1 text-center md:text-left">
+                        <div className="flex-1 text-center md:text-left pt-4 md:pt-0">
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                 <div>
                                     <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-white mb-2">
                                         {displayName}
                                     </h1>
-                                    {organizer?.organizerSubtitle && (
+                                    {organizer?.organizerSubtitle && organizer.organizerSubtitle.trim() !== '' && (
                                         <p className="text-lg text-zinc-500 dark:text-zinc-400 mb-4 italic">
                                             "{organizer.organizerSubtitle}"
                                         </p>
                                     )}
                                     
-                                    {/* Stats Row */}
+                                    {/* Stats Row - Only show events count */}
                                     <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-4">
                                         <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
                                             <Calendar size={18} />
                                             <span className="font-bold">{events.length}</span>
                                             <span className="text-sm">Upcoming Events</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                                            <Users size={18} />
-                                            <span className="font-bold">{totalAttendees}</span>
-                                            <span className="text-sm">Total Attendees</span>
                                         </div>
                                     </div>
                                 </div>
@@ -157,7 +180,7 @@ export const OrganizerProfile = () => {
                                         disabled={loadingFavorite}
                                         className={`flex items-center gap-2 transition-all duration-300 ${
                                             isFavorited 
-                                                ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]' 
+                                                ? 'bg-pink-500 hover:bg-pink-600 text-white shadow-[0_0_25px_rgba(236,72,153,0.5)]' 
                                                 : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-pink-100 dark:hover:bg-pink-900/30 text-zinc-700 dark:text-zinc-300'
                                         }`}
                                     >
@@ -185,11 +208,11 @@ export const OrganizerProfile = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column - About & Contact */}
                     <div className="lg:col-span-1 space-y-6">
-                        {/* About Section */}
-                        {organizer?.bio && (
+                        {/* About Section - Only show if bio exists */}
+                        {organizer?.bio && organizer.bio.trim() !== '' && (
                             <Card className="p-6 bg-white dark:bg-zinc-900 rounded-2xl">
                                 <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">About</h2>
-                                <p className="text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">
+                                <p className="text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed">
                                     {organizer.bio}
                                 </p>
                             </Card>
@@ -211,7 +234,7 @@ export const OrganizerProfile = () => {
                                     </a>
                                 )}
                                 
-                                {organizer?.showPhonePublicly && displayPhone && (
+                                {organizer?.showPhonePublicly && displayPhone && displayPhone.trim() !== '' && (
                                     <a 
                                         href={`tel:${displayPhone}`}
                                         className="flex items-center gap-3 text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors"
@@ -223,9 +246,9 @@ export const OrganizerProfile = () => {
                                     </a>
                                 )}
 
-                                {organizer?.socials?.website && (
+                                {isValidSocialUrl(organizer?.socials?.website) && (
                                     <a 
-                                        href={organizer.socials.website}
+                                        href={organizer!.socials!.website}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="flex items-center gap-3 text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors"
@@ -233,20 +256,20 @@ export const OrganizerProfile = () => {
                                         <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
                                             <Globe size={18} />
                                         </div>
-                                        <span className="text-sm truncate">{organizer.socials.website.replace(/^https?:\/\//, '')}</span>
+                                        <span className="text-sm truncate">{organizer!.socials!.website!.replace(/^https?:\/\//, '')}</span>
                                     </a>
                                 )}
                             </div>
                         </Card>
 
-                        {/* Social Links */}
-                        {organizer?.socials && (
+                        {/* Social Links - Only show if organizer has valid social links */}
+                        {hasSocialLinks && (
                             <Card className="p-6 bg-white dark:bg-zinc-900 rounded-2xl">
                                 <h2 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">Social</h2>
                                 <div className="flex flex-wrap gap-3">
-                                    {organizer.socials.instagram && (
+                                    {isValidSocialUrl(organizer?.socials?.instagram) && (
                                         <a 
-                                            href={organizer.socials.instagram} 
+                                            href={organizer!.socials!.instagram!} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -255,9 +278,9 @@ export const OrganizerProfile = () => {
                                             <Instagram size={22} />
                                         </a>
                                     )}
-                                    {organizer.socials.facebook && (
+                                    {isValidSocialUrl(organizer?.socials?.facebook) && (
                                         <a 
-                                            href={organizer.socials.facebook} 
+                                            href={organizer!.socials!.facebook!} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -266,9 +289,9 @@ export const OrganizerProfile = () => {
                                             <Facebook size={22} />
                                         </a>
                                     )}
-                                    {organizer.socials.x && (
+                                    {isValidSocialUrl(organizer?.socials?.x) && (
                                         <a 
-                                            href={organizer.socials.x} 
+                                            href={organizer!.socials!.x!} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -277,9 +300,9 @@ export const OrganizerProfile = () => {
                                             <Twitter size={22} />
                                         </a>
                                     )}
-                                    {organizer.socials.youtube && (
+                                    {isValidSocialUrl(organizer?.socials?.youtube) && (
                                         <a 
-                                            href={organizer.socials.youtube} 
+                                            href={organizer!.socials!.youtube!} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -288,9 +311,9 @@ export const OrganizerProfile = () => {
                                             <Youtube size={22} />
                                         </a>
                                     )}
-                                    {organizer.socials.tiktok && (
+                                    {isValidSocialUrl(organizer?.socials?.tiktok) && (
                                         <a 
-                                            href={organizer.socials.tiktok} 
+                                            href={organizer!.socials!.tiktok!} 
                                             target="_blank" 
                                             rel="noreferrer" 
                                             className="w-12 h-12 bg-black rounded-xl flex items-center justify-center text-white hover:scale-110 transition-transform"
