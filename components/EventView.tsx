@@ -69,6 +69,10 @@ export const EventView = () => {
     const [waitlistData, setWaitlistData] = useState({ name: '', email: '' });
     const { showToast, showAlert, showConfirm } = useGlobalUI();
 
+    // Lightbox state for gallery
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+    const [lightboxCaption, setLightboxCaption] = useState<string>('');
+
     // Display Currency State (UI-only, doesn't affect Stripe charges)
     const [displayCurrency, setDisplayCurrency] = useState<string>('');
     
