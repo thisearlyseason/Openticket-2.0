@@ -94,8 +94,8 @@ class TestProfilePersistence:
         print(f"  - header_image_url: {profile.get('header_image_url', 'NOT SET')}")
         
         # Check subscription.settings structure
-        subscription = profile.get('subscription', {})
-        settings = subscription.get('settings', {})
+        subscription = profile.get('subscription') or {}
+        settings = subscription.get('settings') or {}
         print(f"\nSubscription.settings fields:")
         for key in ['bio', 'phone', 'business_email', 'business_phone', 'use_business_name', 'show_phone_publicly', 'logo_url', 'header_image_url']:
             print(f"  - {key}: {settings.get(key, 'NOT IN SETTINGS')}")
