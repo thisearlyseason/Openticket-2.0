@@ -404,7 +404,7 @@ export const OrganizerProfile = () => {
                                                 {/* Event Info */}
                                                 <div className="flex-1 p-5 flex flex-col justify-between">
                                                     <div>
-                                                        <div className="flex items-center gap-2 text-sm font-bold text-primary mb-2">
+                                                        <div className="flex items-center gap-2 text-sm font-bold text-pink-600 dark:text-pink-400 mb-2">
                                                             <Calendar size={14} />
                                                             {new Date(event.date).toLocaleDateString(undefined, { 
                                                                 weekday: 'short',
@@ -412,7 +412,7 @@ export const OrganizerProfile = () => {
                                                                 day: 'numeric' 
                                                             })} • {formatTime(event.time, event.timeFormat)}
                                                         </div>
-                                                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                                                        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2 group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors line-clamp-2">
                                                             {event.title}
                                                         </h3>
                                                         <div className="flex items-center text-zinc-500 text-sm">
@@ -426,7 +426,7 @@ export const OrganizerProfile = () => {
                                                             <Ticket size={14} />
                                                             <span>{event.registeredCount || 0} attending</span>
                                                         </div>
-                                                        <span className="text-sm font-bold text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
+                                                        <span className="text-sm font-bold text-pink-600 dark:text-pink-400 flex items-center gap-1 group-hover:gap-2 transition-all">
                                                             Get Tickets <ChevronRight size={16} />
                                                         </span>
                                                     </div>
