@@ -1080,6 +1080,46 @@ export const Settings = () => {
                                     />
                                 </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Input
+                                        label="Personal Phone"
+                                        type="tel"
+                                        value={phone}
+                                        onChange={e => setPhone(e.target.value)}
+                                        placeholder="e.g. +1 555-123-4567"
+                                    />
+                                    <Input
+                                        label="Business Phone"
+                                        type="tel"
+                                        value={businessPhone}
+                                        onChange={e => setBusinessPhone(e.target.value)}
+                                        placeholder="e.g. +1 555-987-6543"
+                                        hint="Shown when 'Use Business Name publicly' is enabled"
+                                    />
+                                </div>
+
+                                <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                                    <div>
+                                        <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Show Phone on Public Profile</h3>
+                                        <p className="text-xs text-zinc-500">Enable to display your phone number on your organizer profile page.</p>
+                                    </div>
+                                    <Switch checked={showPhonePublicly} onChange={setShowPhonePublicly} />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
+                                        Bio / About
+                                    </label>
+                                    <textarea
+                                        value={bio}
+                                        onChange={e => setBio(e.target.value)}
+                                        placeholder="Tell attendees about yourself or your organization..."
+                                        rows={4}
+                                        className="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-none"
+                                    />
+                                    <p className="text-xs text-zinc-500 mt-1">This appears on your public organizer profile page.</p>
+                                </div>
+
                                 <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                                     <div>
                                         <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Use Business Name publicly</h3>
