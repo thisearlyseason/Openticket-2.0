@@ -1659,7 +1659,7 @@ export const EventView = () => {
                                     <Button
                                         variant="outline"
                                         onClick={() => navigate(`/organizer/${organizerUser?.id || event.ownerId}`)}
-                                        className="flex-1 border-zinc-800 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-14 uppercase tracking-widest text-xs transition-all"
+                                        className="flex-1 border-white/30 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-14 uppercase tracking-widest text-xs transition-all"
                                     >
                                         View Full Bio
                                     </Button>
