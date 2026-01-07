@@ -119,15 +119,16 @@ export const AdvancedAnalytics = () => {
         }
     };
 
-    const calculateAnalytics = (events: Event[], regs: Registration[]): AnalyticsData => {
+    const calculateAnalytics = (events: Event[], regs: Registration[], realAnalytics?: { totalViews: number; byDevice: Record<string, number>; byCountry: { label: string; value: number }[] }): AnalyticsData => {
         // Total revenue - using utility function for consistency
         const totalRevenue = regs.reduce((sum, r) => sum + calculateRegistrationRevenue(r), 0);
 
         // Total tickets sold - using utility function
         const totalTicketsSold = regs.reduce((sum, r) => sum + calculateRegistrationTickets(r), 0);
 
-        // Conversion rate (simplified - would need page view data for accurate calculation)
-        const conversionRate = events.length > 0 ? (regs.length / (events.length * 100)) * 100 : 0;
+        // Conversion rate - now uses real page views if available
+        const totalPageViews = realAnalytics?.totalViews || 0;
+        const conversionRate = totalPageViews > 0 ? (regs.length / totalPageViews) * 100 : 0;
 
         // Average order value
         const avgOrderValue = regs.length > 0 ? totalRevenue / regs.length : 0;
@@ -189,23 +190,27 @@ export const AdvancedAnalytics = () => {
         const salesByHourData = Object.entries(salesByHour)
             .map(([label, value]) => ({ label, value }));
 
-        // Device breakdown - Note: Real tracking would require analytics integration
-        // For now, show actual registration count without simulated breakdown
-        const deviceBreakdown = regs.length > 0 ? [
-            { label: 'All Devices', value: regs.length }
-        ] : [];
+        // Device breakdown - now uses real analytics data
+        const deviceBreakdown = realAnalytics?.byDevice && Object.keys(realAnalytics.byDevice).length > 0
+            ? Object.entries(realAnalytics.byDevice).map(([label, value]) => ({ label, value }))
+            : regs.length > 0 ? [{ label: 'All Devices', value: regs.length }] : [];
 
-        // Location data (from registrations if available)
-        const locations: Record<string, number> = {};
-        regs.forEach(r => {
-            const location = r.attendeePhone?.includes('+1') ? 'United States' : 
-                           r.attendeePhone?.includes('+44') ? 'United Kingdom' :
-                           r.attendeePhone?.includes('+61') ? 'Australia' : 'Other';
-            locations[location] = (locations[location] || 0) + 1;
-        });
-        const locationData = Object.entries(locations)
-            .map(([label, value]) => ({ label, value }))
-            .sort((a, b) => b.value - a.value);
+        // Location data - now uses real analytics data if available
+        const locationData = realAnalytics?.byCountry && realAnalytics.byCountry.length > 0
+            ? realAnalytics.byCountry
+            : (() => {
+                // Fallback to phone-based inference
+                const locations: Record<string, number> = {};
+                regs.forEach(r => {
+                    const location = r.attendeePhone?.includes('+1') ? 'United States' : 
+                                   r.attendeePhone?.includes('+44') ? 'United Kingdom' :
+                                   r.attendeePhone?.includes('+61') ? 'Australia' : 'Other';
+                    locations[location] = (locations[location] || 0) + 1;
+                });
+                return Object.entries(locations)
+                    .map(([label, value]) => ({ label, value }))
+                    .sort((a, b) => b.value - a.value);
+            })();
 
         return {
             events,
