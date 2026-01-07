@@ -2,26 +2,19 @@
  * Email Delivery Service - Unified email sending with provider selection
  * 
  * PROVIDERS:
- * 1. Gmail - Organizer's connected Gmail account (requires OAuth)
- * 2. OpenTicket Mailing Service - Platform's Mailerlite integration
+ * 1. Resend - Platform's transactional email service (default)
+ * 2. Gmail - Organizer's connected Gmail account (requires OAuth)
  * 
  * RULES:
  * - Only one provider can be active at a time
  * - Gmail selection requires Gmail to be connected
  * - No automatic fallback between providers
- * - Display currency is UI-only and doesn't affect payments
- * 
- * LIMITS:
- * - Gmail (Standard): 500 emails/day
- * - Gmail (Google Workspace): 2,000 emails/day
- * - OpenTicket Mailing Service: Depends on Mailerlite plan
  */
 
 import { EmailService } from './emailService';
-import { mailerliteService } from './mailerliteService';
 import { StorageService } from './storageService';
 
-export type EmailProvider = 'gmail' | 'openticket_mailer';
+export type EmailProvider = 'gmail' | 'resend';
 
 export interface EmailDeliveryConfig {
     provider: EmailProvider;
@@ -64,7 +57,7 @@ class EmailDeliveryService {
         const user = await StorageService.getUserById(userId);
         
         return {
-            provider: user?.emailProvider || 'openticket_mailer',
+            provider: user?.emailProvider || 'resend',
             gmailConnected: user?.gmailConfig?.connected || false,
             gmailEmail: user?.gmailConfig?.email
         };
@@ -108,7 +101,7 @@ class EmailDeliveryService {
         if (config.provider === 'gmail') {
             return this.sendViaGmail(options);
         } else {
-            return this.sendViaOpenTicket(options);
+            return this.sendViaResend(options);
         }
     }
 
@@ -151,40 +144,9 @@ class EmailDeliveryService {
     }
 
     /**
-     * Send email via OpenTicket Mailing Service (Mailerlite)
+     * Send email via Resend (platform's transactional email service)
      */
-    private async sendViaOpenTicket(options: SendEmailOptions): Promise<EmailDeliveryResult> {
-        try {
-            // Check if Mailerlite is configured
-            const apiKey = localStorage.getItem('platform_mailerlite_key');
-            
-            if (!apiKey) {
-                // Fallback to backend email service if Mailerlite not configured
-                return this.sendViaBackend(options);
-            }
-
-            // Configure Mailerlite if not already done
-            if (!mailerliteService.isReady()) {
-                mailerliteService.configure(apiKey);
-            }
-
-            // For transactional emails, we'll use the backend service
-            // Mailerlite is better suited for campaign emails
-            return this.sendViaBackend(options);
-        } catch (error: any) {
-            return {
-                success: false,
-                provider: 'openticket_mailer',
-                error: error.message || 'Failed to send via OpenTicket Mailing Service'
-            };
-        }
-    }
-
-    /**
-     * Send via backend email service (Nodemailer)
-     * This is used for transactional emails when using OpenTicket Mailing Service
-     */
-    private async sendViaBackend(options: SendEmailOptions): Promise<EmailDeliveryResult> {
+    private async sendViaResend(options: SendEmailOptions): Promise<EmailDeliveryResult> {
         try {
             const response = await fetch('/api/email/send', {
                 method: 'POST',
@@ -204,21 +166,21 @@ class EmailDeliveryService {
             if (!response.ok) {
                 return {
                     success: false,
-                    provider: 'openticket_mailer',
+                    provider: 'resend',
                     error: result.error || 'Failed to send email'
                 };
             }
 
             return {
                 success: true,
-                provider: 'openticket_mailer',
+                provider: 'resend',
                 messageId: result.messageId
             };
         } catch (error: any) {
             return {
                 success: false,
-                provider: 'openticket_mailer',
-                error: error.message || 'Failed to send via OpenTicket backend'
+                provider: 'resend',
+                error: error.message || 'Failed to send via Resend'
             };
         }
     }
@@ -234,7 +196,7 @@ class EmailDeliveryService {
             if (!config.gmailConnected) {
                 return {
                     canSend: false,
-                    reason: 'Gmail is selected but not connected. Please connect Gmail or switch to OpenTicket Mailing Service.'
+                    reason: 'Gmail is selected but not connected. Please connect Gmail or switch to Resend.'
                 };
             }
 
@@ -250,7 +212,7 @@ class EmailDeliveryService {
             return { canSend: true };
         }
 
-        // OpenTicket Mailing Service is always available
+        // Resend is always available (backend handles API key check)
         return { canSend: true };
     }
 
@@ -262,15 +224,35 @@ class EmailDeliveryService {
             return {
                 name: 'Gmail',
                 description: 'Send emails from your connected Gmail account',
-                icon: '📧'
+                icon: '📫'
             };
         }
 
         return {
-            name: 'OpenTicket Mailing Service',
-            description: 'Send emails via OpenTicket\'s reliable email infrastructure',
-            icon: '🎟️'
+            name: 'Resend',
+            description: 'Send emails via OpenTicket\'s reliable transactional email service',
+            icon: '📧'
         };
+    }
+
+    /**
+     * Get all available providers
+     */
+    getAvailableProviders(): Array<{ id: EmailProvider; name: string; description: string; icon: string }> {
+        return [
+            {
+                id: 'resend',
+                name: 'Resend',
+                description: 'Reliable transactional email service (recommended)',
+                icon: '📧'
+            },
+            {
+                id: 'gmail',
+                name: 'Gmail',
+                description: 'Send from your connected Gmail account',
+                icon: '📫'
+            }
+        ];
     }
 }
 
