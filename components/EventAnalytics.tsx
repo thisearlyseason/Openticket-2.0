@@ -15,6 +15,7 @@ export const EventAnalytics = () => {
     const [paidRegs, setPaidRegs] = useState<Registration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPro, setIsPro] = useState(false);
+    const [pageViews, setPageViews] = useState<{ total: number; byDevice: Record<string, number> }>({ total: 0, byDevice: {} });
 
     useEffect(() => {
         loadData();
@@ -34,6 +35,22 @@ export const EventAnalytics = () => {
         setRegs(r);
         // Filter to only paid (not refunded) for accurate analytics
         setPaidRegs(r.filter(reg => isPaidStatus(reg.paymentStatus) && !isRefundedStatus(reg.paymentStatus)));
+        
+        // Fetch real page view analytics
+        try {
+            const token = localStorage.getItem('openticket_auth_token');
+            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+            const response = await fetch(`${API_URL}/api/analytics/event/${id}`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setPageViews({ total: data.total || 0, byDevice: data.byDevice || {} });
+            }
+        } catch (e) {
+            console.debug('[Analytics] Failed to fetch page views:', e);
+        }
+        
         setIsLoading(false);
     };
 
