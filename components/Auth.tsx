@@ -568,7 +568,7 @@ export const Auth = () => {
                                             onFileSelect={(b64) => setFormData({ ...formData, nonProfitDocUrl: b64 as string })}
                                             onClear={() => setFormData({ ...formData, nonProfitDocUrl: '' })}
                                         />
-                                        {formData.nonProfitDocUrl && <p className="text-secondary text-xs font-bold mt-1">Document Attached</p>}
+                                        {formData.nonProfitDocUrl && <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold mt-1">Document Attached</p>}
                                     </div>
 
                                     <div className="flex gap-2 mt-4">
