@@ -1556,27 +1556,29 @@ export const EventView = () => {
                         <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/40 transition-all"></div>
                             <div className="relative text-center">
-                                <div className="w-40 h-40 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full mx-auto mb-6 flex items-center justify-center p-1 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700 overflow-hidden">
-                                    <div className="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center text-8xl font-black overflow-hidden bg-white/5">
+                                <div className="w-32 h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full mx-auto mb-6 flex items-center justify-center p-1 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700 overflow-hidden">
+                                    <div className="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden bg-white/5">
                                         {organizerUser?.logoUrl ? (
                                             <img src={organizerUser.logoUrl} alt={organizerUser.businessName || organizerUser.name} className="w-full h-full object-cover" />
                                         ) : (
-                                            event.organizer?.charAt(0) || 'O'
+                                            <span className="text-5xl font-black text-white/80">
+                                                {(organizerUser?.useBusinessName ? (organizerUser.businessName || organizerUser.name) : (organizerUser?.name || event.organizer))?.charAt(0)?.toUpperCase() || 'O'}
+                                            </span>
                                         )}
                                     </div>
                                 </div>
                                 <div className="text-xs font-black uppercase tracking-[3px] text-zinc-500 mb-2">Hosted by</div>
-                                <h3 className="text-3xl font-black mb-2 uppercase tracking-tighter">
+                                <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">
                                     {organizerUser?.useBusinessName ? (organizerUser.businessName || organizerUser.name) : (organizerUser?.name || event.organizer)}
                                 </h3>
-                                <p className="text-zinc-400 font-bold mb-8 italic">
+                                <p className="text-zinc-400 font-medium mb-6 italic text-sm">
                                     "{organizerUser?.organizerSubtitle || `Building the future of ${event.category?.toLowerCase() || 'events'}`}"
                                 </p>
                                 <div className="flex gap-3">
                                     <Button
                                         variant="outline"
                                         onClick={() => navigate(`/organizer/${organizerUser?.id || event.ownerId}`)}
-                                        className="flex-1 border-zinc-800 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-24 uppercase tracking-widest text-xs transition-all"
+                                        className="flex-1 border-zinc-800 text-white hover:bg-white hover:!text-black font-black rounded-2xl h-14 uppercase tracking-widest text-xs transition-all"
                                     >
                                         View Full Bio
                                     </Button>
@@ -1584,9 +1586,17 @@ export const EventView = () => {
                                         variant="outline"
                                         onClick={toggleFavorite}
                                         disabled={loadingFavorite}
-                                        className={`w-24 h-24 !p-0 rounded-2xl border-zinc-800 flex items-center justify-center transition-all ${currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? 'bg-pink-500 border-pink-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]' : 'text-zinc-600 hover:text-pink-500 hover:border-pink-500'}`}
+                                        className={`w-14 h-14 !p-0 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                                            currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') 
+                                                ? 'bg-pink-500 border-pink-500 text-white shadow-[0_0_25px_rgba(236,72,153,0.6),0_0_50px_rgba(236,72,153,0.3)]' 
+                                                : 'border-zinc-700 text-zinc-500 hover:text-pink-400 hover:border-pink-400 hover:shadow-[0_0_15px_rgba(236,72,153,0.3)]'
+                                        }`}
                                     >
-                                        <Heart size={42} fill={currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? "currentColor" : "none"} />
+                                        <Heart 
+                                            size={24} 
+                                            fill={currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? "currentColor" : "none"} 
+                                            className={currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') ? 'animate-pulse' : ''}
+                                        />
                                     </Button>
                                 </div>
                             </div>
