@@ -629,7 +629,7 @@ export const EventView = () => {
 
                 // Use the event's currency for Stripe checkout
                 // This ensures buyers are charged in the currency the organizer set
-                const eventCurrency = event.currency || 'USD';
+                const chargeCurrency = eventCurrency;
 
                 const response = await fetch('/api/stripe/create-order', {
                     method: 'POST',
