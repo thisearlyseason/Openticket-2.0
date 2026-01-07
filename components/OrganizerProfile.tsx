@@ -28,8 +28,8 @@ export const OrganizerProfile = () => {
                 const user = await StorageService.getUserById(id);
                 if (user) setOrganizer(user);
 
-                // Fetch Events - only public, upcoming events
-                const allEvents = await StorageService.getEvents();
+                // Fetch Events - use PUBLIC events API, filter by organizer
+                const allEvents = await StorageService.getPublicEvents();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
