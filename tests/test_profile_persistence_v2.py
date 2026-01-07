@@ -16,8 +16,8 @@ import os
 import time
 import json
 
-# Use the public preview URL
-BASE_URL = os.environ.get('preview_endpoint', 'https://profile-data-repair.preview.emergentagent.com')
+# Use localhost since backend is running on port 8001
+BASE_URL = "http://127.0.0.1:8001"
 
 # Test credentials from previous iteration
 TEST_EMAIL = "test_organizer_1767755527@test.com"
