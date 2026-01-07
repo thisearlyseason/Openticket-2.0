@@ -1,66 +1,48 @@
 /**
  * Email Routes - API endpoints for email delivery
+ * 
+ * Supports two providers:
+ * 1. Resend (default) - Transactional email service
+ * 2. Gmail - User's connected Gmail account (via OAuth)
  */
 import express from 'express';
-import nodemailer from 'nodemailer';
+import resendService from '../services/resendService.js';
 
 const router = express.Router();
 
-// Create transporter
-let transporter;
-try {
-    if (process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD) {
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_APP_PASSWORD
-            }
-        });
-    }
-} catch (e) {
-    console.warn("[EmailRoutes] Transporter init failed:", e.message);
-}
-
 /**
  * POST /api/email/send
- * Send an email via OpenTicket Mailing Service (Nodemailer/Platform email)
+ * Send a single email via Resend (default provider)
  */
 router.post('/send', async (req, res) => {
     try {
-        const { to, subject, html, text } = req.body;
+        const { to, subject, html, text, provider } = req.body;
 
         if (!to || !subject || !html) {
             return res.status(400).json({ error: 'Missing required fields: to, subject, html' });
         }
 
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-            console.warn("[EmailRoutes] Email credentials not configured - simulating send");
+        // Use Resend as the default provider
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailRoutes] Resend not configured - simulating send");
             return res.json({ 
                 success: true, 
                 simulated: true,
                 messageId: `simulated-${Date.now()}`,
-                message: 'Email simulated (credentials not configured)'
+                message: 'Email simulated (Resend API key not configured)'
             });
         }
 
-        if (!transporter) {
-            return res.status(503).json({ error: 'Email service not available' });
+        const result = await resendService.sendEmail({ to, subject, html, text });
+
+        if (!result.success) {
+            return res.status(500).json({ error: result.error || 'Failed to send email' });
         }
-
-        const info = await transporter.sendMail({
-            from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
-            to,
-            subject,
-            html,
-            text: text || html.replace(/<[^>]*>/g, '') // Strip HTML for text version
-        });
-
-        console.log(`[EmailRoutes] Email sent: ${info.messageId} to ${to}`);
 
         res.json({
             success: true,
-            messageId: info.messageId
+            messageId: result.messageId,
+            provider: 'resend'
         });
     } catch (error) {
         console.error("[EmailRoutes] Send failed:", error);
@@ -70,7 +52,7 @@ router.post('/send', async (req, res) => {
 
 /**
  * POST /api/email/send-bulk
- * Send bulk emails via OpenTicket Mailing Service
+ * Send bulk emails via Resend
  * Used for campaigns and broadcasts
  */
 router.post('/send-bulk', async (req, res) => {
@@ -85,73 +67,25 @@ router.post('/send-bulk', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields: subject, html' });
         }
 
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-            console.warn("[EmailRoutes] Email credentials not configured - simulating bulk send");
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailRoutes] Resend not configured - simulating bulk send");
             return res.json({ 
                 success: true, 
                 simulated: true,
                 sent: recipients.length,
                 failed: 0,
-                message: 'Bulk email simulated (credentials not configured)'
+                message: 'Bulk email simulated (Resend API key not configured)'
             });
         }
 
-        if (!transporter) {
-            return res.status(503).json({ error: 'Email service not available' });
-        }
-
-        let sent = 0;
-        let failed = 0;
-        const errors = [];
-
-        // Send emails in batches to avoid rate limits
-        const BATCH_SIZE = 50;
-        const DELAY_BETWEEN_BATCHES = 1000; // 1 second
-
-        for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-            const batch = recipients.slice(i, i + BATCH_SIZE);
-            
-            const promises = batch.map(async (recipient) => {
-                try {
-                    const email = typeof recipient === 'string' ? recipient : recipient.email;
-                    const name = typeof recipient === 'object' ? recipient.name : undefined;
-                    
-                    // Personalize HTML if name provided
-                    let personalizedHtml = html;
-                    if (name) {
-                        personalizedHtml = html.replace(/{{name}}/g, name);
-                    }
-
-                    await transporter.sendMail({
-                        from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
-                        to: email,
-                        subject,
-                        html: personalizedHtml,
-                        text: text || personalizedHtml.replace(/<[^>]*>/g, '')
-                    });
-                    
-                    sent++;
-                } catch (err) {
-                    failed++;
-                    errors.push({ email: recipient, error: err.message });
-                }
-            });
-
-            await Promise.all(promises);
-
-            // Add delay between batches
-            if (i + BATCH_SIZE < recipients.length) {
-                await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
-            }
-        }
-
-        console.log(`[EmailRoutes] Bulk send complete: ${sent} sent, ${failed} failed`);
+        const result = await resendService.sendBulkEmail({ recipients, subject, html, text });
 
         res.json({
             success: true,
-            sent,
-            failed,
-            errors: errors.slice(0, 10) // Return first 10 errors only
+            sent: result.sent,
+            failed: result.failed,
+            errors: result.errors,
+            provider: 'resend'
         });
     } catch (error) {
         console.error("[EmailRoutes] Bulk send failed:", error);
@@ -223,15 +157,15 @@ router.post('/send-test', async (req, res) => {
         const htmlBody = testBanner + body;
         const testSubject = `[TEST] ${subject}`;
 
-        // Check if email credentials are configured
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD || !transporter) {
-            console.log("[EmailRoutes] Email credentials not configured - returning preview");
+        // Check if Resend is configured
+        if (!resendService.isResendConfigured()) {
+            console.log("[EmailRoutes] Resend not configured - returning preview");
             return res.json({ 
                 success: true, 
                 simulated: true,
                 preview: true,
                 messageId: `preview-${Date.now()}`,
-                message: 'Email preview generated. To send real test emails, configure SMTP credentials in your environment.',
+                message: 'Email preview generated. Configure RESEND_API_KEY to send real test emails.',
                 previewData: {
                     to,
                     subject: testSubject,
@@ -240,49 +174,35 @@ router.post('/send-test', async (req, res) => {
             });
         }
 
-        // Try to send the email
-        try {
-            const info = await transporter.sendMail({
-                from: `"OpenTicket Test" <${process.env.EMAIL_USER}>`,
-                to,
-                subject: testSubject,
-                html: htmlBody,
-                text: htmlBody.replace(/<[^>]*>/g, '')
-            });
+        // Send via Resend
+        const result = await resendService.sendEmail({
+            to,
+            subject: testSubject,
+            html: htmlBody
+        });
 
-            console.log(`[EmailRoutes] Test email sent: ${info.messageId} to ${to}`);
-
-            res.json({
+        if (!result.success) {
+            // Return preview on error
+            return res.json({
                 success: true,
-                messageId: info.messageId,
-                message: `Test email sent successfully to ${to}`
+                simulated: true,
+                preview: true,
+                messageId: `preview-${Date.now()}`,
+                message: `Could not send: ${result.error}. Showing preview instead.`,
+                previewData: {
+                    to,
+                    subject: testSubject,
+                    bodyPreview: body.substring(0, 500) + (body.length > 500 ? '...' : '')
+                }
             });
-        } catch (sendError) {
-            // Handle Gmail authentication errors gracefully
-            console.error("[EmailRoutes] Email send failed:", sendError.message);
-            
-            // Check for common Gmail auth errors
-            if (sendError.message && (
-                sendError.message.includes('Username and Password not accepted') ||
-                sendError.message.includes('Invalid login') ||
-                sendError.message.includes('BadCredentials')
-            )) {
-                return res.json({
-                    success: true,
-                    simulated: true,
-                    preview: true,
-                    messageId: `preview-${Date.now()}`,
-                    message: 'Gmail credentials are invalid or expired. Showing email preview instead. To fix: update EMAIL_USER and EMAIL_APP_PASSWORD in your environment, or use a different email provider.',
-                    previewData: {
-                        to,
-                        subject: testSubject,
-                        bodyPreview: body.substring(0, 500) + (body.length > 500 ? '...' : '')
-                    }
-                });
-            }
-            
-            throw sendError;
         }
+
+        res.json({
+            success: true,
+            messageId: result.messageId,
+            message: `Test email sent successfully to ${to}`,
+            provider: 'resend'
+        });
     } catch (error) {
         console.error("[EmailRoutes] Test send failed:", error);
         res.status(500).json({ error: error.message || 'Failed to send test email' });
@@ -294,18 +214,34 @@ router.post('/send-test', async (req, res) => {
  * Check email service status
  */
 router.get('/status', async (req, res) => {
-    const configured = !!(process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD);
-    const available = configured && !!transporter;
+    const status = resendService.getStatus();
+    res.json(status);
+});
 
+/**
+ * GET /api/email/providers
+ * Get available email providers
+ */
+router.get('/providers', async (req, res) => {
     res.json({
-        configured,
-        available,
-        provider: 'openticket_mailer',
-        message: available 
-            ? 'OpenTicket Mailing Service is ready'
-            : configured 
-                ? 'Email service error - transporter not initialized'
-                : 'Email credentials not configured'
+        providers: [
+            {
+                id: 'resend',
+                name: 'Resend',
+                description: 'Reliable transactional email service (recommended)',
+                configured: resendService.isResendConfigured(),
+                icon: '📧'
+            },
+            {
+                id: 'gmail',
+                name: 'Gmail',
+                description: 'Send from your connected Gmail account',
+                configured: false, // This will be set by frontend based on user's Gmail connection
+                icon: '📫',
+                requiresOAuth: true
+            }
+        ],
+        defaultProvider: 'resend'
     });
 });
 
