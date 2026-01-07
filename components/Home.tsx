@@ -128,6 +128,21 @@ export const Home = () => {
                                 {ft === 'paid' ? 'Ticketed' : ft}
                             </button>
                         ))}
+                        
+                        {/* Favorite Organizers Button - Only show if user is logged in */}
+                        {currentUser && (
+                            <button
+                                onClick={() => setShowFavoriteOrganizers(!showFavoriteOrganizers)}
+                                className={`px-5 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all border-2 flex items-center gap-2 ${
+                                    showFavoriteOrganizers 
+                                        ? 'bg-pink-500 text-white border-pink-500' 
+                                        : 'bg-black/20 text-white hover:bg-black/40 border-white/20'
+                                }`}
+                            >
+                                <Heart size={16} className={showFavoriteOrganizers ? 'fill-white' : ''} />
+                                Favorites
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
