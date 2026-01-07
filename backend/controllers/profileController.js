@@ -183,7 +183,15 @@ export const getProfile = async (req, res) => {
             notifications: extendedSettings.notifications,
             email_templates: extendedSettings.email_templates,
             gemini_api_key: extendedSettings.gemini_api_key,
-            gmail_config: extendedSettings.gmail_config
+            gmail_config: extendedSettings.gmail_config,
+            // These are direct DB columns but ensure they're included
+            business_email: data.business_email,
+            use_business_name: data.use_business_name,
+            phone: data.phone,
+            business_phone: data.business_phone,
+            show_phone_publicly: data.show_phone_publicly,
+            bio: data.bio,
+            socials: data.socials
         };
 
         res.json({ profile: responseProfile });
@@ -345,7 +353,15 @@ export const getProfileById = async (req, res) => {
             notifications: extendedSettings.notifications,
             email_templates: extendedSettings.email_templates,
             gemini_api_key: extendedSettings.gemini_api_key,
-            gmail_config: extendedSettings.gmail_config
+            gmail_config: extendedSettings.gmail_config,
+            // These are direct DB columns but ensure they're included
+            business_email: data.business_email,
+            use_business_name: data.use_business_name,
+            phone: data.phone,
+            business_phone: data.business_phone,
+            show_phone_publicly: data.show_phone_publicly,
+            bio: data.bio,
+            socials: data.socials
         };
 
         res.json({ profile: responseProfile });
