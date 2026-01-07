@@ -1567,39 +1567,58 @@ export const EventView = () => {
                     </div>
 
                     <div className={isWidget ? 'hidden' : 'lg:col-span-4 space-y-8'}>
-                        {/* Organizer Profile */}
-                        <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative overflow-hidden group">
+                        {/* Organizer Profile - overflow: visible to prevent image clipping */}
+                        <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative group" style={{ overflow: 'visible', zIndex: 1 }}>
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/40 transition-all"></div>
                             <div className="relative text-center">
-                                {/* Profile Photo / Logo - Square container, NO CROPPING, full image visible */}
-                                <div className="w-36 h-36 bg-white rounded-2xl mx-auto mb-6 flex items-center justify-center p-3 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700">
-                                    {/* Show logo first, then header image, then initial */}
-                                    {organizerUser?.logoUrl ? (
-                                        <img 
-                                            src={organizerUser.logoUrl} 
-                                            alt={organizerUser.businessName || organizerUser.name} 
-                                            className="max-w-full max-h-full object-contain" 
-                                        />
-                                    ) : organizerUser?.headerImageUrl ? (
-                                        <img 
-                                            src={organizerUser.headerImageUrl} 
-                                            alt={organizerUser.businessName || organizerUser.name} 
-                                            className="max-w-full max-h-full object-contain" 
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-zinc-800 rounded-xl flex items-center justify-center">
-                                            <span className="text-5xl font-black text-white/80">
-                                                {(() => {
-                                                    // Use business name if public, otherwise personal name
-                                                    const name = organizerUser?.useBusinessName 
-                                                        ? (organizerUser.businessName || organizerUser.name) 
-                                                        : (organizerUser?.name || '');
-                                                    const firstChar = name?.charAt(0)?.toUpperCase();
-                                                    return firstChar && /[A-Z]/.test(firstChar) ? firstChar : 'O';
-                                                })()}
-                                            </span>
-                                        </div>
-                                    )}
+                                {/* Profile Image Wrapper - overflow: visible, equal padding, centered */}
+                                <div 
+                                    className="flex justify-center items-center p-4 mx-auto mb-6"
+                                    style={{ overflow: 'visible', zIndex: 10 }}
+                                >
+                                    {/* Profile Image Container - circular with object-fit: contain */}
+                                    <div 
+                                        className="w-32 h-32 bg-white rounded-full flex items-center justify-center p-2 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700"
+                                        style={{ overflow: 'visible' }}
+                                    >
+                                        {/* Show logo first, then header image, then initial */}
+                                        {organizerUser?.logoUrl ? (
+                                            <img 
+                                                src={organizerUser.logoUrl} 
+                                                alt={organizerUser.businessName || organizerUser.name} 
+                                                className="w-[112px] h-[112px] rounded-full block"
+                                                style={{ 
+                                                    objectFit: 'contain', 
+                                                    objectPosition: 'center',
+                                                    backgroundColor: 'transparent'
+                                                }}
+                                            />
+                                        ) : organizerUser?.headerImageUrl ? (
+                                            <img 
+                                                src={organizerUser.headerImageUrl} 
+                                                alt={organizerUser.businessName || organizerUser.name} 
+                                                className="w-[112px] h-[112px] rounded-full block"
+                                                style={{ 
+                                                    objectFit: 'contain', 
+                                                    objectPosition: 'center',
+                                                    backgroundColor: 'transparent'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-zinc-800 rounded-full flex items-center justify-center">
+                                                <span className="text-5xl font-black text-white/80">
+                                                    {(() => {
+                                                        // Use business name if public, otherwise personal name
+                                                        const name = organizerUser?.useBusinessName 
+                                                            ? (organizerUser.businessName || organizerUser.name) 
+                                                            : (organizerUser?.name || '');
+                                                        const firstChar = name?.charAt(0)?.toUpperCase();
+                                                        return firstChar && /[A-Z]/.test(firstChar) ? firstChar : 'O';
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 
                                 <div className="text-xs font-black uppercase tracking-[3px] text-zinc-500 mb-2">Hosted by</div>
