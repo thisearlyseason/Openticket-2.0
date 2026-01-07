@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
 import { StorageService } from '../services/storageService';
+import { isPaidStatus, isRefundedStatus, getPaymentStatusLabel } from '../services/paymentUtils';
 import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
 import { QRScanner } from './QRScanner';
@@ -44,7 +45,8 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete, onPa
     }, []);
 
     const isCheckedIn = ticket.checkedIn;
-    const isUnpaid = ticket.reg.paymentStatus !== 'completed';
+    // Use centralized payment status check
+    const isUnpaid = !isPaidStatus(ticket.reg.paymentStatus);
 
     return (
         <div className={`relative rounded-2xl mb-3 border-l-4 transition-all shadow-sm flex flex-col sm:flex-row gap-4 p-5 ${isCheckedIn
