@@ -141,10 +141,29 @@ export const Home = () => {
     return (
         <div className="space-y-8 min-h-screen">
 
+            {/* Share Toast Notification */}
+            {shareToast && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
+                    <div className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2">
+                        <Share2 size={16} />
+                        {shareToast}
+                    </div>
+                </div>
+            )}
+
             {/* Pop Modern Header */}
             <div className="relative py-12 px-6 bg-gradient-to-r from-primary via-purple-600 to-[#E0FF20] rounded-[3rem] overflow-hidden shadow-[0_0_40px_rgba(255,77,140,0.3)]">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#E0FF20] rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+
+                {/* Share Explore Button - Top Right */}
+                <button
+                    onClick={handleShareExplore}
+                    className="absolute top-4 right-4 z-20 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-xl transition-all hover:scale-105 active:scale-95 group"
+                    title="Share Explore Events"
+                >
+                    <Share2 size={20} className="group-hover:rotate-12 transition-transform" />
+                </button>
 
                 <div className="relative z-10 text-center max-w-2xl mx-auto">
                     <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter drop-shadow-sm font-display uppercase italic transform -rotate-1">
