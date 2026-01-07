@@ -456,7 +456,7 @@ export const MyTickets = () => {
                             <Button variant="outline" onClick={() => setTransferModal({ ...transferModal, isOpen: false })} className="flex-1 rounded-xl font-black">Cancel</Button>
                             <Button className="flex-1 rounded-xl font-black" onClick={async () => {
                                 if (!transferModal.name || !transferModal.email) return alert("Please fill in all details");
-                                if (confirm("Transfer this ticket? This action cannot be undone.")) {
+                                if (window.confirm("Transfer this ticket? This action cannot be undone.")) {
                                     try {
                                         await StorageService.updateTicketHolder(transferModal.ticket!.reg.id, transferModal.ticket!.ticketArrayIndex!, transferModal.name, transferModal.email);
                                         alert("Ticket transferred successfully!");
