@@ -190,13 +190,14 @@ export const getProfile = async (req, res) => {
             email_templates: extendedSettings.email_templates,
             gemini_api_key: extendedSettings.gemini_api_key,
             gmail_config: extendedSettings.gmail_config,
-            // These are direct DB columns but ensure they're included
-            business_email: data.business_email,
-            use_business_name: data.use_business_name,
-            phone: data.phone,
-            business_phone: data.business_phone,
-            show_phone_publicly: data.show_phone_publicly,
-            bio: data.bio,
+            // Organizer profile fields (stored in subscription.settings JSONB)
+            bio: extendedSettings.bio,
+            phone: extendedSettings.phone,
+            business_email: extendedSettings.business_email,
+            business_phone: extendedSettings.business_phone,
+            use_business_name: extendedSettings.use_business_name,
+            show_phone_publicly: extendedSettings.show_phone_publicly,
+            // DB column fields
             socials: data.socials
         };
 
@@ -364,13 +365,14 @@ export const getProfileById = async (req, res) => {
             email_templates: extendedSettings.email_templates,
             gemini_api_key: extendedSettings.gemini_api_key,
             gmail_config: extendedSettings.gmail_config,
-            // These are direct DB columns but ensure they're included
-            business_email: data.business_email,
-            use_business_name: data.use_business_name,
-            phone: data.phone,
-            business_phone: data.business_phone,
-            show_phone_publicly: data.show_phone_publicly,
-            bio: data.bio,
+            // Organizer profile fields (stored in subscription.settings JSONB)
+            bio: extendedSettings.bio,
+            phone: extendedSettings.phone,
+            business_email: extendedSettings.business_email,
+            business_phone: extendedSettings.business_phone,
+            use_business_name: extendedSettings.use_business_name,
+            show_phone_publicly: extendedSettings.show_phone_publicly,
+            // DB column fields
             socials: data.socials
         };
 
