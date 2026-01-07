@@ -262,7 +262,7 @@ export const EmailMarketing = () => {
     };
 
     const deleteCampaign = (campaignId: string) => {
-        if (!confirm('Are you sure you want to delete this campaign?')) return;
+        if (!window.confirm('Are you sure you want to delete this campaign?')) return;
         
         const updatedCampaigns = campaigns.filter(c => c.id !== campaignId);
         setCampaigns(updatedCampaigns);

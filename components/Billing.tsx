@@ -176,7 +176,7 @@ export const Billing = () => {
     };
 
     const handleDisconnect = async () => {
-        if (!confirm('Are you sure you want to disconnect your Stripe account? You will need to reconnect to receive payouts.')) {
+        if (!window.confirm('Are you sure you want to disconnect your Stripe account? You will need to reconnect to receive payouts.')) {
             return;
         }
         try {
