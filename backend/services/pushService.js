@@ -109,14 +109,23 @@ export const getSubscription = async (userId) => {
             .single();
 
         if (error) {
-            if (error.code === 'PGRST116' || error.code === '42P01') return null;
+            if (error.code === 'PGRST116' || error.code === '42P01' || error.code === 'PGRST205') {
+                // Check in-memory fallback
+                const inMemorySub = inMemorySubscriptions.get(userId);
+                if (inMemorySub) {
+                    console.log('[PushService] Using in-memory subscription for user:', userId);
+                    return inMemorySub;
+                }
+                return null;
+            }
             throw error;
         }
 
         return data?.subscription;
     } catch (err) {
         console.error('[PushService] Error getting subscription:', err);
-        return null;
+        // Check in-memory fallback
+        return inMemorySubscriptions.get(userId) || null;
     }
 };
 
