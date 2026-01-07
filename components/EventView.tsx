@@ -850,7 +850,7 @@ export const EventView = () => {
                                                                 <div className="font-black text-zinc-900 dark:text-white">{ticket.name}</div>
                                                                 <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
                                                             </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={ticket.pricePerTicket} currency={event.currency || 'USD'} /></div>
+                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={ticket.pricePerTicket} currency={eventCurrency} /></div>
                                                         </div>
                                                     ))}
                                                     {completedRegistration?.addOns?.map((addon, idx) => (
@@ -858,7 +858,7 @@ export const EventView = () => {
                                                             <div>
                                                                 <div className="font-black text-zinc-900 dark:text-white">{addon.name} x{addon.quantity}</div>
                                                             </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={addon.price * addon.quantity} currency={event.currency || 'USD'} /></div>
+                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={addon.price * addon.quantity} currency={eventCurrency} /></div>
                                                         </div>
                                                     ))}
 
@@ -866,7 +866,7 @@ export const EventView = () => {
                                                     {(completedRegistration?.serviceFee || 0) > 0 && (
                                                         <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
                                                             <span>Platform & Service Fees</span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.serviceFee || 0} currency={event.currency || 'USD'} /></span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.serviceFee || 0} currency={eventCurrency} /></span>
                                                         </div>
                                                     )}
 
@@ -880,7 +880,7 @@ export const EventView = () => {
                                                                 (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
                                                                 (completedRegistration?.serviceFee || 0) +
                                                                 (completedRegistration?.donationAmount || 0)
-                                                            } currency={event.currency || 'USD'} />
+                                                            } currency={eventCurrency} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1113,7 +1113,7 @@ export const EventView = () => {
                                                                     <div className="flex-1 text-center md:text-left">
                                                                         <div className="font-black text-xl flex flex-col md:flex-row items-center gap-3">
                                                                             {addon.name}
-                                                                            <span className="text-secondary font-black bg-secondary/10 px-3 py-1 rounded-full text-lg"><EventPriceDisplay amount={addon.price} currency={event.currency || 'USD'} /></span>
+                                                                            <span className="text-secondary font-black bg-secondary/10 px-3 py-1 rounded-full text-lg"><EventPriceDisplay amount={addon.price} currency={eventCurrency} /></span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-4 bg-white dark:bg-zinc-800 p-2 rounded-[1.5rem] shadow-lg">
@@ -1342,7 +1342,7 @@ export const EventView = () => {
                                                                         return (
                                                                             <div key={tier.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                                 <span>{qty} x {tier.name}</span>
-                                                                                <span>{tier.price === 0 ? 'FREE' : <EventPriceDisplay amount={tier.price * qty} currency={event.currency || 'USD'} />}</span>
+                                                                                <span>{tier.price === 0 ? 'FREE' : <EventPriceDisplay amount={tier.price * qty} currency={eventCurrency} />}</span>
                                                                             </div>
                                                                         );
                                                                     })
@@ -1350,7 +1350,7 @@ export const EventView = () => {
                                                                     (ticketSelection['general'] || 0) > 0 && (
                                                                         <div className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                             <span>{(ticketSelection['general'] || 0)} x {event.ticketName || 'Tickets'}</span>
-                                                                            <span>{event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? <EventPriceDisplay amount={Number(regData.donation) || 0} currency={event.currency || 'USD'} /> : <EventPriceDisplay amount={event.price * (ticketSelection['general'] || 0)} currency={event.currency || 'USD'} />}</span>
+                                                                            <span>{event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? <EventPriceDisplay amount={Number(regData.donation) || 0} currency={eventCurrency} /> : <EventPriceDisplay amount={event.price * (ticketSelection['general'] || 0)} currency={eventCurrency} />}</span>
                                                                         </div>
                                                                     )
                                                                 )}
@@ -1361,7 +1361,7 @@ export const EventView = () => {
                                                                     return (
                                                                         <div key={addon.id} className="flex justify-between text-zinc-600 dark:text-zinc-400">
                                                                             <span>{qty} x {addon.name}</span>
-                                                                            <span><EventPriceDisplay amount={addon.price * qty} currency={event.currency || 'USD'} /></span>
+                                                                            <span><EventPriceDisplay amount={addon.price * qty} currency={eventCurrency} /></span>
                                                                         </div>
                                                                     )
                                                                 })}
@@ -1381,7 +1381,7 @@ export const EventView = () => {
                                                                                 if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
                                                                                 else sub -= appliedPromo.value;
                                                                             }
-                                                                            return <EventPriceDisplay amount={Math.max(0, sub)} currency={event.currency || 'USD'} />;
+                                                                            return <EventPriceDisplay amount={Math.max(0, sub)} currency={eventCurrency} />;
                                                                         })()}
                                                                     </span>
                                                                 </div>
@@ -1390,7 +1390,7 @@ export const EventView = () => {
                                                                 {appliedPromo && (orderBreakdown?.discountAmount || 0) > 0 && (
                                                                     <div className="flex justify-between text-green-600 dark:text-green-400">
                                                                         <span>Discount ({appliedPromo.code})</span>
-                                                                        <span>-<EventPriceDisplay amount={orderBreakdown?.discountAmount || 0} currency={event.currency || 'USD'} /></span>
+                                                                        <span>-<EventPriceDisplay amount={orderBreakdown?.discountAmount || 0} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
 
@@ -1399,7 +1399,7 @@ export const EventView = () => {
                                                                         <span>Tax ({event.taxRate}%)</span>
                                                                         <span>
                                                                             {orderBreakdown 
-                                                                                ? <EventPriceDisplay amount={orderBreakdown.taxAmount} currency={event.currency || 'USD'} />
+                                                                                ? <EventPriceDisplay amount={orderBreakdown.taxAmount} currency={eventCurrency} />
                                                                                 : (() => {
                                                                                     let sub = 0;
                                                                                     if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
@@ -1411,7 +1411,7 @@ export const EventView = () => {
                                                                                         else sub -= appliedPromo.value;
                                                                                     }
                                                                                     const tax = Math.max(0, sub) * (event.taxRate / 100);
-                                                                                    return <EventPriceDisplay amount={tax} currency={event.currency || 'USD'} />;
+                                                                                    return <EventPriceDisplay amount={tax} currency={eventCurrency} />;
                                                                                 })()
                                                                             }
                                                                         </span>
@@ -1433,7 +1433,7 @@ export const EventView = () => {
                                                                                     else sub -= appliedPromo.value;
                                                                                 }
                                                                                 const amount = fee.type === 'percent' ? Math.max(0, sub) * (fee.amount / 100) : fee.amount;
-                                                                                return <EventPriceDisplay amount={amount} currency={event.currency || 'USD'} />;
+                                                                                return <EventPriceDisplay amount={amount} currency={eventCurrency} />;
                                                                             })()}
                                                                         </span>
                                                                     </div>
@@ -1446,7 +1446,7 @@ export const EventView = () => {
                                                                             {(() => {
                                                                                 // Use server breakdown if available
                                                                                 if (orderBreakdown) {
-                                                                                    return <EventPriceDisplay amount={orderBreakdown.platformFee} currency={event.currency || 'USD'} />;
+                                                                                    return <EventPriceDisplay amount={orderBreakdown.platformFee} currency={eventCurrency} />;
                                                                                 }
                                                                                 // Fallback calculation
                                                                                 let sub = 0;
@@ -1465,7 +1465,7 @@ export const EventView = () => {
 
                                                                                 const plan = organizerUser?.subscription?.plan || 'free';
                                                                                 const fee = StorageService.calculateFees(runningTotal, plan);
-                                                                                return <EventPriceDisplay amount={fee} currency={event.currency || 'USD'} />;
+                                                                                return <EventPriceDisplay amount={fee} currency={eventCurrency} />;
                                                                             })()}
                                                                         </span>
                                                                     </div>
@@ -1477,7 +1477,7 @@ export const EventView = () => {
                                                                         <span className="flex items-center gap-1">
                                                                             <Heart size={14} fill="currentColor" /> Platform Donation
                                                                         </span>
-                                                                        <span><EventPriceDisplay amount={regData.platformDonationAmount} currency={event.currency || 'USD'} /></span>
+                                                                        <span><EventPriceDisplay amount={regData.platformDonationAmount} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1485,7 +1485,7 @@ export const EventView = () => {
                                                                 <span>Total</span>
                                                                 <span className="flex items-center gap-2">
                                                                     {isCalculating && <Loader size={16} className="animate-spin text-zinc-400" />}
-                                                                    <EventPriceDisplay amount={calculateTotal()} currency={event.currency || 'USD'} />
+                                                                    <EventPriceDisplay amount={calculateTotal()} currency={eventCurrency} />
                                                                 </span>
                                                             </div>
                                                             {orderBreakdown && (
