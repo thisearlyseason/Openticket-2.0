@@ -663,25 +663,32 @@ export const AttendeeManager = () => {
 
             {/* Quick Stats */}
             {(() => {
-                // Computed Stats excluding Refunded/Cancelled
-                const validAttendees = attendees.filter(a => a.status !== 'refunded' && a.status !== 'cancelled');
-                const checkInCount = validAttendees.filter(a => a.checkedIn).length;
-                const totalRevenue = validAttendees.reduce((acc, curr) => acc + (curr.price || 0), 0);
+                // Use accurate calculations from paid registrations
+                const ticketGuests = attendees.filter(a => a.itemType === 'ticket' && a.status !== 'refunded' && a.status !== 'cancelled');
+                const ticketCheckInCount = ticketGuests.filter(a => a.checkedIn).length;
 
                 return (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 md:mb-8">
                         <div className="p-4 rounded-2xl bg-gradient-to-br from-green-50 to-white dark:from-zinc-900 dark:to-black border border-green-100 dark:border-zinc-800">
                             <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Check-in Status</div>
                             <div className="text-2xl font-black text-green-600 dark:text-green-400 flex items-end gap-2">
-                                {checkInCount} <span className="text-sm font-medium text-zinc-400 mb-1">/ {validAttendees.length}</span>
+                                {ticketCheckInCount} <span className="text-sm font-medium text-zinc-400 mb-1">/ {totalTickets}</span>
                             </div>
                             <div className="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                                <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${validAttendees.length > 0 ? (checkInCount / validAttendees.length) * 100 : 0}%` }}></div>
+                                <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${totalTickets > 0 ? (ticketCheckInCount / totalTickets) * 100 : 0}%` }}></div>
                             </div>
                         </div>
                         <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
-                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Revenue</div>
-                            <div className="text-2xl font-black text-zinc-900 dark:text-white truncate">${totalRevenue.toLocaleString()}</div>
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Ticket Revenue</div>
+                            <div className="text-2xl font-black text-zinc-900 dark:text-white truncate">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Add-on Revenue</div>
+                            <div className="text-2xl font-black text-purple-600 dark:text-purple-400 truncate">${totalAddOnRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Tickets Sold</div>
+                            <div className="text-2xl font-black text-zinc-900 dark:text-white truncate">{totalTickets}</div>
                         </div>
                     </div>
                 );
