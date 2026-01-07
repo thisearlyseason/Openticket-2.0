@@ -887,19 +887,35 @@ class OpenTicketAPITester:
             self.log_result("Profile Endpoint Structure", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run all tests including email template persistence"""
-        print("🔍 Starting OpenTicket Email Template Persistence Tests")
+        """Run all tests including Send Test Email functionality"""
+        print("🔍 Starting OpenTicket Send Test Email API Tests")
         print("=" * 60)
         
+        # Test Send Test Email functionality
+        print("\n📧 SEND TEST EMAIL API TESTS")
+        print("-" * 40)
+        self.test_send_test_email_full_template()
+        self.test_send_test_email_minimal_template()
+        self.test_send_test_email_missing_to_field()
+        self.test_send_test_email_missing_template()
+        self.test_send_test_email_template_without_subject()
+        self.test_email_status_endpoint()
+        
         # Test basic endpoints
+        print("\n🔧 BASIC API TESTS")
+        print("-" * 40)
         self.test_health_endpoint()
         self.test_debug_endpoint_removed()
         
         # Test CORS security
+        print("\n🔒 CORS SECURITY TESTS")
+        print("-" * 40)
         self.test_cors_valid_origin()
         self.test_cors_invalid_origin()
         
         # Test analytics functionality
+        print("\n📊 ANALYTICS TESTS")
+        print("-" * 40)
         self.test_analytics_tracking()
         self.test_analytics_tracking_device_parsing()
         self.test_analytics_retrieval_no_auth()
@@ -924,6 +940,14 @@ class OpenTicketAPITester:
         print(f"Passed: {passed}")
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        # Separate Send Test Email test results
+        send_test_email_tests = [r for r in self.results if 'Send Test Email' in r['test'] or 'Email Status' in r['test']]
+        send_test_email_passed = sum(1 for r in send_test_email_tests if r['success'])
+        send_test_email_total = len(send_test_email_tests)
+        
+        if send_test_email_total > 0:
+            print(f"\n📧 SEND TEST EMAIL TESTS: {send_test_email_passed}/{send_test_email_total} passed ({(send_test_email_passed/send_test_email_total)*100:.1f}%)")
         
         # Separate email template test results
         email_tests = [r for r in self.results if 'Email Template' in r['test'] or 'Profile' in r['test']]
