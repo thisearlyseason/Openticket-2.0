@@ -103,9 +103,33 @@ export const OrganizerProfile = () => {
     // Helper to check if a social URL is valid (not empty and not just the domain)
     const isValidSocialUrl = (url?: string): boolean => {
         if (!url || url.trim() === '') return false;
-        // Don't show if it's just pointing to openticket.events
+        // Don't show if it's just pointing to openticket.events or preview domains
         if (url.includes('openticket.events')) return false;
+        if (url.includes('preview.emergentagent.com')) return false;
         return true;
+    };
+
+    // Helper to normalize social URLs - ensures proper protocol
+    const normalizeSocialUrl = (url?: string): string => {
+        if (!url) return '';
+        let cleaned = url.trim();
+        
+        // Remove any preview domain prefix that might have been accidentally added
+        const previewPatterns = [
+            /^https?:\/\/[^\/]*preview\.emergentagent\.com\//i,
+            /^https?:\/\/[^\/]*openticket\.events\//i,
+        ];
+        for (const pattern of previewPatterns) {
+            cleaned = cleaned.replace(pattern, '');
+        }
+        
+        // If it already has a protocol, return as-is
+        if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+            return cleaned;
+        }
+        
+        // Add https:// prefix
+        return `https://${cleaned}`;
     };
 
     return (
