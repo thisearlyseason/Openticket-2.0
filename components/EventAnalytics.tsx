@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StorageService, PLANS } from '../services/storageService';
+import { isPaidStatus, isRefundedStatus, calculatePaidRevenue, calculatePaidTickets, getAddOnSummary } from '../services/paymentUtils';
 import { Event, Registration } from '../types';
 import { Button, Card, DonutChart, SimpleChart, Badge } from './UI';
-import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar, Download, QrCode } from 'lucide-react';
+import { ArrowLeft, Crown, Lock, BarChart3, TrendingUp, Users, DollarSign, Clock, Calendar, Download, QrCode, ShoppingBag } from 'lucide-react';
 
 export const EventAnalytics = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [event, setEvent] = useState<Event | null>(null);
     const [regs, setRegs] = useState<Registration[]>([]);
+    const [paidRegs, setPaidRegs] = useState<Registration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPro, setIsPro] = useState(false);
 
@@ -29,26 +31,26 @@ export const EventAnalytics = () => {
         const r = await StorageService.getRegistrations(id);
 
         if (e) setEvent(e);
-        setRegs(r.filter(reg => reg.paymentStatus !== 'refunded'));
+        setRegs(r);
+        // Filter to only paid (not refunded) for accurate analytics
+        setPaidRegs(r.filter(reg => isPaidStatus(reg.paymentStatus) && !isRefundedStatus(reg.paymentStatus)));
         setIsLoading(false);
     };
 
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><BarChart3 className="animate-bounce" /></div>;
     if (!event) return <div className="p-8">Event not found.</div>;
 
-    // --- Aggregation Logic ---
-    const totalSales = regs.length;
-    const grossRevenue = regs.reduce((sum, r) => {
-        let val = Number(r.donationAmount) || 0;
-        if (r.tickets) val += r.tickets.reduce((acc, t) => acc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
-        if (r.addOns && Array.isArray(r.addOns)) {
-            val += r.addOns.reduce((acc, a) => acc + ((Number(a.price) || 0) * (Number(a.quantity) || 0)), 0);
-        }
-        return sum + val;
-    }, 0);
+    // --- Aggregation Logic (using PAID registrations only) ---
+    const totalSales = paidRegs.length;
+    const grossRevenue = calculatePaidRevenue(paidRegs);
+    const totalTickets = calculatePaidTickets(paidRegs);
+
+    // Add-on summary
+    const addOnSummary = getAddOnSummary(paidRegs);
+    const totalAddOnRevenue = addOnSummary.reduce((sum, a) => sum + a.totalRevenue, 0);
 
     const ticketTypesData: Record<string, number> = {};
-    regs.forEach(r => {
+    paidRegs.forEach(r => {
         if (r.tickets) {
             r.tickets.forEach(t => {
                 ticketTypesData[t.name] = (ticketTypesData[t.name] || 0) + t.quantity;
@@ -58,7 +60,7 @@ export const EventAnalytics = () => {
     const donutData = Object.entries(ticketTypesData).map(([label, value]) => ({ label, value }));
 
     const salesOverTime: Record<string, number> = {};
-    regs.forEach(r => {
+    paidRegs.forEach(r => {
         const date = new Date(r.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
         salesOverTime[date] = (salesOverTime[date] || 0) + 1;
     });
@@ -68,12 +70,11 @@ export const EventAnalytics = () => {
         .map(([label, value]) => ({ label, value }));
 
     // Check-in Stats
-    // Check-in Stats
-    const checkInCount = regs.reduce((acc, r) => {
+    const checkInCount = paidRegs.reduce((acc, r) => {
         if (r.checkInStatuses) return acc + Object.values(r.checkInStatuses).filter(s => s.checkedIn).length;
         return acc + (r.checkedIn ? 1 : 0);
     }, 0);
-    const checkInRate = totalSales > 0 ? Math.round((checkInCount / totalSales) * 100) : 0;
+    const checkInRate = totalTickets > 0 ? Math.round((checkInCount / totalTickets) * 100) : 0;
 
     const downloadCSV = () => {
         if (!event || regs.length === 0) return alert('No data to export.');
