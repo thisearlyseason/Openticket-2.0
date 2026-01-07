@@ -865,7 +865,7 @@ export const CheckInPortal = () => {
         <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white flex flex-col">
             {/* Offline Status Banner */}
             {(!isOnline || pendingCheckIns > 0) && (
-                <div className={`${isOnline ? 'bg-yellow-500' : 'bg-red-500'} text-white px-4 py-2 flex items-center justify-between text-sm font-medium`}>
+                <div className={`${isOnline ? 'bg-yellow-500 text-black' : 'bg-red-500 text-white'} px-4 py-2 flex items-center justify-between text-sm font-medium`}>
                     <div className="flex items-center gap-2">
                         {isOnline ? <CloudOff size={16} /> : <WifiOff size={16} />}
                         {isOnline 
