@@ -1,9 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Search, Filter, Ticket, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Search, Filter, Ticket, Image as ImageIcon, Heart, Users } from 'lucide-react';
 import { StorageService } from '../services/storageService';
-import { Event } from '../types';
+import { Event, User } from '../types';
 import { Card, Badge, Button, formatTime } from './UI';
 import { HotelCTA } from './HotelCTA';
 
@@ -25,8 +25,16 @@ export const Home = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [showFavoriteOrganizers, setShowFavoriteOrganizers] = useState(false);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        // Load current user
+        const user = StorageService.getCurrentUser();
+        setCurrentUser(user);
+    }, []);
 
     useEffect(() => {
         const loadEvents = async () => {
@@ -76,8 +84,12 @@ export const Home = () => {
         if (selectedCategory !== 'all') {
             results = results.filter(e => e.category === selectedCategory);
         }
+        // Filter by favorite organizers
+        if (showFavoriteOrganizers && currentUser?.favoriteOrganizers?.length) {
+            results = results.filter(e => currentUser.favoriteOrganizers?.includes(e.ownerId));
+        }
         setFilteredEvents(results);
-    }, [searchTerm, filterType, selectedCategory, events]);
+    }, [searchTerm, filterType, selectedCategory, events, showFavoriteOrganizers, currentUser]);
 
     return (
         <div className="space-y-8 min-h-screen">
