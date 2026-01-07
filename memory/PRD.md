@@ -117,6 +117,28 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] **Toggle:** Button toggles pink when active
 - [x] **Backend:** Uses existing `toggleFavoriteOrganizer` in StorageService
 
+#### Event Builder Image Gallery
+- [x] **Location:** Step 2 (Content) in `EventBuilder.tsx`
+- [x] **Add Image Button:** Creates new GalleryItem with id, url, caption
+- [x] **Grid Layout:** 2-column responsive grid for gallery images
+- [x] **FileDropZone:** Each gallery item has image upload functionality
+- [x] **Captions:** Text input below each image for adding captions
+- [x] **Remove Button:** Delete individual gallery items
+- [x] **Empty State:** Shows placeholder when no gallery images exist
+- [x] **Type:** Uses existing `GalleryItem` interface (id, url, caption)
+
+#### Event Details - Schedule & Gallery Display
+- [x] **Schedule Section:** Displays rich text schedule with PDF download button
+- [x] **PDF Download:** `Download Schedule (PDF)` button with FileText icon
+- [x] **Gallery Section:** Renders after schedule, before tickets
+- [x] **Lightbox Modal:** Click image to open fullscreen lightbox
+- [x] **Lightbox Features:**
+  - Black overlay with blur
+  - Large image display with caption
+  - X button to close
+  - Click outside to close
+- [x] **Responsive Grid:** 2-3 column layout for gallery thumbnails
+
 ### ✅ Completed (January 6, 2026)
 
 #### My Templates - Save Custom Ticket Designs (LATEST - January 6, 2026)
