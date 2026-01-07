@@ -51,7 +51,23 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ## Implementation Status
 
-### ✅ Bug Fixes (January 6, 2026 - Latest)
+### ✅ Bug Fixes (January 7, 2026 - Latest)
+
+#### Profile Data Persistence Fix (P0 Critical Bug Fixed)
+- [x] **Root Cause:** Profile fields (bio, phone, business_email, business_phone, use_business_name, show_phone_publicly) were listed as DB column fields in `profileController.js` but these columns don't exist in the Supabase profiles table
+- [x] **Fix Location:** `/app/backend/controllers/profileController.js` - syncProfile, updateProfile, getProfile, getProfileById methods
+- [x] **Solution:** Moved these 6 fields from `dbColumnFields` to `extendedSettingsFields` so they are stored in the existing `subscription.settings` JSONB field (which already works for logo_url, header_image_url, etc.)
+- [x] **Verification:** Backend pytest tests confirm 100% pass rate - all profile fields now persist correctly
+- [x] **Fields Fixed:**
+  - `bio` - Organizer biography/description
+  - `phone` - Personal phone number
+  - `business_email` - Business contact email
+  - `business_phone` - Business phone number
+  - `use_business_name` - Toggle to display business name publicly
+  - `show_phone_publicly` - Toggle to show phone on public profile
+- [x] **Test Report:** `/app/test_reports/iteration_28.json` - All 8 backend tests passed
+
+### ✅ Bug Fixes (January 6, 2026)
 
 #### Black Screen After Stripe Payment (P0 Bug Fixed)
 - [x] **Root Cause:** Race condition in `EventView.tsx` where payment verification ran before event data loaded
