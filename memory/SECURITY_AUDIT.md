@@ -199,8 +199,8 @@ stripe.webhooks.constructEvent(buf, sig, webhookSecret);
 - [x] Stripe webhook signature validation
 - [x] No plaintext passwords stored
 - [x] HTTPS enforced (via platform)
-- [ ] CORS whitelist configured
-- [ ] Rate limiting implemented
+- [x] CORS whitelist configured
+- [x] Rate limiting implemented
 
 ### Financial ✅
 - [x] Stripe Checkout Sessions (PCI compliant)
