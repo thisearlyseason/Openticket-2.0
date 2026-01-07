@@ -626,9 +626,9 @@ class OpenTicketAPITester:
             self.log_result("Profile Endpoint Structure", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run all audit fix tests"""
-        print("🔍 Starting OpenTicket Audit Fix Tests")
-        print("=" * 50)
+        """Run all tests including email template persistence"""
+        print("🔍 Starting OpenTicket Email Template Persistence Tests")
+        print("=" * 60)
         
         # Test basic endpoints
         self.test_health_endpoint()
@@ -644,9 +644,17 @@ class OpenTicketAPITester:
         self.test_analytics_retrieval_no_auth()
         self.test_analytics_missing_event_id()
         
-        print("\n" + "=" * 50)
+        # Test email template persistence functionality
+        print("\n📧 EMAIL TEMPLATE PERSISTENCE TESTS")
+        print("-" * 40)
+        self.test_profile_get_email_templates()
+        self.test_profile_update_email_templates()
+        self.test_email_template_persistence_cycle()
+        self.test_profile_endpoint_structure()
+        
+        print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
-        print("=" * 50)
+        print("=" * 60)
         
         passed = sum(1 for r in self.results if r['success'])
         total = len(self.results)
@@ -655,6 +663,14 @@ class OpenTicketAPITester:
         print(f"Passed: {passed}")
         print(f"Failed: {total - passed}")
         print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        # Separate email template test results
+        email_tests = [r for r in self.results if 'Email Template' in r['test'] or 'Profile' in r['test']]
+        email_passed = sum(1 for r in email_tests if r['success'])
+        email_total = len(email_tests)
+        
+        if email_total > 0:
+            print(f"\n📧 EMAIL TEMPLATE TESTS: {email_passed}/{email_total} passed ({(email_passed/email_total)*100:.1f}%)")
         
         if total - passed > 0:
             print("\n❌ FAILED TESTS:")
