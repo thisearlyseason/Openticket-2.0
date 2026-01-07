@@ -1182,14 +1182,14 @@ export const EventView = () => {
 
                                                 {event.addOns && event.addOns.length > 0 && (
                                                     <div className="mt-12 pt-12 border-t border-zinc-100 dark:border-zinc-800">
-                                                        <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Gift size={32} className="text-secondary" /> Extra Goodies</h3>
+                                                        <h3 className="text-2xl font-black uppercase tracking-tighter mb-8 flex items-center gap-3"><Gift size={32} className="text-primary" /> Extra Goodies</h3>
                                                         <div className="space-y-6">
                                                             {event.addOns.map(addon => (
-                                                                <div key={addon.id} className="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-8 group hover:border-secondary/30 transition-all">
+                                                                <div key={addon.id} className="p-8 bg-zinc-50 dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-center gap-8 group hover:border-primary/30 transition-all">
                                                                     <div className="flex-1 text-center md:text-left">
                                                                         <div className="font-black text-xl flex flex-col md:flex-row items-center gap-3">
                                                                             {addon.name}
-                                                                            <span className="text-secondary font-black bg-secondary/10 px-3 py-1 rounded-full text-lg"><EventPriceDisplay amount={addon.price} currency={eventCurrency} /></span>
+                                                                            <span className="text-primary font-black bg-primary/10 px-3 py-1 rounded-full text-lg"><EventPriceDisplay amount={addon.price} currency={eventCurrency} /></span>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-center gap-4 bg-white dark:bg-zinc-800 p-2 rounded-[1.5rem] shadow-lg">
