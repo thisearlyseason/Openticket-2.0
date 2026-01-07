@@ -129,18 +129,20 @@ export const Home = () => {
                             </button>
                         ))}
                         
-                        {/* Favorite Organizers Button - Only show if user is logged in AND has favorites */}
-                        {currentUser && currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0 && (
+                        {/* Favorite Organizers Button - Show for logged in users */}
+                        {currentUser && (
                             <button
                                 onClick={() => setShowFavoriteOrganizers(!showFavoriteOrganizers)}
                                 className={`px-5 py-2 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300 border-2 flex items-center gap-2 ${
                                     showFavoriteOrganizers 
                                         ? 'bg-pink-500 text-white border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.5)]' 
-                                        : 'bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 border-pink-500/50 hover:border-pink-500'
+                                        : currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0
+                                            ? 'bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 border-pink-500/50 hover:border-pink-500'
+                                            : 'bg-black/20 text-white/70 hover:bg-black/40 border-white/20 hover:border-white/40'
                                 }`}
                             >
-                                <Heart size={16} className={showFavoriteOrganizers ? 'fill-white' : 'fill-pink-400'} />
-                                Favorites ({currentUser.favoriteOrganizers.length})
+                                <Heart size={16} className={showFavoriteOrganizers || (currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0) ? 'fill-current' : ''} />
+                                Favorites {currentUser.favoriteOrganizers && currentUser.favoriteOrganizers.length > 0 ? `(${currentUser.favoriteOrganizers.length})` : ''}
                             </button>
                         )}
                     </div>
