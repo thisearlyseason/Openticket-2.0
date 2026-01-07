@@ -7,7 +7,7 @@ import { CurrencyService } from '../services/currencyService';
 import { Event, Registration, PurchasedTicket, PurchasedAddOn, PromoCode, User } from '../types';
 import stripePromise from '../services/stripe';
 import { Button, Input, Select, Card, Badge, formatTime, AnchorButton, PriceDisplay, EventPriceDisplay, ReceiptModal, DisplayCurrencySelector } from './UI';
-import { Calendar, MapPin, Clock, Share2, Ticket, Check, AlertCircle, Info, Lock, Users, Printer, FileText, Download, Gift, Hourglass, CheckCircle, ArrowRight, Target, Image as ImageIcon, QrCode, Heart, Loader } from 'lucide-react';
+import { Calendar, MapPin, Clock, Share2, Ticket, Check, AlertCircle, Info, Lock, Users, Printer, FileText, Download, Gift, Hourglass, CheckCircle, ArrowRight, Target, Image as ImageIcon, QrCode, Heart, Loader, Eye, X } from 'lucide-react';
 import { useGlobalUI } from './GlobalUIProvider';
 
 export const EventView = () => {
