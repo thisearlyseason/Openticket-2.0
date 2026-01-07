@@ -27,8 +27,38 @@ export const Home = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [showFavoriteOrganizers, setShowFavoriteOrganizers] = useState(false);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [shareToast, setShareToast] = useState<string | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Share Explore page handler
+    const handleShareExplore = async () => {
+        const shareData = {
+            title: 'Discover events on OpenTicket',
+            text: 'Find and share amazing events happening now! 🎉',
+            url: `${window.location.origin}/#/browse`
+        };
+
+        // Try native share first (mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (e: any) {
+                if (e.name === 'AbortError') return; // User cancelled
+            }
+        }
+
+        // Fallback: copy to clipboard
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            setShareToast('Explore link copied! Share it anywhere.');
+            setTimeout(() => setShareToast(null), 3000);
+        } catch (e) {
+            setShareToast('Copy the link from your browser address bar to share.');
+            setTimeout(() => setShareToast(null), 3000);
+        }
+    };
 
     useEffect(() => {
         // Load current user initially and on location change (to catch updates from other pages)
