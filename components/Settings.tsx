@@ -580,6 +580,89 @@ export const Settings = () => {
                                     className="opacity-60 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800"
                                 />
 
+                                {/* Password Change Section */}
+                                <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <Shield size={18} className="text-zinc-500" />
+                                            <span className="font-bold text-zinc-900 dark:text-white">Password & Security</span>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowPasswordChange(!showPasswordChange)}
+                                            className="text-sm"
+                                        >
+                                            {showPasswordChange ? 'Cancel' : 'Change Password'}
+                                        </Button>
+                                    </div>
+
+                                    {showPasswordChange && (
+                                        <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 space-y-4 animate-in fade-in slide-in-from-top-2">
+                                            <div className="relative">
+                                                <Input
+                                                    label="Current Password"
+                                                    type={showCurrentPw ? 'text' : 'password'}
+                                                    value={currentPassword}
+                                                    onChange={e => setCurrentPassword(e.target.value)}
+                                                    placeholder="Enter your current password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCurrentPw(!showCurrentPw)}
+                                                    className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-600"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            </div>
+
+                                            <div className="relative">
+                                                <Input
+                                                    label="New Password"
+                                                    type={showNewPw ? 'text' : 'password'}
+                                                    value={newPassword}
+                                                    onChange={e => setNewPassword(e.target.value)}
+                                                    placeholder="Enter new password"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPw(!showNewPw)}
+                                                    className="absolute right-3 top-9 text-zinc-400 hover:text-zinc-600"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            </div>
+
+                                            <Input
+                                                label="Confirm New Password"
+                                                type={showNewPw ? 'text' : 'password'}
+                                                value={confirmPassword}
+                                                onChange={e => setConfirmPassword(e.target.value)}
+                                                placeholder="Confirm new password"
+                                            />
+
+                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-700/50 rounded-lg p-3">
+                                                <p className="font-bold mb-1">Password Requirements:</p>
+                                                <ul className="list-disc list-inside space-y-1">
+                                                    <li className={newPassword.length >= 8 ? 'text-green-600' : ''}>At least 8 characters</li>
+                                                    <li className={/[A-Z]/.test(newPassword) ? 'text-green-600' : ''}>One uppercase letter</li>
+                                                    <li className={/[a-z]/.test(newPassword) ? 'text-green-600' : ''}>One lowercase letter</li>
+                                                    <li className={/\d/.test(newPassword) ? 'text-green-600' : ''}>One number</li>
+                                                    <li className={/[@$!%*?&]/.test(newPassword) ? 'text-green-600' : ''}>One special character (@$!%*?&)</li>
+                                                </ul>
+                                            </div>
+
+                                            <Button
+                                                onClick={handleChangePassword}
+                                                disabled={isChangingPassword || !currentPassword || !newPassword || newPassword !== confirmPassword}
+                                                className="w-full"
+                                            >
+                                                {isChangingPassword ? 'Changing Password...' : 'Update Password'}
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Organizer Upgrade */}
                                 {user.role === 'attendee' && (
                                     <div className="mt-8 p-6 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl border border-purple-100 dark:border-purple-800/30">
