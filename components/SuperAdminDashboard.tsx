@@ -549,21 +549,21 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             ? `Re-activate ${user.name}?`
             : `Are you sure you want to BAN ${user.name}? They will be unable to login.`;
 
-        if (confirm(confirmMsg)) {
+        if (window.confirm(confirmMsg)) {
             StorageService.updateUser(user.id, { isBanned: !user.isBanned });
             refreshData();
         }
     };
 
     const handleDeleteEvent = (event: Event) => {
-        if (confirm(`Delete "${event.title}"? This cannot be undone.`)) {
+        if (window.confirm(`Delete "${event.title}"? This cannot be undone.`)) {
             StorageService.deleteEvent(event.id);
             refreshData();
         }
     };
 
     const handleRejectEvent = (event: Event) => {
-        if (confirm(`Reject "${event.title}"? This will hide the event from the public and mark it as rejected.`)) {
+        if (window.confirm(`Reject "${event.title}"? This will hide the event from the public and mark it as rejected.`)) {
             StorageService.saveEvent({ ...event, moderationStatus: 'rejected', visibility: 'hidden' });
             refreshData();
         }
