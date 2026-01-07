@@ -1153,7 +1153,20 @@ export const Settings = () => {
                                                     <strong>Variables:</strong> {'{{event_title}}'}, {'{{attendee_name}}'}, {'{{ticket_type}}'}, {'{{event_date}}'}, {'{{event_location}}'}, {'{{qr_code_link}}'}
                                                 </div>
                                             </div>
-                                            <div className="flex justify-end pt-4">
+                                            <div className="flex justify-between items-center pt-4">
+                                                <Button 
+                                                    variant="outline"
+                                                    onClick={() => handleSendTestEmail(editingTemplate)}
+                                                    disabled={sendingTestId === editingTemplate.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    {sendingTestId === editingTemplate.id ? (
+                                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Send size={16} />
+                                                    )}
+                                                    Send Test Email
+                                                </Button>
                                                 <Button onClick={() => handleSaveTemplate(editingTemplate)}>Save Template</Button>
                                             </div>
                                         </div>
