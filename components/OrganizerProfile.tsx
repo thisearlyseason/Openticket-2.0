@@ -149,20 +149,32 @@ export const OrganizerProfile = () => {
             </div>
 
                 {/* Profile Content */}
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-16 relative z-10 pb-20">
-                    {/* Profile Header Card */}
-                    <Card className="pt-36 md:pt-44 p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8 relative">
-                        {/* Profile Image - Square container, NO CROPPING, full image visible */}
-                        <div className="absolute left-1/2 -translate-x-1/2 -top-28 md:-top-36 z-20">
-                            <div className="w-48 h-48 md:w-60 md:h-60 rounded-2xl border-4 border-white dark:border-zinc-900 shadow-2xl bg-white dark:bg-zinc-800 p-3 flex items-center justify-center">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-16 relative z-[1] pb-20">
+                    {/* Profile Header Card - overflow-visible to prevent clipping */}
+                    <Card className="pt-32 md:pt-40 p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8 relative" style={{ overflow: 'visible' }}>
+                        {/* Profile Image Wrapper - overflow: visible, equal padding, centered */}
+                        <div 
+                            className="absolute left-1/2 -translate-x-1/2 -top-24 md:-top-32 flex justify-center items-center p-4"
+                            style={{ zIndex: 10, overflow: 'visible' }}
+                        >
+                            {/* Profile Image Container - circular with object-fit: contain */}
+                            <div 
+                                className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-white dark:bg-zinc-800 flex items-center justify-center p-2"
+                                style={{ overflow: 'visible' }}
+                            >
                                 {organizer?.logoUrl ? (
                                     <img 
                                         src={organizer.logoUrl} 
                                         alt={displayName} 
-                                        className="max-w-full max-h-full object-contain"
+                                        className="w-[120px] h-[120px] md:w-[152px] md:h-[152px] rounded-full block"
+                                        style={{ 
+                                            objectFit: 'contain', 
+                                            objectPosition: 'center',
+                                            backgroundColor: 'transparent'
+                                        }}
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-700 rounded-xl">
+                                    <div className="w-full h-full flex items-center justify-center text-5xl md:text-6xl font-black text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-700 rounded-full">
                                         {displayName.charAt(0).toUpperCase()}
                                     </div>
                                 )}
