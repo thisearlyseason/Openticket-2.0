@@ -289,7 +289,7 @@ export const Dashboard = () => {
                         <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Available Payout</div>
                         <div className="text-3xl font-black text-zinc-900 dark:text-white">${currentUser?.availablePayout?.toFixed(2) || '0.00'}</div>
                     </div>
-                    <Wallet size={24} className="text-secondary" />
+                    <Wallet size={24} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
                 {/* Affiliate Access */}
                 <div className="bg-gradient-to-br from-[#E0FF20]/20 to-green-500/10 border border-[#E0FF20]/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-[#E0FF20] transition-colors group" onClick={() => navigate('/affiliate')}>
