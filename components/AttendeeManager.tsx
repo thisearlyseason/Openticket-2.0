@@ -4,9 +4,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
 import { EmailService } from '../services/emailService';
+import { isPaidStatus, isRefundedStatus, getPaymentStatusLabel, calculatePaidRevenue, calculatePaidTickets, getAddOnSummary } from '../services/paymentUtils';
 import { Event, Registration, WaitlistEntry } from '../types';
 import { Button, Input, Select, Card, Badge } from './UI';
-import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2, Hourglass, DollarSign, X } from 'lucide-react';
+import { ArrowLeft, Search, Download, Plus, Check, Edit, Printer, AlertTriangle, MoreHorizontal, User, Mail, Ticket, Clock, Filter, Trash2, Hourglass, DollarSign, X, ShoppingBag, Eye, EyeOff } from 'lucide-react';
 
 interface AttendeeItem {
     id: string;
@@ -23,6 +24,7 @@ interface AttendeeItem {
     approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
     checkedIn: boolean; // For tickets: check-in. For addons: fulfilled.
     fulfilled?: boolean;
+    addOns?: { name: string; quantity: number; price: number }[]; // Add-ons for this guest
 }
 
 export const AttendeeManager = () => {
@@ -37,9 +39,13 @@ export const AttendeeManager = () => {
     const { showToast, showConfirm } = useGlobalUI();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    // Show/hide add-ons toggle
+    const [showAddOns, setShowAddOns] = useState(false);
     // Waitlist Support
     const [activeTab, setActiveTab] = useState<'attendees' | 'waitlist'>('attendees');
     const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+    // Financial summary state
+    const [allRegistrations, setAllRegistrations] = useState<Registration[]>([]);
 
     // Bulk Selection
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
