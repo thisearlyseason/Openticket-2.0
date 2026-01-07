@@ -797,7 +797,105 @@ export const EventBuilder = () => {
                                         <Sparkles size={14} className="mr-1" /> Generate Image with AI
                                     </Button>
                                 </div>
-                                {/* Gallery, Description etc. */}
+
+                                {/* Image Gallery Section */}
+                                <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div>
+                                            <label className="text-sm font-bold text-zinc-500 uppercase">Image Gallery</label>
+                                            <p className="text-xs text-zinc-400 mt-1">Add multiple images to showcase your event</p>
+                                        </div>
+                                        <Button 
+                                            size="sm" 
+                                            variant="outline"
+                                            onClick={() => {
+                                                const newGalleryItem: GalleryItem = {
+                                                    id: `gallery-${Date.now()}`,
+                                                    url: '',
+                                                    caption: ''
+                                                };
+                                                setFormData({ 
+                                                    ...formData, 
+                                                    gallery: [...(formData.gallery || []), newGalleryItem] 
+                                                });
+                                            }}
+                                        >
+                                            <Plus size={14} className="mr-1" /> Add Image
+                                        </Button>
+                                    </div>
+
+                                    {formData.gallery && formData.gallery.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {formData.gallery.map((item, idx) => (
+                                                <div key={item.id} className="relative group border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+                                                    {item.url ? (
+                                                        <div className="aspect-video relative">
+                                                            <img 
+                                                                src={item.url} 
+                                                                alt={item.caption || `Gallery image ${idx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                            <button
+                                                                onClick={() => {
+                                                                    const updated = [...(formData.gallery || [])];
+                                                                    updated[idx] = { ...updated[idx], url: '' };
+                                                                    setFormData({ ...formData, gallery: updated });
+                                                                }}
+                                                                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="aspect-video">
+                                                            <FileDropZone
+                                                                label=""
+                                                                currentImage=""
+                                                                onFileSelect={(b64) => {
+                                                                    const updated = [...(formData.gallery || [])];
+                                                                    updated[idx] = { ...updated[idx], url: b64 as string };
+                                                                    setFormData({ ...formData, gallery: updated });
+                                                                }}
+                                                                onClear={() => {}}
+                                                                className="h-full"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <div className="p-3">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Add a caption..."
+                                                            value={item.caption || ''}
+                                                            onChange={(e) => {
+                                                                const updated = [...(formData.gallery || [])];
+                                                                updated[idx] = { ...updated[idx], caption: e.target.value };
+                                                                setFormData({ ...formData, gallery: updated });
+                                                            }}
+                                                            className="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                const updated = (formData.gallery || []).filter((_, i) => i !== idx);
+                                                                setFormData({ ...formData, gallery: updated });
+                                                            }}
+                                                            className="mt-2 text-xs text-red-500 hover:text-red-600 flex items-center gap-1"
+                                                        >
+                                                            <Trash2 size={12} /> Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl">
+                                            <ImageIcon size={32} className="mx-auto text-zinc-300 mb-2" />
+                                            <p className="text-sm text-zinc-400">No gallery images yet</p>
+                                            <p className="text-xs text-zinc-400 mt-1">Click "Add Image" to create a gallery</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Description */}
                                 <div className="mt-6">
                                     <div className="flex justify-between items-center mb-1">
                                         <label className="text-sm font-bold text-zinc-500 uppercase">Description</label>
