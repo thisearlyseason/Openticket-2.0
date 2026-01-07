@@ -296,11 +296,6 @@ export const Auth = () => {
                             Continue with Google
                         </button>
 
-                        <div className="relative flex items-center justify-center my-4">
-                            <span className="absolute w-full h-px bg-zinc-200 dark:bg-zinc-800"></span>
-                            <span className="relative bg-white dark:bg-zinc-900 px-3 text-xs text-zinc-500 uppercase">Or with email</span>
-                        </div>
-
                         <form onSubmit={handleLogin} className="space-y-4">
                             <Input
                                 label="Email Address"
@@ -309,12 +304,11 @@ export const Auth = () => {
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
-                            <Input
+                            <PasswordInput
                                 label="Password"
-                                type="password"
-                                required
                                 value={formData.password}
                                 onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                required
                             />
                             {error && (
                                 <div className="text-red-500 text-sm text-center font-bold bg-red-500/10 p-3 rounded flex items-center justify-center gap-2">
