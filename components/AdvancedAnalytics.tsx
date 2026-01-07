@@ -79,8 +79,23 @@ export const AdvancedAnalytics = () => {
             const startDate = getDateRangeFilter(dateRange);
             const filteredRegs = allRegs.filter(r => new Date(r.timestamp) >= startDate);
 
-            // Calculate analytics
-            const data = calculateAnalytics(myEvents, filteredRegs);
+            // Fetch real page view analytics from backend
+            let realAnalytics = { totalViews: 0, byDevice: {}, byCountry: [], byDay: [] };
+            try {
+                const token = localStorage.getItem('openticket_auth_token');
+                const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                const response = await fetch(`${API_URL}/api/analytics/organizer?range=${dateRange}`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (response.ok) {
+                    realAnalytics = await response.json();
+                }
+            } catch (e) {
+                console.debug('[Analytics] Failed to fetch page view analytics:', e);
+            }
+
+            // Calculate analytics with real page view data
+            const data = calculateAnalytics(myEvents, filteredRegs, realAnalytics);
             setAnalyticsData(data);
 
             // Calculate previous period for comparison
