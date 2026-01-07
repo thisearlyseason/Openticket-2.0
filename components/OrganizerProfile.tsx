@@ -271,7 +271,7 @@ export const OrganizerProfile = () => {
 
                                 {isValidSocialUrl(organizer?.socials?.website) && (
                                     <a 
-                                        href={organizer!.socials!.website}
+                                        href={normalizeSocialUrl(organizer!.socials!.website)}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="flex items-center gap-3 text-zinc-600 dark:text-zinc-400 hover:text-primary transition-colors"
