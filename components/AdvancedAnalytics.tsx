@@ -105,25 +105,11 @@ export const AdvancedAnalytics = () => {
     };
 
     const calculateAnalytics = (events: Event[], regs: Registration[]): AnalyticsData => {
-        // Total revenue
-        const totalRevenue = regs.reduce((sum, r) => {
-            let val = Number(r.donationAmount) || 0;
-            if (r.tickets) {
-                val += r.tickets.reduce((acc, t) => acc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
-            }
-            if (r.addOns && Array.isArray(r.addOns)) {
-                val += r.addOns.reduce((acc, a) => acc + ((Number(a.price) || 0) * (Number(a.quantity) || 0)), 0);
-            }
-            return sum + val;
-        }, 0);
+        // Total revenue - using utility function for consistency
+        const totalRevenue = regs.reduce((sum, r) => sum + calculateRegistrationRevenue(r), 0);
 
-        // Total tickets sold
-        const totalTicketsSold = regs.reduce((sum, r) => {
-            if (r.tickets) {
-                return sum + r.tickets.reduce((acc, t) => acc + (Number(t.quantity) || 0), 0);
-            }
-            return sum + 1;
-        }, 0);
+        // Total tickets sold - using utility function
+        const totalTicketsSold = regs.reduce((sum, r) => sum + calculateRegistrationTickets(r), 0);
 
         // Conversion rate (simplified - would need page view data for accurate calculation)
         const conversionRate = events.length > 0 ? (regs.length / (events.length * 100)) * 100 : 0;
@@ -137,14 +123,8 @@ export const AdvancedAnalytics = () => {
             if (!eventRevenue[r.eventId]) {
                 eventRevenue[r.eventId] = { revenue: 0, tickets: 0 };
             }
-            let val = Number(r.donationAmount) || 0;
-            let tickets = 0;
-            if (r.tickets) {
-                val += r.tickets.reduce((acc, t) => acc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
-                tickets = r.tickets.reduce((acc, t) => acc + (Number(t.quantity) || 0), 0);
-            }
-            eventRevenue[r.eventId].revenue += val;
-            eventRevenue[r.eventId].tickets += tickets || 1;
+            eventRevenue[r.eventId].revenue += calculateRegistrationRevenue(r);
+            eventRevenue[r.eventId].tickets += calculateRegistrationTickets(r);
         });
 
         const topEvents = Object.entries(eventRevenue)
@@ -160,11 +140,7 @@ export const AdvancedAnalytics = () => {
         const revenueByDay: Record<string, number> = {};
         regs.forEach(r => {
             const date = new Date(r.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            let val = Number(r.donationAmount) || 0;
-            if (r.tickets) {
-                val += r.tickets.reduce((acc, t) => acc + ((Number(t.pricePerTicket) || 0) * (Number(t.quantity) || 0)), 0);
-            }
-            revenueByDay[date] = (revenueByDay[date] || 0) + val;
+            revenueByDay[date] = (revenueByDay[date] || 0) + calculateRegistrationRevenue(r);
         });
 
         const revenueByDayData = Object.entries(revenueByDay)
@@ -198,12 +174,11 @@ export const AdvancedAnalytics = () => {
         const salesByHourData = Object.entries(salesByHour)
             .map(([label, value]) => ({ label, value }));
 
-        // Device breakdown (simulated - would need tracking for real data)
-        const deviceBreakdown = [
-            { label: 'Mobile', value: Math.round(regs.length * 0.65) },
-            { label: 'Desktop', value: Math.round(regs.length * 0.30) },
-            { label: 'Tablet', value: Math.round(regs.length * 0.05) }
-        ];
+        // Device breakdown - Note: Real tracking would require analytics integration
+        // For now, show actual registration count without simulated breakdown
+        const deviceBreakdown = regs.length > 0 ? [
+            { label: 'All Devices', value: regs.length }
+        ] : [];
 
         // Location data (from registrations if available)
         const locations: Record<string, number> = {};
