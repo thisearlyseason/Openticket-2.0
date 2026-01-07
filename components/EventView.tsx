@@ -1701,7 +1701,7 @@ export const EventView = () => {
                         {/* Share Card - Interactive */}
                         <Card className="p-8 bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 rounded-[3rem] text-center">
                             <div className="w-16 h-16 bg-white dark:bg-black rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-xl">
-                                <Share2 size={32} className="text-primary" />
+                                <Share2 size={32} className="text-pink-500" />
                             </div>
                             <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Tell your friends</h3>
                             <p className="text-zinc-500 font-bold mb-6">This event is better with a crew. Share the vibe!</p>
