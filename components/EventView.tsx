@@ -1571,23 +1571,23 @@ export const EventView = () => {
                         <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/40 transition-all"></div>
                             <div className="relative text-center">
-                                {/* Profile Photo / Logo - NO CROPPING, show full image */}
-                                <div className="w-32 h-32 bg-white rounded-full mx-auto mb-6 flex items-center justify-center p-2 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700">
+                                {/* Profile Photo / Logo - Square container, NO CROPPING, full image visible */}
+                                <div className="w-36 h-36 bg-white rounded-2xl mx-auto mb-6 flex items-center justify-center p-3 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700">
                                     {/* Show logo first, then header image, then initial */}
                                     {organizerUser?.logoUrl ? (
                                         <img 
                                             src={organizerUser.logoUrl} 
                                             alt={organizerUser.businessName || organizerUser.name} 
-                                            className="w-full h-full object-contain rounded-full" 
+                                            className="max-w-full max-h-full object-contain" 
                                         />
                                     ) : organizerUser?.headerImageUrl ? (
                                         <img 
                                             src={organizerUser.headerImageUrl} 
                                             alt={organizerUser.businessName || organizerUser.name} 
-                                            className="w-full h-full object-contain rounded-full" 
+                                            className="max-w-full max-h-full object-contain" 
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-zinc-800 rounded-full flex items-center justify-center">
+                                        <div className="w-full h-full bg-zinc-800 rounded-xl flex items-center justify-center">
                                             <span className="text-5xl font-black text-white/80">
                                                 {(() => {
                                                     // Use business name if public, otherwise personal name
