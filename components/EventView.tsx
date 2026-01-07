@@ -1556,17 +1556,21 @@ export const EventView = () => {
                         <Card className="p-8 bg-black text-white border-none rounded-[3rem] shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/40 transition-all"></div>
                             <div className="relative text-center">
+                                {/* Profile Photo / Logo - Prioritize image over initial */}
                                 <div className="w-32 h-32 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-full mx-auto mb-6 flex items-center justify-center p-1 ring-4 ring-white/10 group-hover:scale-110 transition-transform duration-700 overflow-hidden">
                                     <div className="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center overflow-hidden bg-white/5">
+                                        {/* Show logo first, then header image, then initial */}
                                         {organizerUser?.logoUrl ? (
                                             <img src={organizerUser.logoUrl} alt={organizerUser.businessName || organizerUser.name} className="w-full h-full object-cover" />
+                                        ) : organizerUser?.headerImageUrl ? (
+                                            <img src={organizerUser.headerImageUrl} alt={organizerUser.businessName || organizerUser.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <span className="text-5xl font-black text-white/80">
                                                 {(() => {
+                                                    // Use business name if public, otherwise personal name
                                                     const name = organizerUser?.useBusinessName 
                                                         ? (organizerUser.businessName || organizerUser.name) 
                                                         : (organizerUser?.name || '');
-                                                    // Ensure we get a letter, not a number
                                                     const firstChar = name?.charAt(0)?.toUpperCase();
                                                     return firstChar && /[A-Z]/.test(firstChar) ? firstChar : 'O';
                                                 })()}
@@ -1574,20 +1578,25 @@ export const EventView = () => {
                                         )}
                                     </div>
                                 </div>
+                                
                                 <div className="text-xs font-black uppercase tracking-[3px] text-zinc-500 mb-2">Hosted by</div>
+                                
+                                {/* Display Name - Based on useBusinessName setting */}
                                 <h3 className="text-xl font-black mb-2 uppercase tracking-tighter">
                                     {organizerUser?.useBusinessName 
                                         ? (organizerUser.businessName || organizerUser.name) 
                                         : (organizerUser?.name || 'Event Organizer')}
                                 </h3>
-                                {organizerUser?.organizerSubtitle && (
+                                
+                                {/* Tagline - Only show if organizer has set one, no default */}
+                                {organizerUser?.organizerSubtitle ? (
                                     <p className="text-zinc-400 font-medium mb-6 italic text-sm">
                                         "{organizerUser.organizerSubtitle}"
                                     </p>
+                                ) : (
+                                    <div className="mb-4"></div>
                                 )}
-                                {!organizerUser?.organizerSubtitle && (
-                                    <div className="mb-6"></div>
-                                )}
+                                
                                 <div className="flex gap-3">
                                     <Button
                                         variant="outline"
@@ -1596,6 +1605,8 @@ export const EventView = () => {
                                     >
                                         View Full Bio
                                     </Button>
+                                    
+                                    {/* Favorite Button - Always visible, prompts login if not authenticated */}
                                     <Button
                                         variant="outline"
                                         onClick={toggleFavorite}
@@ -1604,7 +1615,7 @@ export const EventView = () => {
                                             currentUser?.favoriteOrganizers?.includes(organizerUser?.id || '') 
                                                 ? 'bg-pink-500 border-pink-500 text-white shadow-[0_0_25px_rgba(236,72,153,0.6),0_0_50px_rgba(236,72,153,0.3)]' 
                                                 : 'border-zinc-700 text-zinc-500 hover:text-pink-400 hover:border-pink-400 hover:shadow-[0_0_15px_rgba(236,72,153,0.3)]'
-                                        }`}
+                                        } ${!currentUser ? 'cursor-pointer' : ''}`}
                                     >
                                         <Heart 
                                             size={24} 
