@@ -2,7 +2,46 @@
 
 ## Current Testing Session
 
-### Test Focus: Email Template Persistence Bug Fix
+### Test Focus: "Send Test Email" Feature Implementation
+
+**New Feature Added:**
+A "Send Test Email" button has been added to allow organizers to test their email templates before using them with real attendees.
+
+**Implementation Details:**
+
+**Backend (`/app/backend/routes/emailRoutes.js`):**
+- Added new `POST /api/email/send-test` endpoint
+- Endpoint accepts a template (subject, body) and recipient email
+- Replaces template variables ({{event_title}}, {{attendee_name}}, etc.) with sample data
+- Adds a "TEST EMAIL" banner to distinguish test emails from real ones
+- Prefixes subject with "[TEST]" 
+- Gracefully handles missing email credentials (simulates send)
+
+**Frontend (`/app/components/Settings.tsx`):**
+- Added `Send` icon import from lucide-react
+- Added `sendingTestId` state to track which template is being tested
+- Added `handleSendTestEmail()` function to call the API
+- Added "Test" button with Send icon in the template list (shows loading spinner while sending)
+- Added "Send Test Email" button in the template editor view
+- Both buttons are disabled while a test is in progress
+
+**Sample Data Used in Test Emails:**
+- `{{attendee_name}}` → "John Doe"
+- `{{event_title}}` → "Sample Event - Test"
+- `{{event_date}}` → Date 7 days from now
+- `{{event_location}}` → "123 Main Street, San Francisco, CA"
+- `{{ticket_type}}` → "General Admission"
+- `{{ticket_price}}` → "$25.00"
+- `{{order_id}}` → "TEST-" + timestamp
+
+**Backend API Test Results:**
+- ✅ API endpoint responds correctly
+- ✅ Returns simulated response when email credentials not configured
+- ✅ Template variables are replaced with sample data
+
+---
+
+### Previous Test Focus: Email Template Persistence Bug Fix
 
 **Root Cause Identified:**
 1. `getUserById()` in storageService.ts was NOT mapping `email_templates` from the backend response
