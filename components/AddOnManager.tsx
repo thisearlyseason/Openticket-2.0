@@ -50,23 +50,25 @@ export const AddOnManager = () => {
         // Build add-on items from registrations
         const items: AddOnItem[] = [];
 
-        // Filter to paid registrations only (not refunded at reg level)
-        const eventRegs = regs.filter(r => 
-            r.paymentStatus === 'paid' || 
-            r.paymentStatus === 'succeeded' || 
-            r.paymentStatus === 'completed'
-        );
+        // Include paid registrations - check for common paid statuses
+        const paidStatuses = ['paid', 'succeeded', 'completed'];
+        const eventRegs = regs.filter(r => paidStatuses.includes(r.paymentStatus?.toLowerCase() || ''));
         
-        console.log('[AddOnManager] Found registrations:', eventRegs.length);
+        console.log('[AddOnManager] Found paid registrations:', eventRegs.length);
 
         eventRegs.forEach(reg => {
-            console.log('[AddOnManager] Reg addOns:', reg.addOns);
+            console.log('[AddOnManager] Checking reg:', reg.id, 'addOns:', reg.addOns);
             
             if (reg.addOns && Array.isArray(reg.addOns) && reg.addOns.length > 0) {
                 reg.addOns.forEach((addon, idx) => {
-                    // Skip refunded or cancelled add-ons
-                    if (addon.status === 'refunded' || addon.status === 'cancelled') return;
+                    // Skip refunded or cancelled add-ons only
+                    const addonStatus = addon.status?.toLowerCase() || 'valid';
+                    if (addonStatus === 'refunded' || addonStatus === 'cancelled') {
+                        console.log('[AddOnManager] Skipping refunded/cancelled addon:', addon.name);
+                        return;
+                    }
 
+                    console.log('[AddOnManager] Adding addon:', addon.name, 'status:', addonStatus);
                     items.push({
                         id: reg.id,
                         attendeeName: reg.attendeeName,
@@ -80,7 +82,7 @@ export const AddOnManager = () => {
             }
         });
 
-        console.log('[AddOnManager] Total add-on items:', items.length);
+        console.log('[AddOnManager] Total add-on items to display:', items.length);
         setAddOnItems(items.sort((a, b) => b.timestamp - a.timestamp));
         setIsLoading(false);
     };
