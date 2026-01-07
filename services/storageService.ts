@@ -539,11 +539,23 @@ export const StorageService = {
         try {
             const { profile } = await fetchSupabase(`/auth/profiles/${id}`);
             if (profile) {
-                // Map snake_case to camelCase
+                // Map snake_case to camelCase - include ALL fields
                 return {
                     ...profile,
                     isAdmin: profile.is_admin,
+                    isBanned: profile.is_banned,
                     businessName: profile.business_name,
+                    businessEmail: profile.business_email,
+                    useBusinessName: profile.use_business_name,
+                    organizerSubtitle: profile.organizer_subtitle,
+                    logoUrl: profile.logo_url,
+                    headerImageUrl: profile.header_image_url,
+                    primaryColor: profile.primary_color,
+                    phone: profile.phone,
+                    businessPhone: profile.business_phone,
+                    showPhonePublicly: profile.show_phone_publicly,
+                    bio: profile.bio,
+                    socials: profile.socials,
                     availablePayout: profile.available_payout,
                     balanceDue: profile.balance_due,
                     affiliateCode: profile.affiliate_code,
@@ -552,7 +564,9 @@ export const StorageService = {
                     stripeOnboardingComplete: profile.stripe_onboarding_complete,
                     stripePublishableKey: profile.stripe_publishable_key,
                     stripeSecretKey: profile.stripe_secret_key,
-                    defaultCurrency: profile.default_currency
+                    defaultCurrency: profile.default_currency,
+                    favoriteOrganizers: profile.favorite_organizers,
+                    savedTicketTemplates: profile.saved_ticket_templates
                 } as User;
             }
             return null;
