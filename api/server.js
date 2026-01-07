@@ -70,13 +70,14 @@ app.use(cors(corsOptions));
 
 // ==================== RATE LIMITING ====================
 
-// General API rate limiter - 100 requests per 15 minutes
+// General API rate limiter - 500 requests per 15 minutes
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 500, // limit each IP to 500 requests per window
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { xForwardedForHeader: false }, // Disable validation for proxy environments
     skip: (req) => {
         // Skip rate limiting for health checks
         return req.path === '/api/ping' || req.path === '/api/health';
@@ -89,7 +90,8 @@ const authLimiter = rateLimit({
     max: 10, // 10 attempts per minute
     message: { error: 'Too many authentication attempts. Please try again in a minute.' },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 // Strict rate limiter for password changes - 5 requests per 15 minutes
@@ -98,7 +100,8 @@ const passwordLimiter = rateLimit({
     max: 5, // 5 attempts per 15 minutes
     message: { error: 'Too many password change attempts. Please try again later.' },
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false }
 });
 
 // Apply general rate limiter to all API routes
