@@ -51,7 +51,36 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 
 ## Implementation Status
 
-### ✅ Production Readiness Hardening (January 7, 2026 - Latest)
+### ✅ Analytics & Financial Data Audit (January 7, 2026 - Latest)
+
+#### Payment Status Normalization
+- [x] **Centralized Utility:** `/app/services/paymentUtils.ts`
+  - `isPaidStatus()` - Checks for 'paid', 'completed', 'succeeded'
+  - `isRefundedStatus()` - Checks for refunded states
+  - `getPaymentStatusLabel()` - Returns normalized "Paid" label
+  - `calculatePaidRevenue()` - Revenue from paid orders only
+  - `calculatePaidTickets()` - Ticket count from paid orders only
+  - `getAddOnSummary()` - Aggregated add-on data per event
+
+#### Analytics Fixes
+- [x] **AdvancedAnalytics.tsx:** Uses `isPaidStatus()` filter, real device data
+- [x] **EventAnalytics.tsx:** Shows paid-only revenue, tickets, add-on summary
+- [x] **Dashboard.tsx:** Uses centralized payment utilities for accurate totals
+
+#### Guest List Corrections
+- [x] **AttendeeManager.tsx:** 
+  - Add-ons toggle (show/hide) - default hidden
+  - Financial totals from paid registrations only
+  - Add-ons attached to guest as metadata (not separate rows)
+  - Separate Add-on Revenue and Ticket Revenue display
+
+#### Check-In Payment Status
+- [x] **CheckInPortal.tsx:** Uses `isPaidStatus()` for unpaid detection
+
+#### Mobile UI Fix
+- [x] **Home.tsx:** Filter buttons responsive with horizontal scroll on mobile
+
+### ✅ Production Readiness Hardening (January 7, 2026)
 
 #### Email Automation System
 - [x] **Cron Jobs Implemented:** `/app/backend/services/cronService.js`
