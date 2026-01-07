@@ -121,25 +121,25 @@ export const OrganizerProfile = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
             </div>
 
-            {/* Profile Content */}
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-32 relative z-10 pb-20">
-                {/* Profile Header Card */}
-                <Card className="p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8">
-                    <div className="flex flex-col md:flex-row gap-6">
-                        {/* Profile Image - Fixed z-index and overflow */}
-                        <div className="flex-shrink-0 -mt-20 md:-mt-24 mx-auto md:mx-0 relative z-20">
-                            <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 relative">
-                                {organizer?.logoUrl ? (
-                                    <img 
-                                        src={organizer.logoUrl} 
-                                        alt={displayName} 
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600 rounded-full">
-                                        {displayName.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
+                {/* Profile Content */}
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-24 relative z-10 pb-20">
+                    {/* Profile Header Card */}
+                    <Card className="p-6 md:p-8 bg-white dark:bg-zinc-900 border-none shadow-2xl rounded-[2rem] mb-8">
+                        <div className="flex flex-col md:flex-row gap-6">
+                            {/* Profile Image - Fixed overflow to show full image */}
+                            <div className="flex-shrink-0 -mt-20 md:-mt-28 mx-auto md:mx-0 relative z-20">
+                                <div className="w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-zinc-900 shadow-2xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                                    {organizer?.logoUrl ? (
+                                        <img 
+                                            src={organizer.logoUrl} 
+                                            alt={displayName} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-6xl md:text-7xl font-black text-zinc-400 dark:text-zinc-600">
+                                            {displayName.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
                             </div>
                         </div>
 
