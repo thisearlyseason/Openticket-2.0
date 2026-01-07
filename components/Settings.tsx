@@ -48,6 +48,7 @@ export const Settings = () => {
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
     const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
     const [isConnectingGmail, setIsConnectingGmail] = useState(false);
+    const [sendingTestId, setSendingTestId] = useState<string | null>(null);
 
     // Preferences State
     const [desktopCamera, setDesktopCamera] = useState(false);
