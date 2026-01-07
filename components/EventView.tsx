@@ -623,7 +623,8 @@ export const EventView = () => {
                 }
 
                 // --- REAL STRIPE CHECKOUT ---
-                setIsProcessingPayment(true);
+                // Don't set isProcessingPayment here - use isRedirectingToStripe instead
+                // isProcessingPayment is only for AFTER returning from Stripe
 
                 // Construct simple addon map for backend
                 const simpleAddOns: { [key: string]: number } = {};
