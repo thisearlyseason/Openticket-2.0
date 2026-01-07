@@ -685,13 +685,13 @@ if __name__ == "__main__":
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/audit_test_results.json', 'w') as f:
+    with open('/app/email_template_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/audit_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/email_template_test_results.json")
     
     if success:
-        print("\n🎉 All audit fix tests PASSED!")
+        print("\n🎉 All email template persistence tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
