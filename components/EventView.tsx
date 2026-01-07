@@ -797,7 +797,7 @@ export const EventView = () => {
                             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"></div>
                             <div className="absolute bottom-0 left-0 w-full p-6 md:p-12">
                                 <div className="max-w-7xl mx-auto">
-                                    <Badge color="primary" className="mb-6 px-4 py-1.5 shadow-lg animate-in fade-in slide-in-from-left-4">{event.category || 'Event'}</Badge>
+                                    <Badge color="gray" className="mb-6 px-4 py-1.5 shadow-lg animate-in fade-in slide-in-from-left-4">{event.category || 'Event'}</Badge>
                                     <h1 className="text-5xl lg:text-8xl font-black font-display text-white uppercase leading-[0.85] tracking-tighter mb-8 drop-shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 max-w-5xl">
                                         {event.title}
                                     </h1>
