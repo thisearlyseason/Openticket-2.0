@@ -1667,6 +1667,53 @@ export const EventView = () => {
                     </div>
                 )
             }
+
+            {/* Stripe Redirect Overlay - Friendly Message */}
+            {
+                isRedirectingToStripe && (
+                    <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+                        <div className="max-w-md w-full bg-gradient-to-br from-purple-900 to-pink-900 border border-white/20 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(168,85,247,0.3)] relative overflow-hidden">
+                            {/* Animated background elements */}
+                            <div className="absolute inset-0 overflow-hidden">
+                                <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+                                <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl animate-pulse delay-300"></div>
+                            </div>
+
+                            <div className="relative">
+                                {/* Lock icon with animation */}
+                                <div className="w-20 h-20 bg-white/10 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-bounce">
+                                    <Lock size={40} className="text-white" />
+                                </div>
+
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-3">
+                                    Hang Tight! 🚀
+                                </h2>
+                                <p className="text-lg text-purple-200 font-bold mb-2">
+                                    Sending you to our secure payment partner
+                                </p>
+                                <p className="text-sm text-purple-300/70 mb-8">
+                                    Don't close this window — we'll have you back in a flash!
+                                </p>
+
+                                {/* Loading indicator */}
+                                <div className="flex items-center justify-center gap-3">
+                                    <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                                    <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                                    <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                                </div>
+
+                                {/* Trust badge */}
+                                <div className="mt-8 flex items-center justify-center gap-2 text-xs text-purple-300/60">
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                                    </svg>
+                                    <span>Powered by Stripe • 256-bit encryption</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </>
     );
 };
