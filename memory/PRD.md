@@ -683,4 +683,4 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ---
 
 ## Last Updated
-January 6, 2026 (Bug Fixes: Stripe Black Screen & Organizer Profile Pre-fill)
+January 7, 2026 (New Features: Attendee Auto-Creation, Auth UX, Currency Fix, Share Card, Stripe Messaging, Favorites)
