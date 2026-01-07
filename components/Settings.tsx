@@ -347,8 +347,15 @@ export const Settings = () => {
                 throw new Error(data.error || 'Failed to send test email');
             }
 
-            if (data.simulated) {
-                showToast(`Test email simulated! (Email service not configured)`, "info");
+            if (data.preview) {
+                // Show preview mode message - email not actually sent
+                showAlert({
+                    title: "📧 Email Preview",
+                    message: `Your template looks great! Since Mailerlite is configured for campaigns (not transactional emails), here's a preview:\n\n**To:** ${user.email}\n**Subject:** ${data.previewData?.subject || template.subject}\n\nNote: Mailerlite sends emails via campaigns, not individual test sends. Your templates will work correctly when sending to attendees through broadcasts.`,
+                    confirmText: "Got it!"
+                });
+            } else if (data.simulated) {
+                showToast(`Email preview generated - ${data.message}`, "info");
             } else {
                 showToast(`Test email sent to ${user.email}!`, "success");
             }
