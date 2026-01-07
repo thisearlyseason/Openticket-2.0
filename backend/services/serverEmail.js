@@ -657,5 +657,126 @@ export const EmailService = {
             console.error("[EmailService] Payment Failed Notification Error:", error);
             return { sent: false, error: error.message };
         }
+    },
+
+    /**
+     * Send attendee account credentials after auto-creation on ticket purchase
+     */
+    sendAttendeeCredentials: async (to, attendeeName, password, eventTitle, eventDate, eventLocation) => {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
+            console.log(`[SIMULATION] Attendee Credentials to: ${to}, Password: ${password}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = attendeeName || 'there';
+        const subject = `🎫 Your OpenTicket Account Has Been Created!`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🎉</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to OpenTicket!</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your account has been created</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName}! 👋
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Thanks for purchasing tickets for <strong>${eventTitle || 'an event'}</strong>! 
+                        We've automatically created an account for you so you can easily access your tickets anytime.
+                    </p>
+
+                    <!-- Credentials Box -->
+                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 16px; padding: 25px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #166534; text-align: center;">Your Login Credentials</h3>
+                        <table style="width: 100%; font-size: 14px;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #166534; font-weight: 600;">Email:</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #047857; font-family: monospace;">${to}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #166534; font-weight: 600;">Password:</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: #047857; font-family: monospace; font-size: 18px;">${password}</td>
+                            </tr>
+                        </table>
+                        <p style="margin: 15px 0 0 0; font-size: 12px; color: #15803d; text-align: center;">
+                            ⚠️ Please save this password or change it after logging in
+                        </p>
+                    </div>
+
+                    ${eventTitle ? `
+                    <!-- Event Details -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">Event Details</h3>
+                        <table style="width: 100%; font-size: 14px; color: #374151;">
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Event</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${eventTitle}</td>
+                            </tr>
+                            ${eventDate ? `
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Date</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">${eventDate}</td>
+                            </tr>
+                            ` : ''}
+                            ${eventLocation ? `
+                            <tr>
+                                <td style="padding: 8px 0;">Location</td>
+                                <td style="padding: 8px 0; text-align: right;">${eventLocation}</td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                    ` : ''}
+
+                    <!-- What You Can Do -->
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; border-radius: 0 8px 8px 0; margin: 25px 0;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #92400e;">🎫 With Your Account You Can:</h3>
+                        <ul style="margin: 0; padding-left: 20px; color: #92400e; font-size: 14px; line-height: 1.8;">
+                            <li>View and download your tickets</li>
+                            <li>Explore upcoming events</li>
+                            <li>Manage your profile</li>
+                            <li>Get event reminders</li>
+                        </ul>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'https://openticket.events'}/#/auth" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            Sign In to View Tickets →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · The boldest ticketing platform for creators
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #d1d5db;">
+                        You received this email because you purchased tickets on OpenTicket.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        try {
+            const info = await transporter.sendMail({
+                from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
+                to,
+                subject,
+                html: htmlBody
+            });
+            console.log(`[EmailService] Attendee Credentials Sent: ${info.messageId} to ${to}`);
+            return { sent: true, messageId: info.messageId };
+        } catch (error) {
+            console.error("[EmailService] Attendee Credentials Failed:", error);
+            return { sent: false, error: error.message };
+        }
     }
 };
