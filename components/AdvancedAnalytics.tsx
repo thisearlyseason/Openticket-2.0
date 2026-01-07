@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
+import { 
+    isPaidStatus, isRefundedStatus, 
+    calculatePaidRevenue, calculatePaidTickets, 
+    calculateRegistrationRevenue, calculateRegistrationTickets 
+} from '../services/paymentUtils';
 import { Event, Registration, User } from '../types';
 import { Button, Card, Badge, DonutChart, SimpleChart } from './UI';
 import { 
