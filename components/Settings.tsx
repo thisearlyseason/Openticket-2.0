@@ -283,8 +283,22 @@ export const Settings = () => {
             onConfirm: async () => {
                 const updated = emailTemplates.filter(t => t.id !== id);
                 setEmailTemplates(updated);
-                if (user) await StorageService.updateUser(user.id, { emailTemplates: updated });
-                showToast("Template deleted", "info");
+                if (user) {
+                    try {
+                        await StorageService.updateUser(user.id, { emailTemplates: updated });
+                        // Update local cache
+                        const cachedUser = StorageService.getCurrentUser();
+                        if (cachedUser) {
+                            localStorage.setItem('openticket_user', JSON.stringify({ ...cachedUser, emailTemplates: updated }));
+                        }
+                        showToast("Template deleted", "info");
+                    } catch (error) {
+                        console.error("Failed to delete template:", error);
+                        showToast("Failed to delete template", "error");
+                        // Revert on failure
+                        setEmailTemplates(emailTemplates);
+                    }
+                }
             }
         });
     };
