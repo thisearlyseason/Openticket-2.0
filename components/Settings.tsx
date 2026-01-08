@@ -1084,16 +1084,16 @@ export const Settings = () => {
 
                                     {/* Gmail Limits Disclaimer */}
                                     {emailProvider === 'gmail' && (
-                                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl">
+                                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl overflow-hidden">
                                             <div className="flex items-start gap-2">
                                                 <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                                                <div>
+                                                <div className="min-w-0 flex-1">
                                                     <h4 className="font-bold text-amber-700 dark:text-amber-400 text-sm">Gmail Daily Sending Limits</h4>
-                                                    <ul className="text-xs text-amber-600 dark:text-amber-500 mt-2 space-y-1 list-disc list-inside">
+                                                    <ul className="text-xs text-amber-600 dark:text-amber-500 mt-2 space-y-1 list-disc list-inside break-words">
                                                         <li><strong>Standard Gmail:</strong> Up to 500 emails per day</li>
                                                         <li><strong>Google Workspace:</strong> Up to 2,000 emails per day</li>
                                                     </ul>
-                                                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2">
+                                                    <p className="text-xs text-amber-600 dark:text-amber-500 mt-2 break-words">
                                                         ⚠️ If limits are exceeded, emails will fail. There is <strong>no automatic fallback</strong> to OpenTicket Mailing Service.
                                                     </p>
                                                 </div>
