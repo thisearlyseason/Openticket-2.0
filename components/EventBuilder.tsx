@@ -116,7 +116,25 @@ export const EventBuilder = () => {
                         navigate('/dashboard');
                         return;
                     }
-                    setFormData(event);
+                    
+                    // Ensure organizer fields are populated from user profile if empty
+                    const useBusinessProfile = updatedUser?.useBusinessName || user.useBusinessName || false;
+                    const defaultOrganizerName = useBusinessProfile 
+                        ? (updatedUser?.businessName || user.businessName || updatedUser?.name || user.name)
+                        : (updatedUser?.name || user.name);
+                    const defaultOrganizerEmail = useBusinessProfile 
+                        ? (updatedUser?.businessEmail || user.businessEmail || updatedUser?.email || user.email)
+                        : (updatedUser?.email || user.email);
+                    
+                    // Only override if event's organizer fields are empty
+                    const organizerName = event.organizer?.trim() || defaultOrganizerName || 'Your Name';
+                    const organizerEmail = event.organizerEmail?.trim() || defaultOrganizerEmail || user.email || '';
+                    
+                    setFormData({
+                        ...event,
+                        organizer: organizerName,
+                        organizerEmail: organizerEmail
+                    });
                 }
             } else {
                 // New event - inherit defaults from user settings
