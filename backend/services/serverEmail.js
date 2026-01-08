@@ -3,16 +3,21 @@ import resendService from './resendService.js';
 // Helper function to send email via Resend
 const sendEmailViaResend = async (to, subject, html) => {
     try {
+        console.log(`[EmailService] Attempting to send email to: ${to}`);
         const result = await resendService.sendEmail({ to, subject, html });
         if (result.success) {
-            console.log(`[EmailService] Sent via Resend: ${result.messageId} to ${to}`);
+            console.log(`[EmailService] ✅ Email sent via Resend: ${result.messageId} to ${to}`);
             return { sent: true, messageId: result.messageId };
         } else {
-            console.error(`[EmailService] Resend failed: ${result.error}`);
+            console.error(`[EmailService] ❌ Resend failed for ${to}: ${result.error}`);
+            // Check if it's a domain verification issue
+            if (result.error && result.error.includes('can only send')) {
+                console.error(`[EmailService] 💡 Resend test key limitation: Can only send to verified emails. Please verify domain at resend.com/domains`);
+            }
             return { sent: false, error: result.error };
         }
     } catch (error) {
-        console.error("[EmailService] Send Failed:", error);
+        console.error(`[EmailService] ❌ Exception sending to ${to}:`, error.message);
         return { sent: false, error: error.message };
     }
 };
