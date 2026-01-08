@@ -254,19 +254,7 @@ export const EmailService = {
             </div>
         `;
 
-        try {
-            const info = await transporter.sendMail({
-                from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
-                to,
-                subject,
-                html: htmlBody
-            });
-            console.log(`[EmailService] Subscription Cancellation Sent: ${info.messageId} to ${to}`);
-            return { sent: true, messageId: info.messageId };
-        } catch (error) {
-            console.error("[EmailService] Subscription Cancellation Failed:", error);
-            return { sent: false, error: error.message };
-        }
+        return await sendEmailViaResend(to, subject, htmlBody);
     },
 
     /**
