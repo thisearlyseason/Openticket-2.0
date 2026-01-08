@@ -365,7 +365,114 @@ class ResendEmailServiceTester:
         except Exception as e:
             self.log_result("MailerLite References Removed", False, f"Exception: {str(e)}")
 
-    def test_resend_configuration_check(self):
+    def test_email_send_to_verified_address(self):
+        """Test: POST /api/email/send to verified address (thisearlyseason@gmail.com)"""
+        try:
+            payload = {
+                "to": "thisearlyseason@gmail.com",
+                "subject": "Test Email from Updated System",
+                "html": "<h1>Test</h1><p>This is a test email to verify the Resend migration worked.</p>"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('success') == True:
+                    if data.get('provider') == 'resend':
+                        self.log_result(
+                            "Email Send to Verified Address", 
+                            True, 
+                            f"Successfully sent email via Resend: {data.get('messageId')}",
+                            data
+                        )
+                    else:
+                        self.log_result(
+                            "Email Send to Verified Address", 
+                            True, 
+                            f"Email sent but provider is {data.get('provider', 'unknown')}: {data.get('messageId')}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Email Send to Verified Address", 
+                        False, 
+                        "Response doesn't indicate success",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Email Send to Verified Address", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Email Send to Verified Address", False, f"Exception: {str(e)}")
+
+    def test_template_email_to_verified_address(self):
+        """Test: POST /api/email/send-test with template to verified address"""
+        try:
+            payload = {
+                "to": "thisearlyseason@gmail.com",
+                "template": {
+                    "subject": "Your Ticket for {{event_title}}",
+                    "body": "<p>Hi {{attendee_name}},</p><p>Thanks for purchasing tickets for {{event_title}}!</p>"
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('success') == True:
+                    if data.get('provider') == 'resend':
+                        self.log_result(
+                            "Template Email to Verified Address", 
+                            True, 
+                            f"Successfully sent template email via Resend: {data.get('messageId')}",
+                            data
+                        )
+                    elif data.get('preview') == True:
+                        self.log_result(
+                            "Template Email to Verified Address", 
+                            True, 
+                            f"Template email preview generated: {data.get('messageId')}",
+                            data
+                        )
+                    else:
+                        self.log_result(
+                            "Template Email to Verified Address", 
+                            True, 
+                            f"Template email processed: {data.get('messageId')}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Template Email to Verified Address", 
+                        False, 
+                        "Response doesn't indicate success",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Template Email to Verified Address", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Template Email to Verified Address", False, f"Exception: {str(e)}")
         """Test 8: Verify Resend configuration is properly detected"""
         try:
             response = self.session.get(f"{BACKEND_URL}/api/email/status")
