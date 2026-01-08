@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Send Test Email Feature
-Tests the new "Send Test Email" API endpoint functionality
+Backend API Testing for OpenTicket Platform - Resend Email Service Integration
+Tests the Resend email service integration after replacing MailerLite
 """
 
 import requests
@@ -12,8 +12,6 @@ from typing import Dict, Any
 
 # Configuration
 BACKEND_URL = "http://localhost:8001"
-VALID_ORIGIN = "https://openticket.events"
-INVALID_ORIGIN = "https://malicious-site.com"
 
 class OpenTicketAPITester:
     def __init__(self):
