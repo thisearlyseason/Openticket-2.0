@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
-import { mailerliteService, CampaignTypes } from '../services/mailerliteService';
-import { Event, Registration } from '../types';
+import { Event } from '../types';
 import { Button, Card, Input, Badge, RichTextarea } from './UI';
 import { 
     ArrowLeft, Mail, Send, Users, Clock, CheckCircle2, AlertCircle,
     Loader2, Plus, Calendar, Bell, ShoppingCart, Megaphone, 
-    Settings, Eye, Trash2, Copy, ExternalLink, MailPlus, Target
+    Settings, Eye, Trash2, Copy, ExternalLink, MailPlus, Target, Zap
 } from 'lucide-react';
+
+// Campaign types
+export const CampaignTypes = {
+    PRE_EVENT_REMINDER: 'pre_event_reminder',
+    POST_EVENT_FOLLOWUP: 'post_event_followup',
+    ABANDONED_CART: 'abandoned_cart',
+    NEWSLETTER: 'newsletter',
+    ANNOUNCEMENT: 'announcement'
+};
 
 interface EmailCampaign {
     id: string;
@@ -23,15 +31,72 @@ interface EmailCampaign {
     scheduledAt?: Date;
 }
 
+// Email template generators
+const getPreEventReminderTemplate = (eventTitle: string, eventDate: string, location: string, eventUrl: string) => ({
+    subject: `🎟️ Reminder: ${eventTitle} is coming up!`,
+    htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #ec4899;">Event Reminder</h1>
+            <p>Hi there!</p>
+            <p>Just a friendly reminder that <strong>${eventTitle}</strong> is coming up soon!</p>
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>📅 Date:</strong> ${eventDate}</p>
+                <p><strong>📍 Location:</strong> ${location}</p>
+            </div>
+            <p>Don't forget to bring your ticket!</p>
+            <a href="${eventUrl}" style="display: inline-block; background: #ec4899; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">View Event Details</a>
+        </div>
+    `,
+    textContent: `Reminder: ${eventTitle} is on ${eventDate} at ${location}. View details: ${eventUrl}`
+});
+
+const getPostEventFollowupTemplate = (eventTitle: string) => ({
+    subject: `🙏 Thank you for attending ${eventTitle}!`,
+    htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #ec4899;">Thank You!</h1>
+            <p>Hi there!</p>
+            <p>Thank you for attending <strong>${eventTitle}</strong>! We hope you had a great time.</p>
+            <p>We'd love to hear your feedback. Please take a moment to let us know how we did.</p>
+            <p>Hope to see you at our next event!</p>
+        </div>
+    `,
+    textContent: `Thank you for attending ${eventTitle}! We hope you had a great time.`
+});
+
+const getAbandonedCartTemplate = (eventTitle: string, eventUrl: string) => ({
+    subject: `🎫 Don't miss out on ${eventTitle}!`,
+    htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #ec4899;">Complete Your Purchase</h1>
+            <p>Hi there!</p>
+            <p>We noticed you didn't complete your ticket purchase for <strong>${eventTitle}</strong>.</p>
+            <p>Tickets are selling fast - don't miss your chance to attend!</p>
+            <a href="${eventUrl}" style="display: inline-block; background: #ec4899; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Get Your Tickets Now</a>
+        </div>
+    `,
+    textContent: `Complete your ticket purchase for ${eventTitle}. Get tickets: ${eventUrl}`
+});
+
+const getNewsletterTemplate = (title: string, content: string) => ({
+    subject: title,
+    htmlContent: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #ec4899;">${title}</h1>
+            ${content}
+        </div>
+    `,
+    textContent: content.replace(/<[^>]*>/g, '')
+});
+
 export const EmailMarketing = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
-    const [apiKey, setApiKey] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [events, setEvents] = useState<Event[]>([]);
     const [campaigns, setCampaigns] = useState<EmailCampaign[]>([]);
-    const [groups, setGroups] = useState<any[]>([]);
+    const [emailServiceStatus, setEmailServiceStatus] = useState<any>(null);
     
     // Campaign creation state
     const [showCreateCampaign, setShowCreateCampaign] = useState(false);
@@ -40,7 +105,6 @@ export const EmailMarketing = () => {
     const [campaignName, setCampaignName] = useState('');
     const [emailSubject, setEmailSubject] = useState('');
     const [emailContent, setEmailContent] = useState('');
-    const [selectedGroup, setSelectedGroup] = useState('');
     const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
@@ -54,32 +118,22 @@ export const EmailMarketing = () => {
             return;
         }
 
-        // Check for platform API key first, then organizer's own key
-        const platformApiKey = localStorage.getItem('platform_mailerlite_key');
-        const savedApiKey = localStorage.getItem('mailerlite_api_key') || platformApiKey;
-        
-        if (savedApiKey) {
-            setApiKey(savedApiKey);
-            mailerliteService.configure(savedApiKey);
-            const connected = await mailerliteService.testConnection();
-            setIsConnected(connected);
-            
-            if (connected) {
-                // Load groups from Mailerlite
-                try {
-                    const groupsData = await mailerliteService.getGroups();
-                    setGroups(groupsData.data || []);
-                } catch (error) {
-                    console.error('Failed to load groups:', error);
-                }
-            }
+        // Check email service status
+        try {
+            const response = await fetch('/api/email/status');
+            const status = await response.json();
+            setEmailServiceStatus(status);
+            setIsConnected(status.configured && status.available);
+        } catch (error) {
+            console.error('Failed to check email status:', error);
+            setIsConnected(false);
         }
 
         // Load events
         const allEvents = await StorageService.getEvents();
         setEvents(allEvents.filter(e => e.ownerId === user.id));
 
-        // Load saved campaigns from local storage (in production, store in DB)
+        // Load saved campaigns from localStorage
         const savedCampaigns = localStorage.getItem('email_campaigns');
         if (savedCampaigns) {
             setCampaigns(JSON.parse(savedCampaigns));
@@ -89,62 +143,46 @@ export const EmailMarketing = () => {
     };
 
     const testConnection = async () => {
-        if (!apiKey) return;
-        
         setIsTestingConnection(true);
-        mailerliteService.configure(apiKey);
-        
-        const connected = await mailerliteService.testConnection();
-        setIsConnected(connected);
-        
-        if (connected) {
-            localStorage.setItem('mailerlite_api_key', apiKey);
-            // Load groups
-            try {
-                const groupsData = await mailerliteService.getGroups();
-                setGroups(groupsData.data || []);
-            } catch (error) {
-                console.error('Failed to load groups:', error);
+        try {
+            const response = await fetch('/api/email/status');
+            const status = await response.json();
+            setEmailServiceStatus(status);
+            setIsConnected(status.configured && status.available);
+            
+            if (status.configured) {
+                alert('✅ Email service is connected and ready!');
+            } else {
+                alert('⚠️ Email service is not configured. Contact your administrator.');
             }
+        } catch (error) {
+            alert('❌ Failed to connect to email service');
+        } finally {
+            setIsTestingConnection(false);
         }
-        
-        setIsTestingConnection(false);
     };
 
-    const disconnectApi = () => {
-        localStorage.removeItem('mailerlite_api_key');
-        setApiKey('');
-        setIsConnected(false);
-        setGroups([]);
-    };
-
-    const getTemplateForCampaignType = () => {
+    const getTemplate = () => {
         const event = events.find(e => e.id === selectedEvent);
         const eventTitle = event?.title || 'Your Event';
         const eventDate = event ? new Date(event.date).toLocaleString() : '';
-        const eventLocation = event?.location || 'TBA';
+        const location = event?.location || 'TBA';
         const baseUrl = window.location.origin;
 
         switch (campaignType) {
             case CampaignTypes.PRE_EVENT_REMINDER:
-                return mailerliteService.getPreEventReminderTemplate(
-                    eventTitle, eventDate, eventLocation, `${baseUrl}/#/event/${selectedEvent}`
-                );
+                return getPreEventReminderTemplate(eventTitle, eventDate, location, `${baseUrl}/#/event/${selectedEvent}`);
             case CampaignTypes.POST_EVENT_FOLLOWUP:
-                return mailerliteService.getPostEventFollowupTemplate(eventTitle);
+                return getPostEventFollowupTemplate(eventTitle);
             case CampaignTypes.ABANDONED_CART:
-                return mailerliteService.getAbandonedCartTemplate(
-                    eventTitle, `${baseUrl}/#/event/${selectedEvent}`
-                );
+                return getAbandonedCartTemplate(eventTitle, `${baseUrl}/#/event/${selectedEvent}`);
             default:
-                return mailerliteService.getNewsletterTemplate(
-                    emailSubject || 'Newsletter', emailContent
-                );
+                return getNewsletterTemplate(emailSubject || 'Newsletter', emailContent);
         }
     };
 
     const loadTemplate = () => {
-        const template = getTemplateForCampaignType();
+        const template = getTemplate();
         setEmailSubject(template.subject);
         setEmailContent(template.textContent || '');
     };
@@ -158,21 +196,8 @@ export const EmailMarketing = () => {
         setIsSending(true);
 
         try {
-            const template = getTemplateForCampaignType();
-            
-            // Create campaign in Mailerlite (if connected)
-            if (isConnected && selectedGroup) {
-                await mailerliteService.createCampaign({
-                    name: campaignName,
-                    type: campaignType,
-                    subject: emailSubject,
-                    content: { html: template.htmlContent, plain: emailContent },
-                    groups: [selectedGroup]
-                });
-            }
-
             // Save campaign locally
-            const newCampaign: EmailCampaign = {
+            const campaign: EmailCampaign = {
                 id: `campaign_${Date.now()}`,
                 name: campaignName,
                 type: campaignType,
@@ -182,7 +207,7 @@ export const EmailMarketing = () => {
                 createdAt: new Date()
             };
 
-            const updatedCampaigns = [...campaigns, newCampaign];
+            const updatedCampaigns = [...campaigns, campaign];
             setCampaigns(updatedCampaigns);
             localStorage.setItem('email_campaigns', JSON.stringify(updatedCampaigns));
 
@@ -192,7 +217,6 @@ export const EmailMarketing = () => {
             setEmailSubject('');
             setEmailContent('');
             setSelectedEvent('');
-            setSelectedGroup('');
 
             alert('Campaign created successfully!');
         } catch (error: any) {
@@ -203,73 +227,55 @@ export const EmailMarketing = () => {
         }
     };
 
-    const syncEventAttendees = async (eventId: string) => {
-        if (!isConnected) {
-            alert('Please connect your Mailerlite account first');
+    const sendTestEmail = async () => {
+        const user = StorageService.getCurrentUser();
+        if (!user?.email) {
+            alert('No email address found. Please update your profile.');
             return;
         }
 
-        const event = events.find(e => e.id === eventId);
-        if (!event) return;
-
-        setIsLoading(true);
-
+        setIsSending(true);
         try {
-            // Get registrations for this event
-            const registrations = await StorageService.getRegistrations(eventId);
+            const template = getTemplate();
+            const response = await fetch('/api/email/send-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: user.email,
+                    template: {
+                        subject: emailSubject || template.subject,
+                        body: template.htmlContent,
+                        name: campaignName,
+                        type: campaignType
+                    }
+                })
+            });
+
+            const result = await response.json();
             
-            // Create or get group for this event
-            const groupName = `Event: ${event.title}`;
-            let group;
-            
-            try {
-                const groupsResponse = await mailerliteService.getGroups();
-                group = groupsResponse.data?.find((g: any) => g.name === groupName);
-            } catch {
-                // Group doesn't exist
+            if (result.preview) {
+                alert(`📧 Email Preview Generated!\n\nSubject: ${result.previewData?.subject}\n\nNote: To send real emails, ensure RESEND_API_KEY is configured.`);
+            } else if (result.success) {
+                alert(`✅ Test email sent to ${user.email}!`);
+            } else {
+                alert(`❌ Failed to send: ${result.error}`);
             }
-
-            if (!group) {
-                const newGroup = await mailerliteService.createGroup(groupName);
-                group = newGroup.data;
-            }
-
-            // Add subscribers
-            const subscribers = registrations.map(r => ({
-                email: r.attendeeEmail,
-                name: r.attendeeName,
-                fields: {
-                    event_name: event.title,
-                    event_date: new Date(event.date).toISOString()
-                }
-            }));
-
-            if (subscribers.length > 0) {
-                await mailerliteService.bulkAddSubscribers(subscribers, group.id);
-            }
-
-            // Refresh groups
-            const groupsData = await mailerliteService.getGroups();
-            setGroups(groupsData.data || []);
-
-            alert(`Synced ${subscribers.length} attendees to Mailerlite!`);
         } catch (error: any) {
-            console.error('Failed to sync attendees:', error);
-            alert(`Failed to sync: ${error.message}`);
+            alert(`Failed to send test email: ${error.message}`);
         } finally {
-            setIsLoading(false);
+            setIsSending(false);
         }
     };
 
-    const deleteCampaign = (campaignId: string) => {
-        if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+    const deleteCampaign = (id: string) => {
+        if (!confirm('Are you sure you want to delete this campaign?')) return;
         
-        const updatedCampaigns = campaigns.filter(c => c.id !== campaignId);
+        const updatedCampaigns = campaigns.filter(c => c.id !== id);
         setCampaigns(updatedCampaigns);
         localStorage.setItem('email_campaigns', JSON.stringify(updatedCampaigns));
     };
 
-    const getCampaignTypeIcon = (type: string) => {
+    const getCampaignIcon = (type: string) => {
         switch (type) {
             case CampaignTypes.PRE_EVENT_REMINDER: return <Bell size={16} />;
             case CampaignTypes.POST_EVENT_FOLLOWUP: return <CheckCircle2 size={16} />;
@@ -317,6 +323,7 @@ export const EmailMarketing = () => {
                                 <p className="text-sm text-zinc-500">Engage your attendees with targeted campaigns</p>
                             </div>
                         </div>
+
                         {isConnected && (
                             <Button onClick={() => setShowCreateCampaign(true)} className="flex items-center gap-2">
                                 <Plus size={16} /> New Campaign
@@ -327,7 +334,7 @@ export const EmailMarketing = () => {
             </div>
 
             <div className="max-w-6xl mx-auto px-4 py-6">
-                {/* Connection Status */}
+                {/* Connection Status Card */}
                 <Card className="p-6 mb-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -335,140 +342,98 @@ export const EmailMarketing = () => {
                                 {isConnected ? (
                                     <CheckCircle2 size={24} className="text-green-600" />
                                 ) : (
-                                    <Settings size={24} className="text-zinc-400" />
+                                    <AlertCircle size={24} className="text-zinc-400" />
                                 )}
                             </div>
                             <div>
                                 <h3 className="font-bold text-zinc-900 dark:text-white">
-                                    {isConnected ? 'Connected to Mailerlite' : 'Connect Mailerlite'}
+                                    {isConnected ? 'Resend Email Service Connected' : 'Email Service Status'}
                                 </h3>
                                 <p className="text-sm text-zinc-500">
-                                    {isConnected ? 'Your email marketing is ready' : 'Enter your API key to get started'}
+                                    {isConnected 
+                                        ? `Ready to send emails via Resend` 
+                                        : emailServiceStatus?.message || 'Checking connection...'}
                                 </p>
                             </div>
                         </div>
-                        {isConnected && (
-                            <Button variant="ghost" onClick={disconnectApi} className="text-red-500">
-                                Disconnect
-                            </Button>
-                        )}
+                        <Button variant="outline" onClick={testConnection} disabled={isTestingConnection}>
+                            {isTestingConnection ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
+                            <span className="ml-2">{isTestingConnection ? 'Checking...' : 'Test Connection'}</span>
+                        </Button>
                     </div>
 
                     {!isConnected && (
-                        <div className="mt-4 flex gap-3">
-                            <Input
-                                type="password"
-                                value={apiKey}
-                                onChange={(e) => setApiKey(e.target.value)}
-                                placeholder="Enter your Mailerlite API key"
-                                className="flex-1"
-                            />
-                            <Button onClick={testConnection} disabled={isTestingConnection || !apiKey}>
-                                {isTestingConnection ? <Loader2 size={16} className="animate-spin" /> : 'Connect'}
-                            </Button>
+                        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                            <p className="text-sm text-amber-800 dark:text-amber-200">
+                                <strong>Note:</strong> Email service requires RESEND_API_KEY to be configured by your administrator. 
+                                You can still create campaigns and send test previews.
+                            </p>
                         </div>
-                    )}
-
-                    {!isConnected && (
-                        <p className="text-xs text-zinc-400 mt-3">
-                            Get your API key from{' '}
-                            <a href="https://www.mailerlite.com/help/where-to-find-the-mailerlite-api-key-groupid-and-documentation" target="_blank" className="text-[#ec4899] underline">
-                                Mailerlite → Integrations → API
-                            </a>
-                        </p>
                     )}
                 </Card>
 
                 {/* Quick Actions */}
-                {isConnected && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <QuickActionCard
-                            icon={<Bell className="text-blue-500" />}
-                            title="Pre-Event Reminder"
-                            description="Remind attendees about upcoming events"
-                            onClick={() => { setCampaignType(CampaignTypes.PRE_EVENT_REMINDER); setShowCreateCampaign(true); }}
-                        />
-                        <QuickActionCard
-                            icon={<CheckCircle2 className="text-green-500" />}
-                            title="Post-Event Follow-up"
-                            description="Thank attendees and gather feedback"
-                            onClick={() => { setCampaignType(CampaignTypes.POST_EVENT_FOLLOWUP); setShowCreateCampaign(true); }}
-                        />
-                        <QuickActionCard
-                            icon={<ShoppingCart className="text-orange-500" />}
-                            title="Abandoned Cart"
-                            description="Recover incomplete purchases"
-                            onClick={() => { setCampaignType(CampaignTypes.ABANDONED_CART); setShowCreateCampaign(true); }}
-                        />
-                        <QuickActionCard
-                            icon={<Megaphone className="text-purple-500" />}
-                            title="Announcement"
-                            description="Send news and updates"
-                            onClick={() => { setCampaignType(CampaignTypes.ANNOUNCEMENT); setShowCreateCampaign(true); }}
-                        />
-                    </div>
-                )}
-
-                {/* Sync Attendees */}
-                {isConnected && events.length > 0 && (
-                    <Card className="p-6 mb-6">
-                        <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Users size={18} /> Sync Event Attendees
-                        </h3>
-                        <p className="text-sm text-zinc-500 mb-4">
-                            Import your event attendees into Mailerlite for targeted campaigns
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {events.slice(0, 6).map(event => (
-                                <div key={event.id} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
-                                    <div className="flex-1 min-w-0 mr-3">
-                                        <p className="font-medium text-zinc-900 dark:text-white text-sm truncate">{event.title}</p>
-                                        <p className="text-xs text-zinc-500">{new Date(event.date).toLocaleDateString()}</p>
-                                    </div>
-                                    <Button size="sm" variant="ghost" onClick={() => syncEventAttendees(event.id)}>
-                                        <MailPlus size={14} />
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <QuickActionCard
+                        icon={<Bell className="text-blue-500" />}
+                        title="Pre-Event Reminder"
+                        description="Remind attendees about upcoming events"
+                        onClick={() => { setCampaignType(CampaignTypes.PRE_EVENT_REMINDER); setShowCreateCampaign(true); }}
+                    />
+                    <QuickActionCard
+                        icon={<CheckCircle2 className="text-green-500" />}
+                        title="Post-Event Follow-up"
+                        description="Thank attendees and gather feedback"
+                        onClick={() => { setCampaignType(CampaignTypes.POST_EVENT_FOLLOWUP); setShowCreateCampaign(true); }}
+                    />
+                    <QuickActionCard
+                        icon={<ShoppingCart className="text-orange-500" />}
+                        title="Abandoned Cart"
+                        description="Recover incomplete purchases"
+                        onClick={() => { setCampaignType(CampaignTypes.ABANDONED_CART); setShowCreateCampaign(true); }}
+                    />
+                    <QuickActionCard
+                        icon={<Megaphone className="text-purple-500" />}
+                        title="Announcement"
+                        description="Send news and updates"
+                        onClick={() => { setCampaignType(CampaignTypes.ANNOUNCEMENT); setShowCreateCampaign(true); }}
+                    />
+                </div>
 
                 {/* Campaigns List */}
                 <Card className="p-6">
                     <h3 className="font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
-                        <Target size={18} /> Campaigns
+                        <Mail size={18} /> Your Campaigns
                     </h3>
-                    
-                    {campaigns.length > 0 ? (
+
+                    {campaigns.length === 0 ? (
+                        <div className="text-center py-12 text-zinc-500">
+                            <MailPlus size={48} className="mx-auto mb-4 opacity-50" />
+                            <p>No campaigns yet. Create your first campaign above!</p>
+                        </div>
+                    ) : (
                         <div className="space-y-3">
                             {campaigns.map(campaign => (
                                 <div key={campaign.id} className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white dark:bg-zinc-700 rounded-lg flex items-center justify-center">
-                                            {getCampaignTypeIcon(campaign.type)}
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-[#ec4899]/10 flex items-center justify-center text-[#ec4899]">
+                                            {getCampaignIcon(campaign.type)}
                                         </div>
                                         <div>
                                             <p className="font-bold text-zinc-900 dark:text-white">{campaign.name}</p>
-                                            <p className="text-xs text-zinc-500">{getCampaignTypeName(campaign.type)} • {new Date(campaign.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-sm text-zinc-500">{getCampaignTypeName(campaign.type)} • {campaign.subject}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge className={campaign.status === 'sent' ? 'bg-green-100 text-green-700' : campaign.status === 'scheduled' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-200 text-zinc-700'}>
+                                    <div className="flex items-center gap-3">
+                                        <Badge color={campaign.status === 'sent' ? 'green' : campaign.status === 'scheduled' ? 'blue' : 'gray'}>
                                             {campaign.status}
                                         </Badge>
                                         <Button variant="ghost" size="sm" onClick={() => deleteCampaign(campaign.id)}>
-                                            <Trash2 size={14} className="text-red-500" />
+                                            <Trash2 size={14} />
                                         </Button>
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 text-zinc-400">
-                            <Mail size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>No campaigns yet</p>
-                            <p className="text-sm mt-1">Create your first campaign to engage your audience</p>
                         </div>
                     )}
                 </Card>
@@ -476,38 +441,42 @@ export const EmailMarketing = () => {
 
             {/* Create Campaign Modal */}
             {showCreateCampaign && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+                        <div className="flex items-center justify-between mb-6">
                             <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Create Campaign</h2>
+                            <button onClick={() => setShowCreateCampaign(false)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                                ✕
+                            </button>
                         </div>
-                        <div className="p-6 space-y-4">
+
+                        <div className="space-y-4">
+                            {/* Campaign Type */}
                             <div>
-                                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Campaign Type</label>
+                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Campaign Type</label>
                                 <select
                                     value={campaignType}
-                                    onChange={(e) => setCampaignType(e.target.value)}
-                                    className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl"
+                                    onChange={e => setCampaignType(e.target.value)}
+                                    className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3"
                                 >
+                                    <option value={CampaignTypes.NEWSLETTER}>Newsletter</option>
                                     <option value={CampaignTypes.PRE_EVENT_REMINDER}>Pre-Event Reminder</option>
                                     <option value={CampaignTypes.POST_EVENT_FOLLOWUP}>Post-Event Follow-up</option>
-                                    <option value={CampaignTypes.ABANDONED_CART}>Abandoned Cart Recovery</option>
-                                    <option value={CampaignTypes.NEWSLETTER}>Newsletter</option>
+                                    <option value={CampaignTypes.ABANDONED_CART}>Abandoned Cart</option>
                                     <option value={CampaignTypes.ANNOUNCEMENT}>Announcement</option>
                                 </select>
                             </div>
 
-                            {(campaignType === CampaignTypes.PRE_EVENT_REMINDER || 
-                              campaignType === CampaignTypes.POST_EVENT_FOLLOWUP ||
-                              campaignType === CampaignTypes.ABANDONED_CART) && (
+                            {/* Event Selection (for event-specific campaigns) */}
+                            {[CampaignTypes.PRE_EVENT_REMINDER, CampaignTypes.POST_EVENT_FOLLOWUP, CampaignTypes.ABANDONED_CART].includes(campaignType) && (
                                 <div>
-                                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Select Event</label>
+                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Select Event</label>
                                     <select
                                         value={selectedEvent}
-                                        onChange={(e) => setSelectedEvent(e.target.value)}
-                                        className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl"
+                                        onChange={e => setSelectedEvent(e.target.value)}
+                                        className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-4 py-3"
                                     >
-                                        <option value="">Choose an event...</option>
+                                        <option value="">Select an event...</option>
                                         {events.map(event => (
                                             <option key={event.id} value={event.id}>{event.title}</option>
                                         ))}
@@ -515,64 +484,44 @@ export const EmailMarketing = () => {
                                 </div>
                             )}
 
-                            <div>
-                                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Campaign Name</label>
-                                <Input
-                                    value={campaignName}
-                                    onChange={(e) => setCampaignName(e.target.value)}
-                                    placeholder="e.g., Summer Festival Reminder"
-                                />
-                            </div>
+                            <Input
+                                label="Campaign Name"
+                                value={campaignName}
+                                onChange={e => setCampaignName(e.target.value)}
+                                placeholder="e.g., March Newsletter"
+                            />
 
-                            {groups.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Recipient Group</label>
-                                    <select
-                                        value={selectedGroup}
-                                        onChange={(e) => setSelectedGroup(e.target.value)}
-                                        className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl"
-                                    >
-                                        <option value="">Select a group...</option>
-                                        {groups.map((group: any) => (
-                                            <option key={group.id} value={group.id}>
-                                                {group.name} ({group.active_count || 0} subscribers)
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
+                            <Input
+                                label="Email Subject"
+                                value={emailSubject}
+                                onChange={e => setEmailSubject(e.target.value)}
+                                placeholder="e.g., Exciting news from us!"
+                            />
 
                             <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300">Email Subject</label>
-                                    <Button variant="ghost" size="sm" onClick={loadTemplate} className="text-xs">
-                                        Load Template
-                                    </Button>
-                                </div>
-                                <Input
-                                    value={emailSubject}
-                                    onChange={(e) => setEmailSubject(e.target.value)}
-                                    placeholder="Subject line..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2">Email Content</label>
-                                <textarea
+                                <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Email Content</label>
+                                <RichTextarea
                                     value={emailContent}
-                                    onChange={(e) => setEmailContent(e.target.value)}
-                                    placeholder="Write your message..."
-                                    rows={6}
-                                    className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl resize-none"
+                                    onChange={setEmailContent}
+                                    placeholder="Write your email content here..."
                                 />
                             </div>
-                        </div>
-                        <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
-                            <Button variant="ghost" onClick={() => setShowCreateCampaign(false)}>Cancel</Button>
-                            <Button onClick={createCampaign} disabled={isSending}>
-                                {isSending ? <Loader2 size={16} className="animate-spin mr-2" /> : <Plus size={16} className="mr-2" />}
-                                Create Campaign
+
+                            {/* Template Helper */}
+                            <Button variant="outline" onClick={loadTemplate} className="w-full">
+                                <Copy size={14} className="mr-2" /> Load Template
                             </Button>
+
+                            <div className="flex gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                                <Button variant="outline" onClick={sendTestEmail} disabled={isSending} className="flex-1">
+                                    {isSending ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
+                                    Send Test Email
+                                </Button>
+                                <Button onClick={createCampaign} disabled={isSending} className="flex-1">
+                                    {isSending ? <Loader2 size={16} className="animate-spin mr-2" /> : <Plus size={16} className="mr-2" />}
+                                    Create Campaign
+                                </Button>
+                            </div>
                         </div>
                     </Card>
                 </div>
@@ -582,26 +531,17 @@ export const EmailMarketing = () => {
 };
 
 // Quick Action Card Component
-const QuickActionCard = ({ 
-    icon, 
-    title, 
-    description, 
-    onClick 
-}: { 
-    icon: React.ReactNode; 
-    title: string; 
-    description: string; 
-    onClick: () => void;
-}) => (
-    <Card 
-        className="p-4 cursor-pointer hover:shadow-lg transition-shadow group"
-        onClick={onClick}
-    >
-        <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            {icon}
+const QuickActionCard = ({ icon, title, description, onClick }: { icon: React.ReactNode; title: string; description: string; onClick: () => void }) => (
+    <Card className="p-4 hover:border-[#ec4899] cursor-pointer transition-colors" onClick={onClick}>
+        <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                {icon}
+            </div>
+            <div>
+                <h4 className="font-bold text-zinc-900 dark:text-white text-sm">{title}</h4>
+                <p className="text-xs text-zinc-500">{description}</p>
+            </div>
         </div>
-        <h4 className="font-bold text-zinc-900 dark:text-white text-sm">{title}</h4>
-        <p className="text-xs text-zinc-500 mt-1">{description}</p>
     </Card>
 );
 
