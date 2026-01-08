@@ -79,8 +79,8 @@ export const EmailService = {
      * Send subscription welcome email when user upgrades their plan
      */
     sendSubscriptionWelcome: async (to, planName, cycle, userName) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Subscription Welcome to: ${to}, Plan: ${planName}`);
             return { sent: false, simulated: true };
         }
@@ -176,8 +176,8 @@ export const EmailService = {
      * Send subscription cancellation/downgrade email
      */
     sendSubscriptionCancellation: async (to, oldPlan, newPlan, userName, effectiveDate) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Subscription Change to: ${to}, ${oldPlan} → ${newPlan}`);
             return { sent: false, simulated: true };
         }
@@ -285,8 +285,8 @@ export const EmailService = {
      * Send affiliate conversion notification when someone signs up with their code
      */
     sendAffiliateConversionNotification: async (to, affiliateName, customerName, eventTitle, orderAmount, commission) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Affiliate Conversion to: ${to}, Commission: $${commission}`);
             return { sent: false, simulated: true };
         }
@@ -390,8 +390,8 @@ export const EmailService = {
      * Send weekly affiliate earnings summary email
      */
     sendAffiliateWeeklySummary: async (to, affiliateName, weeklyStats) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Weekly Summary to: ${to}`);
             return { sent: false, simulated: true };
         }
@@ -537,8 +537,8 @@ export const EmailService = {
      * Send payment failed notification email
      */
     sendPaymentFailedNotification: async (to, customerName, eventTitle, amount, failureReason) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Payment Failed to: ${to}, Event: ${eventTitle}`);
             return { sent: false, simulated: true };
         }
@@ -652,8 +652,8 @@ export const EmailService = {
      * Send attendee account credentials after auto-creation on ticket purchase
      */
     sendAttendeeCredentials: async (to, attendeeName, password, eventTitle, eventDate, eventLocation) => {
-        if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Simulation only.");
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+            console.warn("[EmailService] Missing Credentials. Email simulation only.");
             console.log(`[SIMULATION] Attendee Credentials to: ${to}, Password: ${password}`);
             return { sent: false, simulated: true };
         }
