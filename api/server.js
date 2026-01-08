@@ -28,8 +28,6 @@ import { handleWebhook } from '../backend/controllers/stripeWebhookController.js
 // Services
 import { initCronJobs } from '../backend/services/cronService.js';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5001;
 
