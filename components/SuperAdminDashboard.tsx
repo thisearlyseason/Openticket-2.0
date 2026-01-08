@@ -173,7 +173,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setPlatformStripeId(currentUser?.stripeConnectId || '');
         setPlatformPublishableKey(currentUser?.stripePublishableKey || '');
         setPlatformSecretKey(currentUser?.stripeSecretKey || '');
-        setMailerliteApiKey(localStorage.getItem('platform_mailerlite_key') || '');
+        // Check if Resend is configured via backend
+        checkResendStatus();
         setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
         loadPromoCodes();
