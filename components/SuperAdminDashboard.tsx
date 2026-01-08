@@ -153,7 +153,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [platformStripeId, setPlatformStripeId] = useState('');
     const [platformPublishableKey, setPlatformPublishableKey] = useState('');
     const [platformSecretKey, setPlatformSecretKey] = useState('');
-    const [mailerliteApiKey, setMailerliteApiKey] = useState('');
+    const [resendApiKeyConfigured, setResendApiKeyConfigured] = useState(false);
     const [backendDefaultCurrency, setBackendDefaultCurrency] = useState('USD');
 
     // Donation analytics date range filter
