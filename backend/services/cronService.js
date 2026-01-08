@@ -31,15 +31,14 @@ const getOrganizerEmailSettings = async (organizerId) => {
         
         const settings = data?.subscription?.settings || {};
         return {
-            provider: settings.emailProvider || 'openticket_mailer',
+            provider: settings.emailProvider || 'resend',
             gmailConfig: settings.gmail_config || null,
-            mailerliteKey: settings.mailerlite_api_key || null,
             organizerEmail: data?.email,
             organizerName: data?.name
         };
     } catch (e) {
         console.error('[CRON] Error fetching organizer settings:', e);
-        return { provider: 'openticket_mailer' };
+        return { provider: 'resend' };
     }
 };
 
