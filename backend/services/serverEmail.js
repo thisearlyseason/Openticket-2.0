@@ -694,18 +694,6 @@ export const EmailService = {
             </div>
         `;
 
-        try {
-            const info = await transporter.sendMail({
-                from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
-                to,
-                subject,
-                html: htmlBody
-            });
-            console.log(`[EmailService] Attendee Credentials Sent: ${info.messageId} to ${to}`);
-            return { sent: true, messageId: info.messageId };
-        } catch (error) {
-            console.error("[EmailService] Attendee Credentials Failed:", error);
-            return { sent: false, error: error.message };
-        }
+        return await sendEmailViaResend(to, subject, htmlBody);
     }
 };
