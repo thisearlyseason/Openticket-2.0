@@ -1102,10 +1102,10 @@ export const Settings = () => {
                                     )}
 
                                     {/* Current Status */}
-                                    <div className="mt-4 flex items-center gap-2 text-sm">
+                                    <div className="mt-4 flex items-center gap-2 text-sm flex-wrap">
                                         <span className="text-zinc-500">Currently sending via:</span>
                                         <Badge variant={emailProvider === 'gmail' ? 'default' : 'success'}>
-                                            {emailProvider === 'gmail' ? '📧 Gmail' : '🎟️ OpenTicket'}
+                                            {emailProvider === 'gmail' ? '📫 Gmail' : '📧 Resend'}
                                         </Badge>
                                     </div>
                                 </div>
