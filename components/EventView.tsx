@@ -732,7 +732,7 @@ export const EventView = () => {
                 paymentStatus,
                 approvalStatus: event.requiresApproval ? 'pending' : 'approved',
                 promoCodeUsed: appliedPromo?.code,
-                discountAmount: appliedPromo ? calculateDiscount() : 0,
+                discountAmount: orderBreakdown?.discountAmount || 0,
                 waiverAgreed: regData.waiverAgreed,
                 taxAmount,
                 customFeesAmount,
