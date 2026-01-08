@@ -544,6 +544,8 @@ class ResendEmailServiceTester:
         print("-" * 40)
         self.test_email_status_endpoint()
         self.test_email_providers_endpoint()
+        self.test_email_send_to_verified_address()
+        self.test_template_email_to_verified_address()
         self.test_email_send_single()
         self.test_email_send_test_template()
         
