@@ -1,0 +1,104 @@
+[
+  {
+    "test": "Email Status Endpoint",
+    "success": true,
+    "details": "Resend configured: True, available: True, provider: resend",
+    "response_data": {
+      "configured": true,
+      "available": true,
+      "provider": "resend",
+      "senderEmail": "onboarding@resend.dev",
+      "message": "Resend email service is ready"
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Email Providers Endpoint",
+    "success": true,
+    "details": "Resend (configured: True), Gmail (configured: False), default: resend",
+    "response_data": {
+      "providers": [
+        {
+          "id": "resend",
+          "name": "Resend",
+          "description": "Reliable transactional email service (recommended)",
+          "configured": true,
+          "icon": "\ud83d\udce7"
+        },
+        {
+          "id": "gmail",
+          "name": "Gmail",
+          "description": "Send from your connected Gmail account",
+          "configured": false,
+          "icon": "\ud83d\udceb",
+          "requiresOAuth": true
+        }
+      ],
+      "defaultProvider": "resend"
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Email Send Single",
+    "success": false,
+    "details": "HTTP 500",
+    "response_data": "{\"error\":\"You can only send testing emails to your own email address (thisearlyseason@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.\"}",
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Email Send Test Template",
+    "success": true,
+    "details": "Successfully generated test email preview/simulation: preview-1767831032826",
+    "response_data": {
+      "success": true,
+      "simulated": true,
+      "preview": true,
+      "messageId": "preview-1767831032826",
+      "message": "Could not send: You can only send testing emails to your own email address (thisearlyseason@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.. Showing preview instead.",
+      "previewData": {
+        "to": "test@example.com",
+        "subject": "[TEST] Test Sample Event - Test",
+        "bodyPreview": "<p>Hi John Doe, welcome to Sample Event - Test on Thursday, January 15, 2026 at 12:10 AM at 123 Main Street, San Francisco, CA!</p>"
+      }
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Email Send Validation - Missing Fields",
+    "success": true,
+    "details": "Correctly validates missing 'to' field (400)",
+    "response_data": {
+      "error": "Missing required fields: to, subject, html"
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Email Send Test Validation - Missing Template",
+    "success": true,
+    "details": "Correctly validates missing template (400)",
+    "response_data": {
+      "error": "Missing required fields: to, template"
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "MailerLite References Removed",
+    "success": true,
+    "details": "No MailerLite references found in API responses",
+    "response_data": null,
+    "timestamp": "2026-01-08 00:10:32"
+  },
+  {
+    "test": "Resend Configuration Check",
+    "success": true,
+    "details": "Resend properly configured and available. Message: Resend email service is ready",
+    "response_data": {
+      "configured": true,
+      "available": true,
+      "provider": "resend",
+      "senderEmail": "onboarding@resend.dev",
+      "message": "Resend email service is ready"
+    },
+    "timestamp": "2026-01-08 00:10:32"
+  }
+]
