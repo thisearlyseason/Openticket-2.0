@@ -4,6 +4,12 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Load environment variables from backend/.env
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
 
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
