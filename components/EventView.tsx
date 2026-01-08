@@ -234,6 +234,14 @@ export const EventView = () => {
                                         tickets: reg.tickets || [],
                                         addOns: reg.add_ons || [],
                                         timestamp: new Date(reg.created_at).getTime(),
+                                        // Include all fee and discount fields
+                                        serviceFee: reg.service_fee || 0,
+                                        customFeesAmount: reg.custom_fees_amount || 0,
+                                        taxAmount: reg.tax_amount || 0,
+                                        donationAmount: reg.donation_amount || 0,
+                                        platformDonationAmount: reg.platform_donation_amount || 0,
+                                        discountAmount: reg.discount_amount || 0,
+                                        promoCodeUsed: reg.promo_code_used || null,
                                     };
                                     
                                     setCompletedRegistration(normalizedReg as any);
