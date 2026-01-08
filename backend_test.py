@@ -10,8 +10,8 @@ import time
 import uuid
 from typing import Dict, Any
 
-# Configuration
-BACKEND_URL = "http://localhost:8001"
+# Configuration - Use production URL from frontend/.env
+BACKEND_URL = "https://savvy-tix.preview.emergentagent.com"
 
 class ResendEmailServiceTester:
     def __init__(self):
