@@ -37,9 +37,10 @@ const PLAN_FEATURES = {
 
 export const EmailService = {
     sendConfirmation: async (to, tickets, eventDetails) => {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-            console.warn("[EmailService] Parsing Missing Credentials. Email simulation only.");
-            console.log(`[SIMULATION] To: ${to}, Subject: Ticket Confirmation`);
+        // Check if Resend is configured
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Email simulation only.");
+            console.log(`[SIMULATION] To: ${to}, Subject: Ticket Confirmation for ${eventDetails?.title}`);
             return false;
         }
 
@@ -55,7 +56,7 @@ export const EmailService = {
 
         const htmlBody = `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1>Order Confirmation</h1>
+                <h1 style="color: #ec4899;">Order Confirmation</h1>
                 <p>Thank you for your purchase!</p>
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                     <p><strong>Event:</strong> ${eventDetails?.title || 'N/A'}</p>
@@ -70,19 +71,8 @@ export const EmailService = {
             </div>
         `;
 
-        try {
-            const info = await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to,
-                subject,
-                html: htmlBody
-            });
-            console.log(`[EmailService] Sent: ${info.messageId}`);
-            return true;
-        } catch (error) {
-            console.error("[EmailService] Send Failed:", error);
-            return false;
-        }
+        const result = await sendEmailViaResend(to, subject, htmlBody);
+        return result.sent;
     },
 
     /**
