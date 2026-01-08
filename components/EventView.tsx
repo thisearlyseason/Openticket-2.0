@@ -1221,14 +1221,14 @@ export const EventView = () => {
                                                     <>
                                                         <div className={`p-8 border-2 transition-all rounded-[2rem] flex flex-col md:flex-row justify-between items-center ${ticketSelection['general'] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-black/20'}`}>
                                                             <div className="text-center md:text-left mb-6 md:mb-0">
-                                                                <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{event.ticketName || 'General Admission'}</div>
+                                                                <div className="font-black text-2xl mb-1 uppercase tracking-tighter text-zinc-900 dark:text-white">{event.ticketName || 'General Admission'}</div>
                                                                 <div className="text-3xl font-black text-zinc-900 dark:text-white">
                                                                     {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATION' : <EventPriceDisplay amount={event.price} currency={organizerUser?.defaultCurrency || 'USD'} showDisplayCurrency={true} />}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl">
-                                                                <button onClick={() => handleTicketChange('general', Math.max(0, (ticketSelection['general'] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection['general']}>-</button>
-                                                                <span className="w-10 text-center font-black text-3xl">{ticketSelection['general'] || 0}</span>
+                                                                <button onClick={() => handleTicketChange('general', Math.max(0, (ticketSelection['general'] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white flex items-center justify-center hover:bg-zinc-200 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection['general']}>-</button>
+                                                                <span className="w-10 text-center font-black text-3xl text-zinc-900 dark:text-white">{ticketSelection['general'] || 0}</span>
                                                                 <button onClick={() => handleTicketChange('general', (ticketSelection['general'] || 0) + 1)} className="w-12 h-12 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all font-bold text-2xl">+</button>
                                                             </div>
                                                         </div>
