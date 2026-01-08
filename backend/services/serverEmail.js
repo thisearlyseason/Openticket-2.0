@@ -1,22 +1,21 @@
-import nodemailer from 'nodemailer';
+import resendService from './resendService.js';
 
-let transporter;
-
-try {
-    if (process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD) {
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_APP_PASSWORD
-            }
-        });
-    } else {
-        console.warn("[EmailService] Missing credentials - Emails disabled.");
+// Helper function to send email via Resend
+const sendEmailViaResend = async (to, subject, html) => {
+    try {
+        const result = await resendService.sendEmail({ to, subject, html });
+        if (result.success) {
+            console.log(`[EmailService] Sent via Resend: ${result.messageId} to ${to}`);
+            return { sent: true, messageId: result.messageId };
+        } else {
+            console.error(`[EmailService] Resend failed: ${result.error}`);
+            return { sent: false, error: result.error };
+        }
+    } catch (error) {
+        console.error("[EmailService] Send Failed:", error);
+        return { sent: false, error: error.message };
     }
-} catch (e) {
-    console.warn("[EmailService] Init Failed:", e.message);
-}
+};
 
 // Plan features for welcome emails
 const PLAN_FEATURES = {
