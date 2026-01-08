@@ -1,18 +1,15 @@
-import nodemailer from 'nodemailer';
+/**
+ * Email Service - Lightweight wrapper for sending emails via Resend
+ * This provides a simpler interface for basic email needs
+ */
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASSWORD
-    }
-});
+import resendService from './resendService.js';
 
 export const EmailService = {
     sendConfirmation: async (to, tickets, eventDetails) => {
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
-            console.warn("[EmailService] Parsing Missing Credentials. Email simulation only.");
-            console.log(`[SIMULATION] To: ${to}, Subject: Ticket Confirmation`);
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Email simulation only.");
+            console.log(`[SIMULATION] To: ${to}, Subject: Ticket Confirmation for ${eventDetails?.title}`);
             return false;
         }
 
@@ -28,7 +25,7 @@ export const EmailService = {
 
         const htmlBody = `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1>Order Confirmation</h1>
+                <h1 style="color: #ec4899;">Order Confirmation</h1>
                 <p>Thank you for your purchase!</p>
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                     <p><strong>Event:</strong> ${eventDetails?.title || 'N/A'}</p>
@@ -44,14 +41,19 @@ export const EmailService = {
         `;
 
         try {
-            const info = await transporter.sendMail({
-                from: process.env.EMAIL_USER,
+            const result = await resendService.sendEmail({
                 to,
                 subject,
                 html: htmlBody
             });
-            console.log(`[EmailService] Sent: ${info.messageId}`);
-            return true;
+            
+            if (result.success) {
+                console.log(`[EmailService] Sent via Resend: ${result.messageId}`);
+                return true;
+            } else {
+                console.error("[EmailService] Send Failed:", result.error);
+                return false;
+            }
         } catch (error) {
             console.error("[EmailService] Send Failed:", error);
             return false;
