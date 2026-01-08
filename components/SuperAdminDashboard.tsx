@@ -180,6 +180,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         loadPromoCodes();
     }, [navigate, embedded]);
 
+    const checkResendStatus = async () => {
+        try {
+            const response = await fetch('/api/email/status');
+            const status = await response.json();
+            setResendApiKeyConfigured(status.configured && status.available);
+        } catch (error) {
+            console.error('Failed to check Resend status:', error);
+            setResendApiKeyConfigured(false);
+        }
+    };
+
     const refreshData = async () => {
         try {
             const [allUsers, allEvents, allRegs] = await Promise.all([
