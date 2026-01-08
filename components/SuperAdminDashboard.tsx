@@ -2379,38 +2379,51 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </div>
                             </div>
 
-                            {/* Mailerlite Email Marketing Settings */}
+                            {/* Resend Email Service Settings */}
                             <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
                                 <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                                    <Mail size={20} className="text-pink-400" /> Email Marketing (Mailerlite)
+                                    <Mail size={20} className="text-pink-400" /> Email Service (Resend)
                                 </h3>
                                 <p className="text-sm text-zinc-400 mb-6">
-                                    Configure Mailerlite API key for all organizers. This enables email campaigns, reminders, and attendee engagement features.
+                                    Resend is configured via environment variables on the backend. This enables transactional emails, campaigns, and attendee engagement features.
                                 </p>
 
                                 <div className="space-y-4">
-                                    <div className="relative">
-                                        <Input
-                                            label="Mailerlite API Key"
-                                            placeholder="Enter your Mailerlite API key..."
-                                            type="password"
-                                            value={mailerliteApiKey}
-                                            onChange={e => setMailerliteApiKey(e.target.value)}
-                                            className="bg-black border-zinc-700 text-white"
-                                        />
-                                        <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
-                                            <Lock size={16} />
+                                    <div className="flex items-center gap-4 p-4 bg-black/50 rounded-xl">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${resendApiKeyConfigured ? 'bg-green-500/20' : 'bg-zinc-700'}`}>
+                                            {resendApiKeyConfigured ? (
+                                                <CheckCircle size={24} className="text-green-500" />
+                                            ) : (
+                                                <AlertCircle size={24} className="text-zinc-400" />
+                                            )}
                                         </div>
+                                        <div className="flex-1">
+                                            <p className="font-bold text-white">
+                                                {resendApiKeyConfigured ? 'Resend Connected' : 'Resend Not Configured'}
+                                            </p>
+                                            <p className="text-sm text-zinc-400">
+                                                {resendApiKeyConfigured 
+                                                    ? 'Email service is ready to send transactional emails' 
+                                                    : 'Add RESEND_API_KEY to backend environment variables'}
+                                            </p>
+                                        </div>
+                                        <Button variant="outline" onClick={checkResendStatus} size="sm">
+                                            Refresh Status
+                                        </Button>
                                     </div>
-                                    <p className="text-xs text-zinc-500">
-                                        Get your API key from{' '}
-                                        <a href="https://www.mailerlite.com/help/where-to-find-the-mailerlite-api-key-groupid-and-documentation" target="_blank" className="text-pink-400 underline">
-                                            Mailerlite → Integrations → API
-                                        </a>
-                                    </p>
+
+                                    <div className="p-4 bg-blue-900/20 border border-blue-700 rounded-xl">
+                                        <h4 className="font-bold text-blue-400 text-sm mb-2">Configuration Instructions</h4>
+                                        <ol className="text-xs text-zinc-400 space-y-2 list-decimal list-inside">
+                                            <li>Sign up at <a href="https://resend.com" target="_blank" className="text-pink-400 underline">resend.com</a></li>
+                                            <li>Go to Dashboard → API Keys → Create API Key</li>
+                                            <li>Add to backend/.env: <code className="bg-black px-2 py-1 rounded">RESEND_API_KEY=re_your_key</code></li>
+                                            <li>Restart the backend service</li>
+                                        </ol>
+                                    </div>
                                     
                                     <div className="mt-4 pt-4 border-t border-zinc-700">
-                                        <h4 className="font-bold text-white text-sm mb-3">Default Email Templates</h4>
+                                        <h4 className="font-bold text-white text-sm mb-3">Available Email Features</h4>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="bg-black/50 p-3 rounded-xl">
                                                 <div className="flex items-center gap-2 text-blue-400 text-sm font-bold mb-1">
@@ -2438,22 +2451,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="mt-6 flex justify-end">
-                                    <Button 
-                                        onClick={() => {
-                                            if (mailerliteApiKey) {
-                                                localStorage.setItem('platform_mailerlite_key', mailerliteApiKey);
-                                                alert('Mailerlite API key saved! All organizers can now use email marketing features.');
-                                            } else {
-                                                alert('Please enter a Mailerlite API key');
-                                            }
-                                        }} 
-                                        className="bg-pink-500 hover:bg-pink-600 text-white border-none"
-                                    >
-                                        <Save size={16} className="mr-2" /> Save Email Settings
-                                    </Button>
                                 </div>
                             </div>
                         </div>
