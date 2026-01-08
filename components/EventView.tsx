@@ -878,44 +878,115 @@ export const EventView = () => {
 
                                             {/* Ticket Summary Table */}
                                             <div className="space-y-4 mb-12">
-                                                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">Ticket Summary</h3>
-                                                <div className="bg-zinc-50 dark:bg-black p-6 rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
+                                                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">Order Summary</h3>
+                                                <div className="bg-zinc-50 dark:bg-black p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
+                                                    {/* Tickets Section */}
                                                     {completedRegistration?.tickets?.map((ticket, idx) => (
                                                         <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 transform transition-all hover:scale-[1.01]">
-                                                            <div>
-                                                                <div className="font-black text-zinc-900 dark:text-white">{ticket.name}</div>
-                                                                <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
+                                                            <div className="min-w-0 flex-1 mr-4">
+                                                                <div className="font-black text-zinc-900 dark:text-white truncate">{ticket.name}</div>
+                                                                <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter truncate">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
                                                             </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={ticket.pricePerTicket} currency={eventCurrency} /></div>
+                                                            <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap"><EventPriceDisplay amount={ticket.pricePerTicket} currency={eventCurrency} /></div>
                                                         </div>
                                                     ))}
-                                                    {completedRegistration?.addOns?.map((addon, idx) => (
-                                                        <div key={`addon-${idx}`} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 border-t mt-3 pt-3">
-                                                            <div>
-                                                                <div className="font-black text-zinc-900 dark:text-white">{addon.name} x{addon.quantity}</div>
-                                                            </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={addon.price * addon.quantity} currency={eventCurrency} /></div>
-                                                        </div>
-                                                    ))}
+                                                    
+                                                    {/* Add-ons Section */}
+                                                    {completedRegistration?.addOns && completedRegistration.addOns.length > 0 && (
+                                                        <>
+                                                            {completedRegistration.addOns.map((addon, idx) => (
+                                                                <div key={`addon-${idx}`} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0">
+                                                                    <div className="min-w-0 flex-1 mr-4">
+                                                                        <div className="font-black text-zinc-900 dark:text-white truncate">{addon.name} {addon.quantity > 1 ? `×${addon.quantity}` : ''}</div>
+                                                                        <div className="text-xs font-bold text-zinc-500 uppercase">Add-on</div>
+                                                                    </div>
+                                                                    <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap"><EventPriceDisplay amount={addon.price * addon.quantity} currency={eventCurrency} /></div>
+                                                                </div>
+                                                            ))}
+                                                        </>
+                                                    )}
 
-                                                    {/* Fees Breakdown */}
+                                                    {/* Subtotal */}
+                                                    <div className="flex justify-between items-center py-3 border-t border-zinc-200 dark:border-zinc-800 mt-2">
+                                                        <span className="font-bold text-zinc-600 dark:text-zinc-400">Subtotal</span>
+                                                        <span className="font-bold text-zinc-900 dark:text-white">
+                                                            <EventPriceDisplay amount={
+                                                                (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
+                                                                (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0)
+                                                            } currency={eventCurrency} />
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Discount/Promo Code */}
+                                                    {(completedRegistration?.discountAmount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm">
+                                                            <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
+                                                                <span>🎟️</span>
+                                                                Promo Code {completedRegistration?.promoCodeUsed ? `(${completedRegistration.promoCodeUsed})` : ''}
+                                                            </span>
+                                                            <span className="text-green-600 dark:text-green-400 font-bold">
+                                                                -<EventPriceDisplay amount={completedRegistration?.discountAmount || 0} currency={eventCurrency} />
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Platform & Service Fees */}
                                                     {(completedRegistration?.serviceFee || 0) > 0 && (
                                                         <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                            <span>Platform & Service Fees</span>
+                                                            <span>Service Fee</span>
                                                             <span><EventPriceDisplay amount={completedRegistration?.serviceFee || 0} currency={eventCurrency} /></span>
                                                         </div>
                                                     )}
 
-                                                    {/* Total Calculation based on saved registration data, NOT current state */}
-                                                    <div className="mt-6 flex justify-between items-center pt-6 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
-                                                        <div className="text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Amount</div>
-                                                        <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                                                            {/* Recalculate total from the registration object to be safe */}
+                                                    {/* Custom Fees */}
+                                                    {(completedRegistration?.customFeesAmount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                            <span>Processing Fee</span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.customFeesAmount || 0} currency={eventCurrency} /></span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Tax */}
+                                                    {(completedRegistration?.taxAmount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                            <span>Tax</span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.taxAmount || 0} currency={eventCurrency} /></span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Event Donation */}
+                                                    {(completedRegistration?.donationAmount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm text-pink-600 dark:text-pink-400 font-medium">
+                                                            <span className="flex items-center gap-2">
+                                                                <Heart size={14} /> Donation
+                                                            </span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.donationAmount || 0} currency={eventCurrency} /></span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Platform Donation (Tip) */}
+                                                    {(completedRegistration?.platformDonationAmount || 0) > 0 && (
+                                                        <div className="flex justify-between items-center py-2 text-sm text-blue-600 dark:text-blue-400 font-medium">
+                                                            <span className="flex items-center gap-2">
+                                                                <Gift size={14} /> Platform Tip
+                                                            </span>
+                                                            <span><EventPriceDisplay amount={completedRegistration?.platformDonationAmount || 0} currency={eventCurrency} /></span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Total Calculation */}
+                                                    <div className="mt-4 flex justify-between items-center pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
+                                                        <div className="text-lg sm:text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Paid</div>
+                                                        <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
                                                             <EventPriceDisplay amount={
                                                                 (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
                                                                 (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
                                                                 (completedRegistration?.serviceFee || 0) +
-                                                                (completedRegistration?.donationAmount || 0)
+                                                                (completedRegistration?.customFeesAmount || 0) +
+                                                                (completedRegistration?.taxAmount || 0) +
+                                                                (completedRegistration?.donationAmount || 0) +
+                                                                (completedRegistration?.platformDonationAmount || 0) -
+                                                                (completedRegistration?.discountAmount || 0)
                                                             } currency={eventCurrency} />
                                                         </div>
                                                     </div>
