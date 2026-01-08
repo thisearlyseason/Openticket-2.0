@@ -490,17 +490,17 @@ class ResendEmailServiceTester:
         return passed == total
 
 if __name__ == "__main__":
-    tester = OpenTicketAPITester()
+    tester = ResendEmailServiceTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/send_test_email_results.json', 'w') as f:
+    with open('/app/resend_email_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/send_test_email_results.json")
+    print(f"\n📄 Detailed results saved to: /app/resend_email_test_results.json")
     
     if success:
-        print("\n🎉 All Send Test Email API tests PASSED!")
+        print("\n🎉 All Resend Email Service Integration tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
