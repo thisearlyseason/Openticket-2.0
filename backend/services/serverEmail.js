@@ -347,19 +347,7 @@ export const EmailService = {
             </div>
         `;
 
-        try {
-            const info = await transporter.sendMail({
-                from: `"OpenTicket Affiliates" <${process.env.EMAIL_USER}>`,
-                to,
-                subject,
-                html: htmlBody
-            });
-            console.log(`[EmailService] Affiliate Conversion Sent: ${info.messageId} to ${to}`);
-            return { sent: true, messageId: info.messageId };
-        } catch (error) {
-            console.error("[EmailService] Affiliate Conversion Failed:", error);
-            return { sent: false, error: error.message };
-        }
+        return await sendEmailViaResend(to, subject, htmlBody);
     },
 
     /**
