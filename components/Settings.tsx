@@ -1010,10 +1010,10 @@ export const Settings = () => {
                                     </p>
 
                                     <div className="space-y-3">
-                                        {/* OpenTicket Mailing Service Option */}
+                                        {/* Resend Email Service Option */}
                                         <label 
                                             className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                                                emailProvider === 'openticket_mailer' 
+                                                emailProvider === 'resend' 
                                                     ? 'border-primary bg-primary/5' 
                                                     : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
                                             }`}
@@ -1021,19 +1021,19 @@ export const Settings = () => {
                                             <input
                                                 type="radio"
                                                 name="emailProvider"
-                                                value="openticket_mailer"
-                                                checked={emailProvider === 'openticket_mailer'}
-                                                onChange={() => setEmailProvider('openticket_mailer')}
+                                                value="resend"
+                                                checked={emailProvider === 'resend'}
+                                                onChange={() => setEmailProvider('resend')}
                                                 className="mt-1"
                                             />
                                             <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xl">🎟️</span>
-                                                    <span className="font-bold">OpenTicket Mailing Service</span>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-xl">📧</span>
+                                                    <span className="font-bold">Resend Email Service</span>
                                                     <Badge variant="success">Recommended</Badge>
                                                 </div>
                                                 <p className="text-sm text-zinc-500 mt-1">
-                                                    Send emails via OpenTicket's reliable email infrastructure. No daily limits. Best deliverability.
+                                                    Send emails via Resend's reliable email infrastructure. No daily limits. Best deliverability.
                                                 </p>
                                             </div>
                                         </label>
