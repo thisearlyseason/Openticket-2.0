@@ -1203,20 +1203,20 @@ export const EventView = () => {
                                                     </div>
                                                 )}
 
-                                                <div className="mt-12 p-8 bg-zinc-100 dark:bg-zinc-800/50 rounded-[2.5rem] border-2 border-dashed border-zinc-300 dark:border-zinc-700 group hover:border-primary/50 transition-colors">
-                                                    <div className="text-sm font-black text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-3">
+                                                <div className="mt-12 p-4 sm:p-8 bg-zinc-100 dark:bg-zinc-800/50 rounded-2xl sm:rounded-[2.5rem] border-2 border-dashed border-zinc-300 dark:border-zinc-700 group hover:border-primary/50 transition-colors">
+                                                    <div className="text-sm font-black text-zinc-500 uppercase tracking-widest mb-4 sm:mb-6 flex items-center gap-3">
                                                         <Target size={20} className="text-pink-500" /> Got a promo code?
                                                     </div>
-                                                    <div className="flex gap-4">
-                                                        <Input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="ENTER CODE" containerClassName="mb-0 flex-1" disabled={!!appliedPromo} className="bg-white dark:bg-black border-none shadow-xl h-14 text-lg font-black tracking-widest rounded-2xl" />
+                                                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                                                        <Input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="ENTER CODE" containerClassName="mb-0 flex-1" disabled={!!appliedPromo} className="bg-white dark:bg-black border-none shadow-xl h-12 sm:h-14 text-base sm:text-lg font-black tracking-widest rounded-xl sm:rounded-2xl" />
                                                         {appliedPromo ? (
-                                                            <Button variant="danger" onClick={() => { setAppliedPromo(null); setPromoCode(''); }} className="rounded-2xl px-8 h-14 font-black">Remove</Button>
+                                                            <Button variant="danger" onClick={() => { setAppliedPromo(null); setPromoCode(''); }} className="rounded-xl sm:rounded-2xl px-6 sm:px-8 h-12 sm:h-14 font-black w-full sm:w-auto">Remove</Button>
                                                         ) : (
-                                                            <Button variant="outline" onClick={handleApplyPromo} className="rounded-2xl px-10 h-14 font-black bg-white dark:bg-black hover:bg-primary hover:text-white border-none shadow-xl">Apply</Button>
+                                                            <Button variant="outline" onClick={handleApplyPromo} className="rounded-xl sm:rounded-2xl px-6 sm:px-10 h-12 sm:h-14 font-black bg-white dark:bg-black hover:bg-primary hover:text-white border-none shadow-xl w-full sm:w-auto">Apply</Button>
                                                         )}
                                                     </div>
                                                     {appliedPromo && (
-                                                        <div className="mt-4 text-lg text-green-600 font-black flex items-center gap-2 animate-in slide-in-from-top-4">
+                                                        <div className="mt-4 text-base sm:text-lg text-green-600 font-black flex items-center gap-2 animate-in slide-in-from-top-4">
                                                             <CheckCircle size={20} /> Applied: {appliedPromo.type === 'percent' ? `${appliedPromo.value}% OFF` : `-$${appliedPromo.value}`}
                                                         </div>
                                                     )}
