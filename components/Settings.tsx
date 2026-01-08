@@ -141,7 +141,7 @@ export const Settings = () => {
 
                 // Email State
                 setGmailConfig(currentUser.gmailConfig || { connected: false });
-                setEmailProvider(currentUser.emailProvider || 'openticket_mailer');
+                setEmailProvider(currentUser.emailProvider || 'resend');
                 setEmailTemplates(currentUser.emailTemplates || []);
 
                 // Load local preferences
