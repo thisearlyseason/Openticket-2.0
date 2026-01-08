@@ -99,7 +99,7 @@ export const Settings = () => {
 
                         // Email State - Load from fresh data
                         setGmailConfig(freshUser.gmailConfig || { connected: false });
-                        setEmailProvider(freshUser.emailProvider || 'openticket_mailer');
+                        setEmailProvider(freshUser.emailProvider || 'resend');
                         setEmailTemplates(freshUser.emailTemplates || []);
 
                         // Load local preferences
