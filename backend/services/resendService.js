@@ -57,6 +57,8 @@ export const sendEmail = async ({ to, subject, html, text, from }) => {
         const senderEmail = from || getSenderEmail();
         const plainText = text || html.replace(/<[^>]*>/g, '');
 
+        console.log(`[ResendService] Sending email from ${senderEmail} to ${to}`);
+        
         const { data, error } = await client.emails.send({
             from: `OpenTicket <${senderEmail}>`,
             to: [to],
@@ -66,20 +68,26 @@ export const sendEmail = async ({ to, subject, html, text, from }) => {
         });
 
         if (error) {
-            console.error('[ResendService] Send failed:', error);
+            console.error('[ResendService] ❌ Send failed:', JSON.stringify(error));
+            // Check for common Resend API errors
+            const errorMsg = error.message || JSON.stringify(error);
+            if (errorMsg.includes('can only send') || errorMsg.includes('403')) {
+                console.error('[ResendService] 💡 TIP: Resend test API keys can only send to verified email addresses.');
+                console.error('[ResendService] 💡 To send to any email, verify a domain at https://resend.com/domains');
+            }
             return {
                 success: false,
-                error: error.message || 'Failed to send email'
+                error: errorMsg
             };
         }
 
-        console.log(`[ResendService] Email sent: ${data.id} to ${to}`);
+        console.log(`[ResendService] ✅ Email sent: ${data.id} to ${to}`);
         return {
             success: true,
             messageId: data.id
         };
     } catch (err) {
-        console.error('[ResendService] Exception:', err);
+        console.error('[ResendService] ❌ Exception:', err.message);
         return {
             success: false,
             error: err.message || 'Failed to send email'
