@@ -1206,13 +1206,13 @@ export const EventView = () => {
                                                     event.ticketTiers?.map(tier => (
                                                         <div key={tier.id} className={`group flex flex-col md:flex-row justify-between items-center p-8 border-2 transition-all rounded-[2rem] ${ticketSelection[tier.id] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 bg-zinc-50 dark:bg-black/20'}`}>
                                                             <div className="flex-1 text-center md:text-left mb-6 md:mb-0">
-                                                                <div className="font-black text-2xl mb-1 uppercase tracking-tighter">{tier.name}</div>
+                                                                <div className="font-black text-2xl mb-1 uppercase tracking-tighter text-zinc-900 dark:text-white">{tier.name}</div>
                                                                 <div className="text-3xl font-black text-zinc-900 dark:text-white"><EventPriceDisplay amount={tier.price} currency={organizerUser?.defaultCurrency || 'USD'} showDisplayCurrency={true} /></div>
-                                                                {tier.description && <div className="text-zinc-500 mt-2 max-w-sm font-bold">{tier.description}</div>}
+                                                                {tier.description && <div className="text-zinc-600 dark:text-zinc-400 mt-2 max-w-sm font-bold">{tier.description}</div>}
                                                             </div>
                                                             <div className="flex items-center gap-6 bg-white dark:bg-zinc-800 p-3 rounded-[2rem] shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-700">
-                                                                <button onClick={() => handleTicketChange(tier.id, Math.max(0, (ticketSelection[tier.id] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 shadow-sm flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection[tier.id]}>-</button>
-                                                                <span className="w-10 text-center font-black text-3xl">{ticketSelection[tier.id] || 0}</span>
+                                                                <button onClick={() => handleTicketChange(tier.id, Math.max(0, (ticketSelection[tier.id] || 0) - 1))} className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors font-bold text-2xl disabled:opacity-30" disabled={!ticketSelection[tier.id]}>-</button>
+                                                                <span className="w-10 text-center font-black text-3xl text-zinc-900 dark:text-white">{ticketSelection[tier.id] || 0}</span>
                                                                 <button onClick={() => handleTicketChange(tier.id, (ticketSelection[tier.id] || 0) + 1)} className="w-12 h-12 rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-90 transition-all font-bold text-2xl">+</button>
                                                             </div>
                                                         </div>
