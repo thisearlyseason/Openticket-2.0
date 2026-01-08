@@ -1094,7 +1094,7 @@ export const Settings = () => {
                                                         <li><strong>Google Workspace:</strong> Up to 2,000 emails per day</li>
                                                     </ul>
                                                     <p className="text-xs text-amber-600 dark:text-amber-500 mt-2 break-words">
-                                                        ⚠️ If limits are exceeded, emails will fail. There is <strong>no automatic fallback</strong> to OpenTicket Mailing Service.
+                                                        ⚠️ If limits are exceeded, emails will fail. There is <strong>no automatic fallback</strong> to Resend.
                                                     </p>
                                                 </div>
                                             </div>
