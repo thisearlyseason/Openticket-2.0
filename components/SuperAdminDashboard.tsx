@@ -137,6 +137,18 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [platformPayoutNotes, setPlatformPayoutNotes] = useState('');
     const [isProcessingPlatformPayout, setIsProcessingPlatformPayout] = useState(false);
 
+    // Non-Profit Applications State
+    const [nonprofitApplications, setNonprofitApplications] = useState<any[]>([]);
+    const [allNonprofitApplications, setAllNonprofitApplications] = useState<any[]>([]);
+    const [selectedNonprofit, setSelectedNonprofit] = useState<any | null>(null);
+    const [nonprofitFilter, setNonprofitFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+    const [isApprovingNonprofit, setIsApprovingNonprofit] = useState(false);
+    const [nonprofitRejectReason, setNonprofitRejectReason] = useState('');
+
+    // Onboarding Responses State
+    const [onboardingResponses, setOnboardingResponses] = useState<any[]>([]);
+    const [selectedOnboarding, setSelectedOnboarding] = useState<any | null>(null);
+
     // Promo Code State
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [newPromo, setNewPromo] = useState({
