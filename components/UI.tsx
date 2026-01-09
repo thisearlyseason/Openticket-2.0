@@ -1024,23 +1024,20 @@ export const PriceDisplay = ({ amount, className = '', showCurrencyCode = true }
 };
 
 /**
- * EventPriceDisplay - Displays prices in the event's CHARGE currency
- * Use this for event tickets, add-ons, and checkout totals
- * The price shown is the exact price the buyer will be charged
+ * EventPriceDisplay - Displays prices with user's SELECTED currency as primary
  * 
- * CURRENCY PRIORITY:
- * 1. Event's charge currency (if specified)
- * 2. Backend default currency
- * 3. USD (fallback)
+ * DISPLAY LOGIC:
+ * 1. PRIMARY (large): User's selected/local currency - this is what they'll be charged
+ * 2. SECONDARY (small): Organizer's original currency - only shown when different from selected
  * 
- * Optionally shows approximate display currency below if user has selected different currency
+ * This ensures the user always sees their payment amount prominently
  */
 export const EventPriceDisplay = ({ 
     amount, 
-    currency,  // Event's charge currency (optional - will use backend default if not set)
+    currency,  // Organizer's currency (source of truth for pricing)
     className = '',
-    showCurrencyCode = true,  // Always show currency code by default
-    showDisplayCurrency = false,  // Show approximate conversion in user's display currency
+    showCurrencyCode = true,
+    showDisplayCurrency = false,  // Legacy prop - now always shows proper conversion
 }: { 
     amount: number, 
     currency?: string, 
@@ -1049,46 +1046,47 @@ export const EventPriceDisplay = ({
     showDisplayCurrency?: boolean,
 }) => {
     const [displayData, setDisplayData] = React.useState<{
-        chargeCurrency: string;
-        displayCurrency: string;
+        organizerCurrency: string;
+        selectedCurrency: string;
         convertedAmount: number;
-        showConversion: boolean;
+        showOrganizerPrice: boolean;
     } | null>(null);
 
     React.useEffect(() => {
-        // Import CurrencyService dynamically to get charge currency resolution
         const getDisplayData = async () => {
             try {
                 const { CurrencyService } = await import('../services/currencyService');
                 
-                // Get charge currency using priority: event → backend default → USD
-                const chargeCurrency = CurrencyService.getChargeCurrency(currency);
-                const displayCurrency = CurrencyService.getDisplayCurrency();
+                // Organizer's currency is the source of truth
+                const organizerCurrency = (currency || 'USD').toUpperCase();
+                // User's selected/local currency - this is what they'll see and be charged
+                const selectedCurrency = CurrencyService.getDisplayCurrency() || organizerCurrency;
                 
-                // Calculate display conversion if different
-                const showConversion = showDisplayCurrency && chargeCurrency !== displayCurrency;
+                // Convert amount from organizer's currency to user's selected currency
                 let convertedAmount = amount;
+                const showOrganizerPrice = selectedCurrency !== organizerCurrency;
                 
-                if (showConversion) {
-                    const chargeInfo = CurrencyService.getInfo(chargeCurrency);
-                    const displayInfo = CurrencyService.getInfo(displayCurrency);
-                    // Convert: charge → USD → display
-                    const amountInUsd = chargeInfo.rate !== 0 ? amount / chargeInfo.rate : amount;
-                    convertedAmount = amountInUsd * displayInfo.rate;
+                if (showOrganizerPrice) {
+                    // Convert: organizer currency → selected currency
+                    const orgInfo = CurrencyService.getInfo(organizerCurrency);
+                    const selectedInfo = CurrencyService.getInfo(selectedCurrency);
+                    // Convert via USD base: orgCurrency → USD → selectedCurrency
+                    const amountInUsd = orgInfo.rate !== 0 ? amount / orgInfo.rate : amount;
+                    convertedAmount = amountInUsd * selectedInfo.rate;
                 }
                 
                 setDisplayData({
-                    chargeCurrency,
-                    displayCurrency,
+                    organizerCurrency,
+                    selectedCurrency,
                     convertedAmount,
-                    showConversion,
+                    showOrganizerPrice,
                 });
             } catch {
                 setDisplayData({
-                    chargeCurrency: currency || 'USD',
-                    displayCurrency: 'USD',
+                    organizerCurrency: currency || 'USD',
+                    selectedCurrency: currency || 'USD',
                     convertedAmount: amount,
-                    showConversion: false,
+                    showOrganizerPrice: false,
                 });
             }
         };
@@ -1110,53 +1108,58 @@ export const EventPriceDisplay = ({
         USD: '$',
         EUR: '€',
         GBP: '£',
-        CAD: 'C$',
+        CAD: 'CA$',
         AUD: 'A$',
     };
 
     if (amount === 0) return <span className={`font-bold ${className}`}>Free</span>;
     
-    // Use resolved charge currency or fallback
-    const chargeCurrency = displayData?.chargeCurrency || currency || 'USD';
-    const symbol = currencySymbols[chargeCurrency] || '$';
-    const validCurrency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(chargeCurrency) ? chargeCurrency : 'USD';
+    // Use user's selected currency as primary
+    const selectedCurrency = displayData?.selectedCurrency || currency || 'USD';
+    const organizerCurrency = displayData?.organizerCurrency || currency || 'USD';
+    const primaryAmount = displayData?.convertedAmount ?? amount;
+    
+    const validSelectedCurrency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(selectedCurrency) ? selectedCurrency : 'USD';
+    const validOrganizerCurrency = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(organizerCurrency) ? organizerCurrency : 'USD';
 
-    // Format the charge price
-    let formattedPrice: string;
+    // Format the PRIMARY price (user's selected currency)
+    let formattedPrimaryPrice: string;
     try {
-        formattedPrice = new Intl.NumberFormat(undefined, {
+        formattedPrimaryPrice = new Intl.NumberFormat(undefined, {
             style: 'currency',
-            currency: validCurrency,
+            currency: validSelectedCurrency,
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        }).format(amount);
+        }).format(primaryAmount);
     } catch {
-        formattedPrice = `${symbol}${amount.toFixed(2)}`;
+        const symbol = currencySymbols[selectedCurrency] || '$';
+        formattedPrimaryPrice = `${symbol}${primaryAmount.toFixed(2)}`;
     }
 
-    // Format display currency if different
-    let displayConversion: string | null = null;
-    if (displayData?.showConversion && displayData.displayCurrency !== chargeCurrency) {
-        const displaySymbol = currencySymbols[displayData.displayCurrency] || '$';
+    // Format the SECONDARY price (organizer's currency) - only when different
+    let secondaryPrice: string | null = null;
+    if (displayData?.showOrganizerPrice) {
+        const orgSymbol = currencySymbols[organizerCurrency] || '$';
         try {
-            displayConversion = new Intl.NumberFormat(undefined, {
+            secondaryPrice = new Intl.NumberFormat(undefined, {
                 style: 'currency',
-                currency: displayData.displayCurrency,
+                currency: validOrganizerCurrency,
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
-            }).format(displayData.convertedAmount);
-            displayConversion = `≈ ${displayConversion}`;
+            }).format(amount);
         } catch {
-            displayConversion = `≈ ${displaySymbol}${displayData.convertedAmount.toFixed(2)}`;
+            secondaryPrice = `${orgSymbol}${amount.toFixed(2)}`;
         }
     }
 
     return (
         <span className={`font-mono ${className}`}>
-            <span>{formattedPrice}</span>
-            {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({chargeCurrency})</span>}
-            {displayConversion && (
-                <span className="text-xs text-zinc-400 ml-2">{displayConversion}</span>
+            {/* PRIMARY: User's selected currency (large) */}
+            <span>{formattedPrimaryPrice}</span>
+            {showCurrencyCode && <span className="text-xs font-bold text-zinc-500 ml-1">({selectedCurrency})</span>}
+            {/* SECONDARY: Organizer's currency (small, only when different) */}
+            {secondaryPrice && (
+                <span className="text-xs text-zinc-400 ml-2">≈ {secondaryPrice} ({organizerCurrency})</span>
             )}
         </span>
     );
