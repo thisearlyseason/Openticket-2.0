@@ -616,14 +616,7 @@ router.get('/nonprofit/verify-magic-link', async (req, res) => {
         // Find application with this magic link token
         const { data: application, error } = await supabase
             .from('nonprofit_applications')
-            .select(`
-                *,
-                user:profiles!nonprofit_applications_user_id_fkey (
-                    id,
-                    name,
-                    email
-                )
-            `)
+            .select('*')
             .eq('magic_link_token', token)
             .eq('discount_code', code)
             .eq('status', 'approved')
@@ -636,12 +629,19 @@ router.get('/nonprofit/verify-magic-link', async (req, res) => {
             });
         }
 
+        // Fetch user separately
+        const { data: user } = await supabase
+            .from('profiles')
+            .select('id, name, email')
+            .eq('id', application.user_id)
+            .single();
+
         res.json({ 
             valid: true,
             userId: application.user_id,
             discountCode: application.discount_code,
             organizationName: application.organization_name,
-            user: application.user
+            user: user || null
         });
     } catch (error) {
         console.error('[Onboarding] Verify magic link error:', error);
