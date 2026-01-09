@@ -117,6 +117,27 @@ export const Dashboard = () => {
         setUserMessages(messages.sort((a, b) => b.broadcast.sentAt - a.broadcast.sentAt));
     };
 
+    const checkNonprofitStatus = async () => {
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/onboarding/nonprofit/status', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setNonprofitStatus(data.data);
+            }
+        } catch (error) {
+            console.error('Failed to check nonprofit status:', error);
+        }
+    };
+
+    const handleResubmitComplete = () => {
+        setShowResubmitForm(false);
+        checkNonprofitStatus();
+        showToast('Non-profit application resubmitted successfully!', 'success');
+    };
+
     const handleDuplicate = async (event: Event) => {
         const user = currentUser || StorageService.getCurrentUser();
         if (!user) return;
