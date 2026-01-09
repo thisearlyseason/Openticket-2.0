@@ -160,23 +160,7 @@ const countryToCurrency = (countryCode: string): string => {
  * Detect currency via IP geolocation
  */
 const detectCurrencyByIP = async (): Promise<string> => {
-    try {
-        const response = await fetch('http://ip-api.com/json/?fields=countryCode', {
-            method: 'GET',
-            signal: AbortSignal.timeout(5000),
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.countryCode) {
-                return countryToCurrency(data.countryCode);
-            }
-        }
-    } catch (e) {
-        // Silent fail
-    }
-    
-    // Fallback: ipapi.co
+    // Primary: ipapi.co (HTTPS, works on secure pages)
     try {
         const response = await fetch('https://ipapi.co/country/', {
             method: 'GET',
@@ -187,6 +171,23 @@ const detectCurrencyByIP = async (): Promise<string> => {
             const countryCode = await response.text();
             if (countryCode && countryCode.length === 2) {
                 return countryToCurrency(countryCode.trim());
+            }
+        }
+    } catch (e) {
+        // Silent fail, try fallback
+    }
+    
+    // Fallback: ip-api.com (HTTP only on free tier - may be blocked on HTTPS pages)
+    try {
+        const response = await fetch('http://ip-api.com/json/?fields=countryCode', {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000),
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.countryCode) {
+                return countryToCurrency(data.countryCode);
             }
         }
     } catch (e) {
