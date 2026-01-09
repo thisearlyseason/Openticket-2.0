@@ -804,5 +804,145 @@ export const EmailService = {
         `;
 
         return await sendEmailViaResend(to, subject, htmlBody);
+    },
+
+    /**
+     * Send non-profit approval email with magic link
+     */
+    sendNonprofitApprovalEmail: async (to, organizerName, organizationName, discountCode, magicLink) => {
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Simulation only.");
+            console.log(`[SIMULATION] Non-profit Approval to: ${to}, Code: ${discountCode}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = organizerName || 'Organizer';
+        const orgName = organizationName || 'Your Organization';
+
+        const subject = `🎉 Non-Profit Status Approved - 20% Discount Inside!`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Non-Profit Approved!</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">${orgName}</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hi ${displayName}! 🎊
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Great news! Your non-profit verification has been <strong>approved</strong>. As a thank you for the important work you do, we're giving you an exclusive <strong>20% discount</strong> on all subscription plans.
+                    </p>
+
+                    <!-- Discount Box -->
+                    <div style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 2px solid #10b981; border-radius: 16px; padding: 30px; margin: 25px 0; text-align: center;">
+                        <p style="margin: 0 0 5px 0; font-size: 14px; color: #059669; text-transform: uppercase; font-weight: bold;">Your Exclusive Code</p>
+                        <p style="margin: 0; font-size: 32px; font-weight: 900; color: #047857; font-family: monospace; letter-spacing: 2px;">${discountCode}</p>
+                        <p style="margin: 10px 0 0 0; font-size: 14px; color: #065f46;">20% off Pro or Premium plans</p>
+                    </div>
+
+                    <!-- Magic Link CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="font-size: 14px; color: #6b7280; margin-bottom: 15px;">Click below to upgrade with your discount automatically applied:</p>
+                        <a href="${magicLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                            Upgrade Now with 20% Off →
+                        </a>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">🌟 What You Get with Pro/Premium:</h3>
+                        <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 2;">
+                            <li>Unlimited events</li>
+                            <li>Lower platform fees</li>
+                            <li>Priority support</li>
+                            <li>Advanced analytics</li>
+                            <li>Custom branding options</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · Supporting non-profits since day one
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #d1d5db;">
+                        This discount code is valid for one-time use on subscription upgrade.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        return await sendEmailViaResend(to, subject, htmlBody);
+    },
+
+    /**
+     * Send non-profit rejection email
+     */
+    sendNonprofitRejectionEmail: async (to, organizerName, reason) => {
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Simulation only.");
+            console.log(`[SIMULATION] Non-profit Rejection to: ${to}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = organizerName || 'Organizer';
+        const rejectionReason = reason || 'Your application did not meet our verification requirements.';
+
+        const subject = `Update on Your Non-Profit Application`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📋</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Application Update</h1>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hi ${displayName},
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Thank you for applying for non-profit status on OpenTicket. After careful review, we were unable to verify your organization at this time.
+                    </p>
+
+                    <!-- Reason Box -->
+                    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px 20px; border-radius: 0 8px 8px 0; margin: 25px 0;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #991b1b;">Reason:</h3>
+                        <p style="margin: 0; color: #991b1b; font-size: 14px; line-height: 1.6;">
+                            ${rejectionReason}
+                        </p>
+                    </div>
+
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        You can still use OpenTicket with our Free plan, or upgrade to Pro/Premium for additional features. If you believe this decision was made in error, please contact our support team with additional documentation.
+                    </p>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'https://openticket.events'}/#/pricing" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            View Plans →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · Here to help you succeed
+                    </p>
+                </div>
+            </div>
+        `;
+
+        return await sendEmailViaResend(to, subject, htmlBody);
     }
 };
