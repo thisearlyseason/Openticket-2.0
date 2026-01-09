@@ -154,6 +154,192 @@ const TicketRow: React.FC<TicketRowProps> = ({ ticket, onCheckIn, onDelete, onPa
     );
 };
 
+// ============ STRIPE CARD PAYMENT FORM COMPONENT ============
+interface StripeCardFormProps {
+    registrationId: string;
+    amount: number;
+    onSuccess: () => void;
+    onError: (error: string) => void;
+    onProcessing: (isProcessing: boolean) => void;
+}
+
+const StripeCardPaymentForm = ({ registrationId, amount, onSuccess, onError, onProcessing }: StripeCardFormProps) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!stripe || !elements) return;
+
+        setIsSubmitting(true);
+        onProcessing(true);
+
+        try {
+            // Confirm the payment
+            const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: window.location.href, // Not actually used since we handle redirect ourselves
+                },
+                redirect: 'if_required',
+            });
+
+            if (error) {
+                console.error('[StripeCard] Payment error:', error);
+                onError(error.message || 'Payment failed');
+                setIsSubmitting(false);
+                onProcessing(false);
+                return;
+            }
+
+            if (paymentIntent && paymentIntent.status === 'succeeded') {
+                // Confirm the payment on our backend
+                const response = await fetch('/api/stripe/at-door/confirm-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentIntentId: paymentIntent.id,
+                        registrationId,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to confirm payment');
+                }
+
+                onSuccess();
+            } else {
+                onError('Payment was not completed. Please try again.');
+            }
+        } catch (err: any) {
+            console.error('[StripeCard] Error:', err);
+            onError(err.message || 'An unexpected error occurred');
+        } finally {
+            setIsSubmitting(false);
+            onProcessing(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <PaymentElement 
+                    options={{
+                        layout: 'tabs',
+                    }}
+                />
+            </div>
+            <Button 
+                type="submit"
+                disabled={!stripe || !elements || isSubmitting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none disabled:opacity-50"
+            >
+                {isSubmitting ? (
+                    <><Loader2 size={18} className="mr-2 animate-spin" /> Processing...</>
+                ) : (
+                    <><CreditCard size={18} className="mr-2" /> Pay ${amount.toFixed(2)}</>
+                )}
+            </Button>
+        </form>
+    );
+};
+
+// ============ STRIPE PAYMENT WRAPPER WITH ELEMENTS ============
+interface StripePaymentWrapperProps {
+    registrationId: string;
+    amount: number;
+    currency?: string;
+    onSuccess: () => void;
+    onError: (error: string) => void;
+    onProcessing: (isProcessing: boolean) => void;
+}
+
+const StripePaymentWrapper = ({ registrationId, amount, currency = 'usd', onSuccess, onError, onProcessing }: StripePaymentWrapperProps) => {
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [initError, setInitError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const createPaymentIntent = async () => {
+            try {
+                const response = await fetch('/api/stripe/at-door/create-payment-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        registrationId,
+                        amount,
+                        currency,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to initialize payment');
+                }
+
+                const data = await response.json();
+                setClientSecret(data.clientSecret);
+            } catch (err: any) {
+                console.error('[StripeWrapper] Init error:', err);
+                setInitError(err.message || 'Failed to initialize payment');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        createPaymentIntent();
+    }, [registrationId, amount, currency]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <Loader2 size={32} className="animate-spin text-blue-500" />
+                <span className="ml-3 text-zinc-500">Initializing secure payment...</span>
+            </div>
+        );
+    }
+
+    if (initError) {
+        return (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 text-center">
+                <AlertTriangle size={24} className="mx-auto mb-2 text-red-500" />
+                <p className="text-red-600 dark:text-red-400 font-bold">{initError}</p>
+                <p className="text-sm text-red-500 mt-1">Please try again or use a different payment method.</p>
+            </div>
+        );
+    }
+
+    if (!clientSecret) {
+        return (
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
+                <p className="text-amber-600 dark:text-amber-400">Unable to initialize payment. Please try another method.</p>
+            </div>
+        );
+    }
+
+    const appearance = {
+        theme: 'stripe' as const,
+        variables: {
+            colorPrimary: '#3b82f6',
+            borderRadius: '8px',
+        },
+    };
+
+    return (
+        <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+            <StripeCardPaymentForm 
+                registrationId={registrationId}
+                amount={amount}
+                onSuccess={onSuccess}
+                onError={onError}
+                onProcessing={onProcessing}
+            />
+        </Elements>
+    );
+};
+
 export const CheckInPortal = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
