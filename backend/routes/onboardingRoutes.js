@@ -421,25 +421,26 @@ router.get('/admin/nonprofit/pending', verifyToken, requireAdmin, async (req, re
  */
 router.get('/admin/nonprofit/all', verifyToken, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabase
+        // Get all applications
+        const { data: applications, error: appError } = await supabase
             .from('nonprofit_applications')
-            .select(`
-                *,
-                user:profiles!nonprofit_applications_user_id_fkey (
-                    id,
-                    name,
-                    email,
-                    nonprofit_name,
-                    nonprofit_ein,
-                    nonprofit_status,
-                    created_at
-                )
-            `)
+            .select('*')
             .order('submitted_at', { ascending: false });
 
-        if (error) throw error;
+        if (appError) throw appError;
 
-        res.json({ data: data || [] });
+        // Enrich with user data
+        const enrichedData = await Promise.all((applications || []).map(async (app) => {
+            const { data: user } = await supabase
+                .from('profiles')
+                .select('id, name, email, nonprofit_name, nonprofit_ein, nonprofit_status, created_at')
+                .eq('id', app.user_id)
+                .single();
+            
+            return { ...app, user: user || null };
+        }));
+
+        res.json({ data: enrichedData });
     } catch (error) {
         console.error('[Onboarding] Admin get all nonprofits error:', error);
         res.status(500).json({ error: error.message });
