@@ -1052,3 +1052,215 @@ export const convertPrice = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
+/**
+ * CREATE PAYMENT INTENT FOR AT-DOOR CARD PAYMENTS
+ * Used in Check-In Portal for in-app card processing via Stripe Payment Element
+ */
+export const createAtDoorPaymentIntent = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { registrationId, amount, currency = 'usd' } = req.body;
+
+        if (!registrationId || !amount) {
+            return res.status(400).json({ error: 'Registration ID and amount are required' });
+        }
+
+        // Validate amount
+        const amountInCents = Math.round(parseFloat(amount) * 100);
+        if (amountInCents < 50) {
+            return res.status(400).json({ error: 'Amount must be at least $0.50' });
+        }
+
+        // Get registration with event details
+        const { data: registration, error: regError } = await supabase
+            .from('registrations')
+            .select(`
+                *,
+                event:events (
+                    id,
+                    title,
+                    owner_id,
+                    owner:profiles!events_owner_id_fkey (
+                        id,
+                        stripe_connect_id,
+                        stripe_onboarding_complete
+                    )
+                )
+            `)
+            .eq('id', registrationId)
+            .single();
+
+        if (regError || !registration) {
+            console.error('[Stripe] Registration not found:', regError);
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Prevent duplicate payments
+        if (registration.payment_status === 'completed') {
+            return res.status(400).json({ error: 'This registration is already paid' });
+        }
+
+        // Get organizer's Stripe Connect ID for destination charge
+        const organizerStripeId = registration.event?.owner?.stripe_connect_id;
+        const isRealStripeAccount = organizerStripeId && 
+            !organizerStripeId.startsWith('mock_') &&
+            registration.event?.owner?.stripe_onboarding_complete;
+
+        // Calculate platform fee (same as regular checkout)
+        const platformFeePercent = 0.029; // 2.9% platform fee
+        const platformFeeAmount = Math.round(amountInCents * platformFeePercent);
+
+        // Build PaymentIntent options
+        const paymentIntentOptions = {
+            amount: amountInCents,
+            currency: currency.toLowerCase(),
+            automatic_payment_methods: {
+                enabled: true,
+            },
+            metadata: {
+                registrationId,
+                eventId: registration.event_id,
+                attendeeEmail: registration.attendee_email,
+                attendeeName: registration.attendee_name,
+                paymentType: 'at_door_card',
+            },
+        };
+
+        // Add Connect destination if organizer has connected account
+        if (isRealStripeAccount) {
+            paymentIntentOptions.application_fee_amount = platformFeeAmount;
+            paymentIntentOptions.transfer_data = {
+                destination: organizerStripeId,
+            };
+            console.log(`[Stripe] At-door PI with Connect destination: ${organizerStripeId}, fee: ${platformFeeAmount} cents`);
+        } else {
+            console.log(`[Stripe] At-door PI without Connect (no real account)`);
+        }
+
+        // Create the PaymentIntent
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+
+        console.log(`[Stripe] Created at-door PaymentIntent: ${paymentIntent.id} for reg: ${registrationId}`);
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+            amount: amountInCents / 100,
+            currency: currency.toLowerCase(),
+        });
+
+    } catch (error) {
+        console.error('[Stripe] At-door PaymentIntent error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create payment intent' });
+    }
+};
+
+/**
+ * CONFIRM AT-DOOR PAYMENT
+ * Called after Stripe Payment Element confirms the payment
+ * Updates registration status and creates financial records
+ */
+export const confirmAtDoorPayment = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { paymentIntentId, registrationId } = req.body;
+
+        if (!paymentIntentId || !registrationId) {
+            return res.status(400).json({ error: 'Payment Intent ID and Registration ID are required' });
+        }
+
+        // Verify the PaymentIntent status
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        if (paymentIntent.status !== 'succeeded') {
+            return res.status(400).json({ 
+                error: `Payment not completed. Status: ${paymentIntent.status}`,
+                status: paymentIntent.status
+            });
+        }
+
+        // Verify registration ID matches
+        if (paymentIntent.metadata.registrationId !== registrationId) {
+            return res.status(400).json({ error: 'Payment Intent does not match registration' });
+        }
+
+        // Update registration as paid
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({
+                payment_status: 'completed',
+                approval_status: 'approved',
+                stripe_payment_intent_id: paymentIntentId,
+                paid_at: new Date().toISOString(),
+            })
+            .eq('id', registrationId);
+
+        if (updateError) {
+            console.error('[Stripe] Failed to update registration:', updateError);
+            return res.status(500).json({ error: 'Failed to update registration status' });
+        }
+
+        // Record financial transaction
+        const grossAmount = paymentIntent.amount / 100;
+        const currency = paymentIntent.currency.toUpperCase();
+
+        try {
+            await supabase.from('financial_transactions').insert({
+                event_id: paymentIntent.metadata.eventId,
+                registration_id: registrationId,
+                type: 'sale',
+                gross_amount: grossAmount,
+                platform_fee: paymentIntent.application_fee_amount ? paymentIntent.application_fee_amount / 100 : 0,
+                net_amount: paymentIntent.amount_received ? paymentIntent.amount_received / 100 : grossAmount,
+                currency: currency,
+                payment_method: 'card',
+                payment_source: 'stripe_at_door',
+                stripe_payment_intent_id: paymentIntentId,
+                status: 'completed',
+                created_at: new Date().toISOString(),
+            });
+            console.log(`[Stripe] Financial transaction recorded for at-door payment: ${registrationId}`);
+        } catch (txError) {
+            console.warn('[Stripe] Could not record financial transaction:', txError);
+            // Non-blocking - registration is already marked as paid
+        }
+
+        // Create audit log
+        try {
+            await supabase.from('audit_logs').insert({
+                timestamp: new Date().toISOString(),
+                actor_id: 'check_in_staff',
+                actor_type: 'staff',
+                actor_email: null,
+                action: 'at_door_card_payment',
+                target_type: 'registration',
+                target_id: registrationId,
+                details: {
+                    eventId: paymentIntent.metadata.eventId,
+                    grossAmount: grossAmount,
+                    currency: currency,
+                    paymentIntentId: paymentIntentId,
+                }
+            });
+        } catch (auditError) {
+            console.warn('[Stripe] Could not create audit log:', auditError);
+        }
+
+        console.log(`[Stripe] At-door payment confirmed: ${paymentIntentId} for reg: ${registrationId}`);
+
+        res.json({
+            success: true,
+            registrationId,
+            paymentIntentId,
+            amount: grossAmount,
+            currency,
+        });
+
+    } catch (error) {
+        console.error('[Stripe] Confirm at-door payment error:', error);
+        res.status(500).json({ error: error.message || 'Failed to confirm payment' });
+    }
+};
+
