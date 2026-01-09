@@ -164,6 +164,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const currentUser = StorageService.getCurrentUser();
 
+    // Check Resend status from backend API
+    const checkResendStatus = async () => {
+        try {
+            const response = await fetch('/api/email/status');
+            const status = await response.json();
+            console.log('[SuperAdmin] Resend status:', status);
+            setResendApiKeyConfigured(status.configured && status.available);
+        } catch (error) {
+            console.error('Failed to check Resend status:', error);
+            setResendApiKeyConfigured(false);
+        }
+    };
+
     useEffect(() => {
         // When embedded, the parent component already verified admin access
         if (!embedded && (!currentUser || !currentUser.isAdmin)) {
