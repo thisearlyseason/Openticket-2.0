@@ -42,37 +42,46 @@ const PLAN_FEATURES = {
 
 export const EmailService = {
     sendConfirmation: async (to, tickets, eventDetails) => {
+        console.log(`[EmailService] sendConfirmation called for: ${to}`);
+        console.log(`[EmailService] Event: ${eventDetails?.title}, Tickets: ${tickets?.length || 0}`);
+        
         // Check if Resend is configured
         if (!resendService.isResendConfigured()) {
-            console.warn("[EmailService] Resend not configured. Email simulation only.");
+            console.warn("[EmailService] ❌ Resend not configured. Email simulation only.");
             console.log(`[SIMULATION] To: ${to}, Subject: Ticket Confirmation for ${eventDetails?.title}`);
             return false;
         }
 
-        const subject = `Your Tickets for ${eventDetails?.title || 'OpenTicket Event'}`;
+        const subject = `🎟️ Your Tickets for ${eventDetails?.title || 'OpenTicket Event'}`;
 
         const ticketRows = tickets.map(t => `
-            <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
-                <h3 style="margin: 0 0 5px 0;">${t.name} (Tier: ${t.tierId})</h3>
-                <p style="margin: 0;">Attendee: <strong>${t.attendeeName}</strong></p>
-                <p style="font-family: monospace; color: #666;">ID: ${t.id}</p>
+            <div style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: #f9fafb;">
+                <h3 style="margin: 0 0 8px 0; color: #111827;">${t.name || 'Ticket'}</h3>
+                <p style="margin: 0; color: #6b7280;">Attendee: <strong style="color: #111827;">${t.attendeeName || 'Guest'}</strong></p>
+                <p style="font-family: monospace; color: #9ca3af; font-size: 12px; margin-top: 8px;">ID: ${t.id || 'N/A'}</p>
             </div>
         `).join('');
 
         const htmlBody = `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                <h1 style="color: #ec4899;">Order Confirmation</h1>
-                <p>Thank you for your purchase!</p>
-                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p><strong>Event:</strong> ${eventDetails?.title || 'N/A'}</p>
-                    <p><strong>Date:</strong> ${eventDetails?.date ? new Date(eventDetails.date).toLocaleString() : 'N/A'}</p>
-                    <p><strong>Location:</strong> ${eventDetails?.location || 'Online'}</p>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <div style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Order Confirmed!</h1>
                 </div>
-                <h2>Your Tickets</h2>
-                ${ticketRows}
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                <p>Please present these tickets at the entrance.</p>
-                <p style="font-size: 12px; color: #999;">Order ID: ${tickets[0]?.id || 'N/A'}</p>
+                <div style="padding: 30px;">
+                    <p style="color: #374151; font-size: 16px;">Thank you for your purchase!</p>
+                    <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 24px 0;">
+                        <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Event:</strong> ${eventDetails?.title || 'N/A'}</p>
+                        <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Date:</strong> ${eventDetails?.date ? new Date(eventDetails.date).toLocaleString() : 'N/A'}</p>
+                        <p style="margin: 0; color: #6b7280;"><strong style="color: #111827;">Location:</strong> ${eventDetails?.location || 'Online'}</p>
+                    </div>
+                    <h2 style="color: #111827; font-size: 18px; margin-top: 24px;">Your Tickets</h2>
+                    ${ticketRows}
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+                    <p style="color: #6b7280; font-size: 14px;">Please present these tickets at the entrance.</p>
+                    <p style="font-size: 12px; color: #9ca3af;">Order ID: ${tickets[0]?.id || 'N/A'}</p>
+                </div>
+            </div>
+        `;
             </div>
         `;
 
