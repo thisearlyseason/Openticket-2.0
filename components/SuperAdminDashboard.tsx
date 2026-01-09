@@ -409,6 +409,35 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 console.error("Failed to load platform payouts", e);
             }
 
+            // Load non-profit applications
+            try {
+                const token = await StorageService.getAuthToken();
+                const response = await fetch('/api/onboarding/admin/nonprofit/all', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setAllNonprofitApplications(data.data || []);
+                    setNonprofitApplications((data.data || []).filter((a: any) => a.status === 'pending'));
+                }
+            } catch (e) {
+                console.error("Failed to load non-profit applications", e);
+            }
+
+            // Load onboarding responses
+            try {
+                const token = await StorageService.getAuthToken();
+                const response = await fetch('/api/onboarding/admin/all', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setOnboardingResponses(data.data || []);
+                }
+            } catch (e) {
+                console.error("Failed to load onboarding responses", e);
+            }
+
             try {
                 setActiveNotification(StorageService.getSystemNotification());
             } catch (e) { console.error(e); }
