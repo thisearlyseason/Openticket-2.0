@@ -365,6 +365,101 @@ export const EmailService = {
     },
 
     /**
+     * Send affiliate subscription commission notification
+     * This is sent when a referred user subscribes or renews their subscription
+     */
+    sendAffiliateSubscriptionCommission: async (to, affiliateName, customerName, planName, subscriptionAmount, commission) => {
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Simulation only.");
+            console.log(`[SIMULATION] Subscription Commission to: ${to}, Commission: $${commission}`);
+            return { sent: false, simulated: true };
+        }
+
+        const displayName = affiliateName || 'Partner';
+        const commissionFormatted = typeof commission === 'number' ? commission.toFixed(2) : commission;
+        const planDisplay = planName.charAt(0).toUpperCase() + planName.slice(1);
+
+        const subject = `🎉 Subscription Commission: $${commissionFormatted} earned!`;
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🔄</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Subscription Commission!</h1>
+                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Recurring revenue from your referral</p>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hey ${displayName}! 🎊
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Great news! A user you referred just paid for their subscription, and you earned a commission!
+                    </p>
+
+                    <!-- Commission Box -->
+                    <div style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 2px solid #8b5cf6; border-radius: 16px; padding: 30px; margin: 25px 0; text-align: center;">
+                        <p style="margin: 0 0 5px 0; font-size: 14px; color: #7c3aed; text-transform: uppercase; font-weight: bold;">Your Commission (15%)</p>
+                        <p style="margin: 0; font-size: 48px; font-weight: 900; color: #6d28d9;">$${commissionFormatted}</p>
+                    </div>
+
+                    <!-- Subscription Details -->
+                    <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin: 25px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #111827;">Subscription Details</h3>
+                        <table style="width: 100%; font-size: 14px; color: #374151;">
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Subscriber</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${customerName || 'Referred User'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Plan</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">${planDisplay} Plan</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">Subscription Amount</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: bold;">$${subscriptionAmount || '0.00'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #7c3aed; font-weight: bold;">Your Earnings</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: 900; color: #7c3aed;">$${commissionFormatted}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Recurring Info -->
+                    <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px 20px; border-radius: 0 8px 8px 0; margin: 25px 0;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 14px; color: #1e40af;">🔄 Recurring Commission</h3>
+                        <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                            As long as this user stays subscribed, you'll earn 15% commission on every renewal. Keep referring more users to maximize your recurring income!
+                        </p>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="#" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            View Affiliate Dashboard →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket Affiliate Program · Subscription Referrals
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #d1d5db;">
+                        Commission pending payout. View your dashboard for payout schedule.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        return await sendEmailViaResend(to, subject, htmlBody);
+    },
+
+    /**
      * Send weekly affiliate earnings summary email
      */
     sendAffiliateWeeklySummary: async (to, affiliateName, weeklyStats) => {
