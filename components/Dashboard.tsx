@@ -276,6 +276,29 @@ export const Dashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto space-y-8 pb-20 relative">
+            {/* Non-Profit Pending Banner */}
+            {nonprofitStatus?.status === 'pending' && (
+                <NonprofitPendingBanner />
+            )}
+
+            {/* Non-Profit Rejected Banner */}
+            {nonprofitStatus?.status === 'rejected' && (
+                <NonprofitRejectedBanner 
+                    rejectionReason={nonprofitStatus?.rejection_reason}
+                    onResubmit={() => setShowResubmitForm(true)}
+                />
+            )}
+
+            {/* Non-Profit Resubmit Form Modal */}
+            {showResubmitForm && (
+                <NonprofitResubmitForm 
+                    user={currentUser}
+                    previousApplication={nonprofitStatus}
+                    onComplete={handleResubmitComplete}
+                    onCancel={() => setShowResubmitForm(false)}
+                />
+            )}
+
             {/* Success Overlay */}
             {showSuccessOverlay && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
