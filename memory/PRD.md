@@ -39,13 +39,15 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 ```
 
 ## Key Database Tables
-- `profiles`: User data with `stripe_connect_id`, `stripe_onboarding_complete`, `affiliate_code`, `affiliate_clicks`, `total_paid_out`, `is_admin`
+- `profiles`: User data with `stripe_connect_id`, `stripe_onboarding_complete`, `affiliate_code`, `affiliate_clicks`, `total_paid_out`, `is_admin`, `nonprofit_status`, `nonprofit_name`, `nonprofit_discount_code`
 - `events`: Event data with pricing, capacity
 - `registrations`: Ticket purchases with payment tracking
 - `financial_transactions`: Revenue/fee breakdown with `affiliate_code`, `affiliate_commission`
 - `audit_logs`: Financial audit trail
 - `promo_codes`: Discount codes for subscriptions and tickets
 - `affiliate_payouts`: Audit trail for all affiliate payouts
+- `onboarding_responses`: User onboarding answers (NEW)
+- `nonprofit_applications`: Non-profit verification applications with status, documents, discount codes (NEW)
 
 ---
 
