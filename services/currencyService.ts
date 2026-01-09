@@ -177,17 +177,17 @@ const detectCurrencyByIP = async (): Promise<string> => {
         // Silent fail, try fallback
     }
     
-    // Fallback: ip-api.com (HTTP only on free tier - may be blocked on HTTPS pages)
+    // Fallback: Use HTTPS alternative - ipapi.co (free tier supports HTTPS)
     try {
-        const response = await fetch('http://ip-api.com/json/?fields=countryCode', {
+        const response = await fetch('https://ipapi.co/json/', {
             method: 'GET',
             signal: AbortSignal.timeout(5000),
         });
         
         if (response.ok) {
             const data = await response.json();
-            if (data.countryCode) {
-                return countryToCurrency(data.countryCode);
+            if (data.country_code) {
+                return countryToCurrency(data.country_code);
             }
         }
     } catch (e) {
