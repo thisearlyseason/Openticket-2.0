@@ -182,6 +182,10 @@ app.use('/api/analytics', analyticsRoutes);
 // Waitlist routes
 app.use('/api/waitlist', waitlistRoutes);
 
+// Onboarding routes
+import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
+app.use('/api/onboarding', onboardingRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
