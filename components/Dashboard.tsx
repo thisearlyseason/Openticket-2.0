@@ -67,8 +67,8 @@ export const Dashboard = () => {
         const note = StorageService.getSystemNotification();
         setSystemNote(note);
 
-        // Check non-profit application status
-        checkNonprofitStatus();
+        // Check non-profit application status from API and user profile
+        checkNonprofitStatus(user);
 
         const handleClickOutside = () => setOpenMenuId(null);
         document.addEventListener('click', handleClickOutside);
