@@ -377,30 +377,38 @@ router.get('/admin/all', verifyToken, requireAdmin, async (req, res) => {
  */
 router.get('/admin/nonprofit/pending', verifyToken, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabase
+        // Get pending applications
+        const { data: applications, error: appError } = await supabase
             .from('nonprofit_applications')
-            .select(`
-                *,
-                user:profiles!nonprofit_applications_user_id_fkey (
-                    id,
-                    name,
-                    email,
-                    nonprofit_name,
-                    nonprofit_ein,
-                    created_at
-                ),
-                onboarding:onboarding_responses!onboarding_responses_nonprofit_application_id_fkey (
-                    responses,
-                    organization_type,
-                    completed_at
-                )
-            `)
+            .select('*')
             .eq('status', 'pending')
             .order('submitted_at', { ascending: true });
 
-        if (error) throw error;
+        if (appError) throw appError;
 
-        res.json({ data: data || [] });
+        // Enrich with user and onboarding data
+        const enrichedData = await Promise.all((applications || []).map(async (app) => {
+            const [userResult, onboardingResult] = await Promise.all([
+                supabase
+                    .from('profiles')
+                    .select('id, name, email, nonprofit_name, nonprofit_ein, created_at')
+                    .eq('id', app.user_id)
+                    .single(),
+                supabase
+                    .from('onboarding_responses')
+                    .select('responses, organization_type, completed_at')
+                    .eq('user_id', app.user_id)
+                    .single()
+            ]);
+            
+            return { 
+                ...app, 
+                user: userResult.data || null,
+                onboarding: onboardingResult.data || null
+            };
+        }));
+
+        res.json({ data: enrichedData });
     } catch (error) {
         console.error('[Onboarding] Admin get pending nonprofits error:', error);
         res.status(500).json({ error: error.message });
