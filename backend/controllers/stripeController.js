@@ -196,20 +196,22 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ error: "No items selected" });
         }
 
-        // 5. Build Stripe line items (with charge currency)
-        const lineItems = buildStripeLineItems(breakdown, event.title, chargeCurrency);
+        // 5. Build Stripe line items with currency conversion if needed
+        const lineItems = buildStripeLineItems(breakdown, event.title, chargeCurrency, currencyConversionRate);
 
         // 5b. Add platform donation as a separate line item (if applicable)
+        // Platform donation also needs to be converted to charge currency
         const donationAmount = Number(platformDonationAmount) || 0;
         if (donationAmount > 0) {
+            const convertedDonation = Math.round(donationAmount * currencyConversionRate * 100); // cents
             lineItems.push({
                 price_data: {
-                    currency: chargeCurrency, // Use event's charge currency
+                    currency: chargeCurrency,
                     product_data: {
                         name: 'Support OpenTicket',
                         description: 'Platform donation to keep fees low',
                     },
-                    unit_amount: Math.round(donationAmount * 100), // cents
+                    unit_amount: convertedDonation,
                 },
                 quantity: 1,
             });
