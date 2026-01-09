@@ -215,13 +215,21 @@ export const calculateOrderBreakdown = ({
  * Build Stripe line items from breakdown
  * @param {Object} breakdown - Result from calculateOrderBreakdown
  * @param {string} eventTitle - Event title for line item names
+ * @param {string} chargeCurrency - Currency to charge in (e.g., 'usd', 'eur')
+ * @param {number} conversionRate - Conversion rate from breakdown currency to charge currency (default 1)
  * @returns {Array} Stripe line_items array
  */
-export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'usd') => {
+export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'usd', conversionRate = 1) => {
     const lineItems = [];
     
     // Use the provided charge currency, falling back to breakdown.currency
     const currency = chargeCurrency || breakdown.currency || 'usd';
+    
+    // Helper to convert and round amounts to cents
+    const convertToCents = (amountInOrgCurrency) => {
+        const converted = amountInOrgCurrency * conversionRate;
+        return Math.round(converted * 100); // cents
+    };
 
     // Add tickets and add-ons
     breakdown.items.forEach(item => {
@@ -229,7 +237,7 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
         const discountRatio = breakdown.rawSubtotal > 0 
             ? breakdown.discountedSubtotal / breakdown.rawSubtotal 
             : 1;
-        const adjustedUnitPrice = Math.round(item.unitPrice * discountRatio * 100); // cents
+        const adjustedUnitPrice = convertToCents(item.unitPrice * discountRatio);
 
         lineItems.push({
             price_data: {
@@ -254,7 +262,7 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
             price_data: {
                 currency: currency,
                 product_data: { name: 'Tax' },
-                unit_amount: Math.round(breakdown.taxAmount * 100),
+                unit_amount: convertToCents(breakdown.taxAmount),
             },
             quantity: 1,
         });
@@ -266,7 +274,7 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
             price_data: {
                 currency: currency,
                 product_data: { name: 'Additional Fees' },
-                unit_amount: Math.round(breakdown.customFeesAmount * 100),
+                unit_amount: convertToCents(breakdown.customFeesAmount),
             },
             quantity: 1,
         });
@@ -278,7 +286,7 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
             price_data: {
                 currency: currency,
                 product_data: { name: 'Service Fee' },
-                unit_amount: Math.round(breakdown.platformFee * 100),
+                unit_amount: convertToCents(breakdown.platformFee),
             },
             quantity: 1,
         });
