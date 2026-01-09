@@ -259,7 +259,7 @@ export const createOrder = async (req, res) => {
             payment_method_types: ['card'],
             line_items: lineItems,
             mode: 'payment',
-            currency: chargeCurrency, // Use event's charge currency (single source of truth)
+            currency: chargeCurrency, // Attendee's selected or organizer's default currency
             success_url: finalSuccessUrl,
             cancel_url: cancelUrl,
             customer_email: customerEmail,
@@ -268,8 +268,10 @@ export const createOrder = async (req, res) => {
                 userId: userId || 'guest',
                 affiliateCode: affiliateCode || '',
                 platformDonationAmount: donationAmount.toString(),
-                chargeCurrency: chargeCurrency.toUpperCase(), // Store for reference
-                // Store breakdown for webhook reconciliation
+                chargeCurrency: chargeCurrency.toUpperCase(), // Currency used for this charge
+                organizerCurrency: organizerCurrency.toUpperCase(), // Organizer's original currency
+                conversionRate: currencyConversionRate.toString(), // Rate used for conversion
+                // Store breakdown for webhook reconciliation (in organizer's currency)
                 platformFee: breakdown.platformFee.toString(),
                 taxAmount: breakdown.taxAmount.toString(),
                 discountAmount: breakdown.discountAmount.toString(),
@@ -284,9 +286,11 @@ export const createOrder = async (req, res) => {
             event.owner?.stripe_onboarding_complete;
 
         if (isRealStripeAccount && breakdown.grandTotal > 0) {
-            // Calculate application fee (platform commission)
-            // This is the platform fee + platform donation (donation goes 100% to platform)
-            const applicationFeeAmount = Math.round((breakdown.platformFee + donationAmount) * 100); // cents
+            // Calculate application fee (platform commission) - MUST be in charge currency
+            // Convert platform fee and donation to charge currency
+            const convertedPlatformFee = breakdown.platformFee * currencyConversionRate;
+            const convertedDonation = donationAmount * currencyConversionRate;
+            const applicationFeeAmount = Math.round((convertedPlatformFee + convertedDonation) * 100); // cents in charge currency
 
             sessionOptions.payment_intent_data = {
                 application_fee_amount: applicationFeeAmount,
@@ -299,7 +303,7 @@ export const createOrder = async (req, res) => {
                 },
             };
 
-            console.log(`[Stripe] Creating session with Connect destination: ${organizerStripeId}, app_fee: $${breakdown.platformFee}`);
+            console.log(`[Stripe] Creating session with Connect destination: ${organizerStripeId}, app_fee: ${chargeCurrency.toUpperCase()} ${(applicationFeeAmount/100).toFixed(2)}`);
         } else {
             console.log(`[Stripe] Creating session WITHOUT Connect (mock account or no account)`);
         }
