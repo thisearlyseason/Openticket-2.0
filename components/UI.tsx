@@ -1247,7 +1247,7 @@ export const DisplayCurrencySelector = ({
                             </button>
                         ))}
                         <div className="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-                            <p className="text-[10px] text-zinc-500">Display only. Payment uses event currency.</p>
+                            <p className="text-[10px] text-zinc-500">You'll be charged in this currency</p>
                         </div>
                     </div>
                 )}
