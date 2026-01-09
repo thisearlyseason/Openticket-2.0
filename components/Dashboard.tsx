@@ -117,18 +117,31 @@ export const Dashboard = () => {
         setUserMessages(messages.sort((a, b) => b.broadcast.sentAt - a.broadcast.sentAt));
     };
 
-    const checkNonprofitStatus = async () => {
+    const checkNonprofitStatus = async (user: User) => {
         try {
-            const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/onboarding/nonprofit/status', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setNonprofitStatus(data.data);
+            // First check user profile for nonprofit status (handles legacy sign-ups)
+            if (user.nonProfitStatus === 'pending' || user.nonProfitStatus === 'rejected') {
+                // Try to fetch from nonprofit_applications table
+                const token = await StorageService.getAuthToken();
+                const response = await fetch('/api/onboarding/nonprofit/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data) {
+                        setNonprofitStatus(data.data);
+                        return;
+                    }
+                }
+                // If no record in nonprofit_applications, use profile status
+                setNonprofitStatus({ status: user.nonProfitStatus });
             }
         } catch (error) {
             console.error('Failed to check nonprofit status:', error);
+            // Fallback to profile status
+            if (user.nonProfitStatus) {
+                setNonprofitStatus({ status: user.nonProfitStatus });
+            }
         }
     };
 
