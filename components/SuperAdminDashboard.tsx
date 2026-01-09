@@ -167,12 +167,20 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     // Check Resend status from backend API
     const checkResendStatus = async () => {
         try {
+            console.log('[SuperAdmin] Checking Resend status...');
             const response = await fetch('/api/email/status');
+            if (!response.ok) {
+                console.error('[SuperAdmin] Resend status API error:', response.status);
+                setResendApiKeyConfigured(false);
+                return;
+            }
             const status = await response.json();
-            console.log('[SuperAdmin] Resend status:', status);
-            setResendApiKeyConfigured(status.configured && status.available);
+            console.log('[SuperAdmin] Resend status response:', JSON.stringify(status));
+            const isConfigured = status.configured === true && status.available === true;
+            console.log('[SuperAdmin] Setting resendApiKeyConfigured to:', isConfigured);
+            setResendApiKeyConfigured(isConfigured);
         } catch (error) {
-            console.error('Failed to check Resend status:', error);
+            console.error('[SuperAdmin] Failed to check Resend status:', error);
             setResendApiKeyConfigured(false);
         }
     };
