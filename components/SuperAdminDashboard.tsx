@@ -2422,6 +2422,308 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                     </div>
                 )}
 
+                {/* NON-PROFIT TAB */}
+                {activeTab === 'nonprofit' && (
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Heart size={24} className="text-[#E0FF20]" /> Non-Profit Applications
+                            </h2>
+                            <div className="flex gap-2">
+                                {(['pending', 'approved', 'rejected', 'all'] as const).map(filter => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setNonprofitFilter(filter)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold capitalize ${
+                                            nonprofitFilter === filter
+                                                ? 'bg-[#E0FF20] text-black'
+                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {filter} {filter === 'pending' && nonprofitApplications.length > 0 && `(${nonprofitApplications.length})`}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Applications List */}
+                            <div className="space-y-4">
+                                {(nonprofitFilter === 'all' ? allNonprofitApplications : 
+                                  nonprofitFilter === 'pending' ? nonprofitApplications :
+                                  allNonprofitApplications.filter(a => a.status === nonprofitFilter)
+                                ).length === 0 ? (
+                                    <div className="bg-zinc-800/50 rounded-xl p-8 text-center">
+                                        <Heart size={48} className="mx-auto mb-4 text-zinc-600" />
+                                        <p className="text-zinc-400">No {nonprofitFilter} applications</p>
+                                    </div>
+                                ) : (
+                                    (nonprofitFilter === 'all' ? allNonprofitApplications : 
+                                      nonprofitFilter === 'pending' ? nonprofitApplications :
+                                      allNonprofitApplications.filter(a => a.status === nonprofitFilter)
+                                    ).map(app => (
+                                        <div
+                                            key={app.id}
+                                            onClick={() => setSelectedNonprofit(app)}
+                                            className={`bg-zinc-800/50 rounded-xl p-4 cursor-pointer border-2 transition-all hover:border-zinc-600 ${
+                                                selectedNonprofit?.id === app.id ? 'border-[#E0FF20]' : 'border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-bold text-white">{app.organization_name}</h3>
+                                                    <p className="text-sm text-zinc-400">{app.user?.email}</p>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                    app.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
+                                                    app.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                                                    'bg-red-500/20 text-red-400'
+                                                }`}>
+                                                    {app.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs text-zinc-500">
+                                                <span>Submitted: {new Date(app.submitted_at).toLocaleDateString()}</span>
+                                                {app.ein && <span>EIN: {app.ein}</span>}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Selected Application Details */}
+                            <div className="bg-zinc-800/50 rounded-xl p-6">
+                                {selectedNonprofit ? (
+                                    <div className="space-y-6">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white mb-1">{selectedNonprofit.organization_name}</h3>
+                                            <p className="text-zinc-400">{selectedNonprofit.user?.name} ({selectedNonprofit.user?.email})</p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-zinc-500">Status</span>
+                                                <p className={`font-bold ${
+                                                    selectedNonprofit.status === 'pending' ? 'text-amber-400' :
+                                                    selectedNonprofit.status === 'approved' ? 'text-green-400' :
+                                                    'text-red-400'
+                                                }`}>{selectedNonprofit.status.toUpperCase()}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-zinc-500">Submitted</span>
+                                                <p className="text-white">{new Date(selectedNonprofit.submitted_at).toLocaleString()}</p>
+                                            </div>
+                                            {selectedNonprofit.ein && (
+                                                <div>
+                                                    <span className="text-zinc-500">EIN / Tax ID</span>
+                                                    <p className="text-white font-mono">{selectedNonprofit.ein}</p>
+                                                </div>
+                                            )}
+                                            {selectedNonprofit.discount_code && (
+                                                <div>
+                                                    <span className="text-zinc-500">Discount Code</span>
+                                                    <p className="text-[#E0FF20] font-mono font-bold">{selectedNonprofit.discount_code}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {selectedNonprofit.description && (
+                                            <div>
+                                                <span className="text-zinc-500 text-sm">Mission Description</span>
+                                                <p className="text-white mt-1">{selectedNonprofit.description}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Document */}
+                                        {selectedNonprofit.document_url && (
+                                            <div>
+                                                <span className="text-zinc-500 text-sm">Verification Document</span>
+                                                <a
+                                                    href={selectedNonprofit.document_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="mt-2 flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                                                >
+                                                    <FileText size={18} />
+                                                    View Document
+                                                    <ExternalLink size={14} />
+                                                </a>
+                                            </div>
+                                        )}
+
+                                        {/* Onboarding Data */}
+                                        {selectedNonprofit.onboarding?.[0]?.responses && (
+                                            <div>
+                                                <span className="text-zinc-500 text-sm">Onboarding Responses</span>
+                                                <div className="mt-2 bg-zinc-900/50 rounded-lg p-4 text-sm">
+                                                    {Object.entries(selectedNonprofit.onboarding[0].responses).map(([key, value]) => (
+                                                        <div key={key} className="flex justify-between py-1 border-b border-zinc-800 last:border-0">
+                                                            <span className="text-zinc-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                                            <span className="text-white">{Array.isArray(value) ? value.join(', ') : String(value)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        {selectedNonprofit.status === 'pending' && (
+                                            <div className="pt-4 border-t border-zinc-700 space-y-4">
+                                                <div>
+                                                    <label className="text-sm text-zinc-400 block mb-2">Rejection Reason (optional)</label>
+                                                    <textarea
+                                                        value={nonprofitRejectReason}
+                                                        onChange={(e) => setNonprofitRejectReason(e.target.value)}
+                                                        placeholder="Enter reason if rejecting..."
+                                                        className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-white text-sm resize-none h-20"
+                                                    />
+                                                </div>
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={() => handleApproveNonprofit(selectedNonprofit.id, selectedNonprofit.user_id)}
+                                                        disabled={isApprovingNonprofit}
+                                                        className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                                                    >
+                                                        <Check size={18} />
+                                                        Approve & Send Code
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRejectNonprofit(selectedNonprofit.id, selectedNonprofit.user_id)}
+                                                        disabled={isApprovingNonprofit}
+                                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+                                                    >
+                                                        <X size={18} />
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Audit Info for Approved/Rejected */}
+                                        {selectedNonprofit.status === 'approved' && selectedNonprofit.approved_at && (
+                                            <div className="pt-4 border-t border-zinc-700 text-sm">
+                                                <p className="text-green-400">✓ Approved on {new Date(selectedNonprofit.approved_at).toLocaleString()}</p>
+                                            </div>
+                                        )}
+                                        {selectedNonprofit.status === 'rejected' && selectedNonprofit.rejected_at && (
+                                            <div className="pt-4 border-t border-zinc-700 text-sm">
+                                                <p className="text-red-400">✗ Rejected on {new Date(selectedNonprofit.rejected_at).toLocaleString()}</p>
+                                                {selectedNonprofit.rejection_reason && (
+                                                    <p className="text-zinc-400 mt-1">Reason: {selectedNonprofit.rejection_reason}</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-zinc-500">
+                                        <div className="text-center">
+                                            <Heart size={48} className="mx-auto mb-4" />
+                                            <p>Select an application to view details</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ONBOARDING TAB */}
+                {activeTab === 'onboarding' && (
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Users size={24} className="text-[#E0FF20]" /> Onboarding Responses
+                            </h2>
+                            <span className="text-zinc-400">{onboardingResponses.length} responses</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Responses List */}
+                            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                                {onboardingResponses.length === 0 ? (
+                                    <div className="bg-zinc-800/50 rounded-xl p-8 text-center">
+                                        <Users size={48} className="mx-auto mb-4 text-zinc-600" />
+                                        <p className="text-zinc-400">No onboarding responses yet</p>
+                                    </div>
+                                ) : (
+                                    onboardingResponses.map(response => (
+                                        <div
+                                            key={response.id}
+                                            onClick={() => setSelectedOnboarding(response)}
+                                            className={`bg-zinc-800/50 rounded-xl p-4 cursor-pointer border-2 transition-all hover:border-zinc-600 ${
+                                                selectedOnboarding?.id === response.id ? 'border-[#E0FF20]' : 'border-transparent'
+                                            }`}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="font-bold text-white">{response.user?.name || 'Unknown User'}</h3>
+                                                    <p className="text-sm text-zinc-400">{response.user?.email}</p>
+                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                                    response.organization_type === 'nonprofit' ? 'bg-pink-500/20 text-pink-400' :
+                                                    response.organization_type === 'business' ? 'bg-blue-500/20 text-blue-400' :
+                                                    'bg-zinc-700 text-zinc-400'
+                                                }`}>
+                                                    {response.organization_type || 'individual'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-zinc-500 mt-2">
+                                                Completed: {new Date(response.completed_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Selected Response Details */}
+                            <div className="bg-zinc-800/50 rounded-xl p-6">
+                                {selectedOnboarding ? (
+                                    <div className="space-y-6">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-white mb-1">{selectedOnboarding.user?.name || 'Unknown User'}</h3>
+                                            <p className="text-zinc-400">{selectedOnboarding.user?.email}</p>
+                                            <p className="text-sm text-zinc-500 mt-1">
+                                                User since: {new Date(selectedOnboarding.user?.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-zinc-500">Organization Type</span>
+                                                <p className="text-white font-bold capitalize">{selectedOnboarding.organization_type || 'Individual'}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-zinc-500">Completed</span>
+                                                <p className="text-white">{new Date(selectedOnboarding.completed_at).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* All Responses */}
+                                        <div>
+                                            <span className="text-zinc-500 text-sm">All Responses</span>
+                                            <div className="mt-2 bg-zinc-900/50 rounded-lg p-4 text-sm space-y-2">
+                                                {selectedOnboarding.responses && Object.entries(selectedOnboarding.responses).map(([key, value]) => (
+                                                    <div key={key} className="py-2 border-b border-zinc-800 last:border-0">
+                                                        <span className="text-zinc-400 capitalize block text-xs mb-1">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                                        <span className="text-white">{Array.isArray(value) ? value.join(', ') : String(value)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-zinc-500">
+                                        <div className="text-center">
+                                            <Users size={48} className="mx-auto mb-4" />
+                                            <p>Select a response to view details</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* SETTINGS TAB */}
                 {activeTab === 'settings' && (
                     <div className="p-8">
