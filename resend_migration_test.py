@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://geopay.preview.emergentagent.com"
+BACKEND_URL = "https://nonprofit-flow.preview.emergentagent.com"
 
 def test_email_status():
     """Test 1: GET /api/email/status - Should return Resend as configured"""

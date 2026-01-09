@@ -11,7 +11,7 @@ import uuid
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://geopay.preview.emergentagent.com"
+BACKEND_URL = "https://nonprofit-flow.preview.emergentagent.com"
 
 class EmailSystemTester:
     def __init__(self):
