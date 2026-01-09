@@ -1189,15 +1189,21 @@ export const EventView = () => {
                                             )
                                         ) : (
                                             <div className="space-y-6">
-                                                {/* Charge Currency Notice + Display Currency Selector */}
+                                                {/* Auto Local Currency Notice + Currency Selector */}
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800/50">
                                                     <div className="text-center sm:text-left">
-                                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm block">
-                                                            💳 Prices in {eventCurrency}
-                                                        </span>
-                                                        {displayCurrency && displayCurrency !== eventCurrency && (
-                                                            <span className="text-blue-500 dark:text-blue-300 text-xs">
-                                                                Viewing in {displayCurrency} (approximate)
+                                                        {displayCurrency && displayCurrency !== eventCurrency ? (
+                                                            <>
+                                                                <span className="text-blue-600 dark:text-blue-400 font-bold text-sm block">
+                                                                    💳 You'll be charged in {displayCurrency}
+                                                                </span>
+                                                                <span className="text-blue-500 dark:text-blue-300 text-xs">
+                                                                    Converted from {eventCurrency} at current rates
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-blue-600 dark:text-blue-400 font-bold text-sm block">
+                                                                💳 Prices in {eventCurrency}
                                                             </span>
                                                         )}
                                                     </div>
