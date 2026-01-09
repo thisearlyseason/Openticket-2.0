@@ -1201,11 +1201,19 @@ export const DisplayCurrencySelector = ({
     ];
 
     React.useEffect(() => {
-        // Load saved display currency preference
+        // Load saved display currency preference OR auto-detect local currency
         const loadCurrency = async () => {
             try {
                 const { CurrencyService } = await import('../services/currencyService');
-                setDisplayCurrency(CurrencyService.getDisplayCurrency());
+                // First check if user has manually set a preference
+                const manualPref = CurrencyService.getUserPreference();
+                if (manualPref) {
+                    setDisplayCurrency(manualPref);
+                } else {
+                    // No manual preference - auto-detect based on IP/locale
+                    const detected = await CurrencyService.autoDetectCurrency();
+                    setDisplayCurrency(detected);
+                }
             } catch {
                 const pref = localStorage.getItem('openticket_currency');
                 setDisplayCurrency(pref || 'USD');
