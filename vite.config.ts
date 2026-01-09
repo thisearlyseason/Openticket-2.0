@@ -35,7 +35,13 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-      }
+      },
+      // Ensure modules are resolved from frontend/node_modules
+      modules: [
+        path.resolve(__dirname, 'frontend/node_modules'),
+        path.resolve(__dirname, 'node_modules'),
+        'node_modules'
+      ]
     },
     build: {
       chunkSizeWarningLimit: 1000,
