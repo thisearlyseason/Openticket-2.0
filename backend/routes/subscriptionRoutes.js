@@ -144,12 +144,14 @@ router.post('/verify', async (req, res) => {
             .eq('id', userId)
             .single();
 
-        // Calculate affiliate commission (15% of subscription) if valid affiliate
+        // Calculate affiliate commission (15% of subscription) ONLY for Pro and Premium plans
+        // Free plan does NOT qualify for affiliate commission
         let affiliateCommission = 0;
         let affiliateId = null;
+        const paidPlans = ['pro', 'premium']; // Only these plans qualify for affiliate commission
         
-        if (affiliateCode && !profile?.referred_by_affiliate) {
-            // Only attribute to affiliate if this is the first subscription (not already referred)
+        if (paidPlans.includes(planName.toLowerCase()) && affiliateCode && !profile?.referred_by_affiliate) {
+            // Only attribute to affiliate if this is the first PAID subscription (not already referred)
             const { data: affiliate } = await supabase
                 .from('profiles')
                 .select('id, name, email, commission_rate')
@@ -161,7 +163,7 @@ router.post('/verify', async (req, res) => {
                 affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
                 affiliateId = affiliate.id;
                 
-                console.log(`[Subscription] Affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${affiliateCode}`);
+                console.log(`[Subscription] Affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${affiliateCode} (${planName} plan)`);
                 
                 // Update user profile with affiliate attribution
                 await supabase
@@ -191,8 +193,8 @@ router.post('/verify', async (req, res) => {
                     }
                 }
             }
-        } else if (profile?.referred_by_affiliate) {
-            // User was already referred - pay recurring commission to original affiliate
+        } else if (paidPlans.includes(planName.toLowerCase()) && profile?.referred_by_affiliate) {
+            // User was already referred - pay recurring commission to original affiliate (only for paid plans)
             const { data: affiliate } = await supabase
                 .from('profiles')
                 .select('id, name, email')
