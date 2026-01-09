@@ -19,7 +19,7 @@ const PLAN_PRICES = {
  */
 router.post('/create-checkout', async (req, res) => {
     try {
-        const { userId, userEmail, planName, cycle, amount } = req.body;
+        const { userId, userEmail, planName, cycle, amount, affiliateCode } = req.body;
 
         if (!userId || !planName) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -62,6 +62,22 @@ router.post('/create-checkout', async (req, res) => {
             return res.json({ success: true, redirect: '/dashboard' });
         }
 
+        // Validate affiliate code if provided
+        let validAffiliateCode = null;
+        if (affiliateCode) {
+            const { data: affiliate } = await supabase
+                .from('profiles')
+                .select('id, affiliate_code')
+                .eq('affiliate_code', affiliateCode)
+                .neq('id', userId) // Can't refer yourself
+                .single();
+            
+            if (affiliate) {
+                validAffiliateCode = affiliateCode;
+                console.log(`[Subscription] Valid affiliate code: ${affiliateCode}`);
+            }
+        }
+
         // Create Stripe Checkout Session for paid plans
         const baseUrl = process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000';
         
@@ -86,7 +102,8 @@ router.post('/create-checkout', async (req, res) => {
             metadata: {
                 userId,
                 planName: planName.toLowerCase(),
-                cycle
+                cycle,
+                affiliateCode: validAffiliateCode || ''
             },
             success_url: `${baseUrl}/#/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${baseUrl}/#/pricing`
