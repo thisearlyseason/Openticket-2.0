@@ -107,7 +107,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'broadcast' | 'promo' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
     // Broadcast State
