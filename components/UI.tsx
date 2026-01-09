@@ -1291,9 +1291,9 @@ export const DisplayCurrencySelector = ({
                                 {displayCurrency === currency.code && <Check size={16} className="text-primary" />}
                             </button>
                         ))}
-                        <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-amber-50 dark:bg-amber-900/20">
-                            <p className="text-xs text-amber-600 dark:text-amber-400">
-                                ⚠️ This changes display only. Actual payments are charged in the event's currency.
+                        <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-blue-50 dark:bg-blue-900/20">
+                            <p className="text-xs text-blue-600 dark:text-blue-400">
+                                💳 You'll be charged in your selected currency
                             </p>
                         </div>
                     </div>
