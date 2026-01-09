@@ -279,7 +279,7 @@ export const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
                     <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Total Revenue</div>
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white">${totalRevenue.toFixed(2)}</div>
+                    <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(totalRevenue, currentUser?.defaultCurrency || 'USD')}</div>
                 </div>
                 <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
                     <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Tickets Sold</div>
@@ -288,7 +288,7 @@ export const Dashboard = () => {
                 <div className="bg-surface border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-secondary transition-colors" onClick={() => navigate('/billing')}>
                     <div>
                         <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Available Payout</div>
-                        <div className="text-3xl font-black text-zinc-900 dark:text-white">${currentUser?.availablePayout?.toFixed(2) || '0.00'}</div>
+                        <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(currentUser?.availablePayout || 0, currentUser?.defaultCurrency || 'USD')}</div>
                     </div>
                     <Wallet size={24} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
