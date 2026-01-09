@@ -789,4 +789,44 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ---
 
 ## Last Updated
-January 7, 2026 (All 9 Build Goal Features Complete: Attendee Auto-Creation, Currency Fix, Auth UX, Share Card, Stripe Messaging, Favorites, Image Gallery, Schedule Display)
+January 9, 2026 (Auto Local Currency Feature Complete)
+
+---
+
+### ✅ Auto Local Currency Feature (January 9, 2026 - LATEST)
+
+#### Feature Overview
+Implemented automatic local currency detection and charging for attendees while keeping organizer views in their configured currency.
+
+#### Attendee Experience
+- [x] **Currency Auto-Detection:** Browser locale detection via HTTPS ipapi.co (fallback to ip-api.com)
+- [x] **Currency Selector:** 5 currencies supported (USD, EUR, GBP, CAD, AUD) with flag emojis
+- [x] **Charging in Local Currency:** Attendees charged in their selected currency
+- [x] **Clear Messaging:** "💳 You'll be charged in [EUR/GBP/etc] - Converted from [CAD] at current rates"
+- [x] **Live Exchange Rates:** Fixer.io API integration with 1-hour caching
+- [x] **Price Conversion Display:** Shows organizer's price with approximate conversion
+
+#### Organizer Experience
+- [x] **Dashboard:** Revenue displays use `CurrencyService.formatChargeCurrency(amount, organizer.defaultCurrency)`
+- [x] **Event Cards:** Per-event revenue in organizer's currency
+- [x] **Payout Display:** Available payout in organizer's currency
+- [x] **Ignores Attendee Settings:** Organizer views are NOT affected by attendee currency preferences
+
+#### Backend Implementation
+- [x] **stripeController.js - createOrder:** Accepts `attendeeCurrency` parameter
+- [x] **Currency Resolution:** attendeeCurrency > organizerCurrency > backendDefault > USD
+- [x] **Fixer.io Integration:** Live rates with EUR base, converted to USD base
+- [x] **Fallback Rates:** Static fallback if API unavailable
+- [x] **priceCalculator.js - buildStripeLineItems:** Accepts `conversionRate` parameter
+- [x] **Application Fee Conversion:** Platform fee correctly converted to charge currency
+
+#### Frontend Implementation
+- [x] **EventView.tsx:** Passes `attendeeCurrency` (displayCurrency || eventCurrency) to API
+- [x] **UI.tsx - DisplayCurrencySelector:** Updated message to "You'll be charged in this currency"
+- [x] **currencyService.ts:** HTTPS-first geo-detection (ipapi.co before ip-api.com)
+- [x] **Dashboard.tsx:** Uses CurrencyService.formatChargeCurrency for organizer currency
+
+#### Test Coverage
+- [x] **19 Backend Tests:** All passed (exchange rates, convert-price, create-order, supported currencies)
+- [x] **Frontend UI Tests:** Currency selector visibility, selection, message updates
+- [x] **Test File:** `/app/tests/test_auto_local_currency.py`
