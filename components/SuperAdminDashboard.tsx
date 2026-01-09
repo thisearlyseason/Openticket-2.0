@@ -2451,7 +2451,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     : 'Add RESEND_API_KEY to backend environment variables'}
                                             </p>
                                         </div>
-                                        <Button variant="outline" onClick={checkResendStatus} size="sm">
+                                        <Button variant="outline" onClick={async () => {
+                                            try {
+                                                const response = await fetch('/api/email/status', { cache: 'no-store' });
+                                                const status = await response.json();
+                                                const isConfigured = status.configured === true && status.available === true;
+                                                setResendApiKeyConfigured(isConfigured);
+                                                alert(`Resend Status:\n\nConfigured: ${status.configured}\nAvailable: ${status.available}\nProvider: ${status.provider}\nSender: ${status.senderEmail}\n\nResult: ${isConfigured ? '✅ Connected' : '❌ Not Connected'}`);
+                                            } catch (error: any) {
+                                                alert(`Error checking Resend status: ${error.message}`);
+                                            }
+                                        }} size="sm">
                                             Refresh Status
                                         </Button>
                                     </div>
