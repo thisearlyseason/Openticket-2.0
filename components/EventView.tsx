@@ -671,9 +671,11 @@ export const EventView = () => {
                     if (val.qty > 0) simpleAddOns[id] = val.qty;
                 });
 
-                // Use the event's currency for Stripe checkout
-                // This ensures buyers are charged in the currency the organizer set
-                const chargeCurrency = eventCurrency;
+                // AUTO LOCAL CURRENCY FEATURE:
+                // - Attendees are charged in their selected/detected local currency
+                // - If displayCurrency is set and different from organizer's currency, use it
+                // - Otherwise fall back to organizer's currency
+                const attendeeCurrency = displayCurrency || eventCurrency;
 
                 const response = await fetch('/api/stripe/create-order', {
                     method: 'POST',
@@ -690,7 +692,7 @@ export const EventView = () => {
                         customerName: regData.name,
                         assignments: assignments,
                         phoneNumber: regData.phoneNumber,
-                        currency: eventCurrency, // Use event's currency for checkout
+                        attendeeCurrency: attendeeCurrency, // Attendee's local/selected currency for charging
                         successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
                         cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
                         userId: currentUser?.id
