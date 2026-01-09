@@ -159,7 +159,8 @@ router.post('/verify', async (req, res) => {
                 .single();
             
             if (affiliate) {
-                const commissionRate = 15; // Fixed 15% for subscriptions
+                // Use affiliate's individual rate if set, otherwise use default 15%
+                const commissionRate = affiliate.commission_rate || 15;
                 affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
                 affiliateId = affiliate.id;
                 
@@ -197,16 +198,17 @@ router.post('/verify', async (req, res) => {
             // User was already referred - pay recurring commission to original affiliate (only for paid plans)
             const { data: affiliate } = await supabase
                 .from('profiles')
-                .select('id, name, email')
+                .select('id, name, email, commission_rate')
                 .eq('affiliate_code', profile.referred_by_affiliate)
                 .single();
             
             if (affiliate) {
-                const commissionRate = 15;
+                // Use affiliate's individual rate if set, otherwise use default 15%
+                const commissionRate = affiliate.commission_rate || 15;
                 affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
                 affiliateId = affiliate.id;
                 
-                console.log(`[Subscription] Recurring affiliate commission: $${affiliateCommission} for ${profile.referred_by_affiliate}`);
+                console.log(`[Subscription] Recurring affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${profile.referred_by_affiliate}`);
                 
                 // Update affiliate's available payout
                 await supabase.rpc('increment_available_payout', {
