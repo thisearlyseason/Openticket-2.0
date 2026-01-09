@@ -64,7 +64,10 @@ export const syncProfile = async (req, res) => {
             'image_url', 'socials', 'address',
             'onboarding_step', 'payment_methods', 'payout_settings',
             'stripe_connect_id', 'stripe_onboarding_complete', 'stripe_publishable_key', 'stripe_secret_key',
-            'favorite_organizers', 'commission_rate', 'affiliate_code'
+            'favorite_organizers', 'commission_rate', 'affiliate_code',
+            // Nonprofit fields
+            'nonprofit_status', 'nonprofit_name', 'nonprofit_ein', 'nonprofit_doc_url',
+            'onboarding_completed', 'onboarding_completed_at'
         ];
 
         // Extended settings stored in the 'subscription.settings' JSONB field
