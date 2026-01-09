@@ -1163,11 +1163,12 @@ export const EventPriceDisplay = ({
 };
 
 /**
- * DisplayCurrencySelector - Allows users to switch their display currency
- * This is for UI display only and does NOT affect Stripe charges
+ * DisplayCurrencySelector - Allows users to switch their payment currency
  * 
- * The charge currency is always determined by: Event Currency → Backend Default → USD
- * This selector only changes how prices are DISPLAYED to the user
+ * AUTO LOCAL CURRENCY FEATURE:
+ * - Attendees are charged in their selected currency
+ * - Prices are automatically converted at current exchange rates
+ * - Organizer views always remain in the organizer's default currency
  */
 export const DisplayCurrencySelector = ({ 
     className = '',
