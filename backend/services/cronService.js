@@ -43,41 +43,33 @@ const getOrganizerEmailSettings = async (organizerId) => {
 };
 
 /**
- * Send email using organizer's preferred provider
+ * Send email using Resend (platform email service)
  */
 const sendEmailWithProvider = async (to, subject, htmlContent, organizerId) => {
-    const settings = await getOrganizerEmailSettings(organizerId);
-    
-    // For now, use the platform email service (Gmail/Nodemailer)
-    // This can be extended to use MailerLite API if configured
     try {
-        // Use the serverEmail service which is always available
-        const nodemailer = (await import('nodemailer')).default;
+        // Import resend service
+        const resendService = (await import('./resendService.js')).default;
         
-        if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+        if (!resendService.isResendConfigured()) {
             console.log(`[CRON] Email simulated to: ${to}, Subject: ${subject}`);
             return { sent: false, simulated: true };
         }
         
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_APP_PASSWORD
-            }
-        });
-        
-        const info = await transporter.sendMail({
-            from: `"OpenTicket" <${process.env.EMAIL_USER}>`,
+        const result = await resendService.sendEmail({
             to,
             subject,
             html: htmlContent
         });
         
-        console.log(`[CRON] Email sent: ${info.messageId} to ${to}`);
-        return { sent: true, messageId: info.messageId };
+        if (result.success) {
+            console.log(`[CRON] ✅ Email sent via Resend: ${result.messageId} to ${to}`);
+            return { sent: true, messageId: result.messageId };
+        } else {
+            console.error(`[CRON] ❌ Email failed to ${to}:`, result.error);
+            return { sent: false, error: result.error };
+        }
     } catch (error) {
-        console.error(`[CRON] Email failed to ${to}:`, error.message);
+        console.error(`[CRON] ❌ Email exception for ${to}:`, error.message);
         return { sent: false, error: error.message };
     }
 };
