@@ -201,6 +201,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         loadPromoCodes();
     }, [navigate, embedded]);
 
+    // Re-check Resend status when switching to settings tab
+    useEffect(() => {
+        if (activeTab === 'settings') {
+            checkResendStatus();
+        }
+    }, [activeTab]);
+
     const refreshData = async () => {
         try {
             const [allUsers, allEvents, allRegs] = await Promise.all([
