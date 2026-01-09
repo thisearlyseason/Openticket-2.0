@@ -39,6 +39,10 @@ export const Dashboard = () => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [eventToDelete, setEventToDelete] = useState<string | null>(null);
 
+    // Non-profit application state
+    const [nonprofitStatus, setNonprofitStatus] = useState<any>(null);
+    const [showResubmitForm, setShowResubmitForm] = useState(false);
+
     useEffect(() => {
         const user = StorageService.getCurrentUser();
         if (!user) {
@@ -62,6 +66,9 @@ export const Dashboard = () => {
 
         const note = StorageService.getSystemNotification();
         setSystemNote(note);
+
+        // Check non-profit application status
+        checkNonprofitStatus();
 
         const handleClickOutside = () => setOpenMenuId(null);
         document.addEventListener('click', handleClickOutside);
