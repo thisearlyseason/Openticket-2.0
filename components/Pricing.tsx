@@ -56,7 +56,7 @@ export const Pricing = () => {
         // Simulate Payment / Upgrade
         let price = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
 
-        // Apply Non-Profit Discount (25%)
+        // Apply Non-Profit Discount (20%)
         if (user.nonProfitStatus === 'approved' && plan === 'pro') {
             price = price * 0.75;
         }
