@@ -1059,8 +1059,15 @@ export const EventPriceDisplay = ({
                 
                 // Organizer's currency is the source of truth
                 const organizerCurrency = (currency || 'USD').toUpperCase();
-                // User's selected/local currency - this is what they'll see and be charged
-                const selectedCurrency = CurrencyService.getDisplayCurrency() || organizerCurrency;
+                
+                // IMPORTANT: Use autoDetectCurrency for initial load to detect user's local currency via IP
+                // This ensures Canadian users see CAD, Australian users see AUD, etc.
+                let selectedCurrency = CurrencyService.getUserPreference();
+                if (!selectedCurrency) {
+                    // No manual preference - auto-detect based on IP/locale
+                    selectedCurrency = await CurrencyService.autoDetectCurrency();
+                }
+                selectedCurrency = selectedCurrency || organizerCurrency;
                 
                 // Convert amount from organizer's currency to user's selected currency
                 let convertedAmount = amount;
