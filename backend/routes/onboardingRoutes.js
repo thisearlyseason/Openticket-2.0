@@ -345,24 +345,26 @@ router.post('/nonprofit/resubmit', verifyToken, async (req, res) => {
  */
 router.get('/admin/all', verifyToken, requireAdmin, async (req, res) => {
     try {
-        const { data, error } = await supabase
+        // First get all onboarding responses
+        const { data: responses, error: respError } = await supabase
             .from('onboarding_responses')
-            .select(`
-                *,
-                user:profiles!onboarding_responses_user_id_fkey (
-                    id,
-                    name,
-                    email,
-                    role,
-                    nonprofit_status,
-                    created_at
-                )
-            `)
+            .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (respError) throw respError;
 
-        res.json({ data: data || [] });
+        // Then fetch user details for each response
+        const enrichedData = await Promise.all((responses || []).map(async (response) => {
+            const { data: user } = await supabase
+                .from('profiles')
+                .select('id, name, email, role, nonprofit_status, created_at')
+                .eq('id', response.user_id)
+                .single();
+            
+            return { ...response, user: user || null };
+        }));
+
+        res.json({ data: enrichedData });
     } catch (error) {
         console.error('[Onboarding] Admin get all error:', error);
         res.status(500).json({ error: error.message });
