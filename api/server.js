@@ -186,6 +186,10 @@ app.use('/api/waitlist', waitlistRoutes);
 import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 app.use('/api/onboarding', onboardingRoutes);
 
+// Upload routes (document storage)
+import uploadRoutes from '../backend/routes/uploadRoutes.js';
+app.use('/api/upload', uploadRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
