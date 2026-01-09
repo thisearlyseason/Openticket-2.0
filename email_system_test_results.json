@@ -1,0 +1,91 @@
+[
+  {
+    "test": "Email Status Check",
+    "success": true,
+    "details": "\u2705 Expected response: configured=True, available=True, provider=resend, senderEmail=tickets@openticket.events",
+    "response_data": {
+      "configured": true,
+      "available": true,
+      "provider": "resend",
+      "senderEmail": "tickets@openticket.events",
+      "message": "Resend email service is ready"
+    },
+    "timestamp": "2026-01-09 02:27:26"
+  },
+  {
+    "test": "Direct Email Send",
+    "success": true,
+    "details": "\u2705 Email sent successfully with messageId: 14cd86c1-a31c-4efe-9cae-c0e17f5fc081",
+    "response_data": {
+      "success": true,
+      "messageId": "14cd86c1-a31c-4efe-9cae-c0e17f5fc081",
+      "provider": "resend"
+    },
+    "timestamp": "2026-01-09 02:27:26"
+  },
+  {
+    "test": "Confirmation Email Test",
+    "success": true,
+    "details": "\u2705 Confirmation email template processed successfully: c7424ead-e299-4d2b-aaec-fadc5a1e99eb",
+    "response_data": {
+      "success": true,
+      "messageId": "c7424ead-e299-4d2b-aaec-fadc5a1e99eb",
+      "message": "Test email sent successfully to thisearlyseason@gmail.com",
+      "provider": "resend"
+    },
+    "timestamp": "2026-01-09 02:27:26"
+  },
+  {
+    "test": "Backend Logs Check",
+    "success": true,
+    "details": "\u2705 No old email errors found. Found positive indicators: resend, email sent, \u2705 email sent",
+    "response_data": {
+      "log_excerpt": "27:26.536Z - POST /api/email/send\n[ResendService] Initialized successfully\n[ResendService] Sending email from tickets@openticket.events to thisearlyseason@gmail.com\n[ResendService] \u2705 Email sent: 14cd86c1-a31c-4efe-9cae-c0e17f5fc081 to thisearlyseason@gmail.com\n2026-01-09T02:27:26.854Z - POST /api/email/send-test\n[ResendService] Sending email from tickets@openticket.events to thisearlyseason@gmail.com\n[ResendService] \u2705 Email sent: c7424ead-e299-4d2b-aaec-fadc5a1e99eb to thisearlyseason@gmail.com\n"
+    },
+    "timestamp": "2026-01-09 02:27:26"
+  },
+  {
+    "test": "Email Service Configuration",
+    "success": true,
+    "details": "\u2705 Resend is default provider and configured: Resend",
+    "response_data": {
+      "providers": [
+        {
+          "id": "resend",
+          "name": "Resend",
+          "description": "Reliable transactional email service (recommended)",
+          "configured": true,
+          "icon": "\ud83d\udce7"
+        },
+        {
+          "id": "gmail",
+          "name": "Gmail",
+          "description": "Send from your connected Gmail account",
+          "configured": false,
+          "icon": "\ud83d\udceb",
+          "requiresOAuth": true
+        }
+      ],
+      "defaultProvider": "resend"
+    },
+    "timestamp": "2026-01-09 02:27:26"
+  },
+  {
+    "test": "Webhook Email Functionality",
+    "success": true,
+    "details": "\u2705 Webhook-style confirmation email processed: preview-1767925647104",
+    "response_data": {
+      "success": true,
+      "simulated": true,
+      "preview": true,
+      "messageId": "preview-1767925647104",
+      "message": "Could not send: Too many requests. You can only make 2 requests per second. See rate limit response headers for more information. Or contact support to increase rate limit.. Showing preview instead.",
+      "previewData": {
+        "to": "thisearlyseason@gmail.com",
+        "subject": "[TEST] Ticket Confirmation - Sample Event - Test",
+        "bodyPreview": "\n                    <h2>Ticket Purchase Confirmed!</h2>\n                    <p>Dear John Doe,</p>\n                    <p>Your ticket purchase has been confirmed for:</p>\n                    <h3>Sample Event - Test</h3>\n                    <p><strong>Date:</strong> Friday, January 16, 2026 at 02:27 AM</p>\n                    <p><strong>Location:</strong> 123 Main Street, San Francisco, CA</p>\n                    <p><strong>Tickets:</strong></p>\n                    <ul>\n                        <l..."
+      }
+    },
+    "timestamp": "2026-01-09 02:27:27"
+  }
+]
