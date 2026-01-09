@@ -733,7 +733,7 @@ export const StorageService = {
 
     updateAffiliateRates: async (affiliateId: string, rates: { commissionRate?: number, discountPercent?: number }): Promise<boolean> => {
         try {
-            await postSupabase(`/admin/affiliate/${affiliateId}/rates`, 'PUT', rates);
+            await postSupabase(`/admin/affiliates/${affiliateId}/commission`, 'PUT', rates);
             return true;
         } catch (e) {
             console.error("Failed to update affiliate rates", e);
