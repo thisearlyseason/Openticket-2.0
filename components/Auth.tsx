@@ -545,7 +545,7 @@ export const Auth = () => {
                                         <Building2 size={20} className="shrink-0" />
                                         <div>
                                             <strong>Non-Profit Verification</strong><br />
-                                            Provide your details to receive 25% off Pro pricing and lower rates.
+                                            Provide your details to receive 20% off Pro pricing and lower rates.
                                         </div>
                                     </div>
                                     <Input
