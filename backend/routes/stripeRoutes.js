@@ -17,6 +17,8 @@ router.post('/convert-price', stripeController.convertPrice);
 
 // ========== AT-DOOR PAYMENT ROUTES ==========
 router.post('/record-at-door-payment', verifyToken, stripeController.recordAtDoorPayment);
+router.post('/at-door/create-payment-intent', stripeController.createAtDoorPaymentIntent);
+router.post('/at-door/confirm-payment', stripeController.confirmAtDoorPayment);
 
 // ========== STRIPE CONNECT ROUTES ==========
 router.post('/connect/create-account', verifyToken, stripeConnectController.createConnectAccount);
