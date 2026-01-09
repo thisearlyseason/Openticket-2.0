@@ -166,22 +166,47 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     // Check Resend status from backend API
     const checkResendStatus = async () => {
+        console.log('[SuperAdmin] checkResendStatus called');
         try {
-            console.log('[SuperAdmin] Checking Resend status...');
-            const response = await fetch('/api/email/status');
-            console.log('[SuperAdmin] Resend API response status:', response.status);
+            console.log('[SuperAdmin] Fetching /api/email/status...');
+            const response = await fetch('/api/email/status', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-store'
+            });
+            console.log('[SuperAdmin] Response received, status:', response.status, 'ok:', response.ok);
+            
             if (!response.ok) {
-                console.error('[SuperAdmin] Resend status API error:', response.status);
+                console.error('[SuperAdmin] API error status:', response.status);
                 setResendApiKeyConfigured(false);
                 return;
             }
-            const status = await response.json();
-            console.log('[SuperAdmin] Resend status response:', JSON.stringify(status));
+            
+            const text = await response.text();
+            console.log('[SuperAdmin] Raw response:', text);
+            
+            let status;
+            try {
+                status = JSON.parse(text);
+            } catch (parseError) {
+                console.error('[SuperAdmin] JSON parse error:', parseError);
+                setResendApiKeyConfigured(false);
+                return;
+            }
+            
+            console.log('[SuperAdmin] Parsed status:', status);
+            console.log('[SuperAdmin] configured:', status.configured, 'available:', status.available);
+            
             const isConfigured = status.configured === true && status.available === true;
-            console.log('[SuperAdmin] Setting resendApiKeyConfigured to:', isConfigured);
+            console.log('[SuperAdmin] isConfigured result:', isConfigured);
+            
             setResendApiKeyConfigured(isConfigured);
+            console.log('[SuperAdmin] State updated to:', isConfigured);
         } catch (error) {
-            console.error('[SuperAdmin] Failed to check Resend status:', error);
+            console.error('[SuperAdmin] Fetch error:', error);
             setResendApiKeyConfigured(false);
         }
     };
