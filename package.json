@@ -1,13 +1,13 @@
 {
-  "name": "openticket-frontend",
+  "name": "openticket",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite --host 0.0.0.0 --port 3000",
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "vite --host 0.0.0.0 --port 3000"
   },
   "dependencies": {
     "@google/genai": "^1.35.0",
@@ -27,41 +27,30 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@stripe/react-stripe-js": "^5.4.1",
-    "@stripe/stripe-js": "^8.6.1",
-    "@supabase/supabase-js": "^2.90.1",
+    "@stripe/react-stripe-js": "^2.8.0",
+    "@stripe/stripe-js": "^4.4.0",
+    "@supabase/supabase-js": "^2.39.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "cmdk": "^0.2.0",
-    "cors": "^2.8.5",
-    "date-fns": "^4.1.0",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.2.1",
-    "firebase": "^12.7.0",
-    "firebase-admin": "^13.6.0",
-    "framer-motion": "^12.24.12",
+    "date-fns": "^2.30.0",
+    "firebase": "^10.7.1",
+    "framer-motion": "^10.16.16",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
-    "idb": "^8.0.3",
-    "idb-keyval": "^6.2.2",
-    "jspdf": "^4.0.0",
-    "lucide-react": "^0.562.0",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.12",
-    "qrcode": "^1.5.4",
+    "idb": "^8.0.1",
+    "idb-keyval": "^6.2.1",
+    "jspdf": "^2.5.1",
+    "lucide-react": "^0.294.0",
+    "qrcode": "^1.5.3",
     "react": "^18.2.0",
     "react-day-picker": "^8.9.1",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.12.0",
-    "recharts": "^3.6.0",
-    "resend": "^6.7.0",
-    "sonner": "^2.0.7",
-    "stripe": "^20.1.2",
+    "react-router-dom": "^6.21.0",
+    "recharts": "^2.10.3",
+    "sonner": "^1.2.4",
     "tailwind-merge": "^2.2.0",
-    "tailwindcss-animate": "^1.0.7",
-    "uuid": "^13.0.0",
-    "web-push": "^3.6.7"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
@@ -73,6 +62,9 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3",
-    "vite": "^6.0.11"
+    "vite": "^5.0.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
