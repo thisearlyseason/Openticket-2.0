@@ -690,7 +690,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://savvy-tix.preview.emergentagent.com  
+**Backend URL:** https://geopay.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
