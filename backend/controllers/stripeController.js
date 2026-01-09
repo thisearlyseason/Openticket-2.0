@@ -32,8 +32,8 @@ export const createOrder = async (req, res) => {
             userId,
             assignments,
             phoneNumber,
-            // Note: We ignore any currency passed from frontend for payments
-            // The charge currency is determined by: Event Currency → Backend Default → USD
+            // Attendee's selected currency - if provided, we'll convert and charge in this currency
+            attendeeCurrency,
         } = req.body;
 
         console.log(`[Stripe] createOrder called for event: ${eventId}`);
