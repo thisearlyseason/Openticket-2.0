@@ -76,27 +76,83 @@ export const createOrder = async (req, res) => {
             return res.status(404).json({ error: "Event not found" });
         }
 
-        // CHARGE CURRENCY RESOLUTION
-        // GLOBAL ORGANIZATION CURRENCY is the single source of truth
-        // Events no longer have per-event currency overrides
-        // Attendees can view in other currencies (display-only) and pay in their preferred currency
+        // ========== AUTO LOCAL CURRENCY FEATURE ==========
+        // ATTENDEE CURRENCY: Attendees can be charged in their local/selected currency
+        // ORGANIZER CURRENCY: All organizer views remain in their configured default currency
+        // 
+        // Priority for charge currency:
+        // 1. Attendee's selected currency (if valid and supported)
+        // 2. Organization's global default currency (fallback)
+        // 3. Platform default / USD (ultimate fallback)
+        
         const supportedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
         
-        // Get organization's global default currency from event owner's profile
+        // Get organization's global default currency from event owner's profile (source of truth for organizer)
         const ownerDefaultCurrency = event.owner?.subscription?.settings?.default_currency?.toLowerCase() || 'usd';
         
-        // Fallback: Get backend default currency from env (platform default)
+        // Platform default currency (ultimate fallback)
         const backendDefaultCurrency = process.env.DEFAULT_CURRENCY?.toLowerCase() || 'usd';
         
-        // Resolve charge currency: Organization default → Platform default → USD
-        let chargeCurrency = 'usd';
+        // Organizer's currency is what prices are stored in
+        let organizerCurrency = 'usd';
         if (supportedCurrencies.includes(ownerDefaultCurrency)) {
-            chargeCurrency = ownerDefaultCurrency;
+            organizerCurrency = ownerDefaultCurrency;
         } else if (supportedCurrencies.includes(backendDefaultCurrency)) {
-            chargeCurrency = backendDefaultCurrency;
+            organizerCurrency = backendDefaultCurrency;
         }
         
-        console.log(`[Stripe] Charge currency resolved: ${chargeCurrency} (org default: ${ownerDefaultCurrency}, platform default: ${backendDefaultCurrency})`);
+        // Determine actual charge currency:
+        // If attendee selected a valid currency, use that; otherwise use organizer's
+        let chargeCurrency = organizerCurrency;
+        let currencyConversionRate = 1; // rate from organizerCurrency to chargeCurrency
+        let needsConversion = false;
+        
+        const normalizedAttendeeCurrency = attendeeCurrency?.toLowerCase();
+        if (normalizedAttendeeCurrency && 
+            supportedCurrencies.includes(normalizedAttendeeCurrency) && 
+            normalizedAttendeeCurrency !== organizerCurrency) {
+            
+            chargeCurrency = normalizedAttendeeCurrency;
+            needsConversion = true;
+            
+            // Fetch live exchange rate for currency conversion
+            try {
+                const FIXER_API_KEY = process.env.FIXER_API_KEY;
+                if (FIXER_API_KEY) {
+                    const response = await fetch(
+                        `http://data.fixer.io/api/latest?access_key=${FIXER_API_KEY}&symbols=USD,EUR,GBP,CAD,AUD`
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.rates) {
+                            // Fixer returns rates with EUR as base, need to convert
+                            const eurToOrg = data.rates[organizerCurrency.toUpperCase()];
+                            const eurToTarget = data.rates[chargeCurrency.toUpperCase()];
+                            
+                            if (eurToOrg && eurToTarget) {
+                                // Convert: organizerCurrency -> EUR -> targetCurrency
+                                currencyConversionRate = eurToTarget / eurToOrg;
+                                console.log(`[Stripe] Live conversion rate ${organizerCurrency.toUpperCase()} -> ${chargeCurrency.toUpperCase()}: ${currencyConversionRate.toFixed(4)}`);
+                            }
+                        }
+                    }
+                }
+            } catch (rateError) {
+                console.warn(`[Stripe] Failed to fetch live rates, using fallback: ${rateError.message}`);
+            }
+            
+            // Fallback rates if live fetch failed
+            if (currencyConversionRate === 1) {
+                const fallbackRates = { usd: 1, eur: 0.92, gbp: 0.79, cad: 1.36, aud: 1.53 };
+                const orgRate = fallbackRates[organizerCurrency] || 1;
+                const targetRate = fallbackRates[chargeCurrency] || 1;
+                currencyConversionRate = targetRate / orgRate;
+                console.log(`[Stripe] Using fallback conversion rate ${organizerCurrency.toUpperCase()} -> ${chargeCurrency.toUpperCase()}: ${currencyConversionRate.toFixed(4)}`);
+            }
+        }
+        
+        console.log(`[Stripe] Currency resolution: organizer=${organizerCurrency.toUpperCase()}, charge=${chargeCurrency.toUpperCase()}, conversion=${needsConversion}, rate=${currencyConversionRate.toFixed(4)}`);
 
         // 2. Validate Capacity
         let requestedQty = 0;
