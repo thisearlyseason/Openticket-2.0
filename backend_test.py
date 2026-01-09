@@ -13,7 +13,7 @@ from typing import Dict, Any
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://savvy-tix.preview.emergentagent.com"
 
-class ResendEmailServiceTester:
+class EmailSystemTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
@@ -33,173 +33,300 @@ class ResendEmailServiceTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_email_status_endpoint(self):
-        """Test 1: GET /api/email/status - Should return Resend as configured"""
+    def test_email_status_check(self):
+        """Test Case 1: Email Status Check - GET /api/email/status"""
         try:
             response = self.session.get(f"{BACKEND_URL}/api/email/status")
             
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check expected fields
-                expected_fields = ['configured', 'available', 'provider']
-                missing_fields = [field for field in expected_fields if field not in data]
+                # Check expected response structure from review request
+                expected_configured = True
+                expected_available = True
+                expected_provider = "resend"
+                expected_sender = "tickets@openticket.events"
                 
-                if missing_fields:
+                # Validate response structure
+                if (data.get('configured') == expected_configured and 
+                    data.get('available') == expected_available and 
+                    data.get('provider') == expected_provider and 
+                    data.get('senderEmail') == expected_sender):
+                    
                     self.log_result(
-                        "Email Status Endpoint", 
-                        False, 
-                        f"Missing required fields: {missing_fields}",
-                        data
-                    )
-                    return
-                
-                # Check if Resend is configured
-                if data.get('provider') == 'resend':
-                    self.log_result(
-                        "Email Status Endpoint", 
+                        "Email Status Check", 
                         True, 
-                        f"Resend configured: {data.get('configured')}, available: {data.get('available')}, provider: {data.get('provider')}",
+                        f"✅ Expected response: configured={data.get('configured')}, available={data.get('available')}, provider={data.get('provider')}, senderEmail={data.get('senderEmail')}",
                         data
                     )
                 else:
                     self.log_result(
-                        "Email Status Endpoint", 
+                        "Email Status Check", 
                         False, 
-                        f"Expected provider 'resend', got '{data.get('provider')}'",
+                        f"❌ Response mismatch - Expected: configured={expected_configured}, available={expected_available}, provider={expected_provider}, senderEmail={expected_sender}. Got: {data}",
                         data
                     )
             else:
                 self.log_result(
-                    "Email Status Endpoint", 
+                    "Email Status Check", 
                     False, 
                     f"HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Email Status Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Email Status Check", False, f"Exception: {str(e)}")
 
-    def test_email_providers_endpoint(self):
-        """Test 2: GET /api/email/providers - Should list Resend as default provider"""
+    def test_direct_email_send(self):
+        """Test Case 2: Direct Email Send - POST /api/email/send to thisearlyseason@gmail.com"""
         try:
+            payload = {
+                "to": "thisearlyseason@gmail.com",
+                "subject": "Backend Test Email",
+                "html": "<h1>Backend Test Email</h1><p>This is a test email sent from the backend testing system to verify email functionality.</p>"
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('success') == True and data.get('messageId'):
+                    self.log_result(
+                        "Direct Email Send", 
+                        True, 
+                        f"✅ Email sent successfully with messageId: {data.get('messageId')}",
+                        data
+                    )
+                else:
+                    self.log_result(
+                        "Direct Email Send", 
+                        False, 
+                        "❌ Response doesn't indicate success or missing messageId",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Direct Email Send", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Direct Email Send", False, f"Exception: {str(e)}")
+
+    def test_confirmation_email_simulation(self):
+        """Test Case 3: Confirmation Email Test (simulating webhook call)"""
+        try:
+            # Simulate the confirmation email that would be sent by webhook
+            # This tests the internal API that webhook would call
+            payload = {
+                "to": "thisearlyseason@gmail.com",
+                "template": {
+                    "subject": "Your Ticket Confirmation for {{event_title}}",
+                    "body": """
+                    <h2>Thank you for your purchase, {{attendee_name}}!</h2>
+                    <p>Your tickets for <strong>{{event_title}}</strong> have been confirmed.</p>
+                    <p><strong>Event Details:</strong></p>
+                    <ul>
+                        <li>Event: {{event_title}}</li>
+                        <li>Date: {{event_date}}</li>
+                        <li>Location: {{event_location}}</li>
+                        <li>Ticket Type: {{ticket_type}}</li>
+                        <li>Order ID: {{order_id}}</li>
+                    </ul>
+                    <p>We look forward to seeing you at the event!</p>
+                    """
+                }
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/api/email/send-test",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('success') == True:
+                    self.log_result(
+                        "Confirmation Email Test", 
+                        True, 
+                        f"✅ Confirmation email template processed successfully: {data.get('messageId')}",
+                        data
+                    )
+                else:
+                    self.log_result(
+                        "Confirmation Email Test", 
+                        False, 
+                        "❌ Response doesn't indicate success",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Confirmation Email Test", 
+                    False, 
+                    f"HTTP {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Confirmation Email Test", False, f"Exception: {str(e)}")
+
+    def check_backend_logs_for_email_errors(self):
+        """Test Case 4: Check Backend Logs for Email Errors"""
+        try:
+            import subprocess
+            
+            # Check for email-related errors in backend logs
+            result = subprocess.run(
+                ["tail", "-50", "/var/log/supervisor/backend.out.log"],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                log_content = result.stdout.lower()
+                
+                # Check for old Gmail/nodemailer errors
+                gmail_errors = [
+                    "missing credentials",
+                    "resend not configured",
+                    "nodemailer",
+                    "gmail service error",
+                    "authentication failed"
+                ]
+                
+                found_errors = []
+                for error in gmail_errors:
+                    if error in log_content:
+                        found_errors.append(error)
+                
+                if found_errors:
+                    self.log_result(
+                        "Backend Logs Check", 
+                        False, 
+                        f"❌ Found old email service errors: {', '.join(found_errors)}",
+                        {"log_excerpt": result.stdout[-500:]}  # Last 500 chars
+                    )
+                else:
+                    # Check for positive email indicators
+                    positive_indicators = [
+                        "resend",
+                        "email sent",
+                        "✅ email sent"
+                    ]
+                    
+                    found_positive = []
+                    for indicator in positive_indicators:
+                        if indicator in log_content:
+                            found_positive.append(indicator)
+                    
+                    if found_positive:
+                        self.log_result(
+                            "Backend Logs Check", 
+                            True, 
+                            f"✅ No old email errors found. Found positive indicators: {', '.join(found_positive)}",
+                            {"log_excerpt": result.stdout[-500:]}
+                        )
+                    else:
+                        self.log_result(
+                            "Backend Logs Check", 
+                            True, 
+                            "✅ No old email service errors found in logs",
+                            {"log_excerpt": result.stdout[-500:]}
+                        )
+            else:
+                self.log_result(
+                    "Backend Logs Check", 
+                    False, 
+                    f"❌ Could not read backend logs: {result.stderr}",
+                    None
+                )
+        except Exception as e:
+            self.log_result("Backend Logs Check", False, f"Exception: {str(e)}")
+
+    def test_email_service_configuration_validation(self):
+        """Additional Test: Validate Email Service Configuration"""
+        try:
+            # Test that the email service is properly configured
             response = self.session.get(f"{BACKEND_URL}/api/email/providers")
             
             if response.status_code == 200:
                 data = response.json()
                 
-                # Check structure
-                if 'providers' not in data or 'defaultProvider' not in data:
-                    self.log_result(
-                        "Email Providers Endpoint", 
-                        False, 
-                        "Missing 'providers' or 'defaultProvider' fields",
-                        data
-                    )
-                    return
-                
+                # Check that Resend is the default provider and configured
                 providers = data.get('providers', [])
                 default_provider = data.get('defaultProvider')
                 
-                # Find Resend provider
                 resend_provider = next((p for p in providers if p.get('id') == 'resend'), None)
-                gmail_provider = next((p for p in providers if p.get('id') == 'gmail'), None)
                 
-                if not resend_provider:
+                if (default_provider == 'resend' and 
+                    resend_provider and 
+                    resend_provider.get('configured') == True):
+                    
                     self.log_result(
-                        "Email Providers Endpoint", 
-                        False, 
-                        "Resend provider not found in providers list",
+                        "Email Service Configuration", 
+                        True, 
+                        f"✅ Resend is default provider and configured: {resend_provider.get('name')}",
                         data
                     )
-                    return
-                
-                if default_provider != 'resend':
-                    self.log_result(
-                        "Email Providers Endpoint", 
-                        False, 
-                        f"Expected default provider 'resend', got '{default_provider}'",
-                        data
-                    )
-                    return
-                
-                # Check Resend provider details
-                resend_configured = resend_provider.get('configured', False)
-                gmail_configured = gmail_provider.get('configured', False) if gmail_provider else False
-                
-                self.log_result(
-                    "Email Providers Endpoint", 
-                    True, 
-                    f"Resend (configured: {resend_configured}), Gmail (configured: {gmail_configured}), default: {default_provider}",
-                    data
-                )
-            else:
-                self.log_result(
-                    "Email Providers Endpoint", 
-                    False, 
-                    f"HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Email Providers Endpoint", False, f"Exception: {str(e)}")
-
-    def test_email_send_single(self):
-        """Test 3: POST /api/email/send - Test single email send"""
-        try:
-            payload = {
-                "to": "test@example.com",
-                "subject": "Test Subject",
-                "html": "<p>Hello World</p>"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/api/email/send",
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get('success') == True:
-                    if data.get('simulated') == True:
-                        self.log_result(
-                            "Email Send Single", 
-                            True, 
-                            f"Successfully simulated email send (API key not configured): {data.get('messageId')}",
-                            data
-                        )
-                    else:
-                        self.log_result(
-                            "Email Send Single", 
-                            True, 
-                            f"Successfully sent email via {data.get('provider', 'unknown')}: {data.get('messageId')}",
-                            data
-                        )
                 else:
                     self.log_result(
-                        "Email Send Single", 
+                        "Email Service Configuration", 
                         False, 
-                        "Response doesn't indicate success",
+                        f"❌ Configuration issue - Default: {default_provider}, Resend configured: {resend_provider.get('configured') if resend_provider else 'Not found'}",
                         data
                     )
             else:
                 self.log_result(
-                    "Email Send Single", 
+                    "Email Service Configuration", 
                     False, 
                     f"HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Email Send Single", False, f"Exception: {str(e)}")
+            self.log_result("Email Service Configuration", False, f"Exception: {str(e)}")
 
-    def test_email_send_test_template(self):
-        """Test 4: POST /api/email/send-test - Test template email"""
+    def test_webhook_email_functionality(self):
+        """Additional Test: Test webhook-style email functionality"""
         try:
+            # This simulates what happens when a webhook triggers confirmation emails
+            # Testing the EmailService.sendConfirmation equivalent
+            
+            # Mock event details and ticket data
+            event_details = {
+                "title": "Test Event for Webhook",
+                "date": "2026-01-15",
+                "location": "Test Venue, San Francisco, CA"
+            }
+            
+            tickets = [
+                {"type": "General Admission", "price": "$25.00", "quantity": 2}
+            ]
+            
+            # Create a confirmation email template
             payload = {
-                "to": "test@example.com",
+                "to": "thisearlyseason@gmail.com",
                 "template": {
-                    "subject": "Test {{event_title}}",
-                    "body": "<p>Hi {{attendee_name}}, welcome to {{event_title}} on {{event_date}} at {{event_location}}!</p>"
+                    "subject": "Ticket Confirmation - {{event_title}}",
+                    "body": f"""
+                    <h2>Ticket Purchase Confirmed!</h2>
+                    <p>Dear {{{{attendee_name}}}},</p>
+                    <p>Your ticket purchase has been confirmed for:</p>
+                    <h3>{{{{event_title}}}}</h3>
+                    <p><strong>Date:</strong> {{{{event_date}}}}</p>
+                    <p><strong>Location:</strong> {{{{event_location}}}}</p>
+                    <p><strong>Tickets:</strong></p>
+                    <ul>
+                        <li>{tickets[0]['quantity']}x {tickets[0]['type']} - {tickets[0]['price']} each</li>
+                    </ul>
+                    <p>Order ID: {{{{order_id}}}}</p>
+                    <p>Thank you for your purchase!</p>
+                    """
                 }
             }
             
@@ -213,353 +340,47 @@ class ResendEmailServiceTester:
                 data = response.json()
                 
                 if data.get('success') == True:
-                    if data.get('simulated') == True or data.get('preview') == True:
-                        self.log_result(
-                            "Email Send Test Template", 
-                            True, 
-                            f"Successfully generated test email preview/simulation: {data.get('messageId')}",
-                            data
-                        )
-                    else:
-                        self.log_result(
-                            "Email Send Test Template", 
-                            True, 
-                            f"Successfully sent test email via {data.get('provider', 'unknown')}: {data.get('messageId')}",
-                            data
-                        )
-                else:
                     self.log_result(
-                        "Email Send Test Template", 
-                        False, 
-                        "Response doesn't indicate success",
-                        data
-                    )
-            else:
-                self.log_result(
-                    "Email Send Test Template", 
-                    False, 
-                    f"HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Email Send Test Template", False, f"Exception: {str(e)}")
-
-    def test_email_send_validation_missing_fields(self):
-        """Test 5: POST /api/email/send without required fields → 400 error"""
-        try:
-            # Test missing 'to' field
-            payload = {
-                "subject": "Test Subject",
-                "html": "<p>Hello World</p>"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/api/email/send",
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 400:
-                data = response.json()
-                if 'error' in data and 'to' in data['error']:
-                    self.log_result(
-                        "Email Send Validation - Missing Fields", 
+                        "Webhook Email Functionality", 
                         True, 
-                        "Correctly validates missing 'to' field (400)",
+                        f"✅ Webhook-style confirmation email processed: {data.get('messageId')}",
                         data
                     )
                 else:
                     self.log_result(
-                        "Email Send Validation - Missing Fields", 
+                        "Webhook Email Functionality", 
                         False, 
-                        "Returns 400 but error message unclear",
+                        "❌ Webhook-style email failed",
                         data
                     )
             else:
                 self.log_result(
-                    "Email Send Validation - Missing Fields", 
-                    False, 
-                    f"Expected 400, got HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Email Send Validation - Missing Fields", False, f"Exception: {str(e)}")
-
-    def test_email_send_test_validation_missing_template(self):
-        """Test 6: POST /api/email/send-test without template → 400 error"""
-        try:
-            payload = {
-                "to": "test@example.com"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/api/email/send-test",
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 400:
-                data = response.json()
-                if 'error' in data and 'template' in data['error']:
-                    self.log_result(
-                        "Email Send Test Validation - Missing Template", 
-                        True, 
-                        "Correctly validates missing template (400)",
-                        data
-                    )
-                else:
-                    self.log_result(
-                        "Email Send Test Validation - Missing Template", 
-                        False, 
-                        "Returns 400 but error message unclear",
-                        data
-                    )
-            else:
-                self.log_result(
-                    "Email Send Test Validation - Missing Template", 
-                    False, 
-                    f"Expected 400, got HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Email Send Test Validation - Missing Template", False, f"Exception: {str(e)}")
-
-    def test_mailerlite_references_removed(self):
-        """Test 7: Verify MailerLite references are completely removed"""
-        try:
-            # Test email status doesn't mention MailerLite
-            status_response = self.session.get(f"{BACKEND_URL}/api/email/status")
-            providers_response = self.session.get(f"{BACKEND_URL}/api/email/providers")
-            
-            mailerlite_found = False
-            references = []
-            
-            if status_response.status_code == 200:
-                status_data = status_response.json()
-                status_text = json.dumps(status_data).lower()
-                if 'mailerlite' in status_text:
-                    mailerlite_found = True
-                    references.append("status endpoint")
-            
-            if providers_response.status_code == 200:
-                providers_data = providers_response.json()
-                providers_text = json.dumps(providers_data).lower()
-                if 'mailerlite' in providers_text:
-                    mailerlite_found = True
-                    references.append("providers endpoint")
-            
-            if mailerlite_found:
-                self.log_result(
-                    "MailerLite References Removed", 
-                    False, 
-                    f"MailerLite references still found in: {', '.join(references)}",
-                    {"status": status_data if status_response.status_code == 200 else None,
-                     "providers": providers_data if providers_response.status_code == 200 else None}
-                )
-            else:
-                self.log_result(
-                    "MailerLite References Removed", 
-                    True, 
-                    "No MailerLite references found in API responses"
-                )
-        except Exception as e:
-            self.log_result("MailerLite References Removed", False, f"Exception: {str(e)}")
-
-    def test_email_send_to_verified_address(self):
-        """Test: POST /api/email/send to verified address (thisearlyseason@gmail.com)"""
-        try:
-            payload = {
-                "to": "thisearlyseason@gmail.com",
-                "subject": "Test Email from Updated System",
-                "html": "<h1>Test</h1><p>This is a test email to verify the Resend migration worked.</p>"
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/api/email/send",
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get('success') == True:
-                    if data.get('provider') == 'resend':
-                        self.log_result(
-                            "Email Send to Verified Address", 
-                            True, 
-                            f"Successfully sent email via Resend: {data.get('messageId')}",
-                            data
-                        )
-                    else:
-                        self.log_result(
-                            "Email Send to Verified Address", 
-                            True, 
-                            f"Email sent but provider is {data.get('provider', 'unknown')}: {data.get('messageId')}",
-                            data
-                        )
-                else:
-                    self.log_result(
-                        "Email Send to Verified Address", 
-                        False, 
-                        "Response doesn't indicate success",
-                        data
-                    )
-            else:
-                self.log_result(
-                    "Email Send to Verified Address", 
+                    "Webhook Email Functionality", 
                     False, 
                     f"HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Email Send to Verified Address", False, f"Exception: {str(e)}")
-
-    def test_template_email_to_verified_address(self):
-        """Test: POST /api/email/send-test with template to verified address"""
-        try:
-            payload = {
-                "to": "thisearlyseason@gmail.com",
-                "template": {
-                    "subject": "Your Ticket for {{event_title}}",
-                    "body": "<p>Hi {{attendee_name}},</p><p>Thanks for purchasing tickets for {{event_title}}!</p>"
-                }
-            }
-            
-            response = self.session.post(
-                f"{BACKEND_URL}/api/email/send-test",
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get('success') == True:
-                    if data.get('provider') == 'resend':
-                        self.log_result(
-                            "Template Email to Verified Address", 
-                            True, 
-                            f"Successfully sent template email via Resend: {data.get('messageId')}",
-                            data
-                        )
-                    elif data.get('preview') == True:
-                        self.log_result(
-                            "Template Email to Verified Address", 
-                            True, 
-                            f"Template email preview generated: {data.get('messageId')}",
-                            data
-                        )
-                    else:
-                        self.log_result(
-                            "Template Email to Verified Address", 
-                            True, 
-                            f"Template email processed: {data.get('messageId')}",
-                            data
-                        )
-                else:
-                    self.log_result(
-                        "Template Email to Verified Address", 
-                        False, 
-                        "Response doesn't indicate success",
-                        data
-                    )
-            else:
-                self.log_result(
-                    "Template Email to Verified Address", 
-                    False, 
-                    f"HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Template Email to Verified Address", False, f"Exception: {str(e)}")
-        """Test 8: Verify Resend configuration is properly detected"""
-        try:
-            response = self.session.get(f"{BACKEND_URL}/api/email/status")
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Check if the response indicates proper Resend configuration detection
-                provider = data.get('provider')
-                configured = data.get('configured')
-                available = data.get('available')
-                message = data.get('message', '')
-                
-                if provider == 'resend':
-                    if configured and available:
-                        self.log_result(
-                            "Resend Configuration Check", 
-                            True, 
-                            f"Resend properly configured and available. Message: {message}",
-                            data
-                        )
-                    elif not configured and not available:
-                        # This is also valid - means API key is not set but service is properly detecting it
-                        if 'not configured' in message.lower() or 'api key' in message.lower():
-                            self.log_result(
-                                "Resend Configuration Check", 
-                                True, 
-                                f"Resend properly detects missing configuration. Message: {message}",
-                                data
-                            )
-                        else:
-                            self.log_result(
-                                "Resend Configuration Check", 
-                                False, 
-                                f"Unclear configuration status. Message: {message}",
-                                data
-                            )
-                    else:
-                        self.log_result(
-                            "Resend Configuration Check", 
-                            False, 
-                            f"Inconsistent configuration status: configured={configured}, available={available}",
-                            data
-                        )
-                else:
-                    self.log_result(
-                        "Resend Configuration Check", 
-                        False, 
-                        f"Expected provider 'resend', got '{provider}'",
-                        data
-                    )
-            else:
-                self.log_result(
-                    "Resend Configuration Check", 
-                    False, 
-                    f"HTTP {response.status_code}",
-                    response.text
-                )
-        except Exception as e:
-            self.log_result("Resend Configuration Check", False, f"Exception: {str(e)}")
+            self.log_result("Webhook Email Functionality", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
-        """Run all Resend email service integration tests"""
-        print("🔍 Starting Resend Email Service Integration Tests")
+        """Run all email system tests as specified in review request"""
+        print("🔍 Starting Complete Email System Testing")
         print("=" * 60)
         
-        # Core Resend Integration Tests
-        print("\n📧 RESEND EMAIL SERVICE TESTS")
+        # Test Cases from Review Request
+        print("\n📧 CORE EMAIL SYSTEM TESTS")
         print("-" * 40)
-        self.test_email_status_endpoint()
-        self.test_email_providers_endpoint()
-        self.test_email_send_to_verified_address()
-        self.test_template_email_to_verified_address()
-        self.test_email_send_single()
-        self.test_email_send_test_template()
+        self.test_email_status_check()
+        self.test_direct_email_send()
+        self.test_confirmation_email_simulation()
+        self.check_backend_logs_for_email_errors()
         
-        # Validation Tests
-        print("\n✅ VALIDATION TESTS")
+        # Additional Validation Tests
+        print("\n✅ ADDITIONAL VALIDATION TESTS")
         print("-" * 40)
-        self.test_email_send_validation_missing_fields()
-        self.test_email_send_test_validation_missing_template()
-        
-        # Migration Verification Tests
-        print("\n🔄 MIGRATION VERIFICATION TESTS")
-        print("-" * 40)
-        self.test_mailerlite_references_removed()
-        self.test_resend_configuration_check()
+        self.test_email_service_configuration_validation()
+        self.test_webhook_email_functionality()
         
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
@@ -574,21 +395,47 @@ class ResendEmailServiceTester:
         print(f"Success Rate: {(passed/total)*100:.1f}%")
         
         # Categorize results
-        core_tests = [r for r in self.results if any(keyword in r['test'] for keyword in ['Email Status', 'Email Providers', 'Email Send'])]
-        validation_tests = [r for r in self.results if 'Validation' in r['test']]
-        migration_tests = [r for r in self.results if any(keyword in r['test'] for keyword in ['MailerLite', 'Configuration Check'])]
+        core_tests = [r for r in self.results if any(keyword in r['test'] for keyword in ['Email Status', 'Direct Email', 'Confirmation Email', 'Backend Logs'])]
+        additional_tests = [r for r in self.results if any(keyword in r['test'] for keyword in ['Configuration', 'Webhook'])]
         
         if core_tests:
             core_passed = sum(1 for r in core_tests if r['success'])
-            print(f"\n📧 CORE FUNCTIONALITY: {core_passed}/{len(core_tests)} passed ({(core_passed/len(core_tests))*100:.1f}%)")
+            print(f"\n📧 CORE EMAIL TESTS: {core_passed}/{len(core_tests)} passed ({(core_passed/len(core_tests))*100:.1f}%)")
         
-        if validation_tests:
-            validation_passed = sum(1 for r in validation_tests if r['success'])
-            print(f"✅ VALIDATION: {validation_passed}/{len(validation_tests)} passed ({(validation_passed/len(validation_tests))*100:.1f}%)")
+        if additional_tests:
+            additional_passed = sum(1 for r in additional_tests if r['success'])
+            print(f"✅ ADDITIONAL TESTS: {additional_passed}/{len(additional_tests)} passed ({(additional_passed/len(additional_tests))*100:.1f}%)")
         
-        if migration_tests:
-            migration_passed = sum(1 for r in migration_tests if r['success'])
-            print(f"🔄 MIGRATION: {migration_passed}/{len(migration_tests)} passed ({(migration_passed/len(migration_tests))*100:.1f}%)")
+        # Success Criteria Check
+        print("\n🎯 SUCCESS CRITERIA VERIFICATION:")
+        status_test = next((r for r in self.results if 'Email Status' in r['test']), None)
+        send_test = next((r for r in self.results if 'Direct Email' in r['test']), None)
+        logs_test = next((r for r in self.results if 'Backend Logs' in r['test']), None)
+        confirmation_test = next((r for r in self.results if 'Confirmation Email' in r['test']), None)
+        
+        criteria_met = []
+        if status_test and status_test['success']:
+            criteria_met.append("✅ Email status shows configured=true")
+        else:
+            criteria_met.append("❌ Email status check failed")
+            
+        if send_test and send_test['success']:
+            criteria_met.append("✅ Direct emails send successfully")
+        else:
+            criteria_met.append("❌ Direct email sending failed")
+            
+        if logs_test and logs_test['success']:
+            criteria_met.append("✅ No old Gmail/nodemailer errors in logs")
+        else:
+            criteria_met.append("❌ Found email service errors in logs")
+            
+        if confirmation_test and confirmation_test['success']:
+            criteria_met.append("✅ Confirmation emails work when webhook is triggered")
+        else:
+            criteria_met.append("❌ Confirmation email functionality failed")
+        
+        for criterion in criteria_met:
+            print(f"  {criterion}")
         
         if total - passed > 0:
             print("\n❌ FAILED TESTS:")
