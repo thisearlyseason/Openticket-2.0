@@ -134,14 +134,101 @@ router.post('/verify', async (req, res) => {
             return res.status(400).json({ error: 'Payment not completed' });
         }
 
-        const { userId, planName, cycle } = session.metadata;
+        const { userId, planName, cycle, affiliateCode } = session.metadata;
+        const subscriptionAmount = session.amount_total / 100;
 
         // Get user's current profile for email
         const { data: profile } = await supabase
             .from('profiles')
-            .select('email, name')
+            .select('email, name, referred_by_affiliate')
             .eq('id', userId)
             .single();
+
+        // Calculate affiliate commission (15% of subscription) if valid affiliate
+        let affiliateCommission = 0;
+        let affiliateId = null;
+        
+        if (affiliateCode && !profile?.referred_by_affiliate) {
+            // Only attribute to affiliate if this is the first subscription (not already referred)
+            const { data: affiliate } = await supabase
+                .from('profiles')
+                .select('id, name, email, commission_rate')
+                .eq('affiliate_code', affiliateCode)
+                .single();
+            
+            if (affiliate) {
+                const commissionRate = 15; // Fixed 15% for subscriptions
+                affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
+                affiliateId = affiliate.id;
+                
+                console.log(`[Subscription] Affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${affiliateCode}`);
+                
+                // Update user profile with affiliate attribution
+                await supabase
+                    .from('profiles')
+                    .update({ referred_by_affiliate: affiliateCode })
+                    .eq('id', userId);
+                
+                // Update affiliate's available payout
+                await supabase.rpc('increment_available_payout', {
+                    p_user_id: affiliate.id,
+                    p_amount: affiliateCommission
+                });
+                
+                // Send affiliate commission notification email
+                if (affiliate.email) {
+                    try {
+                        await EmailService.sendAffiliateSubscriptionCommission(
+                            affiliate.email,
+                            affiliate.name,
+                            profile?.name || 'A new user',
+                            planName,
+                            subscriptionAmount.toFixed(2),
+                            affiliateCommission
+                        );
+                    } catch (emailErr) {
+                        console.warn('[Subscription] Affiliate email failed:', emailErr);
+                    }
+                }
+            }
+        } else if (profile?.referred_by_affiliate) {
+            // User was already referred - pay recurring commission to original affiliate
+            const { data: affiliate } = await supabase
+                .from('profiles')
+                .select('id, name, email')
+                .eq('affiliate_code', profile.referred_by_affiliate)
+                .single();
+            
+            if (affiliate) {
+                const commissionRate = 15;
+                affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
+                affiliateId = affiliate.id;
+                
+                console.log(`[Subscription] Recurring affiliate commission: $${affiliateCommission} for ${profile.referred_by_affiliate}`);
+                
+                // Update affiliate's available payout
+                await supabase.rpc('increment_available_payout', {
+                    p_user_id: affiliate.id,
+                    p_amount: affiliateCommission
+                });
+                
+                // Send recurring commission email
+                if (affiliate.email) {
+                    try {
+                        await EmailService.sendAffiliateSubscriptionCommission(
+                            affiliate.email,
+                            affiliate.name,
+                            profile?.name || 'A referred user',
+                            planName,
+                            subscriptionAmount.toFixed(2),
+                            affiliateCommission
+                        );
+                    } catch (emailErr) {
+                        console.warn('[Subscription] Recurring affiliate email failed:', emailErr);
+                    }
+                }
+            }
+        }
 
         // Update user's subscription
         const { error } = await supabase
@@ -161,16 +248,34 @@ router.post('/verify', async (req, res) => {
 
         if (error) throw error;
 
-        // Create invoice record
+        // Create invoice record with affiliate commission
         await supabase.from('invoices').insert({
             user_id: userId,
             type: 'subscription',
-            amount: session.amount_total / 100,
+            amount: subscriptionAmount,
             status: 'paid',
             description: `${planName} Plan - ${cycle} subscription`,
             stripe_session_id: sessionId,
+            affiliate_code: affiliateCode || null,
+            affiliate_commission: affiliateCommission,
             created_at: new Date().toISOString()
         }).catch(e => console.warn('Invoice creation failed:', e));
+
+        // Record affiliate commission transaction if applicable
+        if (affiliateCommission > 0 && affiliateId) {
+            await supabase.from('affiliate_commissions').insert({
+                affiliate_id: affiliateId,
+                user_id: userId,
+                type: 'subscription',
+                plan_name: planName,
+                gross_amount: subscriptionAmount,
+                commission_amount: affiliateCommission,
+                commission_rate: 15,
+                stripe_session_id: sessionId,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }).catch(e => console.warn('Affiliate commission record failed:', e));
+        }
 
         // Send subscription welcome email
         if (profile?.email) {
