@@ -169,6 +169,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         try {
             console.log('[SuperAdmin] Checking Resend status...');
             const response = await fetch('/api/email/status');
+            console.log('[SuperAdmin] Resend API response status:', response.status);
             if (!response.ok) {
                 console.error('[SuperAdmin] Resend status API error:', response.status);
                 setResendApiKeyConfigured(false);
@@ -194,8 +195,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setPlatformStripeId(currentUser?.stripeConnectId || '');
         setPlatformPublishableKey(currentUser?.stripePublishableKey || '');
         setPlatformSecretKey(currentUser?.stripeSecretKey || '');
-        // Check if Resend is configured via backend
-        checkResendStatus();
+        // Check if Resend is configured via backend - run async
+        checkResendStatus().catch(console.error);
         setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
         loadPromoCodes();
@@ -204,7 +205,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     // Re-check Resend status when switching to settings tab
     useEffect(() => {
         if (activeTab === 'settings') {
-            checkResendStatus();
+            console.log('[SuperAdmin] Settings tab active, checking Resend status...');
+            checkResendStatus().catch(console.error);
         }
     }, [activeTab]);
 
