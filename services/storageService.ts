@@ -916,13 +916,19 @@ export const StorageService = {
             }
 
             // Sync to backend
-            const payload = {
+            const payload: any = {
                 id: uid,
                 email: cleanData.email,
                 name: cleanData.name,
                 role: cleanData.role || 'attendee',
                 business_name: cleanData.businessName
             };
+
+            // Include nonprofit fields if present
+            if (cleanData.nonProfitStatus) payload.nonprofit_status = cleanData.nonProfitStatus;
+            if (cleanData.nonProfitName) payload.nonprofit_name = cleanData.nonProfitName;
+            if (cleanData.nonProfitEin) payload.nonprofit_ein = cleanData.nonProfitEin;
+            if (cleanData.nonProfitDocUrl) payload.nonprofit_doc_url = cleanData.nonProfitDocUrl;
 
             await postSupabase('/auth/sync', 'POST', payload);
 
