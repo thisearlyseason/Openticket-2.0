@@ -789,7 +789,55 @@ Legacy scripts (no longer needed, use MASTER_MIGRATION.sql instead):
 ---
 
 ## Last Updated
-January 9, 2026 (Auto Local Currency Feature Complete)
+January 9, 2026 (Auto Local Currency + Stripe Elements + Subscription Affiliates Complete)
+
+---
+
+### ✅ Stripe Elements At-Door Card Payments (January 9, 2026 - LATEST)
+
+#### Feature Overview
+Implemented in-app card processing at check-in using Stripe Payment Element. Staff can now process card payments directly in the browser without an external terminal.
+
+#### Implementation
+- [x] **Backend - PaymentIntent Creation:** `POST /api/stripe/at-door/create-payment-intent`
+  - Validates registrationId and amount (min $0.50)
+  - Fetches registration with event owner for Stripe Connect
+  - Prevents duplicate payments on already-paid registrations
+  - Includes metadata: registrationId, eventId, paymentType='at_door_card'
+- [x] **Backend - Payment Confirmation:** `POST /api/stripe/at-door/confirm-payment`
+  - Verifies PaymentIntent status is 'succeeded'
+  - Updates registration to 'completed' status
+  - Creates financial_transactions record
+  - Creates audit_logs entry
+- [x] **Frontend - StripePaymentWrapper:** CheckInPortal.tsx (lines 157-341)
+  - Uses `@stripe/react-stripe-js` with PaymentElement
+  - Shows loading state during payment initialization
+  - Handles success/error states gracefully
+- [x] **Available to all plans:** Free, Pro, and Premium organizers
+
+---
+
+### ✅ Subscription-Only Affiliate Commissions (January 9, 2026 - LATEST)
+
+#### Feature Overview
+Affiliates now earn 15% RECURRING commission on subscription payments ONLY. Ticket sales no longer carry affiliate commission.
+
+#### Implementation
+- [x] **Subscription Checkout:** Accepts `affiliateCode` parameter
+- [x] **Session Metadata:** Stores affiliateCode in Stripe session metadata
+- [x] **User Attribution:** `referred_by_affiliate` field stored on user profile (first subscription only)
+- [x] **15% Commission:** Fixed 15% rate on subscription amount (not configurable)
+- [x] **Recurring Payments:** Commission paid to original affiliate on every renewal
+- [x] **Database Record:** Creates entry in `affiliate_commissions` table with type='subscription'
+- [x] **Email Notification:** `sendAffiliateSubscriptionCommission()` sends commission email
+- [x] **Ticket Sales - NO Commission:** 
+  - `stripeController.js`: affiliateCommission = 0
+  - `stripeWebhookController.js`: affiliateCommission = 0
+  - Log: "Affiliate code tracked for analytics only. No ticket commission."
+
+#### Test Coverage
+- [x] **24 Backend Tests:** All passed (100%)
+- [x] **Test File:** `/app/tests/test_stripe_elements_affiliate_subscription.py`
 
 ---
 
