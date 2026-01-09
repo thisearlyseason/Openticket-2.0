@@ -184,19 +184,24 @@ export const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
         setError(null);
 
         try {
-            // Upload to storage (using StorageService or direct API)
+            const token = await StorageService.getAuthToken();
+            
+            // Upload to Supabase storage via API
             const formData = new FormData();
             formData.append('file', file);
             formData.append('type', 'nonprofit-verification');
-            formData.append('userId', user.id);
 
             const response = await fetch('/api/upload/document', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
                 body: formData,
             });
 
             if (!response.ok) {
-                throw new Error('Failed to upload document');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to upload document');
             }
 
             const data = await response.json();
