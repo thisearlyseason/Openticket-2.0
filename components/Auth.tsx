@@ -262,6 +262,33 @@ export const Auth = () => {
             setError(result);
             setIsLoading(false);
         } else {
+            // If nonprofit, also create nonprofit application record
+            if (formData.businessType === 'nonprofit' && result?.id) {
+                try {
+                    const token = await StorageService.getAuthToken();
+                    await fetch('/api/onboarding/nonprofit/apply', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            organizationName: formData.nonProfitName,
+                            ein: formData.nonProfitEin,
+                            documentUrl: formData.nonProfitDocUrl,
+                            description: `${formData.businessName} - Nonprofit organization`,
+                            onboardingResponses: {
+                                organizationType: 'nonprofit',
+                                businessName: formData.businessName,
+                                businessType: formData.businessType
+                            }
+                        })
+                    });
+                } catch (e) {
+                    console.error('Failed to create nonprofit application:', e);
+                }
+            }
+
             if (redirectPlan) {
                 navigate(`/pricing?select=${redirectPlan}`);
             } else {
