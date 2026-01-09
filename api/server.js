@@ -6,10 +6,18 @@ import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-// Load environment variables from backend/.env
+// Load environment variables - check both locations
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// First load from /app/.env (root)
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Then load from /app/backend/.env (will override if same keys exist)
 dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
+
+// Log Resend configuration status
+console.log('[Server] RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY);
+console.log('[Server] SENDER_EMAIL:', process.env.SENDER_EMAIL || 'not set');
 
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
