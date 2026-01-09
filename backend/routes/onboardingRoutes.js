@@ -247,6 +247,96 @@ router.get('/nonprofit/status', verifyToken, async (req, res) => {
     }
 });
 
+/**
+ * Re-submit rejected non-profit application
+ * POST /api/onboarding/nonprofit/resubmit
+ */
+router.post('/nonprofit/resubmit', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const { 
+            organizationName, 
+            ein, 
+            documentUrl, 
+            description 
+        } = req.body;
+
+        if (!organizationName || !documentUrl) {
+            return res.status(400).json({ 
+                error: 'Organization name and verification document are required' 
+            });
+        }
+
+        // Check if user has a rejected application
+        const { data: existingApp } = await supabase
+            .from('nonprofit_applications')
+            .select('id, status')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (!existingApp) {
+            return res.status(400).json({ error: 'No previous application found' });
+        }
+
+        if (existingApp.status !== 'rejected') {
+            return res.status(400).json({ 
+                error: 'Only rejected applications can be resubmitted' 
+            });
+        }
+
+        // Create new application (keep history of previous one)
+        const applicationId = uuidv4();
+        const { data: application, error: appError } = await supabase
+            .from('nonprofit_applications')
+            .insert({
+                id: applicationId,
+                user_id: userId,
+                organization_name: organizationName,
+                ein: ein || null,
+                document_url: documentUrl,
+                description: description || null,
+                status: 'pending',
+                submitted_at: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (appError) throw appError;
+
+        // Update user profile status back to pending
+        await supabase
+            .from('profiles')
+            .update({
+                nonprofit_status: 'pending',
+                nonprofit_name: organizationName,
+                nonprofit_ein: ein || null,
+                nonprofit_doc_url: documentUrl
+            })
+            .eq('id', userId);
+
+        // Update onboarding record if exists
+        await supabase
+            .from('onboarding_responses')
+            .update({
+                nonprofit_application_id: applicationId,
+                updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId);
+
+        res.json({ 
+            success: true, 
+            applicationId,
+            message: 'Non-profit application resubmitted successfully'
+        });
+    } catch (error) {
+        console.error('[Onboarding] Non-profit resubmit error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ============ ADMIN ROUTES ============
 
 /**
