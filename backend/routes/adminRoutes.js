@@ -889,4 +889,119 @@ router.delete('/platform-payouts/:id', verifyToken, requireAdmin, async (req, re
     }
 });
 
+/**
+ * Update affiliate commission rate (individual)
+ * PUT /api/admin/affiliates/:id/commission
+ */
+router.put('/affiliates/:id/commission', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { commissionRate, discountPercent } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const updates = {};
+        if (commissionRate !== undefined) {
+            updates.commission_rate = commissionRate;
+        }
+        if (discountPercent !== undefined) {
+            updates.discount_percent = discountPercent;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ error: 'No updates provided' });
+        }
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', id)
+            .select('id, name, email, commission_rate, discount_percent')
+            .single();
+
+        if (error) throw error;
+
+        // Audit log
+        AuditLogService.createLog({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user.uid,
+            actor_type: 'admin',
+            action: 'update_affiliate_rates',
+            target_type: 'affiliate',
+            target_id: id,
+            details: updates
+        });
+
+        res.json({ success: true, affiliate: data });
+    } catch (error) {
+        console.error('Update affiliate commission error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Update all affiliates commission rate (global)
+ * PUT /api/admin/affiliates/global-commission
+ */
+router.put('/affiliates/global-commission', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { commissionRate } = req.body;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        if (commissionRate === undefined || commissionRate < 0 || commissionRate > 100) {
+            return res.status(400).json({ error: 'Invalid commission rate (must be 0-100)' });
+        }
+
+        // Update all affiliates
+        const { data, error } = await supabase
+            .from('profiles')
+            .update({ commission_rate: commissionRate })
+            .eq('role', 'affiliate')
+            .select('id');
+
+        if (error) throw error;
+
+        // Audit log
+        AuditLogService.createLog({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user.uid,
+            actor_type: 'admin',
+            action: 'update_global_commission_rate',
+            target_type: 'system',
+            target_id: 'global',
+            details: { commissionRate, affiliatesUpdated: data?.length || 0 }
+        });
+
+        res.json({ 
+            success: true, 
+            message: `Updated ${data?.length || 0} affiliates to ${commissionRate}% commission rate`
+        });
+    } catch (error) {
+        console.error('Update global commission error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * Get all affiliates with their commission rates
+ * GET /api/admin/affiliates
+ */
+router.get('/affiliates', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, name, email, affiliate_code, commission_rate, discount_percent, affiliate_clicks, total_paid_out, created_at')
+            .eq('role', 'affiliate')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json({ affiliates: data || [] });
+    } catch (error) {
+        console.error('Get affiliates error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
