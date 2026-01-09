@@ -7,6 +7,7 @@ import { CurrencyService } from '../services/currencyService';
 import { isPaidStatus, isRefundedStatus, calculatePaidRevenue, calculatePaidTickets } from '../services/paymentUtils';
 import type { Event, Registration, User, SystemNotification, Broadcast } from '../types';
 import { Card, Button, Badge, formatTime, Input, Select } from './UI';
+import { NonprofitPendingBanner, NonprofitRejectedBanner, NonprofitResubmitForm } from './Onboarding';
 import {
     Search, Calendar, Grid, List as ListIcon, MoreVertical,
     Copy, Trash2, Edit, ExternalLink, QrCode, Download,
