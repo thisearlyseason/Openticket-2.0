@@ -128,6 +128,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [editCommissionRate, setEditCommissionRate] = useState<number | null>(null);
     const [editDiscountPercent, setEditDiscountPercent] = useState<number | null>(null);
     const [isSavingRates, setIsSavingRates] = useState(false);
+    const [globalCommissionRate, setGlobalCommissionRate] = useState<number>(15);
+    const [isUpdatingGlobalRate, setIsUpdatingGlobalRate] = useState(false);
 
     // Platform Payouts State
     const [platformPayouts, setPlatformPayouts] = useState<any[]>([]);
