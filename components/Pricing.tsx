@@ -296,7 +296,7 @@ export const Pricing = () => {
                 </p>
                 {user?.businessType === 'nonprofit' && user.nonProfitStatus !== 'approved' && (
                     <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-center text-sm text-blue-800 dark:text-blue-200 inline-block">
-                        <span className="font-bold">Non-Profit Status Pending:</span> Once approved, you will see 25% off Pro pricing here.
+                        <span className="font-bold">Non-Profit Status Pending:</span> Once approved, you will see 20% off Pro pricing here.
                     </div>
                 )}
             </div>
