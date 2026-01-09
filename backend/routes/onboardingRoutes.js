@@ -2,7 +2,7 @@ import express from 'express';
 import supabase from '../services/supabase.js';
 import verifyToken from '../middlewares/authMiddleware.js';
 import { v4 as uuidv4 } from 'uuid';
-import * as EmailService from '../services/serverEmail.js';
+import { EmailService } from '../services/serverEmail.js';
 
 const router = express.Router();
 
