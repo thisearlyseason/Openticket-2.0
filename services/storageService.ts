@@ -300,9 +300,14 @@ const StripeService = {
     processSplitPayment: async (amount: number, fee: number, organizerConnectId: string) => {
         return { paymentIntentId: `pi_${Math.random().toString(36).substr(2, 20)}`, transferId: `tr_${Math.random().toString(36).substr(2, 20)}`, success: true };
     },
-    processSubscriptionPayment: async (amount: number, userId: string, planName: string, cycle: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
+    processSubscriptionPayment: async (amount: number, userId: string, planName: string, cycle: 'monthly' | 'yearly' = 'monthly', affiliateCode?: string): Promise<boolean> => {
         try {
             const user = StorageService.getCurrentUser();
+            
+            // Check for affiliate code in URL or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            const refCode = affiliateCode || urlParams.get('ref') || localStorage.getItem('affiliateRef') || undefined;
+            
             const res = await fetch(`${SUPABASE_API_BASE}/subscription/create-checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -311,7 +316,8 @@ const StripeService = {
                     userEmail: user?.email,
                     planName,
                     cycle,
-                    amount
+                    amount,
+                    affiliateCode: refCode // Pass affiliate code for subscription commission
                 })
             });
 
