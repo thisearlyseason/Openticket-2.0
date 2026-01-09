@@ -8,6 +8,8 @@ import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
 import { QRScanner } from './QRScanner';
 import { OfflineService } from '../services/offlineService';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import stripePromise from '../services/stripe';
 
 interface CheckInTicket {
     reg: Registration;
