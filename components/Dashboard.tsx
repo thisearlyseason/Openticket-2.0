@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useGlobalUI } from './GlobalUIProvider';
 import { StorageService } from '../services/storageService';
+import { CurrencyService } from '../services/currencyService';
 import { isPaidStatus, isRefundedStatus, calculatePaidRevenue, calculatePaidTickets } from '../services/paymentUtils';
 import type { Event, Registration, User, SystemNotification, Broadcast } from '../types';
 import { Card, Button, Badge, formatTime, Input, Select } from './UI';
