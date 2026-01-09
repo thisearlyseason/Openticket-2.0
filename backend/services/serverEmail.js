@@ -82,10 +82,10 @@ export const EmailService = {
                 </div>
             </div>
         `;
-            </div>
-        `;
 
+        console.log(`[EmailService] Sending confirmation email to ${to}...`);
         const result = await sendEmailViaResend(to, subject, htmlBody);
+        console.log(`[EmailService] Confirmation email result: sent=${result.sent}, messageId=${result.messageId || 'N/A'}`);
         return result.sent;
     },
 
