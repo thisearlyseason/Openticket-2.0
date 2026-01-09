@@ -1777,7 +1777,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 method: 'POST',
                                                 headers: { 
                                                     'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${await (window as any).firebase?.auth()?.currentUser?.getIdToken()}`
+                                                    'Authorization': `Bearer ${await StorageService.getAuthToken()}`
                                                 }
                                             });
                                             const result = await response.json();
@@ -1797,10 +1797,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <RefreshCw size={14} className="mr-2" /> Refresh
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => {
-                                    const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Earnings', 'Paid', 'Pending'];
+                                    const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Commission%', 'Earnings', 'Paid', 'Pending'];
                                     const rows = affiliates.map(a => [
                                         a.name, a.email, a.affiliateCode, a.clicks, a.conversions, 
-                                        `${a.conversionRate.toFixed(1)}%`, `$${a.totalEarnings.toFixed(2)}`,
+                                        `${a.conversionRate.toFixed(1)}%`, `${a.commissionRate}%`, `$${a.totalEarnings.toFixed(2)}`,
                                         `$${a.paidOut.toFixed(2)}`, `$${a.pendingPayout.toFixed(2)}`
                                     ]);
                                     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -1813,6 +1813,66 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 }}>
                                     <Download size={14} className="mr-2" /> Export CSV
                                 </Button>
+                            </div>
+                        </div>
+
+                        {/* Global Commission Rate Setting */}
+                        <div className="mb-6 bg-gradient-to-r from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-xl p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-white flex items-center gap-2">
+                                        <Percent size={18} className="text-purple-400" /> Global Subscription Commission Rate
+                                    </h3>
+                                    <p className="text-sm text-zinc-400 mt-1">
+                                        Set the default commission rate for all affiliates on Pro/Premium subscriptions
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={globalCommissionRate}
+                                            onChange={(e) => setGlobalCommissionRate(Number(e.target.value))}
+                                            className="w-20 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-center"
+                                        />
+                                        <span className="text-zinc-400">%</span>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        disabled={isUpdatingGlobalRate}
+                                        onClick={async () => {
+                                            if (!confirm(`Set ALL affiliates to ${globalCommissionRate}% commission rate?`)) return;
+                                            setIsUpdatingGlobalRate(true);
+                                            try {
+                                                const token = await StorageService.getAuthToken();
+                                                const response = await fetch('/api/admin/affiliates/global-commission', {
+                                                    method: 'PUT',
+                                                    headers: { 
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${token}` 
+                                                    },
+                                                    body: JSON.stringify({ commissionRate: globalCommissionRate })
+                                                });
+                                                const result = await response.json();
+                                                if (response.ok) {
+                                                    alert(result.message);
+                                                    refreshData();
+                                                } else {
+                                                    alert('Error: ' + result.error);
+                                                }
+                                            } catch (e: any) {
+                                                alert('Failed: ' + e.message);
+                                            } finally {
+                                                setIsUpdatingGlobalRate(false);
+                                            }
+                                        }}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                                    >
+                                        {isUpdatingGlobalRate ? 'Updating...' : 'Apply to All'}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
 
