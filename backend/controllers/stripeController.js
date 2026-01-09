@@ -585,38 +585,15 @@ export const verifySession = async (req, res) => {
         const discountAmount = Number(session.metadata?.discountAmount || reg.discount_amount || 0);
         const affiliateCode = session.metadata?.affiliateCode || reg.affiliate_code || null;
 
-        // Calculate affiliate commission if applicable
-        let affiliateCommission = 0;
+        // NOTE: Affiliate commissions are ONLY for subscriptions, NOT ticket sales
+        // Affiliates earn 15% recurring commission on subscription payments only
+        const affiliateCommission = 0;
         if (affiliateCode) {
-            try {
-                const eventAffiliates = reg.event?.affiliates || [];
-                const isAuthorized = eventAffiliates.some(a => a.code === affiliateCode);
-
-                if (isAuthorized) {
-                    const { data: affiliate } = await supabase
-                        .from('profiles')
-                        .select('id, commission_rate')
-                        .eq('affiliate_code', affiliateCode)
-                        .single();
-
-                    if (affiliate) {
-                        const buyerId = session.metadata?.userId;
-                        if (buyerId && affiliate.id === buyerId) {
-                            console.warn(`[Affiliate] Self-referral detected. Commission set to 0.`);
-                        } else {
-                            const rate = affiliate.commission_rate || 10;
-                            const baseSubtotal = grossAmount - platformFee - taxAmount;
-                            affiliateCommission = Number((baseSubtotal * (rate / 100)).toFixed(2));
-                        }
-                    }
-                }
-            } catch (affError) {
-                console.warn("[Affiliate] Error processing commission:", affError.message);
-            }
+            console.log(`[Stripe] Affiliate code ${affiliateCode} tracked for analytics only. No ticket commission.`);
         }
 
-        // Calculate organizer net earnings
-        const organizerNet = Number((grossAmount - platformFee - stripeFee - affiliateCommission).toFixed(2));
+        // Calculate organizer net earnings (no affiliate commission deducted for tickets)
+        const organizerNet = Number((grossAmount - platformFee - stripeFee).toFixed(2));
 
         // 3. Update registration with all data
         const paymentIntentId = typeof session.payment_intent === 'object' 
