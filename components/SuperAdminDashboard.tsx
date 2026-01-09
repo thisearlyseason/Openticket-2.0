@@ -456,6 +456,78 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
+    // Non-profit approval handler
+    const handleApproveNonprofit = async (applicationId: string, userId: string) => {
+        if (!confirm('Are you sure you want to approve this non-profit application? This will generate a 20% discount code and send an email to the applicant.')) {
+            return;
+        }
+        
+        setIsApprovingNonprofit(true);
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/onboarding/admin/nonprofit/approve', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ applicationId, userId })
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to approve application');
+            }
+            
+            const data = await response.json();
+            alert(`Non-profit approved! Discount code: ${data.discountCode}`);
+            refreshData();
+            setSelectedNonprofit(null);
+        } catch (e: any) {
+            console.error('Approve nonprofit error:', e);
+            alert(e.message || 'Failed to approve application');
+        } finally {
+            setIsApprovingNonprofit(false);
+        }
+    };
+
+    // Non-profit rejection handler
+    const handleRejectNonprofit = async (applicationId: string, userId: string) => {
+        const reason = nonprofitRejectReason || 'Your application did not meet our verification requirements.';
+        
+        if (!confirm(`Are you sure you want to reject this application?\n\nReason: ${reason}`)) {
+            return;
+        }
+        
+        setIsApprovingNonprofit(true);
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/onboarding/admin/nonprofit/reject', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ applicationId, userId, reason })
+            });
+            
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to reject application');
+            }
+            
+            alert('Non-profit application rejected.');
+            setNonprofitRejectReason('');
+            refreshData();
+            setSelectedNonprofit(null);
+        } catch (e: any) {
+            console.error('Reject nonprofit error:', e);
+            alert(e.message || 'Failed to reject application');
+        } finally {
+            setIsApprovingNonprofit(false);
+        }
+    };
+
     const handleProcessAffiliatePayout = async () => {
         if (!selectedAffiliate || !payoutAmount) return;
         
