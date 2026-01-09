@@ -542,4 +542,249 @@ export const NonprofitSubmissionModal: React.FC<{ isOpen: boolean; onClose: () =
     );
 };
 
+/**
+ * Non-Profit Rejected Banner with Re-submit Option
+ */
+export const NonprofitRejectedBanner: React.FC<{ 
+    rejectionReason?: string;
+    onResubmit: () => void;
+}> = ({ rejectionReason, onResubmit }) => {
+    return (
+        <div className="bg-red-50 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 px-4 py-3">
+            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-red-100 dark:bg-red-800/50 rounded-full">
+                        <AlertCircle size={18} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                        <p className="font-bold text-red-800 dark:text-red-300 text-sm">
+                            Non-Profit Application Rejected
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                            {rejectionReason || 'Your application did not meet our verification requirements.'}
+                        </p>
+                    </div>
+                </div>
+                <Button 
+                    onClick={onResubmit}
+                    className="bg-red-600 hover:bg-red-700 text-white border-none text-sm px-4 py-2"
+                >
+                    Re-submit Application
+                </Button>
+            </div>
+        </div>
+    );
+};
+
+/**
+ * Non-Profit Re-submit Form - For rejected applications
+ */
+interface ResubmitFormProps {
+    user: User;
+    previousApplication?: any;
+    onComplete: () => void;
+    onCancel: () => void;
+}
+
+export const NonprofitResubmitForm: React.FC<ResubmitFormProps> = ({ 
+    user, 
+    previousApplication,
+    onComplete, 
+    onCancel 
+}) => {
+    const [organizationName, setOrganizationName] = useState(previousApplication?.organization_name || '');
+    const [ein, setEin] = useState(previousApplication?.ein || '');
+    const [description, setDescription] = useState(previousApplication?.description || '');
+    const [documentUrl, setDocumentUrl] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        setError(null);
+
+        try {
+            const token = await StorageService.getAuthToken();
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'nonprofit-verification');
+
+            const response = await fetch('/api/upload/document', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to upload document');
+            }
+
+            const data = await response.json();
+            setDocumentUrl(data.url);
+        } catch (err: any) {
+            setError(err.message || 'Failed to upload document');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!organizationName || !documentUrl) {
+            setError('Please fill in all required fields and upload a verification document.');
+            return;
+        }
+
+        setSubmitting(true);
+        setError(null);
+
+        try {
+            const token = await StorageService.getAuthToken();
+            
+            const response = await fetch('/api/onboarding/nonprofit/resubmit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    organizationName,
+                    ein,
+                    documentUrl,
+                    description
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to resubmit application');
+            }
+
+            onComplete();
+        } catch (err: any) {
+            setError(err.message || 'An error occurred');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <Card className="w-full max-w-lg p-6">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">
+                    Re-submit Non-Profit Application
+                </h2>
+                <p className="text-sm text-zinc-500 mb-6">
+                    Please provide updated information and documentation for verification.
+                </p>
+
+                {previousApplication?.rejection_reason && (
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+                        <p className="text-sm font-bold text-red-700 dark:text-red-400 mb-1">Previous Rejection Reason:</p>
+                        <p className="text-sm text-red-600 dark:text-red-300">{previousApplication.rejection_reason}</p>
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    <Input
+                        label="Organization Name *"
+                        value={organizationName}
+                        onChange={(e) => setOrganizationName(e.target.value)}
+                        placeholder="Your non-profit's legal name"
+                    />
+
+                    <Input
+                        label="EIN / Tax ID (optional)"
+                        value={ein}
+                        onChange={(e) => setEin(e.target.value)}
+                        placeholder="XX-XXXXXXX"
+                    />
+
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                            Mission Description
+                        </label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Briefly describe your organization's mission..."
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-zinc-900 dark:text-white resize-none h-24"
+                        />
+                    </div>
+
+                    {/* Document Upload */}
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                            Verification Document * <span className="text-zinc-400 font-normal">(501(c)(3) letter, registration, etc.)</span>
+                        </label>
+                        <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.png,.jpg,.jpeg"
+                                onChange={handleFileUpload}
+                                disabled={uploading}
+                            />
+                            {uploading ? (
+                                <div className="flex items-center gap-2 text-zinc-500">
+                                    <Loader2 size={20} className="animate-spin" />
+                                    <span>Uploading...</span>
+                                </div>
+                            ) : documentUrl ? (
+                                <div className="flex items-center gap-2 text-green-600">
+                                    <Check size={20} />
+                                    <span>Document uploaded</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center gap-1 text-zinc-500">
+                                    <Upload size={24} />
+                                    <span className="text-sm">Click to upload</span>
+                                    <span className="text-xs">PDF, PNG, JPG (max 10MB)</span>
+                                </div>
+                            )}
+                        </label>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+                        <AlertCircle size={16} />
+                        {error}
+                    </div>
+                )}
+
+                <div className="flex gap-3 mt-6">
+                    <Button
+                        onClick={onCancel}
+                        className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-none"
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={submitting || !organizationName || !documentUrl}
+                        className="flex-1 bg-primary text-white border-none disabled:opacity-50"
+                    >
+                        {submitting ? (
+                            <>
+                                <Loader2 size={16} className="mr-2 animate-spin" />
+                                Submitting...
+                            </>
+                        ) : (
+                            'Re-submit Application'
+                        )}
+                    </Button>
+                </div>
+            </Card>
+        </div>
+    );
+};
+
 export default Onboarding;
