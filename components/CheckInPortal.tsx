@@ -970,30 +970,40 @@ export const CheckInPortal = () => {
                                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-2">
                                     <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
                                         <CreditCard size={14} />
-                                        Process card on your external terminal, then confirm below.
+                                        Enter card details below to process payment securely via Stripe.
                                     </p>
                                 </div>
-                                <div className="p-4 bg-zinc-50 dark:bg-black rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-bold text-zinc-500">Amount to Charge</span>
-                                        <span className="font-bold text-2xl">${calculateTotalDue(paymentContext.reg).toFixed(2)}</span>
-                                    </div>
-                                </div>
-                                <Input 
-                                    label="Last 4 Digits (optional)" 
-                                    placeholder="1234" 
-                                    maxLength={4}
-                                    value={cardDetails.number} 
-                                    onChange={e => setCardDetails({ ...cardDetails, number: e.target.value })} 
-                                    containerClassName="mb-0" 
+                                <StripePaymentWrapper
+                                    registrationId={paymentContext.reg.id}
+                                    amount={totalDue}
+                                    onSuccess={() => {
+                                        // Update local state
+                                        const updatedRegs = registrations.map(r =>
+                                            r.id === paymentContext.reg.id
+                                                ? { ...r, paymentStatus: 'completed' as const }
+                                                : r
+                                        );
+                                        setRegistrations(updatedRegs);
+                                        processTickets(updatedRegs);
+                                        
+                                        // Show success
+                                        setPaymentStatus('done');
+                                        setTimeout(() => {
+                                            setPaymentContext(null);
+                                            setPaymentMethod(null);
+                                            setPaymentStatus('input');
+                                            setPaymentError(null);
+                                        }, 1500);
+                                    }}
+                                    onError={(error) => {
+                                        setPaymentError(error);
+                                        setPaymentStatus('error');
+                                        setTimeout(() => setPaymentStatus('input'), 3000);
+                                    }}
+                                    onProcessing={(isProcessing) => {
+                                        if (isProcessing) setPaymentStatus('processing');
+                                    }}
                                 />
-                                <Button 
-                                    onClick={() => handleProcessPayment('card')} 
-                                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white border-none"
-                                >
-                                    <CreditCard size={18} className="mr-2" />
-                                    Confirm Card Payment Received
-                                </Button>
                             </div>
                         )}
 
