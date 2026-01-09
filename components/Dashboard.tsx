@@ -450,7 +450,7 @@ export const Dashboard = () => {
                                     </div>
                                     <div>
                                         <div className="text-[10px] uppercase font-bold text-zinc-400">Revenue</div>
-                                        <div className="font-black text-green-600 dark:text-green-400">${stats.grossRevenue.toFixed(0)}</div>
+                                        <div className="font-black text-green-600 dark:text-green-400">{CurrencyService.formatChargeCurrency(stats.grossRevenue, currentUser?.defaultCurrency || 'USD', false)}</div>
                                     </div>
                                 </div>
 
