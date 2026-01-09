@@ -649,4 +649,67 @@ router.get('/nonprofit/verify-magic-link', async (req, res) => {
     }
 });
 
+/**
+ * Migrate existing nonprofit users from profiles to nonprofit_applications table
+ * POST /api/onboarding/admin/nonprofit/migrate
+ * This creates nonprofit_applications records for users who have nonprofit_status set but no application record
+ */
+router.post('/admin/nonprofit/migrate', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        // Find all users with nonprofit_status set but no corresponding application
+        const { data: nonprofitUsers, error: userError } = await supabase
+            .from('profiles')
+            .select('id, name, email, nonprofit_status, nonprofit_name, nonprofit_ein, nonprofit_doc_url, created_at')
+            .in('nonprofit_status', ['pending', 'approved', 'rejected']);
+
+        if (userError) throw userError;
+
+        let migrated = 0;
+        let skipped = 0;
+
+        for (const user of nonprofitUsers || []) {
+            // Check if application already exists
+            const { data: existingApp } = await supabase
+                .from('nonprofit_applications')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+            if (existingApp) {
+                skipped++;
+                continue;
+            }
+
+            // Create new application record
+            const { error: insertError } = await supabase
+                .from('nonprofit_applications')
+                .insert({
+                    id: uuidv4(),
+                    user_id: user.id,
+                    organization_name: user.nonprofit_name || user.name || 'Unknown Organization',
+                    ein: user.nonprofit_ein || null,
+                    document_url: user.nonprofit_doc_url || null,
+                    description: `Migrated from legacy signup - ${user.email}`,
+                    status: user.nonprofit_status,
+                    submitted_at: user.created_at || new Date().toISOString(),
+                    created_at: new Date().toISOString()
+                });
+
+            if (!insertError) {
+                migrated++;
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: `Migration complete. Migrated: ${migrated}, Skipped (already exists): ${skipped}`,
+            migrated,
+            skipped
+        });
+    } catch (error) {
+        console.error('[Onboarding] Migration error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
