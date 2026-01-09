@@ -2430,6 +2430,31 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <Heart size={24} className="text-[#E0FF20]" /> Non-Profit Applications
                             </h2>
                             <div className="flex gap-2">
+                                <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={async () => {
+                                        if (!confirm('This will migrate existing nonprofit users from profiles to the applications table. Continue?')) return;
+                                        try {
+                                            const token = await StorageService.getAuthToken();
+                                            const response = await fetch('/api/onboarding/admin/nonprofit/migrate', {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` }
+                                            });
+                                            const data = await response.json();
+                                            if (response.ok) {
+                                                alert(data.message);
+                                                refreshData();
+                                            } else {
+                                                alert('Migration failed: ' + data.error);
+                                            }
+                                        } catch (e: any) {
+                                            alert('Migration failed: ' + e.message);
+                                        }
+                                    }}
+                                >
+                                    <RefreshCw size={14} className="mr-2" /> Migrate Legacy Users
+                                </Button>
                                 {(['pending', 'approved', 'rejected', 'all'] as const).map(filter => (
                                     <button
                                         key={filter}
