@@ -448,6 +448,12 @@ export const StorageService = {
     getLastError: () => initError,
     Stripe: StripeService,
 
+    // Export getAuthToken for direct usage
+    getAuthToken: async () => {
+        const { getAuthToken } = await import('./firebaseConfig');
+        return getAuthToken();
+    },
+
     init: async () => {
         // Wait for Firebase Auth to initialize before rendering app
         return new Promise<void>((resolve) => {
