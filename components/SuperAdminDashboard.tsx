@@ -1933,7 +1933,15 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         size="sm"
                                         disabled={isUpdatingGlobalRate}
                                         onClick={async () => {
-                                            if (!window.confirm(`Set ALL affiliates to ${globalCommissionRate}% commission rate?`)) return;
+                                            const confirmed = await confirm({
+                                                title: 'Update Global Commission Rate',
+                                                message: `Set ALL affiliates to ${globalCommissionRate}% commission rate?`,
+                                                confirmText: 'Update All',
+                                                variant: 'warning'
+                                            });
+
+                                            if (!confirmed) return;
+                                            
                                             setIsUpdatingGlobalRate(true);
                                             try {
                                                 const token = await StorageService.getAuthToken();
@@ -1947,7 +1955,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 });
                                                 const result = await response.json();
                                                 if (response.ok) {
-                                                    window.alert(result.message);
+                                                    await confirm({
+                                                        title: 'Success',
+                                                        message: result.message,
+                                                        confirmText: 'OK',
+                                                        variant: 'info'
+                                                    });
                                                     refreshData();
                                                 } else {
                                                     window.alert('Error: ' + result.error);
