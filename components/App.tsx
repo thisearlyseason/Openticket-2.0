@@ -29,6 +29,7 @@ import { NonprofitUpgrade } from './NonprofitUpgrade';
 import { StorageService } from '../services/storageService';
 import { ErrorBoundary } from './ErrorBoundary';
 import { db } from '../services/firebaseConfig';
+import { ConfirmProvider } from './ConfirmContext';
 
 const Layout = ({ children }: { children?: React.ReactNode }) => {
     const navigate = useNavigate();
