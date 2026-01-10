@@ -9,10 +9,12 @@ export const NonprofitUpgrade = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
-    const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'error'>('loading');
+    const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'error' | 'needs-auth'>('loading');
     const [discountCode, setDiscountCode] = useState<string>('');
     const [organizationName, setOrganizationName] = useState<string>('');
+    const [userEmail, setUserEmail] = useState<string>('');
     const [error, setError] = useState<string>('');
+    const currentUser = StorageService.getCurrentUser();
 
     // Try to get params from both searchParams and hash
     const getParams = () => {
@@ -46,9 +48,20 @@ export const NonprofitUpgrade = () => {
                 const data = await response.json();
 
                 if (response.ok && data.valid) {
-                    setStatus('valid');
                     setDiscountCode(data.discountCode);
                     setOrganizationName(data.organizationName || 'Your Organization');
+                    setUserEmail(data.userEmail || '');
+                    
+                    // Check if user is authenticated
+                    if (!currentUser) {
+                        setStatus('needs-auth');
+                    } else if (currentUser.email !== data.userEmail) {
+                        // Logged in as different user
+                        setStatus('needs-auth');
+                    } else {
+                        // User is authenticated and email matches
+                        setStatus('valid');
+                    }
                 } else {
                     setStatus('invalid');
                     setError(data.error || 'Invalid or expired magic link');
@@ -60,7 +73,17 @@ export const NonprofitUpgrade = () => {
         };
 
         verifyMagicLink();
-    }, [location]);
+    }, [location, currentUser]);
+
+    const handleSignIn = () => {
+        // Store the magic link params and discount code
+        const { token, code } = getParams();
+        localStorage.setItem('nonprofitDiscountCode', discountCode);
+        localStorage.setItem('nonprofitMagicLink', JSON.stringify({ token, code }));
+        
+        // Redirect to auth page with return URL
+        navigate(`/auth?email=${encodeURIComponent(userEmail)}&redirect=/nonprofit-upgrade?token=${token}&code=${code}`);
+    };
 
     const handleGoToPricing = () => {
         // Store the discount code in localStorage for use during checkout
