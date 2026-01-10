@@ -735,6 +735,65 @@ export const Settings = () => {
                                     className="opacity-60 cursor-not-allowed bg-zinc-100 dark:bg-zinc-800"
                                 />
 
+                                {/* Business Type & Non-Profit Status Section */}
+                                {(businessType || nonprofitStatus) && (
+                                    <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Briefcase size={18} className="text-zinc-500" />
+                                            <span className="font-bold text-zinc-900 dark:text-white">Organization Details</span>
+                                        </div>
+                                        
+                                        <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 space-y-4">
+                                            {businessType && (
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-zinc-500 dark:text-zinc-400">Business Type</span>
+                                                    <Badge color={businessType === 'nonprofit' ? 'purple' : 'blue'}>
+                                                        {businessType === 'nonprofit' ? 'Non-Profit' : businessType === 'individual' ? 'Individual' : 'Business'}
+                                                    </Badge>
+                                                </div>
+                                            )}
+                                            
+                                            {nonprofitStatus && (
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-zinc-500 dark:text-zinc-400">Non-Profit Status</span>
+                                                    <Badge color={
+                                                        nonprofitStatus === 'approved' ? 'green' : 
+                                                        nonprofitStatus === 'pending' ? 'yellow' : 'red'
+                                                    }>
+                                                        {nonprofitStatus === 'approved' ? '✓ Approved' : 
+                                                         nonprofitStatus === 'pending' ? '⏳ Pending Review' : '✗ Rejected'}
+                                                    </Badge>
+                                                </div>
+                                            )}
+                                            
+                                            {nonprofitName && (
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-zinc-500 dark:text-zinc-400">Organization Name</span>
+                                                    <span className="text-sm font-medium text-zinc-900 dark:text-white">{nonprofitName}</span>
+                                                </div>
+                                            )}
+                                            
+                                            {nonprofitStatus === 'pending' && (
+                                                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                                                        <AlertCircle size={14} className="inline mr-1" />
+                                                        Your non-profit application is under review. You'll receive an email once it's processed.
+                                                    </p>
+                                                </div>
+                                            )}
+                                            
+                                            {nonprofitStatus === 'approved' && (
+                                                <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                                    <p className="text-xs text-green-700 dark:text-green-300">
+                                                        <CheckCircle size={14} className="inline mr-1" />
+                                                        Your non-profit status is verified! You receive a 20% discount on Pro/Premium plans.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Password Change Section */}
                                 <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
                                     <div className="flex items-center justify-between mb-4">
