@@ -106,15 +106,20 @@ export const Pricing = () => {
         const currencyInfo = CurrencyService.getInfo(currency);
         const convertedPrice = CurrencyService.convert(priceUSD, currency);
         
-        if (user?.nonProfitStatus === 'approved' && plan === 'pro') {
-            const discountedUSD = priceUSD * 0.75;
+        // Apply 20% nonprofit discount to Pro and Premium plans
+        const isNonprofitEligible = user?.nonProfitStatus === 'approved' && (plan === 'pro' || plan === 'premium');
+        if (isNonprofitEligible) {
+            const discountedUSD = priceUSD * 0.80; // 20% discount
             const discountedConverted = CurrencyService.convert(discountedUSD, currency);
             return (
                 <div className="flex flex-col items-center">
                     <span className="text-sm line-through text-gray-400 dark:text-zinc-500">
                         {currencyInfo.symbol}{convertedPrice.toFixed(0)} {currency}
                     </span>
-                    <span>{currencyInfo.symbol}{discountedConverted.toFixed(0)} {currency}</span>
+                    <span className="font-bold">{currencyInfo.symbol}{discountedConverted.toFixed(0)} {currency}</span>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+                        20% OFF
+                    </span>
                 </div>
             );
         }
