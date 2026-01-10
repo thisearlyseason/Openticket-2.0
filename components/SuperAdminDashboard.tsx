@@ -863,7 +863,14 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     };
 
     const handleDeletePromoCode = async (promo: PromoCode) => {
-        if (window.confirm(`Delete promo code "${promo.code}"?`)) {
+        const confirmed = await confirm({
+            title: 'Delete Promo Code',
+            message: `Delete promo code "${promo.code}"?`,
+            confirmText: 'Delete',
+            variant: 'danger'
+        });
+
+        if (confirmed) {
             await StorageService.deletePromoCode(promo.id);
             loadPromoCodes();
         }
