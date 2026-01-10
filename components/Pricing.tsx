@@ -129,9 +129,32 @@ export const Pricing = () => {
     };
 
     const isNonUSD = currency !== 'USD';
+    const hasNonprofitDiscount = user?.nonProfitStatus === 'approved';
 
     return (
         <div className="max-w-7xl mx-auto py-12 px-4">
+
+            {/* Nonprofit Promotional Banner */}
+            {hasNonprofitDiscount && (
+                <div className="mb-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-400 dark:border-emerald-600 rounded-2xl shadow-lg animate-in slide-in-from-top-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-emerald-100 dark:bg-emerald-800 rounded-xl shrink-0">
+                            <Gift className="text-emerald-600 dark:text-emerald-300" size={32} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-100 mb-1">
+                                🎉 NON-PROFIT DISCOUNT ACTIVE
+                            </h3>
+                            <p className="text-emerald-800 dark:text-emerald-200 font-semibold">
+                                Your non-profit status has been approved! Enjoy <span className="text-emerald-600 dark:text-emerald-400 font-black">20% OFF</span> Pro and Premium plans.
+                            </p>
+                        </div>
+                        <div className="hidden sm:flex items-center justify-center bg-emerald-600 dark:bg-emerald-700 text-white px-6 py-3 rounded-xl font-black text-2xl shrink-0">
+                            20% OFF
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {user?.role === 'attendee' && (
                 <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-4">
