@@ -34,6 +34,35 @@ const DocumentUpload = ({
         });
     };
 
+    // Get Firebase ID token directly from Firebase Auth
+    const getFirebaseToken = async (): Promise<string | null> => {
+        try {
+            // Import Firebase auth directly
+            const { auth } = await import('../services/firebaseConfig');
+            
+            // Wait for auth state to be ready
+            const currentUser = auth.currentUser;
+            
+            if (!currentUser) {
+                console.log('[DocumentUpload] No authenticated user');
+                return null;
+            }
+            
+            // Get fresh ID token
+            const token = await currentUser.getIdToken(true);
+            
+            if (!token || token.length < 100) {
+                console.log('[DocumentUpload] Invalid token received');
+                return null;
+            }
+            
+            return token;
+        } catch (err) {
+            console.error('[DocumentUpload] Error getting Firebase token:', err);
+            return null;
+        }
+    };
+
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -55,11 +84,13 @@ const DocumentUpload = ({
         setError('');
 
         try {
-            // Try to get auth token
-            const token = await StorageService.getAuthToken();
+            // Try to get Firebase auth token
+            const token = await getFirebaseToken();
             
             if (token) {
                 // User is authenticated - upload to Supabase Storage
+                console.log('[DocumentUpload] Attempting authenticated upload...');
+                
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('type', 'nonprofit');
@@ -73,25 +104,30 @@ const DocumentUpload = ({
                 });
 
                 const data = await response.json();
+                
                 if (!response.ok) {
+                    console.error('[DocumentUpload] Upload API error:', data.error);
                     throw new Error(data.error || 'Upload failed');
                 }
 
+                console.log('[DocumentUpload] Upload successful:', data.url);
                 onChange(data.url);
             } else {
                 // User is not authenticated (during signup) - use base64
-                console.log('No auth token, using base64 encoding for document');
+                console.log('[DocumentUpload] No auth token, using base64 encoding');
                 const base64 = await fileToBase64(file);
                 onChange(base64);
             }
         } catch (err: any) {
-            console.error('Upload error:', err);
+            console.error('[DocumentUpload] Upload error:', err.message);
+            
             // Fall back to base64 on any error
             try {
-                console.log('Upload failed, falling back to base64');
+                console.log('[DocumentUpload] Falling back to base64 encoding');
                 const base64 = await fileToBase64(file);
                 onChange(base64);
             } catch (base64Err) {
+                console.error('[DocumentUpload] Base64 encoding failed:', base64Err);
                 setError('Failed to process file');
             }
         } finally {
