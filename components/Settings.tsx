@@ -31,6 +31,11 @@ export const Settings = () => {
     const [showPhonePublicly, setShowPhonePublicly] = useState(false);
     const [bio, setBio] = useState('');
 
+    // Business type and nonprofit status
+    const [businessType, setBusinessType] = useState<string>('');
+    const [nonprofitStatus, setNonprofitStatus] = useState<string | null>(null);
+    const [nonprofitName, setNonprofitName] = useState('');
+
     // Branding State
     const [primaryColor, setPrimaryColor] = useState('#E0FF20');
 
