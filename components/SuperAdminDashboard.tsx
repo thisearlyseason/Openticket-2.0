@@ -782,21 +782,42 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             ? `Re-activate ${user.name}?`
             : `Are you sure you want to BAN ${user.name}? They will be unable to login.`;
 
-        if (window.confirm(confirmMsg)) {
+        const confirmed = await confirm({
+            title: user.isBanned ? 'Re-activate User' : 'Ban User',
+            message: confirmMsg,
+            confirmText: user.isBanned ? 'Re-activate' : 'Ban User',
+            variant: 'danger'
+        });
+
+        if (confirmed) {
             StorageService.updateUser(user.id, { isBanned: !user.isBanned });
             refreshData();
         }
     };
 
-    const handleDeleteEvent = (event: Event) => {
-        if (window.confirm(`Delete "${event.title}"? This cannot be undone.`)) {
+    const handleDeleteEvent = async (event: Event) => {
+        const confirmed = await confirm({
+            title: 'Delete Event',
+            message: `Delete "${event.title}"? This cannot be undone.`,
+            confirmText: 'Delete',
+            variant: 'danger'
+        });
+
+        if (confirmed) {
             StorageService.deleteEvent(event.id);
             refreshData();
         }
     };
 
-    const handleRejectEvent = (event: Event) => {
-        if (window.confirm(`Reject "${event.title}"? This will hide the event from the public and mark it as rejected.`)) {
+    const handleRejectEvent = async (event: Event) => {
+        const confirmed = await confirm({
+            title: 'Reject Event',
+            message: `Reject "${event.title}"? This will hide the event from the public and mark it as rejected.`,
+            confirmText: 'Reject',
+            variant: 'warning'
+        });
+
+        if (confirmed) {
             StorageService.saveEvent({ ...event, moderationStatus: 'rejected', visibility: 'hidden' });
             refreshData();
         }
