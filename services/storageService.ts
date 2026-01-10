@@ -104,7 +104,7 @@ export const PLANS = {
         name: 'Free',
         priceMonthly: 0,
         priceYearly: 0,
-        feePercent: 0.0275, // 2.75%
+        feePercent: 0.045, // 4.5%
         feeFixed: 0.99, // $0.99
         ticketLimit: 50, // 50 tickets per event
         eventLimit: 3, // per month
@@ -115,8 +115,8 @@ export const PLANS = {
         name: 'Pro',
         priceMonthly: 39,
         priceYearly: 390,
-        feePercent: 0.015, // 1.5%
-        feeFixed: 0.75, // $0.75
+        feePercent: 0.029, // 2.9%
+        feeFixed: 0.69, // $0.69
         ticketLimit: 250, // 250 tickets per event
         eventLimit: 10, // 10 events per month
         showDonationButton: false,
@@ -126,8 +126,8 @@ export const PLANS = {
         name: 'Premium',
         priceMonthly: 110,
         priceYearly: 1100,
-        feePercent: 0.0075, // 0.75%
-        feeFixed: 0.30, // $0.30 per ticket
+        feePercent: 0.019, // 1.9%
+        feeFixed: 0.49, // $0.49 per ticket
         ticketLimit: 999999, // Unlimited
         eventLimit: 9999, // Unlimited
         showDonationButton: false,
