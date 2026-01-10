@@ -106,7 +106,7 @@ export const syncProfile = async (req, res) => {
             const { data: currentProfile, error: fetchError } = await supabase
             console.log('[ProfileSync] Fetching current profile to merge settings');
             // First fetch current subscription to merge
-            const { data: currentProfile, error: fetchError} = await supabase
+            const { data: existingProfile, error: fetchError} = await supabase
                 .from('profiles')
                 .select('subscription')
                 .eq('id', uid)
@@ -116,7 +116,7 @@ export const syncProfile = async (req, res) => {
                 console.error('[ProfileSync] Error fetching current profile:', fetchError);
             }
             
-            const currentSubscription = currentProfile?.subscription || {};
+            const currentSubscription = existingProfile?.subscription || {};
             console.log('[ProfileSync] Current subscription plan:', currentSubscription.plan);
             
             const mergedSubscription = {
