@@ -147,6 +147,18 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [isApprovingNonprofit, setIsApprovingNonprofit] = useState(false);
     const [nonprofitRejectReason, setNonprofitRejectReason] = useState('');
 
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        type: 'approve' | 'reject' | 'other';
+    }>({ show: false, title: '', message: '', onConfirm: () => {}, type: 'other' });
+
+    // Lightbox State
+    const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
     // Onboarding Responses State
     const [onboardingResponses, setOnboardingResponses] = useState<any[]>([]);
     const [selectedOnboarding, setSelectedOnboarding] = useState<any | null>(null);
