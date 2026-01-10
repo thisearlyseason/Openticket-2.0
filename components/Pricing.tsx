@@ -256,6 +256,12 @@ export const Pricing = () => {
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm">
                         MOST POPULAR
                     </div>
+                    {hasNonprofitDiscount && (
+                        <div className="absolute top-0 right-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black px-3 py-1.5 rounded-b-lg shadow-lg flex items-center gap-1">
+                            <Gift size={12} />
+                            20% OFF
+                        </div>
+                    )}
                     <div className="mb-6 mt-2">
                         <h3 className="text-xl font-bold text-primary mb-2 flex items-center gap-2"><Star size={20} fill="currentColor" /> {PLANS.pro.name}</h3>
                         <div className="text-4xl font-black text-gray-900 dark:text-white flex items-end">
