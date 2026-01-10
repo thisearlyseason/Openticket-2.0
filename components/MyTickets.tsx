@@ -7,6 +7,7 @@ import { useConfirm } from './ConfirmContext';
 import { Calendar, MapPin, Clock, Ticket as TicketIcon, Printer, ArrowLeft, Send, Archive, RotateCcw, Trash2, Ghost, ShoppingBag } from 'lucide-react';
 
 export const MyTickets = () => {
+    const { confirm } = useConfirm();
     interface DisplayTicket {
         reg: Registration;
         event: Event;
