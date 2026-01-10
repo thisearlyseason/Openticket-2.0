@@ -84,6 +84,7 @@ interface PromoCode {
 
 export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }) => {
     const navigate = useNavigate();
+    const { confirm } = useConfirm();
     const [users, setUsers] = useState<User[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
     const [registrations, setRegistrations] = useState<Registration[]>([]);
