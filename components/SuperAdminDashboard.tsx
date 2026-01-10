@@ -2631,16 +2631,39 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         {selectedNonprofit.document_url && (
                                             <div>
                                                 <span className="text-zinc-500 text-sm">Verification Document</span>
-                                                <a
-                                                    href={selectedNonprofit.document_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="mt-2 flex items-center gap-2 text-blue-400 hover:text-blue-300"
-                                                >
-                                                    <FileText size={18} />
-                                                    View Document
-                                                    <ExternalLink size={14} />
-                                                </a>
+                                                {selectedNonprofit.document_url.startsWith('data:image') ? (
+                                                    <div className="mt-2">
+                                                        <img 
+                                                            src={selectedNonprofit.document_url} 
+                                                            alt="Verification Document" 
+                                                            className="max-w-full max-h-64 rounded-lg border border-zinc-700"
+                                                        />
+                                                    </div>
+                                                ) : selectedNonprofit.document_url.startsWith('data:application/pdf') ? (
+                                                    <div className="mt-2 p-4 bg-zinc-800 rounded-lg">
+                                                        <p className="text-zinc-400 text-sm mb-2">PDF Document Attached</p>
+                                                        <a
+                                                            href={selectedNonprofit.document_url}
+                                                            download="verification-document.pdf"
+                                                            className="flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                                                        >
+                                                            <FileText size={18} />
+                                                            Download PDF
+                                                            <Download size={14} />
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <a
+                                                        href={selectedNonprofit.document_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mt-2 flex items-center gap-2 text-blue-400 hover:text-blue-300"
+                                                    >
+                                                        <FileText size={18} />
+                                                        View Document
+                                                        <ExternalLink size={14} />
+                                                    </a>
+                                                )}
                                             </div>
                                         )}
 
