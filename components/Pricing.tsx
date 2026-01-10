@@ -400,10 +400,16 @@ export const Pricing = () => {
                                 )}
                             </div>
                         </div>
-                        {user?.nonProfitStatus === 'approved' && confirmModal.plan === 'pro' && (
-                            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                <p className="text-sm text-green-700 dark:text-green-300">
-                                    ✓ 20% Non-Profit discount applied
+                        {user?.nonProfitStatus === 'approved' && (confirmModal.plan === 'pro' || confirmModal.plan === 'premium') && (
+                            <div className="mb-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-400 dark:border-emerald-600 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                    <Gift size={20} className="text-emerald-600 dark:text-emerald-400" />
+                                    <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">
+                                        ✓ Non-Profit Discount (20% OFF) Applied
+                                    </p>
+                                </div>
+                                <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                                    Promotional pricing is already reflected in the amount above
                                 </p>
                             </div>
                         )}
