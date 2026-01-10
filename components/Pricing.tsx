@@ -66,9 +66,10 @@ export const Pricing = () => {
         // Calculate price in USD
         let priceUSD = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
 
-        // Apply Non-Profit Discount (20%)
-        if (user.nonProfitStatus === 'approved' && plan === 'pro') {
-            priceUSD = priceUSD * 0.80;
+        // Apply Non-Profit Discount (20%) - applies to Pro and Premium plans
+        const isNonprofitEligible = user.nonProfitStatus === 'approved' && (plan === 'pro' || plan === 'premium');
+        if (isNonprofitEligible) {
+            priceUSD = priceUSD * 0.80; // 20% discount
         }
 
         // Convert to local currency
