@@ -1,9 +1,137 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Button, Input, Card, Select, FileDropZone } from './UI';
-import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome, Eye, EyeOff, Check, X } from 'lucide-react';
+import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome, Eye, EyeOff, Check, X, Upload, Loader2, FileText, Trash2 } from 'lucide-react';
+
+// Document Upload Component with Supabase Storage
+const DocumentUpload = ({
+    label,
+    value,
+    onChange,
+    onClear,
+    disabled = false
+}: {
+    label: string;
+    value: string;
+    onChange: (url: string) => void;
+    onClear: () => void;
+    disabled?: boolean;
+}) => {
+    const [uploading, setUploading] = useState(false);
+    const [error, setError] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            setError('Only PDF, PNG, and JPG files are allowed');
+            return;
+        }
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+            setError('File size must be less than 10MB');
+            return;
+        }
+
+        setUploading(true);
+        setError('');
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'nonprofit');
+
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/upload/document', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+
+            onChange(data.url);
+        } catch (err: any) {
+            console.error('Upload error:', err);
+            setError(err.message || 'Failed to upload file');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="mb-4">
+            {label && <label className="block text-xs font-bold text-gray-500 uppercase mb-2">{label}</label>}
+            
+            {!value ? (
+                <div 
+                    className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                        disabled ? 'border-zinc-700 bg-zinc-900/50 cursor-not-allowed' : 
+                        'border-zinc-600 hover:border-[#E0FF20] cursor-pointer'
+                    }`}
+                    onClick={() => !disabled && !uploading && fileInputRef.current?.click()}
+                >
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        disabled={disabled || uploading}
+                    />
+                    {uploading ? (
+                        <div className="flex flex-col items-center gap-2">
+                            <Loader2 size={32} className="animate-spin text-[#E0FF20]" />
+                            <p className="text-sm text-zinc-400">Uploading...</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-2">
+                            <Upload size={32} className="text-zinc-500" />
+                            <p className="text-sm text-zinc-400">Click to upload PDF or Image</p>
+                            <p className="text-xs text-zinc-600">Max 10MB</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="flex items-center gap-3 bg-emerald-900/20 border border-emerald-700 rounded-xl p-4">
+                    <FileText size={24} className="text-emerald-400" />
+                    <div className="flex-1">
+                        <p className="text-sm text-emerald-400 font-bold">Document Uploaded</p>
+                        <a 
+                            href={value} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-emerald-600 hover:underline"
+                        >
+                            View Document
+                        </a>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onClear(); }}
+                        className="p-2 hover:bg-red-900/30 rounded-lg transition-colors"
+                    >
+                        <Trash2 size={18} className="text-red-400" />
+                    </button>
+                </div>
+            )}
+            
+            {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+        </div>
+    );
+};
 
 // Password Input with visibility toggle and validation
 const PasswordInput = ({ 
