@@ -1,23 +1,40 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { CheckCircle, XCircle, Loader2, Gift, ArrowRight } from 'lucide-react';
 import { Button, Card } from './UI';
 import { StorageService } from '../services/storageService';
 
 export const NonprofitUpgrade = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState<'loading' | 'valid' | 'invalid' | 'error'>('loading');
     const [discountCode, setDiscountCode] = useState<string>('');
     const [organizationName, setOrganizationName] = useState<string>('');
     const [error, setError] = useState<string>('');
 
-    const token = searchParams.get('token');
-    const code = searchParams.get('code');
+    // Try to get params from both searchParams and hash
+    const getParams = () => {
+        let token = searchParams.get('token');
+        let code = searchParams.get('code');
+        
+        // If not found in search params, try to parse from the full URL
+        if (!token || !code) {
+            const fullUrl = window.location.href;
+            const tokenMatch = fullUrl.match(/token=([^&]+)/);
+            const codeMatch = fullUrl.match(/code=([^&]+)/);
+            if (tokenMatch) token = tokenMatch[1];
+            if (codeMatch) code = codeMatch[1];
+        }
+        
+        return { token, code };
+    };
 
     useEffect(() => {
         const verifyMagicLink = async () => {
+            const { token, code } = getParams();
+            
             if (!token || !code) {
                 setStatus('invalid');
                 setError('Invalid or missing link parameters');
@@ -43,7 +60,7 @@ export const NonprofitUpgrade = () => {
         };
 
         verifyMagicLink();
-    }, [token, code]);
+    }, [location]);
 
     const handleGoToPricing = () => {
         // Store the discount code in localStorage for use during checkout
