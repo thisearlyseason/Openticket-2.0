@@ -462,7 +462,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const handleApproveNonprofit = async (applicationId: string, userId: string) => {
         console.log('Approve clicked:', { applicationId, userId });
         
-        if (!confirm('Are you sure you want to approve this non-profit application? This will generate a 20% discount code and send an email to the applicant.')) {
+        if (!window.confirm('Are you sure you want to approve this non-profit application? This will generate a 20% discount code and send an email to the applicant.')) {
             return;
         }
         
@@ -488,12 +488,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 throw new Error(data.error || 'Failed to approve application');
             }
             
-            alert(`✅ Non-profit approved!\n\nDiscount code: ${data.discountCode}\n\nAn email with the 20% discount has been sent to the applicant.`);
+            window.alert(`✅ Non-profit approved!\n\nDiscount code: ${data.discountCode}\n\nAn email with the 20% discount has been sent to the applicant.`);
             refreshData();
             setSelectedNonprofit(null);
         } catch (e: any) {
             console.error('Approve nonprofit error:', e);
-            alert('❌ Error: ' + (e.message || 'Failed to approve application'));
+            window.alert('❌ Error: ' + (e.message || 'Failed to approve application'));
         } finally {
             setIsApprovingNonprofit(false);
         }
