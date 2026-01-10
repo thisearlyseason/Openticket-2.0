@@ -664,7 +664,7 @@ router.get('/affiliate/by-code/:code', async (req, res) => {
         res.json({
             affiliateId: affiliate.id,
             affiliateCode: affiliate.affiliate_code,
-            commissionRate: affiliate.commission_rate || 10,
+            commissionRate: affiliate.commission_rate || 15,  // Default 15% for subscriptions
             discountPercent: affiliate.discount_percent || 0
         });
     } catch (error) {
