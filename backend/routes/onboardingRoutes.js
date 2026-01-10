@@ -681,10 +681,11 @@ router.post('/admin/nonprofit/migrate', verifyToken, requireAdmin, async (req, r
             }
 
             // Create new application record
+            const applicationId = uuidv4();
             const { error: insertError } = await supabase
                 .from('nonprofit_applications')
                 .insert({
-                    id: uuidv4(),
+                    id: applicationId,
                     user_id: user.id,
                     organization_name: user.nonprofit_name || user.name || 'Unknown Organization',
                     ein: user.nonprofit_ein || null,
@@ -697,6 +698,19 @@ router.post('/admin/nonprofit/migrate', verifyToken, requireAdmin, async (req, r
 
             if (!insertError) {
                 migrated++;
+                
+                // Also create onboarding_responses entry for the Onboarding tab
+                await supabase
+                    .from('onboarding_responses')
+                    .upsert({
+                        user_id: user.id,
+                        responses: { businessType: 'nonprofit', migratedFromLegacy: true },
+                        organization_type: 'nonprofit',
+                        nonprofit_application_id: applicationId,
+                        completed_at: user.created_at || new Date().toISOString(),
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id' });
             }
         }
 
