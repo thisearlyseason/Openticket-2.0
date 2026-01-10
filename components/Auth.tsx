@@ -458,7 +458,7 @@ export const Auth = () => {
             if (formData.businessType === 'nonprofit' && result?.id) {
                 try {
                     const token = await StorageService.getAuthToken();
-                    await fetch('/api/onboarding/nonprofit/apply', {
+                    const response = await fetch('/api/onboarding/nonprofit/apply', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -476,8 +476,20 @@ export const Auth = () => {
                             }
                         })
                     });
+
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        console.error('Nonprofit application failed:', data);
+                        setError(`Failed to submit nonprofit application: ${data.error || 'Unknown error'}`);
+                        setIsLoading(false);
+                        return;
+                    }
                 } catch (e) {
                     console.error('Failed to create nonprofit application:', e);
+                    setError(`Error: ${e.message}`);
+                    setIsLoading(false);
+                    return;
                 }
             }
 
