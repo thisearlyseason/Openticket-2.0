@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Star, Shield, Zap, Heart, Clock, X } from 'lucide-react';
+import { Check, Star, Shield, Zap, Heart, Clock, X, Gift } from 'lucide-react';
 import { Button, Card, Badge } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
