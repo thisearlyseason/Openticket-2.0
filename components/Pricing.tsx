@@ -61,7 +61,7 @@ export const Pricing = () => {
             price = price * 0.75;
         }
 
-        if (window.confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} USD`)) {
+        if (globalThis.confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} USD`)) {
             // --- STRIPE_INTEGRATION: Process Subscription Fee ---
             // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
             await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
