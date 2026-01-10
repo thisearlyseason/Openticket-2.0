@@ -144,6 +144,38 @@ export const NonprofitUpgrade = () => {
                     </div>
                 )}
 
+                {status === 'needs-auth' && (
+                    <div className="text-center">
+                        <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Shield size={48} className="text-blue-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">
+                            Sign In Required
+                        </h2>
+                        <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+                            Your non-profit application for <strong>{organizationName}</strong> has been approved!
+                        </p>
+                        <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                            Please sign in to {userEmail ? `your account (${userEmail})` : 'continue'} and claim your 20% discount.
+                        </p>
+                        
+                        <div className="bg-gradient-to-r from-emerald-900/20 to-teal-900/20 border border-emerald-500/30 rounded-xl p-4 mb-6">
+                            <p className="text-sm text-emerald-400 font-semibold">
+                                Your 20% discount will be automatically applied after sign-in
+                            </p>
+                        </div>
+
+                        <Button 
+                            onClick={handleSignIn}
+                            variant="secondary"
+                            className="w-full"
+                        >
+                            <span>Sign In to Continue</span>
+                            <ArrowRight size={18} className="ml-2" />
+                        </Button>
+                    </div>
+                )}
+
                 {(status === 'invalid' || status === 'error') && (
                     <div className="text-center">
                         <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
