@@ -716,14 +716,12 @@ export const Auth = () => {
                                         required
                                     />
                                     <div className="mb-4">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Upload Proof of Status (501(c)(3) Letter)</label>
-                                        <FileDropZone
-                                            label=""
-                                            currentImage={formData.nonProfitDocUrl ? 'PDF UPLOADED' : undefined}
-                                            onFileSelect={(b64) => setFormData({ ...formData, nonProfitDocUrl: b64 as string })}
+                                        <DocumentUpload
+                                            label="Upload Proof of Status (501(c)(3) Letter)"
+                                            value={formData.nonProfitDocUrl}
+                                            onChange={(url) => setFormData({ ...formData, nonProfitDocUrl: url })}
                                             onClear={() => setFormData({ ...formData, nonProfitDocUrl: '' })}
                                         />
-                                        {formData.nonProfitDocUrl && <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold mt-1">Document Attached</p>}
                                     </div>
 
                                     <div className="flex gap-2 mt-4">
