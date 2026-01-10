@@ -460,6 +460,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     // Non-profit approval handler
     const handleApproveNonprofit = async (applicationId: string, userId: string) => {
+        console.log('Approve clicked:', { applicationId, userId });
+        
         if (!confirm('Are you sure you want to approve this non-profit application? This will generate a 20% discount code and send an email to the applicant.')) {
             return;
         }
@@ -467,6 +469,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setIsApprovingNonprofit(true);
         try {
             const token = await StorageService.getAuthToken();
+            console.log('Token obtained, making request...');
+            
             const response = await fetch('/api/onboarding/admin/nonprofit/approve', {
                 method: 'POST',
                 headers: { 
@@ -476,18 +480,20 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 body: JSON.stringify({ applicationId, userId })
             });
             
+            console.log('Response status:', response.status);
+            const data = await response.json();
+            console.log('Response data:', data);
+            
             if (!response.ok) {
-                const data = await response.json();
                 throw new Error(data.error || 'Failed to approve application');
             }
             
-            const data = await response.json();
-            alert(`Non-profit approved! Discount code: ${data.discountCode}`);
+            alert(`✅ Non-profit approved!\n\nDiscount code: ${data.discountCode}\n\nAn email with the 20% discount has been sent to the applicant.`);
             refreshData();
             setSelectedNonprofit(null);
         } catch (e: any) {
             console.error('Approve nonprofit error:', e);
-            alert(e.message || 'Failed to approve application');
+            alert('❌ Error: ' + (e.message || 'Failed to approve application'));
         } finally {
             setIsApprovingNonprofit(false);
         }
