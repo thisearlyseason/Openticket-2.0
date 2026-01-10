@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { CheckCircle, XCircle, Loader2, Gift, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Gift, ArrowRight, Shield } from 'lucide-react';
 import { Button, Card } from './UI';
 import { StorageService } from '../services/storageService';
 
