@@ -61,25 +61,36 @@ export const Pricing = () => {
 
         if (plan === currentPlan) return;
 
-        // Calculate price
-        let price = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
+        // Calculate price in USD
+        let priceUSD = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
 
         // Apply Non-Profit Discount (20%)
         if (user.nonProfitStatus === 'approved' && plan === 'pro') {
-            price = price * 0.80;
+            priceUSD = priceUSD * 0.80;
         }
 
+        // Convert to local currency
+        const currencyInfo = CurrencyService.getInfo(currency);
+        const priceLocal = CurrencyService.convert(priceUSD, currency);
+
         // Show confirmation modal
-        setConfirmModal({ show: true, plan, price });
+        setConfirmModal({ 
+            show: true, 
+            plan, 
+            priceUSD,
+            priceLocal,
+            currencySymbol: currencyInfo.symbol,
+            currencyCode: currency
+        });
     };
 
     const confirmPlanSelection = async () => {
         if (!confirmModal.plan || !user) return;
         
         const plan = confirmModal.plan;
-        const price = confirmModal.price;
+        const price = confirmModal.priceUSD; // Stripe always charges in USD
         
-        setConfirmModal({ show: false, plan: null, price: 0 });
+        setConfirmModal({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' });
         
         // --- STRIPE_INTEGRATION: Process Subscription Fee ---
         // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
