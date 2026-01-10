@@ -94,6 +94,9 @@ export const Settings = () => {
                         setBusinessPhone(freshUser.businessPhone || '');
                         setShowPhonePublicly(freshUser.showPhonePublicly || false);
                         setBio(freshUser.bio || '');
+                        setBusinessType(freshUser.businessType || '');
+                        setNonprofitStatus(freshUser.nonProfitStatus || null);
+                        setNonprofitName(freshUser.nonProfitName || '');
                         setPrimaryColor(freshUser.primaryColor || '#E0FF20');
                         setDefaultRefundPolicy(freshUser.defaultRefundPolicy || '');
                         setDefaultRefundPolicyEnabled(freshUser.defaultRefundPolicyEnabled || false);
