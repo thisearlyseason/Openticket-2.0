@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Star, Shield, Zap, Heart, Clock } from 'lucide-react';
+import { Check, Star, Shield, Zap, Heart, Clock, X } from 'lucide-react';
 import { Button, Card, Badge } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
@@ -10,6 +10,11 @@ import { PlanType, Invoice } from '../types';
 export const Pricing = () => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [currency, setCurrency] = useState('USD');
+    const [confirmModal, setConfirmModal] = useState<{
+        show: boolean;
+        plan: PlanType | null;
+        price: number;
+    }>({ show: false, plan: null, price: 0 });
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const user = StorageService.getCurrentUser();
