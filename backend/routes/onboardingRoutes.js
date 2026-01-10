@@ -454,6 +454,7 @@ router.get('/admin/nonprofit/all', verifyToken, requireAdmin, async (req, res) =
 router.post('/admin/nonprofit/approve', verifyToken, requireAdmin, async (req, res) => {
     try {
         const { applicationId, userId } = req.body;
+        console.log('[Nonprofit Approve] Starting approval for:', { applicationId, userId });
 
         if (!applicationId || !userId) {
             return res.status(400).json({ error: 'Application ID and User ID are required' });
@@ -462,6 +463,7 @@ router.post('/admin/nonprofit/approve', verifyToken, requireAdmin, async (req, r
         // Generate unique discount code (20% off)
         const discountCode = `NP${uuidv4().substring(0, 8).toUpperCase()}`;
         const magicLinkToken = uuidv4();
+        console.log('[Nonprofit Approve] Generated code:', discountCode);
 
         // Update application status
         const { error: appError } = await supabase
@@ -475,7 +477,11 @@ router.post('/admin/nonprofit/approve', verifyToken, requireAdmin, async (req, r
             })
             .eq('id', applicationId);
 
-        if (appError) throw appError;
+        if (appError) {
+            console.error('[Nonprofit Approve] App update error:', appError);
+            throw appError;
+        }
+        console.log('[Nonprofit Approve] Application updated');
 
         // Update user profile
         const { error: profileError } = await supabase
@@ -487,26 +493,35 @@ router.post('/admin/nonprofit/approve', verifyToken, requireAdmin, async (req, r
             })
             .eq('id', userId);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+            console.error('[Nonprofit Approve] Profile update error:', profileError);
+            throw profileError;
+        }
+        console.log('[Nonprofit Approve] Profile updated');
 
-        // Create the promo code in the system
-        await supabase
-            .from('promo_codes')
-            .insert({
-                id: uuidv4(),
-                code: discountCode,
-                type: 'percentage',
-                value: 20,
-                target: 'subscription',
-                target_plans: ['pro', 'premium'],
-                usage_limit: 1,
-                usage_count: 0,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                created_by: req.user.uid,
-                nonprofit_application_id: applicationId,
-                description: `Non-profit discount for application ${applicationId}`
-            });
+        // Create the promo code in the system (if promo_codes table exists)
+        try {
+            await supabase
+                .from('promo_codes')
+                .insert({
+                    id: uuidv4(),
+                    code: discountCode,
+                    type: 'percentage',
+                    value: 20,
+                    target: 'subscription',
+                    target_plans: ['pro', 'premium'],
+                    usage_limit: 1,
+                    usage_count: 0,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    created_by: req.user.uid,
+                    nonprofit_application_id: applicationId,
+                    description: `Non-profit discount for application ${applicationId}`
+                });
+            console.log('[Nonprofit Approve] Promo code created');
+        } catch (promoError) {
+            console.warn('[Nonprofit Approve] Promo code creation failed (table may not exist):', promoError.message);
+        }
 
         // Get user details for email
         const { data: user } = await supabase
@@ -519,14 +534,21 @@ router.post('/admin/nonprofit/approve', verifyToken, requireAdmin, async (req, r
         if (user?.email) {
             const frontendUrl = process.env.FRONTEND_URL || 'https://openticket.events';
             const magicLink = `${frontendUrl}/#/nonprofit-upgrade?token=${magicLinkToken}&code=${discountCode}`;
+            console.log('[Nonprofit Approve] Sending email to:', user.email);
 
-            await EmailService.sendNonprofitApprovalEmail(
-                user.email,
-                user.name || 'Organizer',
-                user.nonprofit_name || 'Your Organization',
-                discountCode,
-                magicLink
-            );
+            try {
+                await EmailService.sendNonprofitApprovalEmail(
+                    user.email,
+                    user.name || 'Organizer',
+                    user.nonprofit_name || 'Your Organization',
+                    discountCode,
+                    magicLink
+                );
+                console.log('[Nonprofit Approve] Email sent successfully');
+            } catch (emailError) {
+                console.error('[Nonprofit Approve] Email failed:', emailError.message);
+                // Don't fail the whole operation if email fails
+            }
         }
 
         res.json({ 
