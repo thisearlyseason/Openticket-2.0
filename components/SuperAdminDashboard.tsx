@@ -339,7 +339,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         conversions: aff.conversions || 0,
                         conversionRate: aff.conversionRate || 0,
                         transactions: aff.transactions || [],
-                        commissionRate: aff.commissionRate || 10,
+                        commissionRate: aff.commissionRate || 15,  // Default 15% for subscriptions
                         discountPercent: aff.discountPercent || 0
                     }));
                     setAffiliates(affiliateDataList);
@@ -367,7 +367,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             conversions: affTransactions.length,
                             conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
                             transactions: affTransactions,
-                            commissionRate: aff.commissionRate || 10,
+                            commissionRate: aff.commissionRate || 15,  // Default 15% for subscriptions
                             discountPercent: aff.discountPercent || 0
                         };
                     });
@@ -398,7 +398,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         conversions: affTransactions.length,
                         conversionRate: aff.affiliateClicks ? (affTransactions.length / aff.affiliateClicks * 100) : 0,
                         transactions: affTransactions,
-                        commissionRate: aff.commissionRate || 10,
+                        commissionRate: aff.commissionRate || 15,  // Default 15% for subscriptions
                         discountPercent: aff.discountPercent || 0
                     };
                 });
