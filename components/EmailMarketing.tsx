@@ -269,8 +269,15 @@ export const EmailMarketing = () => {
         }
     };
 
-    const deleteCampaign = (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+    const deleteCampaign = async (id: string) => {
+        const confirmed = await confirm({
+            title: 'Delete Campaign',
+            message: 'Are you sure you want to delete this campaign?',
+            confirmText: 'Delete',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
         
         const updatedCampaigns = campaigns.filter(c => c.id !== id);
         setCampaigns(updatedCampaigns);
