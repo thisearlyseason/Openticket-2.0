@@ -470,15 +470,23 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
-    // Non-profit approval handler
-    const handleApproveNonprofit = async (applicationId: string, userId: string) => {
-        console.log('Approve clicked:', { applicationId, userId });
-        
-        if (!window.confirm('Are you sure you want to approve this non-profit application? This will generate a 20% discount code and send an email to the applicant.')) {
-            return;
-        }
-        
+    // Non-profit approval handler - shows confirmation modal
+    const showApproveConfirmation = (applicationId: string, userId: string) => {
+        setConfirmModal({
+            show: true,
+            title: 'Approve Non-Profit Application',
+            message: 'This will generate a 20% discount code and send an email to the applicant. Continue?',
+            type: 'approve',
+            onConfirm: () => executeApproveNonprofit(applicationId, userId)
+        });
+    };
+
+    // Execute the actual approval
+    const executeApproveNonprofit = async (applicationId: string, userId: string) => {
+        console.log('Executing approval:', { applicationId, userId });
+        setConfirmModal({ ...confirmModal, show: false });
         setIsApprovingNonprofit(true);
+        
         try {
             const token = await StorageService.getAuthToken();
             console.log('Token obtained, making request...');
@@ -500,24 +508,46 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 throw new Error(data.error || 'Failed to approve application');
             }
             
-            window.alert(`✅ Non-profit approved!\n\nDiscount code: ${data.discountCode}\n\nAn email with the 20% discount has been sent to the applicant.`);
+            // Show success message in a modal-like way
+            setConfirmModal({
+                show: true,
+                title: '✅ Non-Profit Approved!',
+                message: `Discount code: ${data.discountCode}\n\nAn email with the 20% discount has been sent to the applicant.`,
+                type: 'other',
+                onConfirm: () => setConfirmModal({ ...confirmModal, show: false })
+            });
             refreshData();
             setSelectedNonprofit(null);
         } catch (e: any) {
             console.error('Approve nonprofit error:', e);
-            window.alert('❌ Error: ' + (e.message || 'Failed to approve application'));
+            setConfirmModal({
+                show: true,
+                title: '❌ Error',
+                message: e.message || 'Failed to approve application',
+                type: 'other',
+                onConfirm: () => setConfirmModal({ ...confirmModal, show: false })
+            });
         } finally {
             setIsApprovingNonprofit(false);
         }
     };
 
-    // Non-profit rejection handler
-    const handleRejectNonprofit = async (applicationId: string, userId: string) => {
+    // Non-profit rejection handler - shows confirmation modal
+    const showRejectConfirmation = (applicationId: string, userId: string) => {
         const reason = nonprofitRejectReason || 'Your application did not meet our verification requirements.';
-        
-        if (!window.confirm(`Are you sure you want to reject this application?\n\nReason: ${reason}`)) {
-            return;
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Reject Non-Profit Application',
+            message: `Are you sure you want to reject this application?\n\nReason: ${reason}`,
+            type: 'reject',
+            onConfirm: () => executeRejectNonprofit(applicationId, userId, reason)
+        });
+    };
+
+    // Execute the actual rejection
+    const executeRejectNonprofit = async (applicationId: string, userId: string, reason: string) => {
+        console.log('Executing rejection:', { applicationId, userId, reason });
+        setConfirmModal({ ...confirmModal, show: false });
         
         setIsApprovingNonprofit(true);
         try {
