@@ -303,6 +303,12 @@ export const Pricing = () => {
 
                 {/* PREMIUM PLAN */}
                 <Card className="p-8 border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-black relative hover:-translate-y-2 transition-transform duration-300">
+                    {hasNonprofitDiscount && (
+                        <div className="absolute top-4 right-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1">
+                            <Gift size={12} />
+                            20% OFF
+                        </div>
+                    )}
                     <div className="mb-6">
                         <h3 className="text-xl font-bold text-purple-500 mb-2 flex items-center gap-2"><Zap size={20} fill="currentColor" /> {PLANS.premium.name}</h3>
                         <div className="text-4xl font-black text-gray-900 dark:text-white flex items-end">
