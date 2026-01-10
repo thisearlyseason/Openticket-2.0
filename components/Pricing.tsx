@@ -315,6 +315,63 @@ export const Pricing = () => {
                     </div>
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && confirmModal.plan && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
+                                Confirm Subscription
+                            </h3>
+                            <button 
+                                onClick={() => setConfirmModal({ show: false, plan: null, price: 0 })}
+                                className="text-zinc-400 hover:text-zinc-600"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 mb-6">
+                            <p className="text-zinc-600 dark:text-zinc-300 mb-2">
+                                You're upgrading to:
+                            </p>
+                            <p className="text-2xl font-bold text-zinc-900 dark:text-white">
+                                {PLANS[confirmModal.plan].name} Plan
+                            </p>
+                            <p className="text-sm text-zinc-500 mt-1">
+                                Billed {billingCycle}
+                            </p>
+                        </div>
+                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+                            <span className="text-zinc-600 dark:text-zinc-400">Total due now:</span>
+                            <span className="text-2xl font-bold text-[#E0FF20]">
+                                ${confirmModal.price.toFixed(2)} USD
+                            </span>
+                        </div>
+                        {user?.nonProfitStatus === 'approved' && confirmModal.plan === 'pro' && (
+                            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                <p className="text-sm text-green-700 dark:text-green-300">
+                                    ✓ 20% Non-Profit discount applied
+                                </p>
+                            </div>
+                        )}
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmModal({ show: false, plan: null, price: 0 })}
+                                className="flex-1 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white font-bold py-3 px-4 rounded-xl"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmPlanSelection}
+                                className="flex-1 bg-[#E0FF20] hover:bg-[#c8e01c] text-black font-bold py-3 px-4 rounded-xl"
+                            >
+                                Continue to Payment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
