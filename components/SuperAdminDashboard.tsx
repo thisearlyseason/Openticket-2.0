@@ -566,13 +566,25 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 throw new Error(data.error || 'Failed to reject application');
             }
             
-            window.alert('Non-profit application rejected.');
+            setConfirmModal({
+                show: true,
+                title: 'Application Rejected',
+                message: 'Non-profit application has been rejected. The applicant will be notified.',
+                type: 'other',
+                onConfirm: () => setConfirmModal({ ...confirmModal, show: false })
+            });
             setNonprofitRejectReason('');
             refreshData();
             setSelectedNonprofit(null);
         } catch (e: any) {
             console.error('Reject nonprofit error:', e);
-            window.alert(e.message || 'Failed to reject application');
+            setConfirmModal({
+                show: true,
+                title: '❌ Error',
+                message: e.message || 'Failed to reject application',
+                type: 'other',
+                onConfirm: () => setConfirmModal({ ...confirmModal, show: false })
+            });
         } finally {
             setIsApprovingNonprofit(false);
         }
