@@ -92,6 +92,7 @@ const getNewsletterTemplate = (title: string, content: string) => ({
 
 export const EmailMarketing = () => {
     const navigate = useNavigate();
+    const { confirm } = useConfirm();
     const [isLoading, setIsLoading] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
     const [isTestingConnection, setIsTestingConnection] = useState(false);
