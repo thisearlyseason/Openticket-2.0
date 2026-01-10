@@ -361,9 +361,11 @@ const App = () => {
 
     return (
         <ErrorBoundary>
-            <HashRouter>
-                <MainContent />
-            </HashRouter>
+            <ConfirmProvider>
+                <HashRouter>
+                    <MainContent />
+                </HashRouter>
+            </ConfirmProvider>
         </ErrorBoundary>
     );
 };
