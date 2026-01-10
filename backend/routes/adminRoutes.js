@@ -491,7 +491,7 @@ router.get('/affiliate/analytics', verifyToken, requireAdmin, async (req, res) =
                 email: aff.email,
                 affiliateCode: aff.affiliate_code,
                 stripeConnected: !!aff.stripe_connect_id,
-                commissionRate: aff.commission_rate || 10,
+                commissionRate: aff.commission_rate || 15,  // Default 15% for subscriptions
                 discountPercent: aff.discount_percent || 0,
                 clicks: clicks,
                 conversions: conversions,
