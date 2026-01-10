@@ -339,7 +339,7 @@ export const Pricing = () => {
                                 Confirm Subscription
                             </h3>
                             <button 
-                                onClick={() => setConfirmModal({ show: false, plan: null, price: 0 })}
+                                onClick={() => setConfirmModal({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' })}
                                 className="text-zinc-400 hover:text-zinc-600"
                             >
                                 <X size={24} />
@@ -356,11 +356,18 @@ export const Pricing = () => {
                                 Billed {billingCycle}
                             </p>
                         </div>
-                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+                        <div className="flex justify-between items-center mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
                             <span className="text-zinc-600 dark:text-zinc-400">Total due now:</span>
-                            <span className="text-2xl font-bold text-[#E0FF20]">
-                                ${confirmModal.price.toFixed(2)} USD
-                            </span>
+                            <div className="text-right">
+                                <span className="text-2xl font-bold text-[#E0FF20]">
+                                    {confirmModal.currencySymbol}{confirmModal.priceLocal.toFixed(2)} {confirmModal.currencyCode}
+                                </span>
+                                {confirmModal.currencyCode !== 'USD' && (
+                                    <p className="text-xs text-zinc-500">
+                                        ≈ ${confirmModal.priceUSD.toFixed(2)} USD
+                                    </p>
+                                )}
+                            </div>
                         </div>
                         {user?.nonProfitStatus === 'approved' && confirmModal.plan === 'pro' && (
                             <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -371,7 +378,7 @@ export const Pricing = () => {
                         )}
                         <div className="flex gap-3">
                             <button
-                                onClick={() => setConfirmModal({ show: false, plan: null, price: 0 })}
+                                onClick={() => setConfirmModal({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' })}
                                 className="flex-1 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white font-bold py-3 px-4 rounded-xl"
                             >
                                 Cancel
