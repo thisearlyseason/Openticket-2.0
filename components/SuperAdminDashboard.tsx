@@ -503,7 +503,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const handleRejectNonprofit = async (applicationId: string, userId: string) => {
         const reason = nonprofitRejectReason || 'Your application did not meet our verification requirements.';
         
-        if (!confirm(`Are you sure you want to reject this application?\n\nReason: ${reason}`)) {
+        if (!window.confirm(`Are you sure you want to reject this application?\n\nReason: ${reason}`)) {
             return;
         }
         
@@ -524,13 +524,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 throw new Error(data.error || 'Failed to reject application');
             }
             
-            alert('Non-profit application rejected.');
+            window.alert('Non-profit application rejected.');
             setNonprofitRejectReason('');
             refreshData();
             setSelectedNonprofit(null);
         } catch (e: any) {
             console.error('Reject nonprofit error:', e);
-            alert(e.message || 'Failed to reject application');
+            window.alert(e.message || 'Failed to reject application');
         } finally {
             setIsApprovingNonprofit(false);
         }
@@ -541,12 +541,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         
         const amount = parseFloat(payoutAmount);
         if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount');
+            window.alert('Please enter a valid amount');
             return;
         }
         
         if (amount > selectedAffiliate.pendingPayout) {
-            alert(`Cannot pay more than pending amount ($${selectedAffiliate.pendingPayout.toFixed(2)})`);
+            window.alert(`Cannot pay more than pending amount ($${selectedAffiliate.pendingPayout.toFixed(2)})`);
             return;
         }
         
@@ -582,7 +582,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 } catch (stripeError) {
                     console.error('Stripe payout failed:', stripeError);
                     await StorageService.updateAffiliatePayout(payout.id, { status: 'failed' });
-                    alert('Stripe payout failed. Please try offline payment or check Stripe connection.');
+                    window.alert('Stripe payout failed. Please try offline payment or check Stripe connection.');
                 }
             }
             
@@ -593,11 +593,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             
             // Refresh data
             refreshData();
-            alert(`Payout of $${amount.toFixed(2)} to ${payout.affiliateName} recorded successfully!`);
+            window.alert(`Payout of $${amount.toFixed(2)} to ${payout.affiliateName} recorded successfully!`);
             
         } catch (e) {
             console.error('Payout error:', e);
-            alert('Failed to process payout. Please try again.');
+            window.alert('Failed to process payout. Please try again.');
         } finally {
             setIsProcessingPayout(false);
         }
@@ -618,7 +618,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             }
             
             if (Object.keys(updates).length === 0) {
-                alert('No changes to save');
+                window.alert('No changes to save');
                 setIsSavingRates(false);
                 return;
             }
@@ -637,10 +637,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             setEditCommissionRate(null);
             setEditDiscountPercent(null);
             
-            alert('Affiliate rates updated successfully!');
+            window.alert('Affiliate rates updated successfully!');
         } catch (e) {
             console.error('Update rates error:', e);
-            alert('Failed to update rates. Please try again.');
+            window.alert('Failed to update rates. Please try again.');
         } finally {
             setIsSavingRates(false);
         }
@@ -676,7 +676,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             }
             
             if (amount <= 0) {
-                alert('No pending amount to pay out');
+                window.alert('No pending amount to pay out');
                 return;
             }
             
@@ -696,10 +696,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             setShowPayoutModal(false);
             setPlatformPayoutNotes('');
             refreshData();
-            alert(`Payout of $${amount.toFixed(2)} has been recorded successfully!`);
+            window.alert(`Payout of $${amount.toFixed(2)} has been recorded successfully!`);
         } catch (e) {
             console.error('Platform payout error:', e);
-            alert('Failed to process payout. Please try again.');
+            window.alert('Failed to process payout. Please try again.');
         } finally {
             setIsProcessingPlatformPayout(false);
         }
@@ -712,7 +712,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         await StorageService.setSystemNotification(broadcastMsg, 'info', broadcastTarget);
         setBroadcastMsg('');
         refreshData();
-        alert(`Broadcast sent to ${broadcastTarget === 'all' ? 'all users' : broadcastTarget}!`);
+        window.alert(`Broadcast sent to ${broadcastTarget === 'all' ? 'all users' : broadcastTarget}!`);
     };
 
     const handleClearBroadcast = () => {
@@ -748,7 +748,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const handleCreatePromoCode = async () => {
         if (!newPromo.code.trim()) {
-            alert('Please enter a promo code');
+            window.alert('Please enter a promo code');
             return;
         }
 
@@ -777,7 +777,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             usageLimit: 0,
             expiresAt: ''
         });
-        alert('Promo code created successfully!');
+        window.alert('Promo code created successfully!');
     };
 
     const handleTogglePromoCode = async (promo: PromoCode) => {
@@ -799,7 +799,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             stripePublishableKey: platformPublishableKey,
             stripeSecretKey: platformSecretKey
         });
-        alert("Platform settings saved successfully.");
+        window.alert("Platform settings saved successfully.");
     };
 
     const exportFinancialsCSV = () => {
@@ -1788,12 +1788,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             });
                                             const result = await response.json();
                                             if (result.success) {
-                                                alert(`✅ Sent ${result.sent} weekly summaries to affiliates!`);
+                                                window.alert(`✅ Sent ${result.sent} weekly summaries to affiliates!`);
                                             } else {
-                                                alert(`❌ Error: ${result.error}`);
+                                                window.alert(`❌ Error: ${result.error}`);
                                             }
                                         } catch (e: any) {
-                                            alert(`❌ Failed: ${e.message}`);
+                                            window.alert(`❌ Failed: ${e.message}`);
                                         }
                                     }}
                                 >
@@ -1849,7 +1849,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         size="sm"
                                         disabled={isUpdatingGlobalRate}
                                         onClick={async () => {
-                                            if (!confirm(`Set ALL affiliates to ${globalCommissionRate}% commission rate?`)) return;
+                                            if (!window.confirm(`Set ALL affiliates to ${globalCommissionRate}% commission rate?`)) return;
                                             setIsUpdatingGlobalRate(true);
                                             try {
                                                 const token = await StorageService.getAuthToken();
@@ -1863,13 +1863,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 });
                                                 const result = await response.json();
                                                 if (response.ok) {
-                                                    alert(result.message);
+                                                    window.alert(result.message);
                                                     refreshData();
                                                 } else {
-                                                    alert('Error: ' + result.error);
+                                                    window.alert('Error: ' + result.error);
                                                 }
                                             } catch (e: any) {
-                                                alert('Failed: ' + e.message);
+                                                window.alert('Failed: ' + e.message);
                                             } finally {
                                                 setIsUpdatingGlobalRate(false);
                                             }
@@ -2502,7 +2502,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     size="sm" 
                                     variant="outline"
                                     onClick={async () => {
-                                        if (!confirm('This will migrate existing nonprofit users from profiles to the applications table. Continue?')) return;
+                                        if (!window.confirm('This will migrate existing nonprofit users from profiles to the applications table. Continue?')) return;
                                         try {
                                             const token = await StorageService.getAuthToken();
                                             const response = await fetch('/api/onboarding/admin/nonprofit/migrate', {
@@ -2511,13 +2511,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             });
                                             const data = await response.json();
                                             if (response.ok) {
-                                                alert(data.message);
+                                                window.alert(data.message);
                                                 refreshData();
                                             } else {
-                                                alert('Migration failed: ' + data.error);
+                                                window.alert('Migration failed: ' + data.error);
                                             }
                                         } catch (e: any) {
-                                            alert('Migration failed: ' + e.message);
+                                            window.alert('Migration failed: ' + e.message);
                                         }
                                     }}
                                 >
@@ -2924,7 +2924,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <Button 
                                         onClick={() => {
                                             localStorage.setItem('openticket_backend_default_currency', backendDefaultCurrency);
-                                            alert(`Backend default currency set to ${backendDefaultCurrency}. All events without a specific currency will use this for charges.`);
+                                            window.alert(`Backend default currency set to ${backendDefaultCurrency}. All events without a specific currency will use this for charges.`);
                                         }} 
                                         className="bg-green-600 hover:bg-green-700 text-white border-none"
                                     >
@@ -2967,9 +2967,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 const status = await response.json();
                                                 const isConfigured = status.configured === true && status.available === true;
                                                 setResendApiKeyConfigured(isConfigured);
-                                                alert(`Resend Status:\n\nConfigured: ${status.configured}\nAvailable: ${status.available}\nProvider: ${status.provider}\nSender: ${status.senderEmail}\n\nResult: ${isConfigured ? '✅ Connected' : '❌ Not Connected'}`);
+                                                window.alert(`Resend Status:\n\nConfigured: ${status.configured}\nAvailable: ${status.available}\nProvider: ${status.provider}\nSender: ${status.senderEmail}\n\nResult: ${isConfigured ? '✅ Connected' : '❌ Not Connected'}`);
                                             } catch (error: any) {
-                                                alert(`Error checking Resend status: ${error.message}`);
+                                                window.alert(`Error checking Resend status: ${error.message}`);
                                             }
                                         }} size="sm">
                                             Refresh Status
