@@ -490,7 +490,9 @@ export const Billing = () => {
                         <div className="flex items-center gap-4 text-sm mb-6">
                             <div className="flex items-center text-gray-600 dark:text-zinc-300">
                                 <Calendar size={16} className="mr-2 text-primary" />
-                                Next billing: {new Date(sub.nextBillingDate).toLocaleDateString()}
+                                Next billing: {sub.nextBillingDate && !isNaN(new Date(sub.nextBillingDate).getTime()) 
+                                    ? new Date(sub.nextBillingDate).toLocaleDateString() 
+                                    : sub.plan === 'free' ? 'N/A' : 'Not set'}
                             </div>
                             <div className="flex items-center text-gray-600 dark:text-zinc-300">
                                 <DollarSign size={16} className="mr-2 text-primary" />
