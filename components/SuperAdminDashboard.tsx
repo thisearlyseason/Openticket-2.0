@@ -2599,7 +2599,15 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     size="sm" 
                                     variant="outline"
                                     onClick={async () => {
-                                        if (!window.confirm('This will migrate existing nonprofit users from profiles to the applications table. Continue?')) return;
+                                        const confirmed = await confirm({
+                                            title: 'Migrate Legacy Users',
+                                            message: 'This will migrate existing nonprofit users from profiles to the applications table. Continue?',
+                                            confirmText: 'Migrate',
+                                            variant: 'warning'
+                                        });
+
+                                        if (!confirmed) return;
+
                                         try {
                                             const token = await StorageService.getAuthToken();
                                             const response = await fetch('/api/onboarding/admin/nonprofit/migrate', {
@@ -2608,13 +2616,28 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             });
                                             const data = await response.json();
                                             if (response.ok) {
-                                                window.alert(data.message);
+                                                await confirm({
+                                                    title: 'Success',
+                                                    message: data.message,
+                                                    confirmText: 'OK',
+                                                    variant: 'info'
+                                                });
                                                 refreshData();
                                             } else {
-                                                window.alert('Migration failed: ' + data.error);
+                                                await confirm({
+                                                    title: 'Error',
+                                                    message: 'Migration failed: ' + data.error,
+                                                    confirmText: 'OK',
+                                                    variant: 'danger'
+                                                });
                                             }
                                         } catch (e: any) {
-                                            window.alert('Migration failed: ' + e.message);
+                                            await confirm({
+                                                title: 'Error',
+                                                message: 'Migration failed: ' + e.message,
+                                                confirmText: 'OK',
+                                                variant: 'danger'
+                                            });
                                         }
                                     }}
                                 >
