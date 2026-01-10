@@ -177,9 +177,7 @@ export const Billing = () => {
     };
 
     const handleDisconnect = async () => {
-        if (!window.confirm('Are you sure you want to disconnect your Stripe account? You will need to reconnect to receive payouts.')) {
-            return;
-        }
+        setShowDisconnectModal(false);
         try {
             await StorageService.disconnectStripeAccount();
             showToast('Stripe account disconnected', 'success');
