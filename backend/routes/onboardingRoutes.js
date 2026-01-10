@@ -161,22 +161,36 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
 
         if (appError) throw appError;
 
+        // Get existing user profile to preserve subscription data
+        const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('subscription, role')
+            .eq('id', userId)
+            .single();
+
+        // Prepare subscription data - merge with existing or create new
+        const subscriptionData = existingProfile?.subscription || {};
+        const updatedSubscription = {
+            ...subscriptionData,
+            plan: subscriptionData.plan || 'free',
+            status: subscriptionData.status || 'active',
+            startDate: subscriptionData.startDate || new Date().toISOString()
+        };
+
         // Update user profile with non-profit status
-        await supabase
+        const { error: updateError } = await supabase
             .from('profiles')
             .update({
                 nonprofit_status: 'pending',
                 nonprofit_name: organizationName,
                 nonprofit_ein: ein || null,
                 nonprofit_doc_url: documentUrl,
-                subscription: {
-                    plan: 'free',
-                    status: 'active',
-                    startDate: new Date().toISOString()
-                },
-                role: 'organizer'
+                subscription: updatedSubscription,
+                role: existingProfile?.role || 'organizer'
             })
             .eq('id', userId);
+
+        if (updateError) throw updateError;
 
         // Save onboarding responses if provided
         if (onboardingResponses) {
