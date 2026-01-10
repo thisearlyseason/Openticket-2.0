@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Event } from '../types';
 import { Button, Card, Input, Badge, RichTextarea } from './UI';
+import { useConfirm } from './ConfirmContext';
 import { 
     ArrowLeft, Mail, Send, Users, Clock, CheckCircle2, AlertCircle,
     Loader2, Plus, Calendar, Bell, ShoppingCart, Megaphone, 
