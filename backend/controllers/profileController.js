@@ -55,8 +55,10 @@ export const setupSuperAdmin = async (req, res) => {
 
 export const syncProfile = async (req, res) => {
     try {
+        console.log('[ProfileSync] Sync request received for user:', req.user?.uid);
         const { uid } = req.user;
         const updates = req.body;
+        console.log('[ProfileSync] Updates received:', Object.keys(updates));
 
         // Fields that exist as columns in the profiles table (verified in DB schema)
         const dbColumnFields = [
@@ -80,7 +82,7 @@ export const syncProfile = async (req, res) => {
             'notifications', 'email_templates', 'gemini_api_key', 'gmail_config',
             // Organizer profile fields (stored in subscription.settings JSONB)
             'bio', 'phone', 'business_email', 'business_phone', 
-            'use_business_name', 'show_phone_publicly'
+            'use_business_name', 'show_phone_publicly', 'event_types'
         ];
 
         const safeUpdates = {};
@@ -94,10 +96,14 @@ export const syncProfile = async (req, res) => {
             }
         });
 
+        console.log('[ProfileSync] Safe updates:', Object.keys(safeUpdates));
+        console.log('[ProfileSync] Extended settings:', Object.keys(extendedSettings));
+
         // If there are extended settings, merge them into the subscription field
         if (Object.keys(extendedSettings).length > 0) {
+            console.log('[ProfileSync] Fetching current profile to merge settings');
             // First fetch current subscription to merge
-            const { data: currentProfile } = await supabase
+            const { data: currentProfile, error: fetchError } = await supabase
                 .from('profiles')
                 .select('subscription')
                 .eq('id', uid)
