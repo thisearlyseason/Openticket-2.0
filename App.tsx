@@ -36,6 +36,7 @@ import { EmailMarketing } from './components/EmailMarketing';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
+import { ConfirmProvider } from './components/ConfirmContext';
 import { NotificationService } from './services/notificationService';
 import { CurrencySelector } from './components/CurrencySelector';
 import { UserNotification } from './types';
