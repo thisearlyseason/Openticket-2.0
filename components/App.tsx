@@ -34,6 +34,9 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     const location = useLocation();
     const user = StorageService.getCurrentUser();
 
+    // Non-profit pending status
+    const [nonprofitPending, setNonprofitPending] = useState(false);
+
     // Role & Visibility Definitions
     const isOrganizer = user?.role === 'organizer' || user?.isAdmin;
     const isAffiliate = user?.role === 'affiliate' || user?.isAdmin;
@@ -48,6 +51,40 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
 
     const isEmbed = window.location.hash.includes('embed=true');
     const isLanding = location.pathname === '/';
+    const isAffiliateAuth = location.pathname === '/affiliate-login';
+
+    // Check nonprofit status on mount
+    useEffect(() => {
+        const checkNonprofitStatus = async () => {
+            if (!user) return;
+            
+            // Check user's local profile first
+            if (user.nonProfitStatus === 'pending') {
+                setNonprofitPending(true);
+                return;
+            }
+            
+            // Also check API for nonprofit application status
+            try {
+                const token = await StorageService.getAuthToken();
+                if (!token) return;
+                
+                const response = await fetch('/api/onboarding/nonprofit/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data?.status === 'pending') {
+                        setNonprofitPending(true);
+                    }
+                }
+            } catch (e) {
+                // Silent fail
+            }
+        };
+        
+        checkNonprofitStatus();
+    }, [user?.id]);
     const isAffiliateAuth = location.pathname === '/affiliate-login';
 
     const [isDark, setIsDark] = useState(() => {
