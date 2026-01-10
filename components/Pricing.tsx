@@ -9,6 +9,7 @@ import { PlanType, Invoice } from '../types';
 import { useConfirm } from './ConfirmContext';
 
 export const Pricing = () => {
+    const { confirm } = useConfirm();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [currency, setCurrency] = useState('USD');
     const [confirmModal, setConfirmModal] = useState<{
