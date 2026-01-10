@@ -47,6 +47,7 @@ const getCurrencySymbol = (currency: string = 'USD'): string => {
 export const EventBuilder = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { confirm } = useConfirm();
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
