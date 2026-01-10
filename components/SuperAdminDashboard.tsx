@@ -2690,8 +2690,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                         <img 
                                                             src={selectedNonprofit.document_url} 
                                                             alt="Verification Document" 
-                                                            className="max-w-full max-h-64 rounded-lg border border-zinc-700"
+                                                            className="max-w-full max-h-48 rounded-lg border border-zinc-700 cursor-pointer hover:opacity-80 transition-opacity"
+                                                            onClick={() => setLightboxImage(selectedNonprofit.document_url)}
                                                         />
+                                                        <p className="text-xs text-zinc-500 mt-1">Click to enlarge</p>
                                                     </div>
                                                 ) : selectedNonprofit.document_url.startsWith('data:application/pdf') ? (
                                                     <div className="mt-2 p-4 bg-zinc-800 rounded-lg">
