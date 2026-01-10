@@ -444,7 +444,7 @@ export const Billing = () => {
                                 <RefreshCw size={12} /> Refresh
                             </button>
                             <button 
-                                onClick={handleDisconnect}
+                                onClick={() => setShowDisconnectModal(true)}
                                 className="text-xs bg-red-500/20 hover:bg-red-500/30 text-red-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
                             >
                                 <XCircle size={12} /> Disconnect
