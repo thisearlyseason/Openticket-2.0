@@ -457,15 +457,41 @@ export const MyTickets = () => {
                         <div className="flex gap-4">
                             <Button variant="outline" onClick={() => setTransferModal({ ...transferModal, isOpen: false })} className="flex-1 rounded-xl font-black">Cancel</Button>
                             <Button className="flex-1 rounded-xl font-black" onClick={async () => {
-                                if (!transferModal.name || !transferModal.email) return window.alert("Please fill in all details");
-                                if (window.confirm("Transfer this ticket? This action cannot be undone.")) {
+                                if (!transferModal.name || !transferModal.email) {
+                                    await confirm({
+                                        title: 'Missing Information',
+                                        message: 'Please fill in all details',
+                                        confirmText: 'OK',
+                                        variant: 'warning'
+                                    });
+                                    return;
+                                }
+
+                                const confirmed = await confirm({
+                                    title: 'Transfer Ticket',
+                                    message: 'Transfer this ticket? This action cannot be undone.',
+                                    confirmText: 'Transfer',
+                                    variant: 'warning'
+                                });
+
+                                if (confirmed) {
                                     try {
                                         await StorageService.updateTicketHolder(transferModal.ticket!.reg.id, transferModal.ticket!.ticketArrayIndex!, transferModal.name, transferModal.email);
-                                        window.alert("Ticket transferred successfully!");
+                                        await confirm({
+                                            title: 'Success',
+                                            message: 'Ticket transferred successfully!',
+                                            confirmText: 'OK',
+                                            variant: 'info'
+                                        });
                                         setTransferModal({ ...transferModal, isOpen: false });
                                         if (user) loadTickets(user.email); // Reload
                                     } catch (e: any) {
-                                        window.alert("Transfer failed: " + e.message);
+                                        await confirm({
+                                            title: 'Error',
+                                            message: 'Transfer failed: ' + e.message,
+                                            confirmText: 'OK',
+                                            variant: 'danger'
+                                        });
                                     }
                                 }
                             }}>Confirm Transfer</Button>
