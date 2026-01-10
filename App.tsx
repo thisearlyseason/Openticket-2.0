@@ -33,6 +33,7 @@ import { MobileTicketView } from './components/MobileTicketView';
 import { InstallPrompt } from './components/InstallPrompt';
 import { AdvancedAnalytics } from './components/AdvancedAnalytics';
 import { EmailMarketing } from './components/EmailMarketing';
+import { NonprofitUpgrade } from './components/NonprofitUpgrade';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
