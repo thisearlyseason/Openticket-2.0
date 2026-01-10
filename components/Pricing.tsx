@@ -6,6 +6,7 @@ import { Button, Card, Badge } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { CurrencyService } from '../services/currencyService';
 import { PlanType, Invoice } from '../types';
+import { useConfirm } from './ConfirmContext';
 
 export const Pricing = () => {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
