@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Ticket, User, LayoutDashboard, Settings as SettingsIcon, Home as HomeIcon, Search, Sun, Moon, LogOut, ExternalLink, AlertTriangle, Loader2, WifiOff, Info, Gift, Briefcase, UserCircle, Menu, Shield } from 'lucide-react';
+import { Plus, Ticket, User, LayoutDashboard, Settings as SettingsIcon, Home as HomeIcon, Search, Sun, Moon, LogOut, ExternalLink, AlertTriangle, Loader2, WifiOff, Info, Gift, Briefcase, UserCircle, Menu, Shield, Clock } from 'lucide-react';
 import { Button } from './UI';
 import { EventBuilder } from './EventBuilder';
 import { EventView } from './EventView';
