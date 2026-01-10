@@ -1262,7 +1262,14 @@ export const EventBuilder = () => {
                                                             type="button"
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                if (window.confirm(`Delete template "${saved.name}"?`)) {
+                                                                const confirmed = await confirm({
+                                                                    title: 'Delete Template',
+                                                                    message: `Delete template "${saved.name}"?`,
+                                                                    confirmText: 'Delete',
+                                                                    variant: 'danger'
+                                                                });
+
+                                                                if (confirmed) {
                                                                     const updated = currentUser.savedTicketTemplates?.filter(t => t.id !== saved.id) || [];
                                                                     await StorageService.updateUser(currentUser.id, { savedTicketTemplates: updated });
                                                                     setCurrentUser({ ...currentUser, savedTicketTemplates: updated });
