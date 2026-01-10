@@ -13,8 +13,11 @@ export const Pricing = () => {
     const [confirmModal, setConfirmModal] = useState<{
         show: boolean;
         plan: PlanType | null;
-        price: number;
-    }>({ show: false, plan: null, price: 0 });
+        priceUSD: number;
+        priceLocal: number;
+        currencySymbol: string;
+        currencyCode: string;
+    }>({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' });
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const user = StorageService.getCurrentUser();
