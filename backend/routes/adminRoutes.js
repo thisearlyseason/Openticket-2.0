@@ -574,7 +574,7 @@ router.get('/affiliate/:affiliateId', verifyToken, requireAdmin, async (req, res
                 email: affiliate.email,
                 affiliateCode: affiliate.affiliate_code,
                 clicks: affiliate.affiliate_clicks || 0,
-                commissionRate: affiliate.commission_rate || 10,
+                commissionRate: affiliate.commission_rate || 15,  // Default 15% for subscriptions
                 discountPercent: affiliate.discount_percent || 0,
                 stripeConnectId: affiliate.stripe_connect_id,
                 stripeOnboardingComplete: affiliate.stripe_onboarding_complete
