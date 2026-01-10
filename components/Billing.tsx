@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink, RefreshCw, XCircle, Loader2, TrendingUp } from 'lucide-react';
+import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink, RefreshCw, XCircle, Loader2, TrendingUp, X } from 'lucide-react';
 import { Button, Card, Badge, Input, Select } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { Registration, Event } from '../types';
@@ -13,6 +13,7 @@ export const Billing = () => {
     const location = useLocation();
     const { showToast } = useGlobalUI();
     const [showAddCard, setShowAddCard] = useState(false);
+    const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
     // Stripe Connect State
     const [stripeStatus, setStripeStatus] = useState<{
