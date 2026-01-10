@@ -755,6 +755,42 @@ export const Billing = () => {
                     </Card>
                 </div>
             )}
+
+            {/* Disconnect Stripe Modal */}
+            {showDisconnectModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
+                                Disconnect Stripe?
+                            </h3>
+                            <button 
+                                onClick={() => setShowDisconnectModal(false)}
+                                className="text-zinc-400 hover:text-zinc-600"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <p className="text-zinc-600 dark:text-zinc-300 mb-6">
+                            Are you sure you want to disconnect your Stripe account? You will need to reconnect to receive payouts.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDisconnectModal(false)}
+                                className="flex-1 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white font-bold py-3 px-4 rounded-xl"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDisconnect}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl"
+                            >
+                                Disconnect
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
