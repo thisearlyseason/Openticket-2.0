@@ -104,12 +104,21 @@ export const syncProfile = async (req, res) => {
             console.log('[ProfileSync] Fetching current profile to merge settings');
             // First fetch current subscription to merge
             const { data: currentProfile, error: fetchError } = await supabase
+            console.log('[ProfileSync] Fetching current profile to merge settings');
+            // First fetch current subscription to merge
+            const { data: currentProfile, error: fetchError} = await supabase
                 .from('profiles')
                 .select('subscription')
                 .eq('id', uid)
                 .single();
             
+            if (fetchError) {
+                console.error('[ProfileSync] Error fetching current profile:', fetchError);
+            }
+            
             const currentSubscription = currentProfile?.subscription || {};
+            console.log('[ProfileSync] Current subscription plan:', currentSubscription.plan);
+            
             const mergedSubscription = {
                 ...currentSubscription,
                 settings: {
@@ -118,6 +127,7 @@ export const syncProfile = async (req, res) => {
                 }
             };
             safeUpdates.subscription = mergedSubscription;
+            console.log('[ProfileSync] Merged subscription created');
         }
 
         const profileData = {
@@ -126,18 +136,21 @@ export const syncProfile = async (req, res) => {
             updated_at: new Date()
         };
 
+        console.log('[ProfileSync] Upserting profile data');
         const { data, error } = await supabase
             .from('profiles')
             .upsert([profileData])
             .select();
 
         if (error) {
+            console.error('[ProfileSync] Upsert error:', error);
             throw error;
         }
 
+        console.log('[ProfileSync] Profile synced successfully');
         res.json({ profile: data[0] });
     } catch (error) {
-        console.error('Profile Sync Error:', error);
+        console.error('[ProfileSync] Error:', error);
         res.status(500).json({ error: error.message });
     }
 };
