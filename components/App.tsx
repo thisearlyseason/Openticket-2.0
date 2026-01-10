@@ -340,6 +340,14 @@ const App = () => {
             }
         };
         initApp();
+        
+        // Handle non-hash routes (e.g., from email links that might strip the #)
+        // If the URL is /nonprofit-upgrade?... without hash, redirect to /#/nonprofit-upgrade?...
+        const path = window.location.pathname;
+        const search = window.location.search;
+        if (path === '/nonprofit-upgrade' && search) {
+            window.location.href = `${window.location.origin}/#/nonprofit-upgrade${search}`;
+        }
     }, []);
 
     if (isInitializing) {
