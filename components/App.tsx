@@ -161,8 +161,17 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                 </div>
             )}
 
+            {/* Non-Profit Pending Banner - Shows at very top of app */}
+            {nonprofitPending && !isLanding && !isEmbed && !isAffiliateAuth && (
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold py-3 px-4 text-center sticky top-0 z-[70] flex items-center justify-center gap-3 shadow-lg">
+                    <Clock size={18} className="animate-pulse" />
+                    <span>Your Non-Profit application is awaiting approval. We'll notify you once it's reviewed.</span>
+                    <Link to="/settings" className="underline ml-2 hover:text-amber-100 transition-colors">View Status</Link>
+                </div>
+            )}
+
             {!isLanding && !isEmbed && !isAffiliateAuth && (
-                <nav className={`fixed left-0 right-0 z-50 glass ${isOffline || isDemoMode ? 'top-6' : 'top-0'}`}>
+                <nav className={`fixed left-0 right-0 z-50 glass ${(isOffline || isDemoMode) ? 'top-6' : nonprofitPending ? 'top-12' : 'top-0'}`}>
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex justify-between items-center h-16">
                             <Link to={user ? (isOrganizer ? "/dashboard" : "/my-tickets") : "/"} className="flex items-center space-x-2 group">
