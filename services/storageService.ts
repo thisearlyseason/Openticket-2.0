@@ -593,7 +593,12 @@ export const StorageService = {
                     defaultRefundPolicy: profile.default_refund_policy,
                     defaultRefundPolicyEnabled: profile.default_refund_policy_enabled,
                     businessType: profile.business_type,
-                    commissionRate: profile.commission_rate
+                    commissionRate: profile.commission_rate,
+                    // Nonprofit fields
+                    nonProfitStatus: profile.nonprofit_status,
+                    nonProfitName: profile.nonprofit_name,
+                    nonProfitEin: profile.nonprofit_ein,
+                    nonProfitDocUrl: profile.nonprofit_doc_url
                 } as User;
             }
             return null;
