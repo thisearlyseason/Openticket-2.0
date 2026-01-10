@@ -50,12 +50,12 @@ export const NonprofitUpgrade = () => {
                 if (response.ok && data.valid) {
                     setDiscountCode(data.discountCode);
                     setOrganizationName(data.organizationName || 'Your Organization');
-                    setUserEmail(data.userEmail || '');
+                    setUserEmail(data.user?.email || '');
                     
                     // Check if user is authenticated
                     if (!currentUser) {
                         setStatus('needs-auth');
-                    } else if (currentUser.email !== data.userEmail) {
+                    } else if (data.user && currentUser.email !== data.user.email) {
                         // Logged in as different user
                         setStatus('needs-auth');
                     } else {
