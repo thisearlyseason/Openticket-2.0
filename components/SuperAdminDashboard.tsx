@@ -3097,6 +3097,64 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         </div>
                     </div>
                 )}
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <h3 className={`text-xl font-bold mb-4 ${
+                            confirmModal.type === 'approve' ? 'text-green-400' : 
+                            confirmModal.type === 'reject' ? 'text-red-400' : 'text-white'
+                        }`}>
+                            {confirmModal.title}
+                        </h3>
+                        <p className="text-zinc-300 whitespace-pre-line mb-6">{confirmModal.message}</p>
+                        <div className="flex gap-3">
+                            {confirmModal.type !== 'other' && (
+                                <button
+                                    onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                                    className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3 px-4 rounded-xl"
+                                >
+                                    Cancel
+                                </button>
+                            )}
+                            <button
+                                onClick={confirmModal.onConfirm}
+                                className={`flex-1 font-bold py-3 px-4 rounded-xl ${
+                                    confirmModal.type === 'approve' ? 'bg-green-600 hover:bg-green-700 text-white' :
+                                    confirmModal.type === 'reject' ? 'bg-red-600 hover:bg-red-700 text-white' :
+                                    'bg-[#E0FF20] hover:bg-[#c8e01c] text-black'
+                                }`}
+                            >
+                                {confirmModal.type === 'other' ? 'OK' : 'Confirm'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Lightbox for Document Images */}
+            {lightboxImage && (
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm cursor-pointer"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <div className="relative max-w-[90vw] max-h-[90vh]">
+                        <button
+                            onClick={() => setLightboxImage(null)}
+                            className="absolute -top-10 right-0 text-white hover:text-zinc-300"
+                        >
+                            <X size={32} />
+                        </button>
+                        <img 
+                            src={lightboxImage} 
+                            alt="Document Preview" 
+                            className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     );
