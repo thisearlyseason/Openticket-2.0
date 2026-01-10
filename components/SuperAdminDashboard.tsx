@@ -2738,7 +2738,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 </div>
                                                 <div className="flex gap-3">
                                                     <button
-                                                        onClick={() => handleApproveNonprofit(selectedNonprofit.id, selectedNonprofit.user_id)}
+                                                        onClick={() => showApproveConfirmation(selectedNonprofit.id, selectedNonprofit.user_id)}
                                                         disabled={isApprovingNonprofit}
                                                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
                                                     >
@@ -2746,7 +2746,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                         Approve & Send Code
                                                     </button>
                                                     <button
-                                                        onClick={() => handleRejectNonprofit(selectedNonprofit.id, selectedNonprofit.user_id)}
+                                                        onClick={() => showRejectConfirmation(selectedNonprofit.id, selectedNonprofit.user_id)}
                                                         disabled={isApprovingNonprofit}
                                                         className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
                                                     >
