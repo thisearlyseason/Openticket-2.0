@@ -58,20 +58,30 @@ export const Pricing = () => {
 
         if (plan === currentPlan) return;
 
-        // Simulate Payment / Upgrade
+        // Calculate price
         let price = billingCycle === 'monthly' ? PLANS[plan].priceMonthly : PLANS[plan].priceYearly;
 
         // Apply Non-Profit Discount (20%)
         if (user.nonProfitStatus === 'approved' && plan === 'pro') {
-            price = price * 0.75;
+            price = price * 0.80;
         }
 
-        if (globalThis.confirm(`Confirm switch to ${PLANS[plan].name} plan?\n\nTotal due now: $${price.toFixed(2)} USD`)) {
-            // --- STRIPE_INTEGRATION: Process Subscription Fee ---
-            // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
-            await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
-            // No code after this, as we expect redirect.
-        }
+        // Show confirmation modal
+        setConfirmModal({ show: true, plan, price });
+    };
+
+    const confirmPlanSelection = async () => {
+        if (!confirmModal.plan || !user) return;
+        
+        const plan = confirmModal.plan;
+        const price = confirmModal.price;
+        
+        setConfirmModal({ show: false, plan: null, price: 0 });
+        
+        // --- STRIPE_INTEGRATION: Process Subscription Fee ---
+        // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
+        await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
+        // No code after this, as we expect redirect.
     };
 
     const getPriceDisplay = (plan: keyof typeof PLANS) => {
