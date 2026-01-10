@@ -126,6 +126,7 @@ router.get('/me', verifyToken, async (req, res) => {
  */
 router.post('/nonprofit/apply', verifyToken, async (req, res) => {
     try {
+        console.log('[Onboarding] Non-profit apply request received');
         const userId = req.user.uid;
         const { 
             organizationName, 
@@ -135,7 +136,12 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
             onboardingResponses 
         } = req.body;
 
+        console.log('[Onboarding] User ID:', userId);
+        console.log('[Onboarding] Organization:', organizationName);
+        console.log('[Onboarding] Document URL:', documentUrl ? 'provided' : 'missing');
+
         if (!organizationName || !documentUrl) {
+            console.log('[Onboarding] Missing required fields');
             return res.status(400).json({ 
                 error: 'Organization name and verification document are required' 
             });
@@ -143,6 +149,8 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
 
         // Create non-profit application record
         const applicationId = uuidv4();
+        console.log('[Onboarding] Creating application:', applicationId);
+        
         const { data: application, error: appError } = await supabase
             .from('nonprofit_applications')
             .insert({
@@ -159,14 +167,26 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
             .select()
             .single();
 
-        if (appError) throw appError;
+        if (appError) {
+            console.error('[Onboarding] Application insert error:', appError);
+            throw appError;
+        }
+
+        console.log('[Onboarding] Application created, updating profile');
 
         // Get existing user profile to preserve subscription data
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: fetchError } = await supabase
             .from('profiles')
             .select('subscription, role')
             .eq('id', userId)
             .single();
+
+        if (fetchError) {
+            console.error('[Onboarding] Profile fetch error:', fetchError);
+            throw fetchError;
+        }
+
+        console.log('[Onboarding] Existing profile found:', existingProfile ? 'yes' : 'no');
 
         // Prepare subscription data - merge with existing or create new
         const subscriptionData = existingProfile?.subscription || {};
@@ -176,6 +196,8 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
             status: subscriptionData.status || 'active',
             startDate: subscriptionData.startDate || new Date().toISOString()
         };
+
+        console.log('[Onboarding] Updating profile with nonprofit status');
 
         // Update user profile with non-profit status
         const { error: updateError } = await supabase
@@ -190,7 +212,12 @@ router.post('/nonprofit/apply', verifyToken, async (req, res) => {
             })
             .eq('id', userId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+            console.error('[Onboarding] Profile update error:', updateError);
+            throw updateError;
+        }
+
+        console.log('[Onboarding] Profile updated successfully');
 
         // Save onboarding responses if provided
         if (onboardingResponses) {
