@@ -7,6 +7,7 @@ import { StorageService, PLANS } from '../services/storageService';
 import { Registration, Event } from '../types';
 import { useGlobalUI } from './GlobalUIProvider';
 import { getAuthToken } from '../services/firebaseConfig';
+import { useConfirm } from './ConfirmContext';
 
 export const Billing = () => {
     const navigate = useNavigate();
