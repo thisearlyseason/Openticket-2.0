@@ -656,13 +656,20 @@ router.get('/nonprofit/verify-magic-link', async (req, res) => {
  */
 router.post('/admin/nonprofit/migrate', verifyToken, requireAdmin, async (req, res) => {
     try {
+        console.log('[Migration] Starting nonprofit user migration...');
+        
         // Find all users with nonprofit_status set but no corresponding application
         const { data: nonprofitUsers, error: userError } = await supabase
             .from('profiles')
             .select('id, name, email, nonprofit_status, nonprofit_name, nonprofit_ein, nonprofit_doc_url, created_at')
             .in('nonprofit_status', ['pending', 'approved', 'rejected']);
 
-        if (userError) throw userError;
+        if (userError) {
+            console.error('[Migration] Error fetching users:', userError);
+            throw userError;
+        }
+        
+        console.log(`[Migration] Found ${nonprofitUsers?.length || 0} users with nonprofit_status set`);
 
         let migrated = 0;
         let skipped = 0;
@@ -676,6 +683,7 @@ router.post('/admin/nonprofit/migrate', verifyToken, requireAdmin, async (req, r
                 .single();
 
             if (existingApp) {
+                console.log(`[Migration] Skipping ${user.email} - application already exists`);
                 skipped++;
                 continue;
             }
