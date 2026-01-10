@@ -320,6 +320,7 @@ const MainContent = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/organizer/:id" element={<OrganizerProfile />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/nonprofit-upgrade" element={<NonprofitUpgrade />} />
             </Routes>
         </Layout>
     );
