@@ -776,7 +776,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         refreshData();
     };
 
-    const handleToggleBan = (user: User) => {
+    const handleToggleBan = async (user: User) => {
         if (user.isAdmin) return;
         const confirmMsg = user.isBanned
             ? `Re-activate ${user.name}?`
