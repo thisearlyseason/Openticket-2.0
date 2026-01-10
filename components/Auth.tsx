@@ -134,8 +134,6 @@ const DocumentUpload = ({
             setUploading(false);
         }
     };
-        }
-    };
 
     return (
         <div className="mb-4">
