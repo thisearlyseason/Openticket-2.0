@@ -13,6 +13,7 @@ export const Billing = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showToast } = useGlobalUI();
+    const { confirm } = useConfirm();
     const [showAddCard, setShowAddCard] = useState(false);
     const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
