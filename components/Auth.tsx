@@ -6,6 +6,7 @@ import { Button, Input, Card, Select, FileDropZone } from './UI';
 import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome, Eye, EyeOff, Check, X, Upload, Loader2, FileText, Trash2 } from 'lucide-react';
 
 // Document Upload Component with Supabase Storage
+// Falls back to base64 if user is not authenticated (during signup)
 const DocumentUpload = ({
     label,
     value,
@@ -22,6 +23,16 @@ const DocumentUpload = ({
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Convert file to base64
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+        });
+    };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -44,30 +55,49 @@ const DocumentUpload = ({
         setError('');
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', 'nonprofit');
-
+            // Try to get auth token
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/upload/document', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
+            
+            if (token) {
+                // User is authenticated - upload to Supabase Storage
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', 'nonprofit');
 
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || 'Upload failed');
+                const response = await fetch('/api/upload/document', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Upload failed');
+                }
+
+                onChange(data.url);
+            } else {
+                // User is not authenticated (during signup) - use base64
+                console.log('No auth token, using base64 encoding for document');
+                const base64 = await fileToBase64(file);
+                onChange(base64);
             }
-
-            onChange(data.url);
         } catch (err: any) {
             console.error('Upload error:', err);
-            setError(err.message || 'Failed to upload file');
+            // Fall back to base64 on any error
+            try {
+                console.log('Upload failed, falling back to base64');
+                const base64 = await fileToBase64(file);
+                onChange(base64);
+            } catch (base64Err) {
+                setError('Failed to process file');
+            }
         } finally {
             setUploading(false);
+        }
+    };
         }
     };
 
