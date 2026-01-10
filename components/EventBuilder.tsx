@@ -426,7 +426,7 @@ export const EventBuilder = () => {
 
     const handleAIHelp = async (field: 'description') => {
         if (field === 'description') {
-            if (!formData.title) return alert("Please enter an event title first.");
+            if (!formData.title) return window.alert("Please enter an event title first.");
             const desc = await GeminiService.generateDescription(formData.title, `${formData.date || 'TBA'} at ${formData.location || 'TBA'}`);
             setFormData(prev => ({ ...prev, description: desc }));
         }
@@ -454,7 +454,7 @@ export const EventBuilder = () => {
 
         const code = newPromo.code.toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (formData.promoCodes?.some(p => p.code === code)) {
-            alert("Promo code already exists!");
+            window.alert("Promo code already exists!");
             return;
         }
 
@@ -477,7 +477,7 @@ export const EventBuilder = () => {
         const baseUrl = window.location.href.split('#')[0];
         const link = `${baseUrl}#/event/${id || formData.id}?ref=${code}`;
         navigator.clipboard.writeText(link);
-        alert("Affiliate link copied to clipboard!");
+        window.alert("Affiliate link copied to clipboard!");
     };
 
     const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -808,7 +808,7 @@ export const EventBuilder = () => {
                                 />
                                 <div className="flex justify-end mt-2">
                                     <Button size="sm" variant="ghost" className="text-purple-600 hover:bg-purple-50" onClick={async () => {
-                                        if (!formData.title) return alert("Please enter an event title first.");
+                                        if (!formData.title) return window.alert("Please enter an event title first.");
                                         const img = await GeminiService.generateEventImage(formData.title, formData.description || formData.title);
                                         if (img) setFormData({ ...formData, imageUrl: img });
                                     }}>
@@ -1341,7 +1341,7 @@ export const EventBuilder = () => {
                                                     // Select the new template
                                                     setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), template: newTemplate.id } });
                                                     
-                                                    alert(`Template "${templateName}" saved! You can now use it for future events.`);
+                                                    window.alert(`Template "${templateName}" saved! You can now use it for future events.`);
                                                 }}
                                                 className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
                                             >

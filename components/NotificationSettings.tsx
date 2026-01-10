@@ -50,11 +50,11 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                 setIsSubscribed(true);
                 setPermission('granted');
             } else {
-                alert('Failed to enable notifications. Please check your browser settings.');
+                window.alert('Failed to enable notifications. Please check your browser settings.');
             }
         } catch (error) {
             console.error('Subscribe error:', error);
-            alert('Failed to enable notifications');
+            window.alert('Failed to enable notifications');
         } finally {
             setIsLoading(false);
         }

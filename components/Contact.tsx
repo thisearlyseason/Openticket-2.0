@@ -11,14 +11,14 @@ export const Contact = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.message.trim()) {
-            alert("Please enter a message.");
+            window.alert("Please enter a message.");
             return;
         }
         const success = StorageService.saveContactMessage(formData);
         if (success) {
             setIsSubmitted(true);
         } else {
-            alert("Failed to send message. Please try again.");
+            window.alert("Failed to send message. Please try again.");
         }
     };
 

@@ -445,7 +445,7 @@ export const CheckInPortal = () => {
                 const e = await StorageService.getEventFull(id);
                 if (e) {
                     if (e.ownerId !== user.id && !user.isAdmin) {
-                        alert("Unauthorized access to Check-In Portal.");
+                        window.alert("Unauthorized access to Check-In Portal.");
                         navigate('/dashboard');
                         return;
                     }
@@ -585,7 +585,7 @@ export const CheckInPortal = () => {
             setTicketToDelete(null);
         } catch (e: any) {
             console.error("Delete failed", e);
-            alert("Failed to delete ticket: " + e.message);
+            window.alert("Failed to delete ticket: " + e.message);
         } finally {
             setIsDeleting(false);
         }
@@ -783,7 +783,7 @@ export const CheckInPortal = () => {
     const startScanner = async () => {
         // Removed desktop restriction check
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Camera API not supported in this browser.");
+            window.alert("Camera API not supported in this browser.");
             return;
         }
 
@@ -848,14 +848,14 @@ export const CheckInPortal = () => {
                             setShowScanner(false);
                             // Visual feedback
                             setTimeout(() => {
-                                alert(`✓ Checked in: ${targetTicket.attendeeName}`);
+                                window.alert(`✓ Checked in: ${targetTicket.attendeeName}`);
                             }, 100);
                         }
                     } else {
-                        alert(`Already checked in: ${targetTicket.attendeeName}`);
+                        window.alert(`Already checked in: ${targetTicket.attendeeName}`);
                     }
                 } else {
-                    alert("Ticket not found in this event.");
+                    window.alert("Ticket not found in this event.");
                 }
             }
         } else {
@@ -872,13 +872,13 @@ export const CheckInPortal = () => {
                     handleCheckInToggle(matchingTicket.reg.id, ticketKey, false);
                     setShowScanner(false);
                     setTimeout(() => {
-                        alert(`✓ Checked in: ${matchingTicket.attendeeName}`);
+                        window.alert(`✓ Checked in: ${matchingTicket.attendeeName}`);
                     }, 100);
                 } else {
-                    alert(`Already checked in: ${matchingTicket.attendeeName}`);
+                    window.alert(`Already checked in: ${matchingTicket.attendeeName}`);
                 }
             } else {
-                alert("QR code not recognized. Please try again.");
+                window.alert("QR code not recognized. Please try again.");
             }
         }
     };

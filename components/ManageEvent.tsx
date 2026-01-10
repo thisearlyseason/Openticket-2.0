@@ -42,7 +42,7 @@ export const ManageEvent = () => {
                 const e = await StorageService.getEventFull(id);
                 if (e) {
                     if (e.ownerId !== user.id && !user.isAdmin) {
-                        alert("Unauthorized");
+                        window.alert("Unauthorized");
                         navigate('/dashboard');
                         return;
                     }
@@ -99,9 +99,9 @@ export const ManageEvent = () => {
                     await EmailService.sendEmail(currentUser.id, email, broadcastSubject, broadcastBody);
                     sentCount++;
                 }
-                alert(`Broadcast recorded! Sent real emails to ${sentCount} recipients via Gmail.`);
+                window.alert(`Broadcast recorded! Sent real emails to ${sentCount} recipients via Gmail.`);
             } else {
-                alert(`Broadcast recorded! (Simulated send to ${count} attendees). Connect Gmail in Settings to send real emails.`);
+                window.alert(`Broadcast recorded! (Simulated send to ${count} attendees). Connect Gmail in Settings to send real emails.`);
             }
 
             setBroadcastSubject('');
@@ -111,7 +111,7 @@ export const ManageEvent = () => {
             if (e) setEvent(e);
         } catch (e: any) {
             console.error(e);
-            alert("Error sending broadcast: " + e.message);
+            window.alert("Error sending broadcast: " + e.message);
         } finally {
             setIsSendingBroadcast(false);
             setShowBroadcastModal(false);
@@ -144,7 +144,7 @@ export const ManageEvent = () => {
             await StorageService.deleteEvent(event.id);
             navigate('/dashboard');
         } catch (e: any) {
-            alert("Error deleting event: " + e.message);
+            window.alert("Error deleting event: " + e.message);
         }
     };
 
@@ -452,7 +452,7 @@ export const ManageEvent = () => {
                                         </div>
                                         <Button onClick={() => {
                                             navigator.clipboard.writeText(`${window.location.origin}/#/event/${event.id}`);
-                                            alert("Link copied!");
+                                            window.alert("Link copied!");
                                         }}>
                                             <Copy size={18} />
                                         </Button>

@@ -151,12 +151,12 @@ export const EmailMarketing = () => {
             setIsConnected(status.configured && status.available);
             
             if (status.configured) {
-                alert('✅ Email service is connected and ready!');
+                window.alert('✅ Email service is connected and ready!');
             } else {
-                alert('⚠️ Email service is not configured. Contact your administrator.');
+                window.alert('⚠️ Email service is not configured. Contact your administrator.');
             }
         } catch (error) {
-            alert('❌ Failed to connect to email service');
+            window.alert('❌ Failed to connect to email service');
         } finally {
             setIsTestingConnection(false);
         }
@@ -189,7 +189,7 @@ export const EmailMarketing = () => {
 
     const createCampaign = async () => {
         if (!campaignName || !emailSubject || !emailContent) {
-            alert('Please fill in all required fields');
+            window.alert('Please fill in all required fields');
             return;
         }
 
@@ -218,10 +218,10 @@ export const EmailMarketing = () => {
             setEmailContent('');
             setSelectedEvent('');
 
-            alert('Campaign created successfully!');
+            window.alert('Campaign created successfully!');
         } catch (error: any) {
             console.error('Failed to create campaign:', error);
-            alert(`Failed to create campaign: ${error.message}`);
+            window.alert(`Failed to create campaign: ${error.message}`);
         } finally {
             setIsSending(false);
         }
@@ -230,7 +230,7 @@ export const EmailMarketing = () => {
     const sendTestEmail = async () => {
         const user = StorageService.getCurrentUser();
         if (!user?.email) {
-            alert('No email address found. Please update your profile.');
+            window.alert('No email address found. Please update your profile.');
             return;
         }
 
@@ -254,21 +254,21 @@ export const EmailMarketing = () => {
             const result = await response.json();
             
             if (result.preview) {
-                alert(`📧 Email Preview Generated!\n\nSubject: ${result.previewData?.subject}\n\nNote: To send real emails, ensure RESEND_API_KEY is configured.`);
+                window.alert(`📧 Email Preview Generated!\n\nSubject: ${result.previewData?.subject}\n\nNote: To send real emails, ensure RESEND_API_KEY is configured.`);
             } else if (result.success) {
-                alert(`✅ Test email sent to ${user.email}!`);
+                window.alert(`✅ Test email sent to ${user.email}!`);
             } else {
-                alert(`❌ Failed to send: ${result.error}`);
+                window.alert(`❌ Failed to send: ${result.error}`);
             }
         } catch (error: any) {
-            alert(`Failed to send test email: ${error.message}`);
+            window.alert(`Failed to send test email: ${error.message}`);
         } finally {
             setIsSending(false);
         }
     };
 
     const deleteCampaign = (id: string) => {
-        if (!confirm('Are you sure you want to delete this campaign?')) return;
+        if (!window.confirm('Are you sure you want to delete this campaign?')) return;
         
         const updatedCampaigns = campaigns.filter(c => c.id !== id);
         setCampaigns(updatedCampaigns);

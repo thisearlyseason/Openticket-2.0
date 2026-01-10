@@ -94,7 +94,7 @@ export const EventAnalytics = () => {
     const checkInRate = totalTickets > 0 ? Math.round((checkInCount / totalTickets) * 100) : 0;
 
     const downloadCSV = () => {
-        if (!event || regs.length === 0) return alert('No data to export.');
+        if (!event || regs.length === 0) return window.alert('No data to export.');
 
         const headers = ['Order ID', 'Date', 'Name', 'Email', 'Ticket Type', 'Price', 'Checked In'];
         const rows = regs.flatMap(r => {

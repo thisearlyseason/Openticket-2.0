@@ -87,13 +87,13 @@ export const EventMarketing = () => {
             window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodeURIComponent(event.title)}&summary=${encodedOnlyText}`, '_blank');
         } else if (platform === 'instagram') {
             navigator.clipboard.writeText(shareData.text + " " + shareUrl);
-            alert("Caption & Link copied! Instagram doesn't support direct sharing from web. Opening Instagram for you to paste into your Story or Post.");
+            window.alert("Caption & Link copied! Instagram doesn't support direct sharing from web. Opening Instagram for you to paste into your Story or Post.");
             window.open('https://www.instagram.com/', '_blank');
         } else if (platform === 'email') {
             window.location.href = `mailto:?subject=${encodeURIComponent(event.title)}&body=${encodedText}`;
         } else {
             navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-            alert("Content copied to clipboard!");
+            window.alert("Content copied to clipboard!");
         }
     };
 
@@ -266,7 +266,7 @@ export const EventMarketing = () => {
                                             onClick={() => {
                                                 const code = `<iframe src="${window.location.origin}/event/${event.id}?widget=true${widgetSettings.hideImage ? '&hideImage=true' : ''}${widgetSettings.hideDetails ? '&hideDetails=true' : ''}${widgetSettings.dark ? '&dark=true' : ''}" width="100%" height="600" frameborder="0"></iframe>`;
                                                 navigator.clipboard.writeText(code);
-                                                alert("Code copied!");
+                                                window.alert("Code copied!");
                                             }}
                                             className="absolute top-2 right-2 p-2 bg-white/10 hover:bg-white/20 rounded text-white opacity-0 group-hover:opacity-100 transition-opacity"
                                         >

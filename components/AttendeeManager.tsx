@@ -414,7 +414,7 @@ export const AttendeeManager = () => {
                 EmailService.sendEmail(event.ownerId, item.email, `Approved: ${event.title}`, `Hi ${item.name}, your registration for ${event.title} has been approved!`).catch(console.error);
             }
             await loadData();
-        } catch (e: any) { alert("Approval failed: " + e.message); }
+        } catch (e: any) { window.alert("Approval failed: " + e.message); }
     };
 
     const handleAddGuest = async () => {
@@ -522,7 +522,7 @@ export const AttendeeManager = () => {
     };
 
     const handleOpenRefundModal = (item: AttendeeItem) => {
-        if (item.status === 'refunded') return alert("This ticket is already refunded.");
+        if (item.status === 'refunded') return window.alert("This ticket is already refunded.");
         // Calculate amount - find the event tier price
         const tier = event?.ticketTiers?.find(t => t.id === item.tierId);
         // Fallback or override if store in reg

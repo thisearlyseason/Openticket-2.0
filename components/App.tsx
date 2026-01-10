@@ -157,7 +157,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                             ? "DEMO MODE — Firebase backend is not enabled. Saving data locally."
                             : "OFFLINE MODE — Connection to backend failed. Using local storage."}
                     </span>
-                    <button onClick={() => alert(StorageService.getLastError()?.message)} className="underline ml-2 opacity-80 hover:opacity-100 uppercase text-[10px]">Details</button>
+                    <button onClick={() => window.alert(StorageService.getLastError()?.message)} className="underline ml-2 opacity-80 hover:opacity-100 uppercase text-[10px]">Details</button>
                 </div>
             )}
 

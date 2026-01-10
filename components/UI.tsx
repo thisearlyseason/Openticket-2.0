@@ -49,7 +49,7 @@ export const formatTime = (time: string | null | undefined, format?: '12h' | '24
     }
 };
 
-// --- Confirmation Modal (replaces browser confirm()) ---
+// --- Confirmation Modal (replaces browser window.confirm()) ---
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -417,7 +417,7 @@ export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multi
         // Check for file size limit (10MB)
         for (let i = 0; i < files.length; i++) {
             if (files[i].size > 10 * 1024 * 1024) {
-                alert(`File "${files[i].name}" is too large. Maximum size is 10MB.`);
+                window.alert(`File "${files[i].name}" is too large. Maximum size is 10MB.`);
                 return;
             }
         }
@@ -444,7 +444,7 @@ export const FileDropZone = ({ label, currentImage, onFileSelect, onClear, multi
                 onFileSelect(resized, files[0].name);
             } catch (e) {
                 console.error(e);
-                alert("Error processing file.");
+                window.alert("Error processing file.");
             }
         }
     };
@@ -600,7 +600,7 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(text);
-                alert("Link copied to clipboard!");
+                window.alert("Link copied to clipboard!");
             }
         } catch (e) {
             console.log('[Share] Clipboard copy failed:', e);
@@ -615,10 +615,10 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
             }
             // Open Instagram in new tab
             window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
-            alert("Link copied! Instagram doesn't support direct sharing. Paste the link in your Story or Bio.");
+            window.alert("Link copied! Instagram doesn't support direct sharing. Paste the link in your Story or Bio.");
         } catch (e) {
             console.log('[Share] Instagram share:', e);
-            alert("Please copy the event link manually and paste it on Instagram.");
+            window.alert("Please copy the event link manually and paste it on Instagram.");
         }
     };
 
@@ -643,7 +643,7 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
                 <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 bg-[#0A66C2] text-white p-2.5 rounded-lg text-xs font-bold hover:bg-[#0958a8]">
                     <Linkedin size={16} /> LinkedIn
                 </a>
-                <button onClick={() => { navigator.clipboard.writeText(url); alert("Link Copied!"); }} className="col-span-2 flex items-center justify-center gap-2 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white p-2.5 rounded-lg text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 mt-1">
+                <button onClick={() => { navigator.clipboard.writeText(url); window.alert("Link Copied!"); }} className="col-span-2 flex items-center justify-center gap-2 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white p-2.5 rounded-lg text-xs font-bold hover:bg-zinc-300 dark:hover:bg-zinc-700 mt-1">
                     <Link2 size={16} /> Copy Direct Link
                 </button>
             </div>
@@ -729,7 +729,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
             pdf.save(`ticket-${registration.id}.pdf`);
         } catch (error) {
             console.error('PDF Generation failed:', error);
-            alert('Failed to generate PDF. Please try the Print button instead.');
+            window.alert('Failed to generate PDF. Please try the Print button instead.');
         }
     };
 

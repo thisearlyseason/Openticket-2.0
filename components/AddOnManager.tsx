@@ -126,7 +126,7 @@ export const AddOnManager = () => {
                     await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
                     loadData();
                 } catch (e: any) {
-                    alert("Failed to delete: " + e.message);
+                    window.alert("Failed to delete: " + e.message);
                 }
             }
         });
@@ -143,7 +143,7 @@ export const AddOnManager = () => {
                     await StorageService.refundAddon(item.id, item.index, "Requested via AddOn Manager");
                     loadData();
                 } catch (e: any) {
-                    alert("Failed to refund: " + e.message);
+                    window.alert("Failed to refund: " + e.message);
                 }
             }
         });

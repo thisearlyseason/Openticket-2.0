@@ -150,13 +150,13 @@ export const AffiliateDashboard = () => {
         if (!user || !stripeId) return;
 
         if (!stripeId.startsWith('acct_')) {
-            alert("Invalid ID. Must start with 'acct_'.");
+            window.alert("Invalid ID. Must start with 'acct_'.");
             return;
         }
 
         await StorageService.updateUser(user.id, { stripeConnectId: stripeId });
         setIsEditingStripe(false);
-        alert("Payout details updated successfully!");
+        window.alert("Payout details updated successfully!");
         await refreshData(user.id);
     };
 
@@ -327,7 +327,7 @@ export const AffiliateDashboard = () => {
                         </h2>
                         <div className="bg-black p-4 rounded-xl border border-zinc-800 flex items-center justify-between gap-4 overflow-hidden">
                             <code className="text-[#E0FF20] font-mono text-sm truncate flex-1">{referralLink}</code>
-                            <Button size="sm" onClick={() => { navigator.clipboard.writeText(referralLink); alert("Copied!") }} className="shrink-0">
+                            <Button size="sm" onClick={() => { navigator.clipboard.writeText(referralLink); window.alert("Copied!") }} className="shrink-0">
                                 <Copy size={16} className="mr-2" /> Copy
                             </Button>
                         </div>
@@ -372,7 +372,7 @@ export const AffiliateDashboard = () => {
                                 ></textarea>
                                 {generatedContent && (
                                     <button
-                                        onClick={() => { navigator.clipboard.writeText(generatedContent); alert("Content Copied!") }}
+                                        onClick={() => { navigator.clipboard.writeText(generatedContent); window.alert("Content Copied!") }}
                                         className="absolute bottom-4 right-4 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
                                         title="Copy to Clipboard"
                                     >
