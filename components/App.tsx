@@ -25,6 +25,7 @@ import { EventAnalytics } from './EventAnalytics';
 import { EventMarketing } from './EventMarketing';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { Terms } from './Terms';
+import { NonprofitUpgrade } from './NonprofitUpgrade';
 import { StorageService } from '../services/storageService';
 import { ErrorBoundary } from './ErrorBoundary';
 import { db } from '../services/firebaseConfig';
