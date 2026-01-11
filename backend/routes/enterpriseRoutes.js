@@ -1,6 +1,6 @@
 import express from 'express';
-import { verifyToken } from '../middlewares/authMiddleware.js';
-import supabase from '../config/supabaseClient.js';
+import verifyToken from '../middlewares/authMiddleware.js';
+import supabase from '../services/supabase.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
