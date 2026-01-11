@@ -1,6 +1,11 @@
 // OpenTicket Service Worker - PWA with Push Notifications & Offline Support
-const CACHE_NAME = 'openticket-v3';
-const OFFLINE_CACHE = 'openticket-offline-v2';
+// VERSION: 4 - Updated 2026-01-11
+const SW_VERSION = 'v4';
+const CACHE_NAME = `openticket-${SW_VERSION}`;
+const OFFLINE_CACHE = `openticket-offline-${SW_VERSION}`;
+
+// Log version on load for debugging
+console.log(`[SW] Service Worker ${SW_VERSION} loaded`);
 
 // Assets to cache for offline use
 const STATIC_ASSETS = [
