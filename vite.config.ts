@@ -2,6 +2,9 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Generate a build timestamp for cache busting
+const BUILD_TIMESTAMP = Date.now();
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
@@ -15,7 +18,10 @@ export default defineConfig(({ mode }) => {
         '.preview.emergentagent.com',
         '.emergentagent.com'
       ],
-      headers: {},
+      headers: {
+        // Prevent caching of HTML in development
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      },
       fs: {
         allow: ['/app', '/app/frontend']
       },
@@ -30,7 +36,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // Inject build info for debugging
+      '__BUILD_TIMESTAMP__': JSON.stringify(BUILD_TIMESTAMP),
+      '__BUILD_DATE__': JSON.stringify(new Date().toISOString())
     },
     resolve: {
       alias: {
@@ -45,8 +54,13 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1000,
+      // Add hash to filenames for cache busting
       rollupOptions: {
         output: {
+          // Ensure unique file names with content hash
+          entryFileNames: `assets/[name]-[hash]-${BUILD_TIMESTAMP}.js`,
+          chunkFileNames: `assets/[name]-[hash].js`,
+          assetFileNames: `assets/[name]-[hash].[ext]`,
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom', '@stripe/stripe-js'],
             firebase: ['firebase/app', 'firebase/auth', 'firebase/storage'],
