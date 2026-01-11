@@ -228,7 +228,7 @@ export const Pricing = () => {
                         ))}
                         <div className="flex items-start text-xs text-zinc-500 dark:text-zinc-500">
                             <span className="mr-2">•</span>
-                            <span>4.5% + $0.99 per ticket</span>
+                            <span>2.75% + $0.99 per ticket</span>
                         </div>
                     </div>
                     <Button
