@@ -439,6 +439,151 @@ export const refundAddOn = async (req, res) => {
     }
 };
 
+/**
+ * Check-in a specific ticket by ticket ID
+ * POST /api/registrations/checkin
+ */
+export const checkInTicket = async (req, res) => {
+    try {
+        const { ticketId, eventId } = req.body;
+        const organizerId = req.user.uid;
+        
+        console.log(`[CheckIn] Attempting check-in: ticketId=${ticketId}, eventId=${eventId}`);
+        
+        if (!ticketId) {
+            return res.status(400).json({ error: 'Ticket ID is required' });
+        }
+        
+        // 1. Verify event ownership
+        if (eventId) {
+            const { data: event, error: eventError } = await supabase
+                .from('events')
+                .select('owner_id')
+                .eq('id', eventId)
+                .single();
+            
+            if (eventError || !event) {
+                return res.status(404).json({ error: 'Event not found' });
+            }
+            
+            if (event.owner_id !== organizerId) {
+                return res.status(403).json({ error: 'Unauthorized: You do not own this event' });
+            }
+        }
+        
+        // 2. Find the registration containing this ticket ID
+        const { data: registrations, error: searchError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('event_id', eventId || '');
+        
+        if (searchError) {
+            console.error('[CheckIn] Search error:', searchError);
+            return res.status(500).json({ error: 'Failed to search for ticket' });
+        }
+        
+        // 3. Search through all registrations for the ticket
+        let targetRegistration = null;
+        let ticketIndex = -1;
+        
+        for (const reg of registrations) {
+            if (!reg.tickets || !Array.isArray(reg.tickets)) continue;
+            
+            const index = reg.tickets.findIndex(t => 
+                t.ticketId === ticketId || 
+                t.qrCodeData === ticketId ||
+                t.ticketNumber === ticketId
+            );
+            
+            if (index !== -1) {
+                targetRegistration = reg;
+                ticketIndex = index;
+                break;
+            }
+        }
+        
+        if (!targetRegistration || ticketIndex === -1) {
+            console.log(`[CheckIn] Ticket not found: ${ticketId}`);
+            return res.status(404).json({ 
+                error: 'Ticket not found',
+                message: 'This ticket does not exist in this event or has been invalidated'
+            });
+        }
+        
+        const ticket = targetRegistration.tickets[ticketIndex];
+        
+        // 4. Validate ticket status
+        if (ticket.status === 'refunded') {
+            return res.status(400).json({ 
+                error: 'Ticket refunded',
+                message: 'This ticket has been refunded and is no longer valid'
+            });
+        }
+        
+        if (ticket.status === 'cancelled') {
+            return res.status(400).json({ 
+                error: 'Ticket cancelled',
+                message: 'This ticket has been cancelled'
+            });
+        }
+        
+        if (ticket.checkedIn) {
+            return res.status(400).json({ 
+                error: 'Already checked in',
+                message: `This ticket was already checked in${ticket.checkedInAt ? ' at ' + new Date(ticket.checkedInAt).toLocaleString() : ''}`,
+                ticket: {
+                    ticketNumber: ticket.ticketNumber,
+                    attendeeName: ticket.attendeeName,
+                    checkedInAt: ticket.checkedInAt
+                }
+            });
+        }
+        
+        // 5. Update ticket check-in status
+        const updatedTickets = [...targetRegistration.tickets];
+        updatedTickets[ticketIndex] = {
+            ...ticket,
+            checkedIn: true,
+            checkedInAt: new Date().toISOString(),
+            checkedInBy: organizerId
+        };
+        
+        const { data: updatedReg, error: updateError } = await supabase
+            .from('registrations')
+            .update({ tickets: updatedTickets })
+            .eq('id', targetRegistration.id)
+            .select()
+            .single();
+        
+        if (updateError) {
+            console.error('[CheckIn] Update error:', updateError);
+            return res.status(500).json({ error: 'Failed to update ticket status' });
+        }
+        
+        console.log(`[CheckIn] Success: ${ticket.ticketNumber} for ${ticket.attendeeName}`);
+        
+        // 6. Return success with ticket details
+        res.json({
+            success: true,
+            message: 'Check-in successful',
+            ticket: {
+                ticketId: ticket.ticketId,
+                ticketNumber: ticket.ticketNumber,
+                attendeeName: ticket.attendeeName,
+                originalAttendeeName: ticket.originalAttendeeName,
+                tierName: ticket.name,
+                checkedInAt: updatedTickets[ticketIndex].checkedInAt,
+                transferStatus: ticket.transferStatus,
+                transferredFrom: ticket.transferredFromEmail
+            }
+        });
+        
+    } catch (error) {
+        console.error('[CheckIn] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const transferTicket = async (req, res) => {
     try {
         const { id } = req.params; // Registration ID
