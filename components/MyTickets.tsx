@@ -66,12 +66,14 @@ export const MyTickets = () => {
         });
 
         // Start countdown
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
             setUndoModal(prev => {
                 if (prev.countdown <= 1) {
                     clearInterval(interval);
-                    // Auto-finalize transfer
-                    finalizeTransfer(transferId);
+                    // Auto-finalize transfer (don't await in setState, call separately)
+                    setTimeout(() => {
+                        finalizeTransfer(transferId);
+                    }, 100);
                     return { ...prev, isOpen: false, countdown: 0 };
                 }
                 return { ...prev, countdown: prev.countdown - 1 };
