@@ -9,6 +9,9 @@ router.get('/', registrationController.getAllRegistrations);
 // Debug endpoint (must be before :id routes)
 router.get('/debug/transfers', registrationController.debugTransfers);
 
+// Check-in endpoint (must be before :id routes)
+router.post('/checkin', verifyToken, registrationController.checkInTicket);
+
 router.get('/:eventId', verifyToken, registrationController.getRegistrationsByEvent);
 router.put('/:id', verifyToken, registrationController.updateRegistration);
 router.post('/:id/refund', verifyToken, registrationController.refundRegistration);
