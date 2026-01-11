@@ -99,40 +99,146 @@ const clearCache = (type: 'events' | 'regs' | 'all' = 'all') => {
     if (type === 'events' || type === 'all') _eventsCache = null;
 };
 
-export const PLANS = {
-    free: {
+// Plan Version System - For Backward Compatibility
+// Existing users stay on their current plan version unless they upgrade
+// New users get the latest version automatically
+
+export const PLAN_VERSIONS = {
+    // Legacy Plans (v1) - Existing users only
+    free_v1: {
+        version: 1,
         name: 'Free',
         priceMonthly: 0,
         priceYearly: 0,
-        feePercent: 0.045, // 4.5%
-        feeFixed: 0.99, // $0.99
-        ticketLimit: 50, // 50 tickets per event
-        eventLimit: 3, // per month
+        feePercent: 0.045,
+        feeFixed: 0.99,
+        ticketLimit: 50,
+        eventLimit: 3,
+        monthlyTicketLimit: null, // No monthly limit in v1
+        teamMemberLimit: 1,
         showDonationButton: true,
-        features: ['50 Tickets per Event', '3 Events per Month', 'Standard Support', 'Platform Donation Button']
+        payoutDelay: '7-10 days',
+        support: 'Email only',
+        analytics: 'Basic',
+        features: ['50 Tickets per Event', '3 Events per Month', 'Email Support', 'Platform Donation Button']
     },
-    pro: {
+    pro_v1: {
+        version: 1,
         name: 'Pro',
         priceMonthly: 39,
         priceYearly: 390,
-        feePercent: 0.029, // 2.9%
-        feeFixed: 0.69, // $0.69
-        ticketLimit: 250, // 250 tickets per event
-        eventLimit: 10, // 10 events per month
+        feePercent: 0.029,
+        feeFixed: 0.69,
+        ticketLimit: 250,
+        eventLimit: 10,
+        monthlyTicketLimit: null,
+        teamMemberLimit: 3,
         showDonationButton: false,
+        payoutDelay: '3-5 days',
+        support: 'Priority Email',
+        analytics: 'Advanced',
         features: ['250 Tickets per Event', '10 Events per Month', 'Priority Support', 'Advanced Analytics']
     },
-    premium: {
+    premium_v1: {
+        version: 1,
         name: 'Premium',
         priceMonthly: 110,
         priceYearly: 1100,
-        feePercent: 0.019, // 1.9%
-        feeFixed: 0.49, // $0.49 per ticket
-        ticketLimit: 999999, // Unlimited
-        eventLimit: 9999, // Unlimited
+        feePercent: 0.019,
+        feeFixed: 0.49,
+        ticketLimit: 999999,
+        eventLimit: 9999,
+        monthlyTicketLimit: null,
+        teamMemberLimit: 5,
         showDonationButton: false,
+        payoutDelay: 'After event',
+        support: 'Priority + Chat',
+        analytics: 'Advanced',
         features: ['Unlimited Tickets', 'Unlimited Events', 'Dedicated Support', 'White Labeling (Coming Soon)', 'Custom Domain (Coming Soon)', 'Lowest Fees']
+    },
+    
+    // Current Plans (v2) - New users
+    free_v2: {
+        version: 2,
+        name: 'Free',
+        priceMonthly: 0,
+        priceYearly: 0,
+        feePercent: 0.045,
+        feeFixed: 0.99,
+        ticketLimit: 100, // Per event
+        eventLimit: 999999, // Unlimited events
+        monthlyTicketLimit: 400, // Max 400 tickets per month
+        teamMemberLimit: 1,
+        showDonationButton: true,
+        payoutDelay: '7-10 days',
+        support: 'Email only',
+        analytics: 'Basic',
+        brandingRequired: true,
+        features: ['Unlimited Events', '100 Tickets per Event', '400 Tickets per Month', '1 Team Member', 'Email Support', 'OpenTicket Branding', 'Donate to OpenTicket Required', 'Payout: 7-10 days']
+    },
+    pro_v2: {
+        version: 2,
+        name: 'Pro',
+        priceMonthly: 39,
+        priceYearly: 390,
+        feePercent: 0.029,
+        feeFixed: 0.69,
+        ticketLimit: 1000, // Per event
+        eventLimit: 999999, // Unlimited
+        monthlyTicketLimit: 4000,
+        teamMemberLimit: 3,
+        showDonationButton: false,
+        payoutDelay: '3-5 days',
+        support: 'Priority Email',
+        analytics: 'Advanced',
+        brandingRequired: false,
+        features: ['Unlimited Events', '1,000 Tickets per Event', '4,000 Tickets per Month', '3 Team Members', 'Priority Email Support', 'Branding Removal', 'Advanced Analytics', 'Payout: 3-5 days']
+    },
+    premium_v2: {
+        version: 2,
+        name: 'Premium',
+        priceMonthly: 110,
+        priceYearly: 1100,
+        feePercent: 0.019,
+        feeFixed: 0.49,
+        ticketLimit: 3000, // Per event
+        eventLimit: 999999, // Unlimited
+        monthlyTicketLimit: 10000,
+        teamMemberLimit: 7,
+        showDonationButton: false,
+        payoutDelay: 'After event',
+        support: 'Priority + Chat',
+        analytics: 'Advanced',
+        brandingRequired: false,
+        features: ['Unlimited Events', '3,000 Tickets per Event', '10,000 Tickets per Month', '7 Team Members', 'Priority Support + Chat', 'After-Event Payouts', 'Advanced Analytics', 'White Labeling (Coming Soon)']
+    },
+    enterprise: {
+        version: 2,
+        name: 'Enterprise',
+        priceMonthly: null, // Contact sales
+        priceYearly: null,
+        feePercent: 0.015, // Negotiable
+        feeFixed: 0.39,
+        ticketLimit: 999999, // No hard limit
+        eventLimit: 999999,
+        monthlyTicketLimit: 999999,
+        teamMemberLimit: 999999,
+        showDonationButton: false,
+        payoutDelay: 'Flexible',
+        support: 'Dedicated Account Manager',
+        analytics: 'Custom',
+        brandingRequired: false,
+        contactSales: true,
+        features: ['No Limits', 'Custom Pricing', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'White Label', 'Custom Domain', 'Flexible Payouts']
     }
+};
+
+// Legacy PLANS constant for backward compatibility
+export const PLANS = {
+    free: PLAN_VERSIONS.free_v2,
+    pro: PLAN_VERSIONS.pro_v2,
+    premium: PLAN_VERSIONS.premium_v2,
+    enterprise: PLAN_VERSIONS.enterprise
 };
 
 const safeStringify = (obj: any) => {
