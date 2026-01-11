@@ -1,0 +1,82 @@
+[
+  {
+    "test": "Ticket Generator Utility",
+    "success": true,
+    "details": "\u2705 All tests passed: Generated unique IDs, numbers, and 3 individual tickets",
+    "response_data": {
+      "id1": "TKT-1768173856440-5d4cb7",
+      "id2": "TKT-1768173856440-274b7f",
+      "idsUnique": true,
+      "num1": "TKT-SUWUE6",
+      "num2": "TKT-V3MNGF",
+      "numbersUnique": true,
+      "ticketCount": 3,
+      "tickets": [
+        {
+          "ticketId": "TKT-1768173856440-dffe2f",
+          "ticketNumber": "TKT-MSMWHF",
+          "qrCodeData": "TKT-1768173856440-dffe2f",
+          "quantity": 1
+        },
+        {
+          "ticketId": "TKT-1768173856441-33a983",
+          "ticketNumber": "TKT-33NLFM",
+          "qrCodeData": "TKT-1768173856441-33a983",
+          "quantity": 1
+        },
+        {
+          "ticketId": "TKT-1768173856441-4a70a5",
+          "ticketNumber": "TKT-5YAS2X",
+          "qrCodeData": "TKT-1768173856441-4a70a5",
+          "quantity": 1
+        }
+      ]
+    },
+    "timestamp": "2026-01-11 23:24:16"
+  },
+  {
+    "test": "Registration Creation with Unique Tickets",
+    "success": false,
+    "details": "HTTP 400",
+    "response_data": "{\"error\":\"insert or update on table \\\"registrations\\\" violates foreign key constraint \\\"registrations_event_id_fkey\\\"\"}",
+    "timestamp": "2026-01-11 23:24:17"
+  },
+  {
+    "test": "Check-In API Authentication",
+    "success": true,
+    "details": "\u2705 Properly requires authentication: HTTP 401 - Missing Authorization header",
+    "response_data": {
+      "error": "Missing Authorization header"
+    },
+    "timestamp": "2026-01-11 23:24:17"
+  },
+  {
+    "test": "Check-In API Validation",
+    "success": false,
+    "details": "\u274c Some validation tests failed: \u274c Missing Ticket ID: Expected [400], got 401; \u2705 Missing Event ID: Proper error response; \u2705 Invalid Ticket Format: Proper error response",
+    "response_data": {
+      "test_results": [
+        "\u274c Missing Ticket ID: Expected [400], got 401",
+        "\u2705 Missing Event ID: Proper error response",
+        "\u2705 Invalid Ticket Format: Proper error response"
+      ]
+    },
+    "timestamp": "2026-01-11 23:24:17"
+  },
+  {
+    "test": "Webhook Ticket Transformation",
+    "success": true,
+    "details": "\u2139\ufe0f No recent webhook activity found in logs (system ready for webhook processing)",
+    "response_data": {
+      "log_excerpt": "ader\n2026-01-11T23:24:16.513Z - POST /api/registrations\n[Registration] Generated 2 unique tickets with IDs and QR codes\n2026-01-11T23:24:17.280Z - POST /api/registrations/checkin\n[Auth] Missing Authorization header\n2026-01-11T23:24:17.291Z - POST /api/registrations/checkin\n[Auth] Missing Authorization header\n2026-01-11T23:24:17.299Z - POST /api/registrations/checkin\n[Auth] Missing Authorization header\n2026-01-11T23:24:17.311Z - POST /api/registrations/checkin\n[Auth] Missing Authorization header\n"
+    },
+    "timestamp": "2026-01-11 23:24:17"
+  },
+  {
+    "test": "Backward Compatibility",
+    "success": false,
+    "details": "HTTP 400",
+    "response_data": "{\"error\":\"insert or update on table \\\"registrations\\\" violates foreign key constraint \\\"registrations_event_id_fkey\\\"\"}",
+    "timestamp": "2026-01-11 23:24:17"
+  }
+]
