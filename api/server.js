@@ -187,12 +187,13 @@ app.use('/api/enterprise', enterpriseRoutes);
 // Waitlist routes
 app.use('/api/waitlist', waitlistRoutes);
 
+// Enterprise contact routes
+app.use('/api/enterprise', enterpriseRoutes);
+
 // Onboarding routes
-import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 app.use('/api/onboarding', onboardingRoutes);
 
 // Upload routes (document storage)
-import uploadRoutes from '../backend/routes/uploadRoutes.js';
 app.use('/api/upload', uploadRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
