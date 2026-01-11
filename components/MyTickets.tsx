@@ -464,6 +464,7 @@ export const MyTickets = () => {
                                 {/* Status Banner */}
                                 {ticket.status === 'refunded' && <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase z-10">Refunded</div>}
                                 {ticket.status === 'pay_at_door' && <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black uppercase z-10">Pay at Door</div>}
+                                {ticket.transferStatus === 'transferred_in' && <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase z-10">Transferred In</div>}
 
                                 <div className="flex-1 p-6 md:p-8">
                                     <div className="flex justify-between items-start mb-6">
@@ -471,6 +472,11 @@ export const MyTickets = () => {
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div className={`text-xs font-bold uppercase tracking-wider ${ticket.isAddOn ? 'text-pink-500' : 'text-zinc-500'}`}>{ticket.isAddOn ? 'Add-On Item' : ticket.ticketInfo.name}</div>
                                                 {ticket.isAddOn && <Badge className="bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-[10px]">EXTRA</Badge>}
+                                                {ticket.transferStatus === 'transferred_in' && ticket.transferredFrom && (
+                                                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
+                                                        FROM: {ticket.transferredFrom}
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <h2 className="text-3xl font-black text-zinc-900 dark:text-white leading-none mb-1">{ticket.event.title}</h2>
                                             {ticket.isAddOn && <div className="text-lg font-bold text-zinc-900 dark:text-white mt-2">{ticket.ticketInfo.name}</div>}
