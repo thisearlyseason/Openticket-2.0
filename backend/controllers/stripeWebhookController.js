@@ -106,13 +106,30 @@ async function handleCheckoutCompleted(stripe, session) {
         return;
     }
 
-    // 2. Finalize Tickets with unique IDs
-    const finalizedTickets = (reg.tickets || []).map(ticket => ({
-        ...ticket,
-        id: crypto.randomUUID(),
-        status: 'valid',
-        purchaseDate: new Date().toISOString()
-    }));
+    // 2. Transform tickets to unique ticket structure with IDs, numbers, and QR codes
+    let finalizedTickets = reg.tickets || [];
+    
+    // Check if tickets already have unique IDs (from createRegistration)
+    const hasUniqueIds = finalizedTickets.length > 0 && finalizedTickets[0].ticketId;
+    
+    if (!hasUniqueIds) {
+        // Legacy tickets without unique IDs - generate them now
+        console.log(`[Webhook] Generating unique ticket IDs for ${finalizedTickets.length} tickets`);
+        finalizedTickets = generateUniqueTickets(
+            finalizedTickets,
+            reg.id,
+            reg.attendee_name || 'Guest',
+            [] // No assigned names at this point
+        );
+    } else {
+        // Tickets already have unique IDs, just ensure status is set
+        finalizedTickets = finalizedTickets.map(ticket => ({
+            ...ticket,
+            status: ticket.status || 'valid',
+            purchaseDate: new Date().toISOString()
+        }));
+        console.log(`[Webhook] Tickets already have unique IDs: ${finalizedTickets.map(t => t.ticketNumber).join(', ')}`);
+    }
 
     // 3. Retrieve actual Stripe fees
     const centsToDollars = (cents) => (cents ? cents / 100 : 0);
