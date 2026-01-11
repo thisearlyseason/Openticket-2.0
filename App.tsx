@@ -269,7 +269,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                                                                 }}
                                                                             >
                                                                                 <div className="font-bold text-sm mb-1">{n.title}</div>
-                                                                                <div className="text-xs text-zinc-500">{n.message}</div>
+                                                                                <div className="text-xs text-zinc-500" dangerouslySetInnerHTML={{ __html: n.message }} />
                                                                                 <div className="text-[10px] text-zinc-400 mt-2">{new Date(n.timestamp).toLocaleDateString()}</div>
                                                                             </div>
                                                                             <button
