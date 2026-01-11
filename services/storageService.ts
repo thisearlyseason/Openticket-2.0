@@ -1512,6 +1512,51 @@ export const StorageService = {
         }
     },
 
+    // New Transfer API Methods
+    initiateTicketTransfer: async (regId: string, ticketKey: string, recipientEmail: string, recipientName?: string): Promise<{ success: boolean, transferId: string, undoExpiresAt: string }> => {
+        try {
+            const result = await postSupabase(`/registrations/${regId}/transfer`, 'POST', { 
+                ticketKey, 
+                recipientEmail,
+                recipientName 
+            });
+            return result;
+        } catch (e) {
+            console.error("Transfer initiation failed:", e);
+            throw e;
+        }
+    },
+
+    undoTicketTransfer: async (regId: string, transferId: string): Promise<{ success: boolean }> => {
+        try {
+            const result = await postSupabase(`/registrations/${regId}/transfer/undo`, 'POST', { transferId });
+            return result;
+        } catch (e) {
+            console.error("Transfer undo failed:", e);
+            throw e;
+        }
+    },
+
+    finalizeTicketTransfer: async (transferId: string): Promise<{ success: boolean }> => {
+        try {
+            const result = await postSupabase(`/registrations/0/transfer/finalize`, 'POST', { transferId });
+            return result;
+        } catch (e) {
+            console.error("Transfer finalization failed:", e);
+            throw e;
+        }
+    },
+
+    getTransferStatus: async (regId: string, transferId: string): Promise<any> => {
+        try {
+            const result = await fetchSupabase(`/registrations/${regId}/transfer/${transferId}`);
+            return result;
+        } catch (e) {
+            console.error("Get transfer status failed:", e);
+            throw e;
+        }
+    },
+
     updateRegistration: async (id: string, updates: Partial<Registration>) => {
         if (isOffline) return;
 
