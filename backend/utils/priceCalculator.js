@@ -6,10 +6,10 @@
 
 // Platform fee structure by plan
 export const PLAN_FEES = {
-    free: { percent: 0.0275, fixed: 0.99 },       // 2.75% + $0.99
-    pro: { percent: 0.015, fixed: 0.75 },          // 1.5% + $0.75
-    premium: { percent: 0.0075, fixed: 0.30 },     // 0.75% + $0.30
-    enterprise: { percent: 0.015, fixed: 0.39 },   // 1.5% + $0.39 (negotiable)
+    free: { percent: 0.045, fixed: 0.99 },         // 4.5% + $0.99
+    pro: { percent: 0.029, fixed: 0.69 },          // 2.9% + $0.69
+    premium: { percent: 0.019, fixed: 0.49 },      // 1.9% + $0.49
+    enterprise: { percent: 0.019, fixed: 0.49 },   // 1.9% + $0.49
 };
 
 /**

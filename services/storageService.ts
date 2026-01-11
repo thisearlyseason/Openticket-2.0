@@ -165,7 +165,7 @@ export const PLAN_VERSIONS = {
         name: 'Free',
         priceMonthly: 0,
         priceYearly: 0,
-        feePercent: 0.0275,  // 2.75% - matches priceCalculator.js
+        feePercent: 0.045,  // 4.5% - matches priceCalculator.js
         feeFixed: 0.99,
         ticketLimit: 100, // Per event
         eventLimit: 999999, // Unlimited events
@@ -183,8 +183,8 @@ export const PLAN_VERSIONS = {
         name: 'Pro',
         priceMonthly: 39,
         priceYearly: 390,
-        feePercent: 0.015,  // 1.5% - matches priceCalculator.js
-        feeFixed: 0.75,
+        feePercent: 0.029,  // 2.9% - matches priceCalculator.js
+        feeFixed: 0.69,
         ticketLimit: 1000, // Per event
         eventLimit: 999999, // Unlimited
         monthlyTicketLimit: 4000,
@@ -201,8 +201,8 @@ export const PLAN_VERSIONS = {
         name: 'Premium',
         priceMonthly: 110,
         priceYearly: 1100,
-        feePercent: 0.0075,  // 0.75% - matches priceCalculator.js
-        feeFixed: 0.30,
+        feePercent: 0.019,  // 1.9% - matches priceCalculator.js
+        feeFixed: 0.49,
         ticketLimit: 3000, // Per event
         eventLimit: 999999, // Unlimited
         monthlyTicketLimit: 10000,
