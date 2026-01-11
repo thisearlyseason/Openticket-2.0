@@ -52,6 +52,73 @@ export const MyTickets = () => {
     // Derived State
     const selectedGroup = eventGroups.find(g => g.eventId === selectedGroupId) || null;
 
+    // Show undo modal with countdown
+    const showUndoModal = (transferId: string, undoExpiresAt: string) => {
+        const expiresAt = new Date(undoExpiresAt).getTime();
+        const now = Date.now();
+        const remainingSeconds = Math.max(0, Math.ceil((expiresAt - now) / 1000));
+        
+        setUndoModal({
+            isOpen: true,
+            transferId,
+            countdown: remainingSeconds,
+            registrationId: transferModal.ticket?.reg.id || null
+        });
+
+        // Start countdown
+        const interval = setInterval(() => {
+            setUndoModal(prev => {
+                if (prev.countdown <= 1) {
+                    clearInterval(interval);
+                    // Auto-finalize transfer
+                    finalizeTransfer(transferId);
+                    return { ...prev, isOpen: false, countdown: 0 };
+                }
+                return { ...prev, countdown: prev.countdown - 1 };
+            });
+        }, 1000);
+    };
+
+    // Undo transfer
+    const handleUndoTransfer = async () => {
+        if (!undoModal.transferId || !undoModal.registrationId) return;
+        
+        try {
+            await StorageService.undoTicketTransfer(undoModal.registrationId, undoModal.transferId);
+            setUndoModal({ isOpen: false, transferId: null, countdown: 0, registrationId: null });
+            await confirm({
+                title: 'Transfer Cancelled',
+                message: 'The transfer has been cancelled. Your ticket is restored.',
+                confirmText: 'OK',
+                variant: 'info'
+            });
+            if (user) loadTickets(user.email);
+        } catch (e: any) {
+            await confirm({
+                title: 'Error',
+                message: 'Failed to undo transfer: ' + e.message,
+                confirmText: 'OK',
+                variant: 'danger'
+            });
+        }
+    };
+
+    // Finalize transfer after countdown
+    const finalizeTransfer = async (transferId: string) => {
+        try {
+            await StorageService.finalizeTicketTransfer(transferId);
+            await confirm({
+                title: 'Transfer Complete',
+                message: 'The ticket has been successfully transferred.',
+                confirmText: 'OK',
+                variant: 'info'
+            });
+            if (user) loadTickets(user.email);
+        } catch (e: any) {
+            console.error('Finalize transfer error:', e);
+        }
+    };
+
     useEffect(() => {
         const currentUser = StorageService.getCurrentUser();
         if (!currentUser) { navigate('/auth'); return; }
