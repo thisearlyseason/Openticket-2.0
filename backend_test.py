@@ -497,77 +497,102 @@ console.log(JSON.stringify({
         except Exception as e:
             self.log_result("Webhook Ticket Transformation", False, f"Exception: {str(e)}")
 
-    def test_webhook_email_functionality(self):
-        """Additional Test: Test webhook-style email functionality"""
+    def test_backward_compatibility(self):
+        """Test Case 6: Backward Compatibility with Legacy Tickets"""
         try:
-            # This simulates what happens when a webhook triggers confirmation emails
-            # Testing the EmailService.sendConfirmation equivalent
+            # Test that the system can handle legacy ticket format
+            # This tests the registration endpoint's ability to process both formats
             
-            # Mock event details and ticket data
-            event_details = {
-                "title": "Test Event for Webhook",
-                "date": "2026-01-15",
-                "location": "Test Venue, San Francisco, CA"
-            }
-            
-            tickets = [
-                {"type": "General Admission", "price": "$25.00", "quantity": 2}
-            ]
-            
-            # Create a confirmation email template
-            payload = {
-                "to": "thisearlyseason@gmail.com",
-                "template": {
-                    "subject": "Ticket Confirmation - {{event_title}}",
-                    "body": f"""
-                    <h2>Ticket Purchase Confirmed!</h2>
-                    <p>Dear {{{{attendee_name}}}},</p>
-                    <p>Your ticket purchase has been confirmed for:</p>
-                    <h3>{{{{event_title}}}}</h3>
-                    <p><strong>Date:</strong> {{{{event_date}}}}</p>
-                    <p><strong>Location:</strong> {{{{event_location}}}}</p>
-                    <p><strong>Tickets:</strong></p>
-                    <ul>
-                        <li>{tickets[0]['quantity']}x {tickets[0]['type']} - {tickets[0]['price']} each</li>
-                    </ul>
-                    <p>Order ID: {{{{order_id}}}}</p>
-                    <p>Thank you for your purchase!</p>
-                    """
-                }
+            # Create a registration that simulates legacy format (before transformation)
+            legacy_payload = {
+                "event_id": "test-event-legacy",
+                "attendee_name": "Bob Legacy",
+                "attendee_email": "bob.legacy@example.com",
+                "tickets": [
+                    {
+                        "tierId": "vip",
+                        "name": "VIP Access",
+                        "quantity": 1,  # Legacy: single ticket with quantity
+                        "price": 50.00,
+                        # Missing: ticketId, ticketNumber, qrCodeData (legacy format)
+                    }
+                ]
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/api/email/send-test",
-                json=payload,
+                f"{BACKEND_URL}/api/registrations",
+                json=legacy_payload,
                 headers={'Content-Type': 'application/json'}
             )
             
-            if response.status_code == 200:
+            if response.status_code == 201:
                 data = response.json()
+                registration = data.get('registration', {})
+                tickets = registration.get('tickets', [])
                 
-                if data.get('success') == True:
+                success = True
+                issues = []
+                
+                # Check that legacy ticket was transformed to new format
+                if len(tickets) != 1:
+                    success = False
+                    issues.append(f"Expected 1 ticket, got {len(tickets)}")
+                
+                if tickets:
+                    ticket = tickets[0]
+                    
+                    # Check that unique identifiers were added
+                    if not ticket.get('ticketId'):
+                        success = False
+                        issues.append("Legacy ticket missing generated ticketId")
+                    
+                    if not ticket.get('ticketNumber'):
+                        success = False
+                        issues.append("Legacy ticket missing generated ticketNumber")
+                    
+                    if not ticket.get('qrCodeData'):
+                        success = False
+                        issues.append("Legacy ticket missing generated qrCodeData")
+                    
+                    # Check that original properties are preserved
+                    if ticket.get('tierId') != 'vip':
+                        success = False
+                        issues.append("Legacy ticket tierId not preserved")
+                    
+                    if ticket.get('name') != 'VIP Access':
+                        success = False
+                        issues.append("Legacy ticket name not preserved")
+                    
+                    if ticket.get('quantity') != 1:
+                        success = False
+                        issues.append("Legacy ticket quantity not normalized to 1")
+                
+                if success:
                     self.log_result(
-                        "Webhook Email Functionality", 
-                        True, 
-                        f"✅ Webhook-style confirmation email processed: {data.get('messageId')}",
-                        data
+                        "Backward Compatibility",
+                        True,
+                        f"✅ Legacy ticket format successfully transformed to new format with unique IDs",
+                        {
+                            "registration_id": registration.get('id'),
+                            "transformed_ticket": tickets[0] if tickets else None
+                        }
                     )
                 else:
                     self.log_result(
-                        "Webhook Email Functionality", 
-                        False, 
-                        "❌ Webhook-style email failed",
+                        "Backward Compatibility",
+                        False,
+                        f"❌ Legacy compatibility issues: {'; '.join(issues)}",
                         data
                     )
             else:
                 self.log_result(
-                    "Webhook Email Functionality", 
-                    False, 
+                    "Backward Compatibility",
+                    False,
                     f"HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Webhook Email Functionality", False, f"Exception: {str(e)}")
+            self.log_result("Backward Compatibility", False, f"Exception: {str(e)}")
     
     def run_all_tests(self):
         """Run all email system tests as specified in review request"""
