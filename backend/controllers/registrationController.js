@@ -768,6 +768,7 @@ export const finalizeTransfer = async (req, res) => {
     try {
         const { transferId } = req.body;
 
+        console.log(`[Transfer] ========== START FINALIZE ==========`);
         console.log(`[Transfer] Finalizing transfer: ${transferId}`);
 
         // 1. Fetch transfer record
@@ -777,29 +778,45 @@ export const finalizeTransfer = async (req, res) => {
             .eq('id', transferId)
             .single();
 
+        console.log(`[Transfer] Transfer record:`, JSON.stringify(transfer, null, 2));
+        console.log(`[Transfer] Transfer error:`, transferError);
+
         if (transferError || !transfer) {
+            console.log(`[Transfer] ERROR: Transfer not found`);
             return res.status(404).json({ error: 'Transfer not found' });
         }
 
         // 2. Check if still pending
         if (transfer.status !== 'pending') {
+            console.log(`[Transfer] ERROR: Transfer status is ${transfer.status}, not pending`);
             return res.status(400).json({ error: `Transfer is ${transfer.status}, not pending` });
         }
 
         // 3. Verify undo window has expired
         const undoExpires = new Date(transfer.undo_expires_at);
-        if (new Date() < undoExpires) {
+        const now = new Date();
+        console.log(`[Transfer] Undo expires at: ${undoExpires.toISOString()}`);
+        console.log(`[Transfer] Current time: ${now.toISOString()}`);
+        console.log(`[Transfer] Has expired: ${now >= undoExpires}`);
+        
+        if (now < undoExpires) {
+            console.log(`[Transfer] ERROR: Undo window has not expired yet`);
             return res.status(400).json({ error: 'Undo window has not expired yet' });
         }
 
         // 4. Get original registration
-        const { data: originalReg } = await supabase
+        console.log(`[Transfer] Fetching registration: ${transfer.registration_id}`);
+        const { data: originalReg, error: regError } = await supabase
             .from('registrations')
             .select('*')
             .eq('id', transfer.registration_id)
             .single();
 
+        console.log(`[Transfer] Original registration:`, JSON.stringify(originalReg, null, 2));
+        console.log(`[Transfer] Registration error:`, regError);
+
         if (!originalReg) {
+            console.log(`[Transfer] ERROR: Original registration not found`);
             return res.status(404).json({ error: 'Original registration not found' });
         }
 
