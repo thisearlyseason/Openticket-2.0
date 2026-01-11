@@ -356,78 +356,76 @@ console.log(JSON.stringify({
         except Exception as e:
             self.log_result("Check-In API Authentication", False, f"Exception: {str(e)}")
 
-    def check_backend_logs_for_email_errors(self):
-        """Test Case 4: Check Backend Logs for Email Errors"""
+    def test_checkin_api_validation(self):
+        """Test Case 4: Check-In API Validation and Error Handling"""
         try:
-            import subprocess
+            test_cases = [
+                {
+                    "name": "Missing Ticket ID",
+                    "payload": {"eventId": "test-event-123"},
+                    "expected_status": 400,
+                    "expected_error": "ticket id"
+                },
+                {
+                    "name": "Missing Event ID", 
+                    "payload": {"ticketId": "TKT-1736789012345-a7f3x9"},
+                    "expected_status": [400, 401, 403],  # Could be validation or auth error
+                    "expected_error": None
+                },
+                {
+                    "name": "Invalid Ticket Format",
+                    "payload": {"ticketId": "INVALID-FORMAT", "eventId": "test-event-123"},
+                    "expected_status": [400, 401, 403, 404],
+                    "expected_error": None
+                }
+            ]
             
-            # Check for email-related errors in backend logs
-            result = subprocess.run(
-                ["tail", "-50", "/var/log/supervisor/backend.out.log"],
-                capture_output=True,
-                text=True
+            all_passed = True
+            results = []
+            
+            for test_case in test_cases:
+                try:
+                    response = self.session.post(
+                        f"{BACKEND_URL}/api/registrations/checkin",
+                        json=test_case["payload"],
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    
+                    expected_statuses = test_case["expected_status"]
+                    if not isinstance(expected_statuses, list):
+                        expected_statuses = [expected_statuses]
+                    
+                    if response.status_code in expected_statuses:
+                        try:
+                            data = response.json()
+                            error_msg = data.get('error', '').lower()
+                            
+                            if test_case["expected_error"]:
+                                if test_case["expected_error"].lower() in error_msg:
+                                    results.append(f"✅ {test_case['name']}: Proper validation")
+                                else:
+                                    results.append(f"⚠️ {test_case['name']}: Expected error message not found")
+                            else:
+                                results.append(f"✅ {test_case['name']}: Proper error response")
+                        except:
+                            results.append(f"✅ {test_case['name']}: Proper error status")
+                    else:
+                        results.append(f"❌ {test_case['name']}: Expected {expected_statuses}, got {response.status_code}")
+                        all_passed = False
+                        
+                except Exception as e:
+                    results.append(f"❌ {test_case['name']}: Exception - {str(e)}")
+                    all_passed = False
+            
+            self.log_result(
+                "Check-In API Validation",
+                all_passed,
+                f"{'✅ All validation tests passed' if all_passed else '❌ Some validation tests failed'}: {'; '.join(results)}",
+                {"test_results": results}
             )
             
-            if result.returncode == 0:
-                log_content = result.stdout.lower()
-                
-                # Check for old Gmail/nodemailer errors
-                gmail_errors = [
-                    "missing credentials",
-                    "resend not configured",
-                    "nodemailer",
-                    "gmail service error",
-                    "authentication failed"
-                ]
-                
-                found_errors = []
-                for error in gmail_errors:
-                    if error in log_content:
-                        found_errors.append(error)
-                
-                if found_errors:
-                    self.log_result(
-                        "Backend Logs Check", 
-                        False, 
-                        f"❌ Found old email service errors: {', '.join(found_errors)}",
-                        {"log_excerpt": result.stdout[-500:]}  # Last 500 chars
-                    )
-                else:
-                    # Check for positive email indicators
-                    positive_indicators = [
-                        "resend",
-                        "email sent",
-                        "✅ email sent"
-                    ]
-                    
-                    found_positive = []
-                    for indicator in positive_indicators:
-                        if indicator in log_content:
-                            found_positive.append(indicator)
-                    
-                    if found_positive:
-                        self.log_result(
-                            "Backend Logs Check", 
-                            True, 
-                            f"✅ No old email errors found. Found positive indicators: {', '.join(found_positive)}",
-                            {"log_excerpt": result.stdout[-500:]}
-                        )
-                    else:
-                        self.log_result(
-                            "Backend Logs Check", 
-                            True, 
-                            "✅ No old email service errors found in logs",
-                            {"log_excerpt": result.stdout[-500:]}
-                        )
-            else:
-                self.log_result(
-                    "Backend Logs Check", 
-                    False, 
-                    f"❌ Could not read backend logs: {result.stderr}",
-                    None
-                )
         except Exception as e:
-            self.log_result("Backend Logs Check", False, f"Exception: {str(e)}")
+            self.log_result("Check-In API Validation", False, f"Exception: {str(e)}")
 
     def test_email_service_configuration_validation(self):
         """Additional Test: Validate Email Service Configuration"""
