@@ -41,7 +41,7 @@ import { handleWebhook } from '../backend/controllers/stripeWebhookController.js
 import { initCronJobs } from '../backend/services/cronService.js';
 
 const app = express();
-const PORT = process.env.PORT || 8001;
+const PORT = process.env.PORT || 5001;
 
 // Trust proxy - required for rate limiting behind reverse proxy (Kubernetes/nginx)
 app.set('trust proxy', 1);
@@ -52,9 +52,6 @@ const allowedOrigins = [
     'https://openticket.events',
     'https://www.openticket.events',
     'https://app.openticket.events',
-    // Emergent deployment domains
-    /\.emergent\.host$/,
-    /\.emergentagent\.com$/,
     // Preview/Development domains
     /\.preview\.emergentagent\.com$/,
     /localhost:\d+$/,
