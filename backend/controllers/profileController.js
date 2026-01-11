@@ -55,10 +55,18 @@ export const setupSuperAdmin = async (req, res) => {
 
 export const syncProfile = async (req, res) => {
     try {
-        console.log('[ProfileSync] Sync request received for user:', req.user?.uid);
+        console.log('[ProfileSync] Sync request received');
+        console.log('[ProfileSync] User object:', JSON.stringify(req.user, null, 2));
+        
+        if (!req.user || !req.user.uid) {
+            console.error('[ProfileSync] Missing user or uid in request');
+            return res.status(400).json({ error: 'User authentication required' });
+        }
+        
         const { uid } = req.user;
-        const updates = req.body;
-        console.log('[ProfileSync] Updates received:', Object.keys(updates));
+        const updates = req.body || {};
+        console.log('[ProfileSync] UID:', uid);
+        console.log('[ProfileSync] Updates received:', JSON.stringify(updates, null, 2));
 
         // Fields that exist as columns in the profiles table (verified in DB schema)
         const dbColumnFields = [
