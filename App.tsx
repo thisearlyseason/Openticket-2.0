@@ -34,6 +34,7 @@ import { InstallPrompt } from './components/InstallPrompt';
 import { AdvancedAnalytics } from './components/AdvancedAnalytics';
 import { EmailMarketing } from './components/EmailMarketing';
 import { NonprofitUpgrade } from './components/NonprofitUpgrade';
+import { EnterpriseContact } from './components/EnterpriseContact';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
