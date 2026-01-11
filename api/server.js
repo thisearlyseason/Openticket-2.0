@@ -165,7 +165,6 @@ app.get('/api/check', (req, res) => {
 
 // app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE - REMOVED
 import stripeRoutes from '../backend/routes/stripeRoutes.js';
-import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
