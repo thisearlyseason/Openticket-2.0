@@ -825,23 +825,49 @@ export const finalizeTransfer = async (req, res) => {
         const ticketKeyParts = transfer.ticket_key.split('-');
         const tierIdPart = ticketKeyParts.slice(0, -1).join('-');
         
+        console.log(`[Transfer] Looking for ticket with key: ${transfer.ticket_key}`);
+        console.log(`[Transfer] Tier ID part: ${tierIdPart}`);
+        console.log(`[Transfer] Available tickets:`, JSON.stringify(tickets, null, 2));
+        
         let ticketIndex = -1;
         
         // Try multiple matching strategies
         ticketIndex = tickets.findIndex(t => t.key === transfer.ticket_key);
-        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.id === transfer.ticket_key);
-        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart);
-        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.id === tierIdPart);
-        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.transferId === transferId);
-        if (ticketIndex === -1 && tickets.length === 1) ticketIndex = 0;
+        console.log(`[Transfer] Match by key: ${ticketIndex}`);
         
         if (ticketIndex === -1) {
-            console.log('[Transfer Finalize] Ticket not found. ticket_key:', transfer.ticket_key);
+            ticketIndex = tickets.findIndex(t => t.id === transfer.ticket_key);
+            console.log(`[Transfer] Match by id: ${ticketIndex}`);
+        }
+        
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart);
+            console.log(`[Transfer] Match by tierId: ${ticketIndex}`);
+        }
+        
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.id === tierIdPart);
+            console.log(`[Transfer] Match by id (tierId part): ${ticketIndex}`);
+        }
+        
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.transferId === transferId);
+            console.log(`[Transfer] Match by transferId: ${ticketIndex}`);
+        }
+        
+        if (ticketIndex === -1 && tickets.length === 1) {
+            ticketIndex = 0;
+            console.log(`[Transfer] Only one ticket, using index 0`);
+        }
+        
+        if (ticketIndex === -1) {
+            console.log('[Transfer Finalize] ERROR: Ticket not found. ticket_key:', transfer.ticket_key);
             console.log('[Transfer Finalize] Available tickets:', JSON.stringify(tickets));
             return res.status(404).json({ error: 'Ticket not found' });
         }
 
         const ticket = tickets[ticketIndex];
+        console.log(`[Transfer] Found ticket at index ${ticketIndex}:`, JSON.stringify(ticket, null, 2));
 
         // 6. Update sender's ticket to transferred_out
         tickets[ticketIndex] = {
