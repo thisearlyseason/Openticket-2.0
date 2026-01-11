@@ -967,6 +967,58 @@ export const EventBuilder = () => {
                             <Card className="p-6">
                                 <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Ticket className="text-primary" /> Tickets</h2>
                                 
+                                {/* Plan Limits Indicator */}
+                                {currentUser && (() => {
+                                    const plan = (currentUser.subscription?.plan as keyof typeof PLANS) || 'free';
+                                    const planDetails = PLANS[plan] || PLANS.free;
+                                    const totalCapacity = formData.isRecurring
+                                        ? formData.recurringDates?.reduce((acc, rd) => acc + (rd.capacity || 0), 0) || 0
+                                        : formData.capacity || 0;
+                                    const usagePercent = Math.min(100, (totalCapacity / planDetails.ticketLimit) * 100);
+                                    const isNearLimit = usagePercent >= 80;
+                                    const isAtLimit = usagePercent >= 100;
+                                    
+                                    return (
+                                        <div className={`p-4 rounded-xl mb-6 border ${
+                                            isAtLimit ? 'bg-red-900/20 border-red-700' : 
+                                            isNearLimit ? 'bg-amber-900/20 border-amber-700' : 
+                                            'bg-zinc-800/50 border-zinc-700'
+                                        }`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <Target size={16} className={isAtLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-zinc-400'} />
+                                                    <span className="text-sm font-medium text-zinc-300">
+                                                        Ticket Capacity ({planDetails.name} Plan)
+                                                    </span>
+                                                </div>
+                                                <span className={`text-sm font-bold ${
+                                                    isAtLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-zinc-400'
+                                                }`}>
+                                                    {totalCapacity.toLocaleString()} / {planDetails.ticketLimit.toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="h-2 bg-zinc-700 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full rounded-full transition-all ${
+                                                        isAtLimit ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : 'bg-[#E0FF20]'
+                                                    }`}
+                                                    style={{ width: `${usagePercent}%` }}
+                                                />
+                                            </div>
+                                            {isAtLimit && (
+                                                <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
+                                                    <AlertCircle size={12} /> Limit reached. <button onClick={() => navigate('/pricing')} className="underline hover:text-red-300">Upgrade</button> for more capacity.
+                                                </p>
+                                            )}
+                                            {isNearLimit && !isAtLimit && (
+                                                <p className="text-xs text-amber-400 mt-2">
+                                                    Approaching limit. Consider upgrading for more capacity.
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                                
                                 {/* Organization Currency Notice - Read-only, set in Settings */}
                                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl mb-6 border border-blue-200 dark:border-blue-800/50 flex items-center gap-3">
                                     <Globe size={18} className="text-blue-600 dark:text-blue-400" />
