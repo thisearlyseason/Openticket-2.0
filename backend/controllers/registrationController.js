@@ -446,25 +446,71 @@ export const transferTicket = async (req, res) => {
         // 4. Find the specific ticket
         const tickets = registration.tickets || [];
         // ticketKey format from frontend: "${tierId}-${index}" e.g., "tier123-0"
-        const [tierIdPart, indexPart] = ticketKey.split('-');
+        const keyParts = ticketKey.split('-');
+        const tierIdPart = keyParts.slice(0, -1).join('-'); // Handle UUIDs with dashes
+        const indexPart = keyParts[keyParts.length - 1];
         const ticketKeyIndex = parseInt(indexPart, 10);
         
-        let ticketIndex = tickets.findIndex(t => t.key === ticketKey || t.id === ticketKey);
+        console.log('[Transfer] Looking for ticket:', { ticketKey, tierIdPart, ticketKeyIndex });
+        console.log('[Transfer] Available tickets:', JSON.stringify(tickets.map(t => ({ 
+            key: t.key, 
+            id: t.id, 
+            tierId: t.tierId, 
+            name: t.name,
+            quantity: t.quantity 
+        }))));
         
-        // If not found by key/id, try matching by tierId
+        // Try multiple matching strategies
+        let ticketIndex = -1;
+        
+        // Strategy 1: Direct key match
+        ticketIndex = tickets.findIndex(t => t.key === ticketKey);
+        
+        // Strategy 2: Direct id match
         if (ticketIndex === -1) {
-            ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart || t.id === tierIdPart);
+            ticketIndex = tickets.findIndex(t => t.id === ticketKey);
+        }
+        
+        // Strategy 3: Match by tierId
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart);
+        }
+        
+        // Strategy 4: Match by id equals tierIdPart
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.id === tierIdPart);
+        }
+        
+        // Strategy 5: For single ticket registrations, just use index 0
+        if (ticketIndex === -1 && tickets.length === 1) {
+            ticketIndex = 0;
+            console.log('[Transfer] Using single ticket fallback');
+        }
+        
+        // Strategy 6: Match by index if within bounds and quantity > ticketKeyIndex
+        if (ticketIndex === -1 && !isNaN(ticketKeyIndex)) {
+            // Find ticket where the index falls within its quantity
+            let runningIndex = 0;
+            for (let i = 0; i < tickets.length; i++) {
+                const t = tickets[i];
+                const qty = t.quantity || 1;
+                if (ticketKeyIndex < runningIndex + qty) {
+                    ticketIndex = i;
+                    console.log('[Transfer] Matched by quantity index:', { ticketIndex, ticketKeyIndex, runningIndex, qty });
+                    break;
+                }
+                runningIndex += qty;
+            }
         }
         
         if (ticketIndex === -1) {
-            console.log('[Transfer] Ticket not found. Looking for:', ticketKey);
-            console.log('[Transfer] Available tickets:', JSON.stringify(tickets.map(t => ({ key: t.key, id: t.id, tierId: t.tierId, name: t.name }))));
+            console.log('[Transfer] Ticket not found after all strategies');
             return res.status(404).json({ error: 'Ticket not found in registration' });
         }
 
         const ticket = tickets[ticketIndex];
         // Store the ticketKey for later use (fraud checks, etc.)
-        const effectiveTicketKey = ticket.key || ticket.id || ticketKey;
+        const effectiveTicketKey = ticket.key || ticket.id || ticket.tierId || ticketKey;
 
         // 5. FRAUD PREVENTION CHECKS
         
