@@ -337,7 +337,7 @@ export const getUpgradeMessage = (limitType: 'event' | 'monthly' | 'team', curre
         },
         monthly: {
             title: '🚀 You\'re on Fire!',
-            message: `You've sold a ton of tickets this month! Upgrade to ${suggestedPlan.toUpperCase()} for higher limits.`,
+            message: `You\'ve sold a ton of tickets this month! Upgrade to ${suggestedPlan.toUpperCase()} for higher limits.`,
             cta: `Upgrade to ${suggestedPlan.charAt(0).toUpperCase() + suggestedPlan.slice(1)}`
         },
         team: {
