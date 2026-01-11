@@ -552,6 +552,29 @@ export const MyTickets = () => {
                                             <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Ticket #</label>
                                             <div className="font-mono font-bold text-zinc-900 dark:text-white">{ticket.ticketIdDisplay}</div>
                                         </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Order #</label>
+                                            <div className="font-mono text-xs font-bold text-zinc-900 dark:text-white truncate" title={ticket.reg.id}>
+                                                {ticket.reg.id.slice(-8).toUpperCase()}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Purchased</label>
+                                            <div className="text-sm font-bold text-zinc-900 dark:text-white">
+                                                {new Date(ticket.reg.timestamp).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Status</label>
+                                            <div className="font-bold text-zinc-900 dark:text-white">
+                                                {ticket.transferStatus === 'transferred_in' && <span className="text-green-600">Transferred In</span>}
+                                                {ticket.transferStatus === 'transferred_out' && <span className="text-orange-600">Transferred Out</span>}
+                                                {!ticket.transferStatus && ticket.status === 'valid' && <span className="text-green-600">Active</span>}
+                                                {ticket.status === 'refunded' && <span className="text-red-600">Refunded</span>}
+                                                {ticket.status === 'pay_at_door' && <span className="text-yellow-600">Pay at Door</span>}
+                                                {ticket.checkedIn && <span className="text-blue-600">Used</span>}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Add-ons Display */}
