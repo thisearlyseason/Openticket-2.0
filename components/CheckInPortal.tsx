@@ -827,59 +827,95 @@ export const CheckInPortal = () => {
         if (showScanner) requestAnimationFrame(scanFrame);
     };
 
-    const handleScanInput = (rawValue: string) => {
+    const handleScanInput = async (rawValue: string) => {
         setScanResult(rawValue);
-        if (rawValue.startsWith('TICKET:')) {
-            const parts = rawValue.split(':');
-            if (parts.length >= 4) {
-                const regId = parts[1];
-                const tierId = parts[2];
-                const index = parseInt(parts[3], 10);
-
-                const targetTicket = allTickets.find(t =>
-                    t.reg.id === regId && t.tierId === tierId && t.index === index
-                );
-
-                if (targetTicket) {
-                    if (!targetTicket.checkedIn) {
-                        handleCheckInToggle(regId, `${tierId}-${index}`, false);
-                        if (targetTicket.reg.paymentStatus === 'completed') {
-                            // Close scanner and show success
-                            setShowScanner(false);
-                            // Visual feedback
-                            setTimeout(() => {
-                                window.alert(`✓ Checked in: ${targetTicket.attendeeName}`);
-                            }, 100);
-                        }
-                    } else {
-                        window.alert(`Already checked in: ${targetTicket.attendeeName}`);
-                    }
-                } else {
-                    window.alert("Ticket not found in this event.");
-                }
-            }
-        } else {
-            // Handle other QR formats or direct registration IDs
-            const matchingTicket = allTickets.find(t => 
-                t.reg.id === rawValue || 
-                t.id.includes(rawValue) ||
-                t.reg.id.toLowerCase().includes(rawValue.toLowerCase())
-            );
-            
-            if (matchingTicket) {
-                if (!matchingTicket.checkedIn) {
-                    const ticketKey = matchingTicket.uniqueKeySuffix || `${matchingTicket.tierId}-${matchingTicket.index}`;
-                    handleCheckInToggle(matchingTicket.reg.id, ticketKey, false);
+        
+        try {
+            // NEW: Check if this is a unique ticket ID (format: TKT-timestamp-hash)
+            if (rawValue.startsWith('TKT-')) {
+                // Call new check-in API with unique ticket ID
+                const response = await fetch('/api/registrations/checkin', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        ticketId: rawValue,
+                        eventId: id
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
                     setShowScanner(false);
                     setTimeout(() => {
-                        window.alert(`✓ Checked in: ${matchingTicket.attendeeName}`);
+                        window.alert(`✓ Checked in: ${result.ticket.attendeeName}\nTicket: ${result.ticket.ticketNumber}`);
                     }, 100);
+                    loadRegistrations(); // Refresh the list
                 } else {
-                    window.alert(`Already checked in: ${matchingTicket.attendeeName}`);
+                    window.alert(`❌ Check-in failed: ${result.message || result.error}`);
+                }
+                return;
+            }
+            
+            // LEGACY: Handle old QR format (TICKET:regId:tierId:index)
+            if (rawValue.startsWith('TICKET:')) {
+                const parts = rawValue.split(':');
+                if (parts.length >= 4) {
+                    const regId = parts[1];
+                    const tierId = parts[2];
+                    const index = parseInt(parts[3], 10);
+
+                    const targetTicket = allTickets.find(t =>
+                        t.reg.id === regId && t.tierId === tierId && t.index === index
+                    );
+
+                    if (targetTicket) {
+                        if (!targetTicket.checkedIn) {
+                            handleCheckInToggle(regId, `${tierId}-${index}`, false);
+                            if (targetTicket.reg.paymentStatus === 'completed') {
+                                // Close scanner and show success
+                                setShowScanner(false);
+                                // Visual feedback
+                                setTimeout(() => {
+                                    window.alert(`✓ Checked in: ${targetTicket.attendeeName}`);
+                                }, 100);
+                            }
+                        } else {
+                            window.alert(`Already checked in: ${targetTicket.attendeeName}`);
+                        }
+                    } else {
+                        window.alert("Ticket not found in this event.");
+                    }
                 }
             } else {
-                window.alert("QR code not recognized. Please try again.");
+                // Handle other QR formats or direct registration IDs
+                const matchingTicket = allTickets.find(t => 
+                    t.reg.id === rawValue || 
+                    t.id.includes(rawValue) ||
+                    t.reg.id.toLowerCase().includes(rawValue.toLowerCase())
+                );
+                
+                if (matchingTicket) {
+                    if (!matchingTicket.checkedIn) {
+                        const ticketKey = matchingTicket.uniqueKeySuffix || `${matchingTicket.tierId}-${matchingTicket.index}`;
+                        handleCheckInToggle(matchingTicket.reg.id, ticketKey, false);
+                        setShowScanner(false);
+                        setTimeout(() => {
+                            window.alert(`✓ Checked in: ${matchingTicket.attendeeName}`);
+                        }, 100);
+                    } else {
+                        window.alert(`Already checked in: ${matchingTicket.attendeeName}`);
+                    }
+                } else {
+                    window.alert("QR code not recognized. Please try again.");
+                }
             }
+        } catch (error) {
+            console.error('[CheckIn] Error:', error);
+            window.alert(`Error processing check-in: ${error.message}`);
         }
     };
 
