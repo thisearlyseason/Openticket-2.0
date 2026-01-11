@@ -76,10 +76,10 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
         setIsLoading(true);
         
         try {
-            const user = StorageService.getCurrentUser();
-            if (!user?.token) return;
+            const token = await StorageService.getAuthToken();
+            if (!token) return;
             
-            await PushNotificationService.unsubscribe(user.token);
+            await PushNotificationService.unsubscribe(token);
             setIsSubscribed(false);
         } catch (error) {
             console.error('Unsubscribe error:', error);
@@ -92,10 +92,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
         setTestStatus('sending');
         
         try {
-            const user = StorageService.getCurrentUser();
-            if (!user?.token) return;
+            const token = await StorageService.getAuthToken();
+            if (!token) {
+                setTestStatus('error');
+                return;
+            }
             
-            const success = await PushNotificationService.sendTestNotification(user.token);
+            const success = await PushNotificationService.sendTestNotification(token);
             setTestStatus(success ? 'sent' : 'error');
             
             setTimeout(() => setTestStatus('idle'), 3000);
