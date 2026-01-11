@@ -1454,26 +1454,28 @@ export const StorageService = {
         }
     },
 
-    getRegistrationsByEmail: async (email: string) => {
-        // Don't call API if email is empty
-        if (!email || email.trim() === '') {
-            console.log('[StorageService] No email provided, returning empty');
+    getRegistrationsByEmail: async (email: string, userId?: string) => {
+        // Don't call API if both email and userId are empty
+        if ((!email || email.trim() === '') && (!userId || userId.trim() === '')) {
+            console.log('[StorageService] No email or userId provided, returning empty');
             return [];
         }
         
-        console.log(`[StorageService] Fetching registrations for email: ${email}`);
+        const searchBy = userId || email;
+        console.log(`[StorageService] Fetching registrations for: ${userId ? 'user_id' : 'email'}: ${searchBy}`);
 
         try {
             // Use backend filtering secure endpoint
-            const { registrations } = await fetchSupabase(`/registrations?email=${encodeURIComponent(email)}`, true);
+            const queryParam = userId ? `user_id=${encodeURIComponent(userId)}` : `email=${encodeURIComponent(email)}`;
+            const { registrations } = await fetchSupabase(`/registrations?${queryParam}`, true);
 
             const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
-            console.log(`[StorageService] Found ${userRegs.length} matches for ${email}`);
+            console.log(`[StorageService] Found ${userRegs.length} matches`);
 
             const allEvents = await StorageService.getEvents();
             return userRegs.map((reg: Registration) => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter((x: any) => x.event);
         } catch (e) {
-            console.error('[StorageService] Fetch by email failed:', e);
+            console.error('[StorageService] Fetch registrations failed:', e);
             return [];
         }
     },
