@@ -451,6 +451,7 @@ const MainContent = () => {
                 <Route path="/organizer/:id" element={<OrganizerProfile />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/nonprofit-upgrade" element={<NonprofitUpgrade />} />
+                <Route path="/enterprise" element={<EnterpriseContact />} />
                 <Route path="/subscription-success" element={<SubscriptionSuccess />} />
             </Routes>
         </Layout>
