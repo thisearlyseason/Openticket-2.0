@@ -241,6 +241,123 @@ export const PLANS = {
     enterprise: PLAN_VERSIONS.enterprise
 };
 
+// Helper: Get user's current plan configuration
+export const getUserPlanConfig = (user: any) => {
+    if (!user) return PLANS.free;
+    
+    // Check if user has a specific plan version stored
+    const planVersion = user.planVersion || user.subscription?.planVersion;
+    if (planVersion && PLAN_VERSIONS[planVersion]) {
+        return PLAN_VERSIONS[planVersion];
+    }
+    
+    // Fall back to current plan without version (use latest)
+    const planType = user.subscription?.plan || 'free';
+    return PLANS[planType] || PLANS.free;
+};
+
+// Helper: Check if user can create/edit event with given ticket count
+export const checkEventLimits = (user: any, ticketCount: number, isNewEvent: boolean = true) => {
+    const planConfig = getUserPlanConfig(user);
+    
+    const result = {
+        allowed: true,
+        reason: null as string | null,
+        suggestedPlan: null as string | null,
+        isHardLimit: false, // false = show upgrade prompt, true = block
+        currentLimit: planConfig.ticketLimit,
+        requested: ticketCount
+    };
+    
+    // Check per-event ticket limit
+    if (ticketCount > planConfig.ticketLimit) {
+        result.allowed = false;
+        result.reason = `Your current plan allows up to ${planConfig.ticketLimit} tickets per event.`;
+        
+        // Suggest appropriate upgrade
+        if (ticketCount <= PLANS.pro.ticketLimit) {
+            result.suggestedPlan = 'pro';
+        } else if (ticketCount <= PLANS.premium.ticketLimit) {
+            result.suggestedPlan = 'premium';
+        } else {
+            result.suggestedPlan = 'enterprise';
+        }
+        
+        // Only hard block for new events, allow editing existing
+        result.isHardLimit = isNewEvent;
+    }
+    
+    return result;
+};
+
+// Helper: Check monthly ticket limit
+export const checkMonthlyTicketLimit = async (user: any, additionalTickets: number = 0) => {
+    const planConfig = getUserPlanConfig(user);
+    
+    if (!planConfig.monthlyTicketLimit) {
+        return { allowed: true, remaining: Infinity };
+    }
+    
+    // Get current month's ticket sales
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // This would need to query actual sold tickets from the database
+    // For now, returning a placeholder structure
+    const result = {
+        allowed: true,
+        limit: planConfig.monthlyTicketLimit,
+        used: 0, // Would be calculated from DB
+        remaining: planConfig.monthlyTicketLimit,
+        suggestedPlan: null as string | null
+    };
+    
+    if (result.used + additionalTickets > result.limit) {
+        result.allowed = false;
+        
+        if (planConfig.monthlyTicketLimit <= PLANS.pro.monthlyTicketLimit!) {
+            result.suggestedPlan = 'pro';
+        } else if (planConfig.monthlyTicketLimit <= PLANS.premium.monthlyTicketLimit!) {
+            result.suggestedPlan = 'premium';
+        } else {
+            result.suggestedPlan = 'enterprise';
+        }
+    }
+    
+    return result;
+};
+
+// Helper: Upgrade messaging (positive, not blocking)
+export const getUpgradeMessage = (limitType: 'event' | 'monthly' | 'team', currentPlan: string, suggestedPlan: string) => {
+    const messages = {
+        event: {
+            title: '🎉 Your Event is Growing!',
+            message: `Wow! You're selling more tickets than ever. Upgrade to ${suggestedPlan.toUpperCase()} to handle larger events.`,
+            cta: `Upgrade to ${suggestedPlan.charAt(0).toUpperCase() + suggestedPlan.slice(1)}`
+        },
+        monthly: {
+            title: '🚀 You're on Fire!',
+            message: `You've sold a ton of tickets this month! Upgrade to ${suggestedPlan.toUpperCase()} for higher limits.`,
+            cta: `Upgrade to ${suggestedPlan.charAt(0).toUpperCase() + suggestedPlan.slice(1)}`
+        },
+        team: {
+            title: '👥 Growing Your Team?',
+            message: `Add more team members with ${suggestedPlan.toUpperCase()} plan.`,
+            cta: `Upgrade to ${suggestedPlan.charAt(0).toUpperCase() + suggestedPlan.slice(1)}`
+        }
+    };
+    
+    if (suggestedPlan === 'enterprise') {
+        return {
+            title: '🌟 Ready for Enterprise?',
+            message: 'Your needs exceed our standard plans. Let\'s create a custom solution for you.',
+            cta: 'Contact Sales'
+        };
+    }
+    
+    return messages[limitType];
+};
+
 const safeStringify = (obj: any) => {
     const cache = new Set();
     return JSON.stringify(obj, (key, value) => {
