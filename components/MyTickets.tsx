@@ -179,34 +179,69 @@ export const MyTickets = () => {
                         return;
                     }
                     
-                    for (let i = 0; i < t.quantity; i++) {
-                        const key = `${t.tierId}-${i}`;
-                        const isTicketHidden = reg.hiddenTicketKeys?.includes(key);
-                        if (activeTab !== 'archived' && isTicketHidden) continue;
-
-                        // Determine status
-                        let ticketStatus = isTicketHidden ? 'hidden' : baseStatus;
+                    // NEW: Check if ticket has unique ID structure (quantity should be 1 for each)
+                    const hasUniqueId = t.ticketId && t.ticketNumber;
+                    
+                    if (hasUniqueId) {
+                        // NEW TICKET STRUCTURE: Each ticket is already unique
+                        const isTicketHidden = reg.hiddenTicketKeys?.includes(t.ticketId);
+                        if (activeTab !== 'archived' && isTicketHidden) return;
                         
                         ticketList.push({
                             reg, event,
                             ticketInfo: { 
                                 name: t.name, 
-                                quantity: t.quantity, 
+                                quantity: 1, // Always 1 for unique tickets
                                 date: t.date 
                             },
-                            uniqueIndex: i,
-                            uniqueQrData: `TICKET:${reg.id}:${t.tierId}:${i}`,
-                            ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0, 3).toUpperCase()}-${i + 1}`,
-                            ticketKey: key,
+                            uniqueIndex: 0,
+                            uniqueQrData: t.qrCodeData || t.ticketId, // Use unique ticket ID for QR
+                            ticketIdDisplay: t.ticketNumber, // Display ticket number (e.g., "TKT-A7F3X9")
+                            ticketKey: t.ticketId, // Use ticket ID as key
                             ticketArrayIndex: tIdx,
-                            status: ticketStatus,
+                            status: isTicketHidden ? 'hidden' : baseStatus,
                             hostName: event.organizer,
                             isAddOn: false,
                             timestamp: reg.timestamp,
-                            transferStatus: t.transferStatus, // Add transfer status
+                            transferStatus: t.transferStatus,
                             transferredFrom: isTransferredIn ? t.transferredFromEmail : undefined,
-                            transferredTo: isTransferredOut ? t.transferredToEmail : undefined
+                            transferredTo: isTransferredOut ? t.transferredToEmail : undefined,
+                            attendeeName: t.attendeeName || reg.attendeeName, // Individual ticket name
+                            originalAttendeeName: t.originalAttendeeName, // For transfer history
+                            checkedIn: t.checkedIn || false
                         });
+                    } else {
+                        // LEGACY TICKET STRUCTURE: Tickets with quantity > 1
+                        const quantity = t.quantity || 1;
+                        for (let i = 0; i < quantity; i++) {
+                            const key = `${t.tierId}-${i}`;
+                            const isTicketHidden = reg.hiddenTicketKeys?.includes(key);
+                            if (activeTab !== 'archived' && isTicketHidden) continue;
+
+                            // Determine status
+                            let ticketStatus = isTicketHidden ? 'hidden' : baseStatus;
+                            
+                            ticketList.push({
+                                reg, event,
+                                ticketInfo: { 
+                                    name: t.name, 
+                                    quantity: quantity, 
+                                    date: t.date 
+                                },
+                                uniqueIndex: i,
+                                uniqueQrData: `TICKET:${reg.id}:${t.tierId}:${i}`, // Legacy format
+                                ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0, 3).toUpperCase()}-${i + 1}`,
+                                ticketKey: key,
+                                ticketArrayIndex: tIdx,
+                                status: ticketStatus,
+                                hostName: event.organizer,
+                                isAddOn: false,
+                                timestamp: reg.timestamp,
+                                transferStatus: t.transferStatus,
+                                transferredFrom: isTransferredIn ? t.transferredFromEmail : undefined,
+                                transferredTo: isTransferredOut ? t.transferredToEmail : undefined
+                            });
+                        }
                     }
                 });
             } else {
