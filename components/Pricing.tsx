@@ -252,34 +252,24 @@ export const Pricing = () => {
                             20% OFF
                         </div>
                     )}
-                    <div className="mb-6 mt-2">
-                        <h3 className="text-xl font-bold text-primary mb-2 flex items-center gap-2"><Star size={20} fill="currentColor" /> {PLANS.pro.name}</h3>
-                        <div className="text-4xl font-black text-gray-900 dark:text-white flex items-end">
+                    <div className="mb-4 mt-2">
+                        <h3 className="text-xl font-bold text-primary mb-2">{PLANS.pro.name}</h3>
+                        <div className="text-3xl font-black text-gray-900 dark:text-white flex items-end">
                             {getPriceDisplay('pro')}
                             <span className="text-sm font-medium text-gray-500 mb-1 ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">For growing organizations.</p>
+                        <p className="text-xs text-gray-500 mt-2">For growing organizations</p>
                     </div>
-                    <div className="space-y-4 mb-8 border-t border-zinc-100 dark:border-zinc-800 pt-6">
-                        <div className="flex items-start font-bold text-zinc-900 dark:text-white">
-                            <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span>250 Tickets / Event</span>
-                        </div>
-                        <div className="flex items-start font-bold text-zinc-900 dark:text-white">
-                            <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span>10 Events / Month</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span>Optional Donation Button</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span>Advanced Analytics</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-primary mr-2 mt-0.5 shrink-0" />
-                            <span className="text-sm font-bold text-primary">1.5% + $0.75 per Ticket</span>
+                    <div className="space-y-3 mb-6 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                        {PLANS.pro.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-start text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                <Check size={16} className="text-primary mr-2 mt-0.5 shrink-0" />
+                                <span>{feature}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-start text-xs font-bold text-primary">
+                            <span className="mr-2">•</span>
+                            <span>2.9% + $0.69 per ticket</span>
                         </div>
                     </div>
                     <Button
