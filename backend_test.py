@@ -682,17 +682,17 @@ console.log(JSON.stringify({
         return passed == total
 
 if __name__ == "__main__":
-    tester = EmailSystemTester()
+    tester = TicketSystemTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/email_system_test_results.json', 'w') as f:
+    with open('/app/ticket_system_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/email_system_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/ticket_system_test_results.json")
     
     if success:
-        print("\n🎉 All Email System tests PASSED!")
+        print("\n🎉 All Unique Ticket System tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
