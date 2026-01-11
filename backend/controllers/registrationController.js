@@ -735,7 +735,7 @@ export const undoTransfer = async (req, res) => {
 
                 await supabase
                     .from('registrations')
-                    .update({ tickets, updated_at: new Date().toISOString() })
+                    .update({ tickets })
                     .eq('id', id);
             }
         }
