@@ -38,6 +38,15 @@ export const MyTickets = () => {
     const [user, setUser] = useState<User | null>(null);
     const [transferModal, setTransferModal] = useState<{ isOpen: boolean, ticket: DisplayTicket | null, name: string, email: string }>({ isOpen: false, ticket: null, name: '', email: '' });
     const [receiptModal, setReceiptModal] = useState<{ isOpen: boolean, reg: Registration | null, event: Event | null }>({ isOpen: false, reg: null, event: null });
+    
+    // Transfer Undo Modal State
+    const [undoModal, setUndoModal] = useState<{ 
+        isOpen: boolean, 
+        transferId: string | null, 
+        countdown: number,
+        registrationId: string | null 
+    }>({ isOpen: false, transferId: null, countdown: 5, registrationId: null });
+    
     const navigate = useNavigate();
 
     // Derived State
