@@ -3166,6 +3166,159 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Database Migrations */}
+                            <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                    <RefreshCw size={20} className="text-amber-400" /> Database Migrations
+                                </h3>
+                                <p className="text-sm text-zinc-400 mb-6">
+                                    Run database migrations to update user data. Use dry-run mode first to preview changes.
+                                </p>
+
+                                <div className="space-y-4">
+                                    {/* Plan ID Assignment Migration */}
+                                    <div className="bg-black/50 p-4 rounded-xl">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div>
+                                                <h4 className="font-bold text-white">Assign Plan IDs (Grandfathering)</h4>
+                                                <p className="text-xs text-zinc-500 mt-1">
+                                                    Assigns <code className="bg-zinc-800 px-1 rounded">plan_id</code> (e.g., free_v1, pro_v1) to existing users for backward compatibility.
+                                                </p>
+                                            </div>
+                                            <Badge variant="outline" className="text-amber-400 border-amber-400/50">
+                                                v1 → v2 Migration
+                                            </Badge>
+                                        </div>
+
+                                        <div className="flex gap-2 mt-4">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={migrationRunning}
+                                                onClick={async () => {
+                                                    setMigrationRunning(true);
+                                                    setMigrationResults(null);
+                                                    try {
+                                                        const token = await StorageService.getAuthToken();
+                                                        const response = await fetch('/api/admin/run-migration', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
+                                                            body: JSON.stringify({
+                                                                migration: 'assign_plan_ids',
+                                                                dryRun: true
+                                                            })
+                                                        });
+                                                        const result = await response.json();
+                                                        setMigrationResults({ ...result, mode: 'dry-run' });
+                                                    } catch (error: any) {
+                                                        setMigrationResults({ error: error.message, mode: 'dry-run' });
+                                                    }
+                                                    setMigrationRunning(false);
+                                                }}
+                                                className="flex-1"
+                                            >
+                                                {migrationRunning ? (
+                                                    <><RefreshCw size={14} className="mr-2 animate-spin" /> Running...</>
+                                                ) : (
+                                                    <><Eye size={14} className="mr-2" /> Dry Run (Preview)</>
+                                                )}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                disabled={migrationRunning}
+                                                onClick={async () => {
+                                                    const confirmed = await confirm(
+                                                        'Run Migration',
+                                                        'This will permanently update all user profiles with plan_id values. This action cannot be undone. Are you sure you want to proceed?'
+                                                    );
+                                                    if (!confirmed) return;
+
+                                                    setMigrationRunning(true);
+                                                    setMigrationResults(null);
+                                                    try {
+                                                        const token = await StorageService.getAuthToken();
+                                                        const response = await fetch('/api/admin/run-migration', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
+                                                            body: JSON.stringify({
+                                                                migration: 'assign_plan_ids',
+                                                                dryRun: false
+                                                            })
+                                                        });
+                                                        const result = await response.json();
+                                                        setMigrationResults({ ...result, mode: 'live' });
+                                                    } catch (error: any) {
+                                                        setMigrationResults({ error: error.message, mode: 'live' });
+                                                    }
+                                                    setMigrationRunning(false);
+                                                }}
+                                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white border-none"
+                                            >
+                                                <Zap size={14} className="mr-2" /> Run Migration (Live)
+                                            </Button>
+                                        </div>
+
+                                        {/* Migration Results */}
+                                        {migrationResults && (
+                                            <div className={`mt-4 p-4 rounded-lg ${
+                                                migrationResults.error 
+                                                    ? 'bg-red-900/30 border border-red-700' 
+                                                    : migrationResults.mode === 'dry-run'
+                                                        ? 'bg-blue-900/30 border border-blue-700'
+                                                        : 'bg-green-900/30 border border-green-700'
+                                            }`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {migrationResults.error ? (
+                                                        <XCircle size={16} className="text-red-400" />
+                                                    ) : migrationResults.mode === 'dry-run' ? (
+                                                        <Eye size={16} className="text-blue-400" />
+                                                    ) : (
+                                                        <CheckCircle size={16} className="text-green-400" />
+                                                    )}
+                                                    <span className={`font-bold text-sm ${
+                                                        migrationResults.error ? 'text-red-400' : 
+                                                        migrationResults.mode === 'dry-run' ? 'text-blue-400' : 'text-green-400'
+                                                    }`}>
+                                                        {migrationResults.error 
+                                                            ? 'Migration Failed' 
+                                                            : migrationResults.mode === 'dry-run' 
+                                                                ? 'Dry Run Complete (No Changes Made)'
+                                                                : 'Migration Complete'}
+                                                    </span>
+                                                </div>
+                                                
+                                                {migrationResults.error ? (
+                                                    <p className="text-sm text-red-300">{migrationResults.error}</p>
+                                                ) : migrationResults.results && (
+                                                    <div className="text-sm space-y-1">
+                                                        <p className="text-zinc-300">
+                                                            <span className="text-zinc-500">Processed:</span> {migrationResults.results.processed} users
+                                                        </p>
+                                                        <p className="text-zinc-300">
+                                                            <span className="text-zinc-500">Updated:</span> {migrationResults.results.updated} users
+                                                        </p>
+                                                        <p className="text-zinc-300">
+                                                            <span className="text-zinc-500">Skipped:</span> {migrationResults.results.skipped} (already had plan_id)
+                                                        </p>
+                                                        {migrationResults.results.errors?.length > 0 && (
+                                                            <p className="text-red-300">
+                                                                <span className="text-zinc-500">Errors:</span> {migrationResults.results.errors.length}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
