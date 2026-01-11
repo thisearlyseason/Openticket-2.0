@@ -38,11 +38,17 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
             const user = StorageService.getCurrentUser();
             if (!user?.id) {
                 console.warn('No user found for push subscription');
+                window.alert('Please sign in to enable notifications');
                 return;
             }
             
-            // Get token from Firebase or stored auth
-            const token = user.token || localStorage.getItem('firebase_token') || user.id;
+            // Get auth token from StorageService
+            const token = await StorageService.getAuthToken();
+            if (!token) {
+                console.warn('No auth token available');
+                window.alert('Please sign in again to enable notifications');
+                return;
+            }
             
             const success = await PushNotificationService.subscribe(token);
             
@@ -50,11 +56,17 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                 setIsSubscribed(true);
                 setPermission('granted');
             } else {
-                window.alert('Failed to enable notifications. Please check your browser settings.');
+                // Check if permission was denied
+                const currentPermission = PushNotificationService.getPermissionStatus();
+                if (currentPermission === 'denied') {
+                    window.alert('Notifications are blocked. Please enable them in your browser settings.');
+                } else {
+                    window.alert('Failed to enable notifications. Please try again.');
+                }
             }
         } catch (error) {
             console.error('Subscribe error:', error);
-            window.alert('Failed to enable notifications');
+            window.alert('Failed to enable notifications. Please check your browser settings.');
         } finally {
             setIsLoading(false);
         }
