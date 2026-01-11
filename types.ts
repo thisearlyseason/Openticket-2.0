@@ -518,7 +518,7 @@ export interface SystemNotification {
 }
 
 export interface Registration {
-  id: string;
+  id: string;  // This is the Purchase Order ID
   eventId: string;
   attendeeName: string;
   attendeeEmail: string;
@@ -535,7 +535,7 @@ export interface Registration {
   promoCodeUsed?: string;
   affiliateCode?: string;
   discountAmount?: number;
-  timestamp: number;
+  timestamp: number;  // Purchase date/time
   paymentStatus: 'pending' | 'completed' | 'offline_pending' | 'refunded' | 'paid' | 'approved';
   approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
   checkedIn?: boolean;
@@ -545,7 +545,7 @@ export interface Registration {
 
   refundedAmount?: number;
   refundReason?: string;
-  source?: 'online' | 'manual';
+  source?: 'online' | 'manual' | 'transfer';  // Added 'transfer' for transferred tickets
 
   hiddenForAttendee?: boolean;
   hiddenTicketKeys?: string[];
@@ -554,6 +554,10 @@ export interface Registration {
   stripePaymentIntentId?: string;
   stripeTransferId?: string;
   stripeFee?: number;
+  
+  // NEW: For better tracking
+  userId?: string;  // Link to user account
+  createdAt?: string;  // ISO timestamp
 }
 
 export interface WaitlistEntry {
