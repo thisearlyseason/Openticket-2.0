@@ -1,0 +1,139 @@
+[
+  {
+    "test": "Debug Transfers Endpoint",
+    "success": true,
+    "details": "\u2705 Found 1 recent transfers",
+    "response_data": {
+      "transfer_count": 1,
+      "recent_transfers": [
+        {
+          "id": "transfer_1768169569092_67ildn65c",
+          "registration_id": "834f5729-e88c-4237-bfa3-34afdfca8e19",
+          "ticket_key": "tix-1767679022278-0-3el2",
+          "event_id": "cf680aa5-3476-466b-a4f1-c7d27ac1b686",
+          "sender_user_id": "twUJdSJAjhY7YSxBKZ7DUMxNXuh1",
+          "sender_email": "aaa@gmail.com",
+          "sender_name": "test",
+          "recipient_email": "tylerans@gmail.com",
+          "recipient_user_id": "uYaLjd5HsAgPn6N7Fkf8fkNvLyB3",
+          "recipient_name": "Tyler A",
+          "recipient_registration_id": "e7a309b0-2627-478f-8c60-2c6f91e3a4ae",
+          "status": "completed",
+          "created_at": "2026-01-11T22:12:49.092+00:00",
+          "undo_expires_at": "2026-01-11T22:12:54.092+00:00",
+          "undone_at": null,
+          "finalized_at": "2026-01-11T22:33:09.946+00:00",
+          "fraud_flag": false
+        }
+      ]
+    },
+    "timestamp": "2026-01-11 22:37:17"
+  },
+  {
+    "test": "Transfer Initiation Validation",
+    "success": true,
+    "details": "\u2705 Properly requires authentication/valid registration (HTTP 401)",
+    "response_data": {
+      "status_code": 401,
+      "response": "{\"error\":\"Missing Authorization header\"}"
+    },
+    "timestamp": "2026-01-11 22:37:17"
+  },
+  {
+    "test": "Undo Transfer Validation",
+    "success": true,
+    "details": "\u2705 Properly requires authentication/valid transfer (HTTP 401)",
+    "response_data": {
+      "status_code": 401
+    },
+    "timestamp": "2026-01-11 22:37:17"
+  },
+  {
+    "test": "Finalize Transfer Validation",
+    "success": true,
+    "details": "\u2705 Properly validates transfer existence: Transfer not found",
+    "response_data": {
+      "error": "Transfer not found"
+    },
+    "timestamp": "2026-01-11 22:37:17"
+  },
+  {
+    "test": "Transfer Endpoints Structure",
+    "success": false,
+    "details": "Endpoint availability check: 3/4 endpoints found",
+    "response_data": {
+      "endpoint_results": [
+        "\u2705 Debug endpoint: HTTP 200",
+        "\u2705 Initiate transfer: HTTP 401",
+        "\u2705 Undo transfer: HTTP 401",
+        "\u274c Finalize transfer: Not found (404)"
+      ]
+    },
+    "timestamp": "2026-01-11 22:37:18"
+  },
+  {
+    "test": "Backend Logs Transfer Check",
+    "success": false,
+    "details": "\u274c Found transfer-related errors: transfer error",
+    "response_data": {
+      "log_excerpt": "======= START FINALIZE ==========\n[Transfer] Finalizing transfer: test-transfer-123\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n2026-01-11T22:37:17.893Z - GET /api/registrations/debug/transfers\n2026-01-11T22:37:18.017Z - POST /api/registrations/test-id/transfer\n[Auth] Missing Authorization header\n2026-01-11T22:37:18.027Z - POST /api/registrations/test-id/transfer/undo\n[Auth] Missing Authorization header\n2026-01-11T22:37:18.036Z - POST /api/registrations/0/transfer/finalize\n[Transfer] ========== START FINALIZE ==========\n[Transfer] Finalizing transfer: undefined\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n"
+    },
+    "timestamp": "2026-01-11 22:37:18"
+  },
+  {
+    "test": "Database Schema Validation",
+    "success": true,
+    "details": "\u2705 Transfer table schema appears correct (checked 9 fields)",
+    "response_data": {
+      "sample_fields": [
+        "id",
+        "registration_id",
+        "ticket_key",
+        "event_id",
+        "sender_user_id",
+        "sender_email",
+        "sender_name",
+        "recipient_email",
+        "recipient_user_id",
+        "recipient_name",
+        "recipient_registration_id",
+        "status",
+        "created_at",
+        "undo_expires_at",
+        "undone_at",
+        "finalized_at",
+        "fraud_flag"
+      ]
+    },
+    "timestamp": "2026-01-11 22:37:18"
+  },
+  {
+    "test": "Transfer Flow Documentation",
+    "success": false,
+    "details": "\u2705 Transfer flow endpoints: 2/3 available (67%)",
+    "response_data": {
+      "flow_steps": [
+        "1. POST /api/registrations/:id/transfer - Creates pending transfer",
+        "2. 5-second undo window with frontend countdown",
+        "3. POST /api/registrations/:id/transfer/undo - Available during countdown",
+        "4. POST /api/registrations/0/transfer/finalize - Called after 5 seconds",
+        "5. Database updates: sender marked transferred_out, recipient gets new registration"
+      ],
+      "endpoints_available": 2
+    },
+    "timestamp": "2026-01-11 22:37:18"
+  },
+  {
+    "test": "Fraud Prevention Features",
+    "success": true,
+    "details": "Fraud prevention checks: 2/3 passed",
+    "response_data": {
+      "fraud_test_results": [
+        "\u2705 Invalid registration ID properly rejected",
+        "\u274c Missing required fields not properly validated",
+        "\u2705 Invalid email format handled gracefully"
+      ]
+    },
+    "timestamp": "2026-01-11 22:37:18"
+  }
+]
