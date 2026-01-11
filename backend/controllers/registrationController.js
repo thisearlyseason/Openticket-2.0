@@ -1059,6 +1059,23 @@ export const finalizeTransfer = async (req, res) => {
  * Get transfer status
  * GET /api/registrations/:id/transfer/:transferId
  */
+export const debugTransfers = async (req, res) => {
+    try {
+        const { data: transfers, error } = await supabase
+            .from('ticket_transfers')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        if (error) throw error;
+        
+        res.json({ transfers });
+    } catch (error) {
+        console.error('Debug transfers error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const getTransferStatus = async (req, res) => {
     try {
         const { transferId } = req.params;
