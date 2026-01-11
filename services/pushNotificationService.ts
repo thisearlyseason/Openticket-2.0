@@ -165,15 +165,43 @@ export const unsubscribe = async (authToken: string): Promise<boolean> => {
 };
 
 /**
- * Check if user is currently subscribed
+ * Check if user is currently subscribed (checks both browser AND server)
  */
-export const isSubscribed = async (): Promise<boolean> => {
+export const isSubscribed = async (authToken?: string): Promise<boolean> => {
     if (!isPushSupported()) return false;
     
     try {
+        // First check browser subscription
         const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        return !!subscription;
+        const browserSubscription = await registration.pushManager.getSubscription();
+        
+        if (!browserSubscription) {
+            return false;
+        }
+        
+        // If we have an auth token, also verify server-side subscription
+        if (authToken) {
+            try {
+                const response = await fetch(`${API_BASE}/api/push/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // If server says not subscribed but browser has subscription,
+                    // we need to re-subscribe on server
+                    if (!data.subscribed) {
+                        console.log('[PushNotification] Browser subscribed but server not - needs re-sync');
+                        return false; // Return false to trigger re-subscribe
+                    }
+                }
+            } catch (e) {
+                console.warn('[PushNotification] Could not verify server subscription:', e);
+            }
+        }
+        
+        return true;
     } catch {
         return false;
     }
