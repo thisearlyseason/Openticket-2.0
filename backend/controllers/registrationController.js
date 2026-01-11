@@ -984,18 +984,29 @@ export const finalizeTransfer = async (req, res) => {
         }
 
         // 8. Update transfer record to completed
-        await supabase
+        console.log(`[Transfer] Updating transfer record to completed`);
+        const { data: updatedTransfer, error: transferUpdateError } = await supabase
             .from('ticket_transfers')
             .update({
                 status: 'completed',
                 recipient_registration_id: recipientRegistrationId,
                 finalized_at: new Date().toISOString()
             })
-            .eq('id', transferId);
+            .eq('id', transferId)
+            .select();
+
+        console.log(`[Transfer] Updated transfer record:`, updatedTransfer);
+        console.log(`[Transfer] Transfer update error:`, transferUpdateError);
+        
+        if (transferUpdateError) {
+            console.log(`[Transfer] ERROR updating transfer record:`, transferUpdateError);
+            throw transferUpdateError;
+        }
 
         // 9. Create notification for recipient
         if (transfer.recipient_user_id) {
-            await supabase.from('notifications').insert({
+            console.log(`[Transfer] Creating notification for recipient`);
+            const { error: notifError } = await supabase.from('notifications').insert({
                 user_id: transfer.recipient_user_id,
                 type: 'transfer',
                 title: '🎟️ Ticket Received!',
@@ -1004,10 +1015,15 @@ export const finalizeTransfer = async (req, res) => {
                 data: { transferId, eventId: transfer.event_id },
                 created_at: new Date().toISOString()
             });
+            
+            if (notifError) {
+                console.log(`[Transfer] WARNING: Failed to create notification:`, notifError);
+            }
         }
 
         // 10. Log finalization
-        await supabase.from('audit_logs').insert({
+        console.log(`[Transfer] Creating audit log`);
+        const { error: auditError } = await supabase.from('audit_logs').insert({
             action: 'TRANSFER_COMPLETED',
             entity_type: 'ticket',
             entity_id: transfer.ticket_key,
@@ -1019,8 +1035,13 @@ export const finalizeTransfer = async (req, res) => {
             },
             created_at: new Date().toISOString()
         });
+        
+        if (auditError) {
+            console.log(`[Transfer] WARNING: Failed to create audit log:`, auditError);
+        }
 
-        console.log(`[Transfer] Transfer completed: ${transferId}`);
+        console.log(`[Transfer] ========== FINALIZE COMPLETE ==========`);
+        console.log(`[Transfer] Transfer completed successfully: ${transferId}`);
 
         res.json({ 
             success: true, 
