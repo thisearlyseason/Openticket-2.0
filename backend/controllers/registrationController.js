@@ -803,11 +803,24 @@ export const finalizeTransfer = async (req, res) => {
             return res.status(404).json({ error: 'Original registration not found' });
         }
 
-        // 5. Find the ticket
+        // 5. Find the ticket - use same matching logic as transfer initiation
         const tickets = originalReg.tickets || [];
-        const ticketIndex = tickets.findIndex(t => t.key === transfer.ticket_key || t.id === transfer.ticket_key);
+        const ticketKeyParts = transfer.ticket_key.split('-');
+        const tierIdPart = ticketKeyParts.slice(0, -1).join('-');
+        
+        let ticketIndex = -1;
+        
+        // Try multiple matching strategies
+        ticketIndex = tickets.findIndex(t => t.key === transfer.ticket_key);
+        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.id === transfer.ticket_key);
+        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart);
+        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.id === tierIdPart);
+        if (ticketIndex === -1) ticketIndex = tickets.findIndex(t => t.transferId === transferId);
+        if (ticketIndex === -1 && tickets.length === 1) ticketIndex = 0;
         
         if (ticketIndex === -1) {
+            console.log('[Transfer Finalize] Ticket not found. ticket_key:', transfer.ticket_key);
+            console.log('[Transfer Finalize] Available tickets:', JSON.stringify(tickets));
             return res.status(404).json({ error: 'Ticket not found' });
         }
 
