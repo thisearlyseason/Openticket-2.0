@@ -547,7 +547,7 @@ export const MyTickets = () => {
                                     // Initiate transfer via new API
                                     const result = await StorageService.initiateTicketTransfer(
                                         transferModal.ticket!.reg.id,
-                                        transferModal.ticket!.key,
+                                        transferModal.ticket!.ticketKey,
                                         transferModal.email,
                                         transferModal.name
                                     );
