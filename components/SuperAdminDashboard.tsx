@@ -768,11 +768,35 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const handleSendBroadcast = async () => {
         if (!broadcastMsg.trim()) return;
         
-        // Store broadcast with target audience
-        await StorageService.setSystemNotification(broadcastMsg, 'info', broadcastTarget);
-        setBroadcastMsg('');
-        refreshData();
-        window.alert(`Broadcast sent to ${broadcastTarget === 'all' ? 'all users' : broadcastTarget}!`);
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/notifications/broadcast', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    message: broadcastMsg,
+                    title: '📢 Announcement',
+                    target: broadcastTarget,
+                    type: 'broadcast'
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                setBroadcastMsg('');
+                refreshData();
+                window.alert(`Broadcast sent to ${result.sent} ${broadcastTarget === 'all' ? 'users' : broadcastTarget}!`);
+            } else {
+                window.alert(`Failed to send broadcast: ${result.error}`);
+            }
+        } catch (error: any) {
+            console.error('Broadcast error:', error);
+            window.alert(`Failed to send broadcast: ${error.message}`);
+        }
     };
 
     const handleClearBroadcast = () => {
