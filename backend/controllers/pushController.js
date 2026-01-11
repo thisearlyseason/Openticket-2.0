@@ -4,6 +4,7 @@
  */
 
 import PushService from '../services/pushService.js';
+import supabase from '../services/supabase.js';
 
 /**
  * Get VAPID public key for client
