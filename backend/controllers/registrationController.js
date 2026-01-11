@@ -926,37 +926,60 @@ export const finalizeTransfer = async (req, res) => {
             originalTicketKey: ticket.key || ticket.id || ticket.tierId
         };
 
+        console.log(`[Transfer] Transferred ticket object:`, JSON.stringify(transferredTicket, null, 2));
+
         if (existingRecipientReg) {
             // Add ticket to existing registration
+            console.log(`[Transfer] Adding ticket to existing recipient registration: ${existingRecipientReg.id}`);
             const existingTickets = existingRecipientReg.tickets || [];
-            await supabase
+            const { data: updatedRecipientReg, error: recipientUpdateError } = await supabase
                 .from('registrations')
                 .update({
                     tickets: [...existingTickets, transferredTicket]
                 })
-                .eq('id', existingRecipientReg.id);
+                .eq('id', existingRecipientReg.id)
+                .select();
+            
+            console.log(`[Transfer] Updated recipient reg:`, updatedRecipientReg);
+            console.log(`[Transfer] Recipient update error:`, recipientUpdateError);
+            
+            if (recipientUpdateError) {
+                console.log(`[Transfer] ERROR updating recipient registration:`, recipientUpdateError);
+                throw recipientUpdateError;
+            }
             
             recipientRegistrationId = existingRecipientReg.id;
         } else {
             // Create new registration for recipient
+            console.log(`[Transfer] Creating new registration for recipient`);
+            const newRegPayload = {
+                event_id: transfer.event_id,
+                user_id: transfer.recipient_user_id,
+                attendee_name: transfer.recipient_name || transfer.recipient_email.split('@')[0],
+                attendee_email: transfer.recipient_email,
+                tickets: [transferredTicket],
+                payment_status: 'paid',
+                approval_status: 'approved',
+                source: 'transfer',
+                transferred_from_registration_id: transfer.registration_id,
+                created_at: new Date().toISOString()
+            };
+            
+            console.log(`[Transfer] New registration payload:`, JSON.stringify(newRegPayload, null, 2));
+            
             const { data: newReg, error: newRegError } = await supabase
                 .from('registrations')
-                .insert({
-                    event_id: transfer.event_id,
-                    user_id: transfer.recipient_user_id,
-                    attendee_name: transfer.recipient_name || transfer.recipient_email.split('@')[0],
-                    attendee_email: transfer.recipient_email,
-                    tickets: [transferredTicket],
-                    payment_status: 'paid',
-                    approval_status: 'approved',
-                    source: 'transfer',
-                    transferred_from_registration_id: transfer.registration_id,
-                    created_at: new Date().toISOString()
-                })
+                .insert(newRegPayload)
                 .select()
                 .single();
 
-            if (newRegError) throw newRegError;
+            console.log(`[Transfer] New registration created:`, JSON.stringify(newReg, null, 2));
+            console.log(`[Transfer] New registration error:`, newRegError);
+
+            if (newRegError) {
+                console.log(`[Transfer] ERROR creating new registration:`, newRegError);
+                throw newRegError;
+            }
             recipientRegistrationId = newReg.id;
         }
 
