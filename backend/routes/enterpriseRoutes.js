@@ -43,7 +43,7 @@ router.post('/contact', verifyToken, async (req, res) => {
                 email,
                 company,
                 phone: phone || null,
-                expected_monthly_tickets: expectedTickets ? parseInt(expected Tickets) : null,
+                expected_monthly_tickets: expectedTickets ? parseInt(expectedTickets) : null,
                 expected_monthly_events: expectedEvents ? parseInt(expectedEvents) : null,
                 message: message || null,
                 source: source || 'manual',
