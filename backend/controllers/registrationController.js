@@ -960,8 +960,6 @@ export const finalizeTransfer = async (req, res) => {
                 tickets: [transferredTicket],
                 payment_status: 'paid',
                 approval_status: 'approved',
-                source: 'transfer',
-                transferred_from_registration_id: transfer.registration_id,
                 created_at: new Date().toISOString()
             };
             
