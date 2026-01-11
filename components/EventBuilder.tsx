@@ -311,10 +311,24 @@ export const EventBuilder = () => {
                 ? formData.recurringDates?.reduce((acc, rd) => acc + (rd.capacity || 0), 0) || 0
                 : formData.capacity || 0;
 
-            if (totalCapacity > planDetails.ticketLimit && !asDraft) { // Skip checking if already forced to draft
-                showAlert({
-                    title: "Capacity Limit Exceeded",
-                    message: `Your current ${planDetails.name} plan is limited to ${planDetails.ticketLimit} tickets per event. This event has a capacity of ${totalCapacity}. Please upgrade to increase capacity.`
+            if (totalCapacity > planDetails.ticketLimit && !asDraft) {
+                // Determine suggested plan
+                let suggestedPlan: string | null = null;
+                if (totalCapacity <= PLANS.pro.ticketLimit) {
+                    suggestedPlan = 'pro';
+                } else if (totalCapacity <= PLANS.premium.ticketLimit) {
+                    suggestedPlan = 'premium';
+                } else {
+                    suggestedPlan = 'enterprise';
+                }
+
+                setUpgradeModal({
+                    open: true,
+                    title: "Upgrade Required",
+                    message: `Your ${planDetails.name} plan allows up to ${planDetails.ticketLimit.toLocaleString()} tickets per event. This event has ${totalCapacity.toLocaleString()} tickets.`,
+                    suggestedPlan,
+                    currentLimit: planDetails.ticketLimit,
+                    requested: totalCapacity
                 });
                 return;
             }
