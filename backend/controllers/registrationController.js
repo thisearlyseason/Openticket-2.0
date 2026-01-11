@@ -470,7 +470,7 @@ export const transferTicket = async (req, res) => {
         
         // 5a. Check if ticket is already checked in
         const checkInStatuses = registration.check_in_statuses || {};
-        if (checkInStatuses[ticketKey]?.checkedIn || registration.checked_in) {
+        if (checkInStatuses[effectiveTicketKey]?.checkedIn || checkInStatuses[ticketKey]?.checkedIn || registration.checked_in) {
             return res.status(400).json({ error: 'Cannot transfer a checked-in ticket' });
         }
 
@@ -489,7 +489,7 @@ export const transferTicket = async (req, res) => {
         const { data: recentTransfers, error: rateError } = await supabase
             .from('ticket_transfers')
             .select('id')
-            .eq('ticket_key', ticketKey)
+            .eq('ticket_key', effectiveTicketKey)
             .gte('created_at', oneHourAgo);
 
         if (!rateError && recentTransfers && recentTransfers.length >= 5) {
@@ -497,7 +497,7 @@ export const transferTicket = async (req, res) => {
             await supabase.from('audit_logs').insert({
                 action: 'SUSPICIOUS_TRANSFER_RATE',
                 entity_type: 'ticket',
-                entity_id: ticketKey,
+                entity_id: effectiveTicketKey,
                 user_id: senderUserId,
                 details: { attempts: recentTransfers.length, recipientEmail },
                 created_at: new Date().toISOString()
@@ -513,7 +513,7 @@ export const transferTicket = async (req, res) => {
         const { data: circularCheck } = await supabase
             .from('ticket_transfers')
             .select('*')
-            .eq('ticket_key', ticketKey)
+            .eq('ticket_key', effectiveTicketKey)
             .eq('recipient_email', registration.attendee_email)
             .gte('created_at', oneDayAgo);
 
@@ -521,7 +521,7 @@ export const transferTicket = async (req, res) => {
             await supabase.from('audit_logs').insert({
                 action: 'SUSPICIOUS_CIRCULAR_TRANSFER',
                 entity_type: 'ticket',
-                entity_id: ticketKey,
+                entity_id: effectiveTicketKey,
                 user_id: senderUserId,
                 details: { recipientEmail, originalOwner: registration.attendee_email },
                 created_at: new Date().toISOString()
