@@ -169,13 +169,14 @@ export const updateRegistration = async (req, res) => {
 
 export const getAllRegistrations = async (req, res) => {
     try {
-        const { stripe_checkout_session_id, email } = req.query;
+        const { stripe_checkout_session_id, email, user_id } = req.query;
 
         // SECURITY FIX: Require valid filters (not empty strings)
         const hasValidSessionId = stripe_checkout_session_id && stripe_checkout_session_id.trim() !== '';
         const hasValidEmail = email && email.trim() !== '';
+        const hasValidUserId = user_id && user_id.trim() !== '';
         
-        if (!hasValidSessionId && !hasValidEmail) {
+        if (!hasValidSessionId && !hasValidEmail && !hasValidUserId) {
             return res.status(403).json({ error: "Missing filter parameters" });
         }
 
@@ -187,10 +188,19 @@ export const getAllRegistrations = async (req, res) => {
         if (hasValidEmail) {
             query = query.eq('attendee_email', email);
         }
+        if (hasValidUserId) {
+            query = query.eq('user_id', user_id);
+        }
 
         const { data, error } = await query;
 
         if (error) throw error;
+        
+        console.log(`[Registrations] Found ${data?.length || 0} registrations for query`, { 
+            email: email ? '***' : null, 
+            user_id: user_id ? '***' : null 
+        });
+        
         res.json({ registrations: data || [] });
     } catch (error) {
         res.status(500).json({ error: error.message });
