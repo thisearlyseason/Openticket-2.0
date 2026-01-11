@@ -86,7 +86,8 @@ export const sendTestNotification = async (req, res) => {
     try {
         const { uid } = req.user;
         
-        const result = await PushService.sendNotification(uid, {
+        // Send browser push notification
+        const pushResult = await PushService.sendNotification(uid, {
             title: '🔔 Test Notification',
             body: 'Push notifications are working! You\'ll receive updates about your events here.',
             tag: 'test',
@@ -96,14 +97,29 @@ export const sendTestNotification = async (req, res) => {
             }
         });
         
-        if (result) {
-            res.json({ success: true, message: 'Test notification sent' });
-        } else {
-            res.status(400).json({ 
-                success: false, 
-                error: 'Failed to send notification. Make sure you\'re subscribed.' 
-            });
+        // Also save to in-app notifications database
+        try {
+            await supabase
+                .from('notifications')
+                .insert({
+                    user_id: uid,
+                    type: 'test',
+                    title: '🔔 Test Notification',
+                    message: 'Push notifications are working! You\'ll receive updates about your events here.',
+                    read: false,
+                    data: { type: 'test' },
+                    created_at: new Date().toISOString()
+                });
+            console.log('[PushController] Test notification saved to database');
+        } catch (dbError) {
+            console.warn('[PushController] Could not save to notifications table:', dbError.message);
         }
+        
+        res.json({ 
+            success: true, 
+            message: 'Test notification sent',
+            pushDelivered: !!pushResult
+        });
     } catch (error) {
         console.error('[PushController] Test notification error:', error);
         res.status(500).json({ error: error.message });
