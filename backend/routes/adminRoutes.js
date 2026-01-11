@@ -1004,4 +1004,44 @@ router.get('/affiliates', verifyToken, requireAdmin, async (req, res) => {
     }
 });
 
+// === MIGRATIONS ===
+
+/**
+ * POST /api/admin/run-migration
+ * Run database migrations (admin only)
+ * Body: { migration: 'assign_plan_ids', dryRun: true/false }
+ */
+router.post('/run-migration', requireAdmin, async (req, res) => {
+    try {
+        const { migration, dryRun = true } = req.body;
+        
+        if (!migration) {
+            return res.status(400).json({ error: 'Migration name is required' });
+        }
+        
+        console.log(`[Admin] Running migration: ${migration} (dryRun: ${dryRun})`);
+        
+        let results;
+        
+        switch (migration) {
+            case 'assign_plan_ids':
+                const { assignPlanIds } = await import('../migrations/assign_plan_ids.js');
+                results = await assignPlanIds({ dryRun });
+                break;
+            default:
+                return res.status(400).json({ error: `Unknown migration: ${migration}` });
+        }
+        
+        res.json({ 
+            success: true,
+            migration,
+            dryRun,
+            results
+        });
+    } catch (error) {
+        console.error('Migration error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
