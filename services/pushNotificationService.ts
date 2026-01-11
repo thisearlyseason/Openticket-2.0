@@ -3,8 +3,12 @@
  * Handles push notification subscription and management
  */
 
-// @ts-ignore - Vite env
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
+// Use relative /api path - same as storageService
+const isProduction = typeof window !== 'undefined' && 
+    !window.location.hostname.includes('localhost') && 
+    !window.location.hostname.includes('127.0.0.1');
+
+const API_BASE = isProduction ? '' : (import.meta.env.VITE_API_URL || '');
 
 /**
  * Check if push notifications are supported
