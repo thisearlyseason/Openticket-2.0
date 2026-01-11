@@ -10,6 +10,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 6. Super Admin dashboard data integrity and financial tracking
 7. Affiliate tracking, revenue attribution, and payout logic
 8. **Super Admin button-triggered panel** for single super admin access
+9. **Financial Audit & Plan Refactor** - Comprehensive financial flows audit and backward-compatible pricing plans
 
 ## Tech Stack
 - **Frontend:** Vite + React + TypeScript + Tailwind CSS
@@ -24,6 +25,7 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 ```
 /app/
 ├── api/server.js              # Express.js main server (port 8001)
+├── App.tsx                    # Root component with ConfirmProvider (SINGLE SOURCE)
 ├── backend/
 │   ├── controllers/           # Business logic
 │   │   ├── stripeController.js       # Checkout, verify-session
@@ -32,9 +34,12 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 │   ├── routes/               # API routes
 │   ├── services/             # Supabase, audit logging, email, cron
 │   │   └── cronService.js    # Scheduled jobs (weekly affiliate emails)
-│   └── utils/                # Price calculator
+│   └── utils/
+│       └── priceCalculator.js  # SINGLE SOURCE OF TRUTH for fee calculations
 ├── components/               # React components
-├── services/                 # Frontend services
+├── services/
+│   ├── storageService.ts     # Plan configurations (PLAN_VERSIONS, PLANS)
+│   └── paymentUtils.ts       # Payment status utilities
 └── .env                      # Environment variables
 ```
 
@@ -52,6 +57,37 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 ---
 
 ## Implementation Status
+
+### ✅ Financial Audit & Critical Fixes (January 11, 2026)
+
+#### Financial Audit Completed
+- [x] **Audit Report:** `/app/memory/FINANCIAL_AUDIT_REPORT.md`
+- [x] **All Financial Flows Verified:** Ticket purchase, subscription, refunds, affiliate commissions
+- [x] **Fee Structure Synchronized:** Backend and frontend now use identical fees
+
+#### Platform Fee Structure (SYNCHRONIZED)
+| Plan | Percentage | Fixed Fee |
+|------|------------|-----------|
+| Free | 2.75% | $0.99 |
+| Pro | 1.5% | $0.75 |
+| Premium | 0.75% | $0.30 |
+| Enterprise | 1.5% | $0.39 |
+
+#### Critical Blockers Fixed
+- [x] **Duplicate App.tsx Removed:** Deleted `/app/components/App.tsx` (was causing confusion)
+- [x] **ConfirmProvider Verified:** `/app/App.tsx` correctly wraps entire app with ConfirmProvider
+- [x] **Fee Display Fixed:** `Pricing.tsx` now shows correct fee percentages (was showing old 4.5%/2.9%/1.9%)
+- [x] **Enterprise Plan Added:** Added enterprise fees to `priceCalculator.js`
+
+#### Test Results (9/9 Passed)
+- [x] `/api/ping` - Returns 'pong'
+- [x] `/api/health` - Returns healthy status
+- [x] `/api/stripe/calculate-order` - Returns correct fee breakdown
+- [x] All 4 plans displayed correctly on Pricing page
+- [x] No useConfirm context errors on any page
+- [x] Fee structure calculations verified for all plans
+
+---
 
 ### ✅ Analytics & Financial Data Audit (January 7, 2026 - Latest)
 
