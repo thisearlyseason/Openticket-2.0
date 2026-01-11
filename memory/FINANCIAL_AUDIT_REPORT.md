@@ -18,9 +18,10 @@ The OpenTicket platform has a well-structured financial system with proper separ
 
 | Plan | Percentage | Fixed Fee | Example on $100 ticket |
 |------|------------|-----------|------------------------|
-| Free | 2.75% | $0.99 | $3.74 |
-| Pro | 1.5% | $0.75 | $2.25 |
-| Premium | 0.75% | $0.30 | $1.05 |
+| Free | 4.5% | $0.99 | $5.49 |
+| Pro | 2.9% | $0.69 | $3.59 |
+| Premium | 1.9% | $0.49 | $2.39 |
+| Enterprise | 1.9% | $0.49 | $2.39 |
 
 ### Plan Pricing (Source: `/app/services/storageService.ts`)
 
