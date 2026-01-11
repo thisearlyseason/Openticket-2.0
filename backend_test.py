@@ -192,47 +192,117 @@ console.log(JSON.stringify({
         except Exception as e:
             self.log_result("Ticket Generator Utility", False, f"Exception: {str(e)}")
 
-    def test_direct_email_send(self):
-        """Test Case 2: Direct Email Send - POST /api/email/send to thisearlyseason@gmail.com"""
+    def test_registration_creation_with_unique_tickets(self):
+        """Test Case 2: Registration Creation with Unique Tickets"""
         try:
+            # Test creating a registration with multiple tickets
             payload = {
-                "to": "thisearlyseason@gmail.com",
-                "subject": "Backend Test Email",
-                "html": "<h1>Backend Test Email</h1><p>This is a test email sent from the backend testing system to verify email functionality.</p>"
+                "event_id": "test-event-123",
+                "attendee_name": "Alice Johnson",
+                "attendee_email": "alice.johnson@example.com",
+                "tickets": [
+                    {
+                        "tierId": "general",
+                        "name": "General Admission",
+                        "quantity": 2,
+                        "price": 25.00
+                    }
+                ]
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/api/email/send",
+                f"{BACKEND_URL}/api/registrations",
                 json=payload,
                 headers={'Content-Type': 'application/json'}
             )
             
-            if response.status_code == 200:
+            if response.status_code == 201:
                 data = response.json()
+                registration = data.get('registration', {})
+                tickets = registration.get('tickets', [])
                 
-                if data.get('success') == True and data.get('messageId'):
+                success = True
+                issues = []
+                
+                # Check that we got 2 individual tickets (not 1 with quantity=2)
+                if len(tickets) != 2:
+                    success = False
+                    issues.append(f"Expected 2 individual tickets, got {len(tickets)}")
+                
+                # Check each ticket has unique identifiers
+                ticket_ids = set()
+                ticket_numbers = set()
+                
+                for i, ticket in enumerate(tickets):
+                    # Check required fields
+                    if not ticket.get('ticketId'):
+                        success = False
+                        issues.append(f"Ticket {i+1} missing ticketId")
+                    else:
+                        ticket_ids.add(ticket['ticketId'])
+                    
+                    if not ticket.get('ticketNumber'):
+                        success = False
+                        issues.append(f"Ticket {i+1} missing ticketNumber")
+                    else:
+                        ticket_numbers.add(ticket['ticketNumber'])
+                    
+                    if not ticket.get('qrCodeData'):
+                        success = False
+                        issues.append(f"Ticket {i+1} missing qrCodeData")
+                    
+                    # Check quantity is 1
+                    if ticket.get('quantity') != 1:
+                        success = False
+                        issues.append(f"Ticket {i+1} has quantity {ticket.get('quantity')}, expected 1")
+                    
+                    # Check QR code data matches ticket ID
+                    if ticket.get('qrCodeData') != ticket.get('ticketId'):
+                        success = False
+                        issues.append(f"Ticket {i+1} QR code data doesn't match ticket ID")
+                    
+                    # Check tier information is preserved
+                    if ticket.get('tierId') != 'general':
+                        success = False
+                        issues.append(f"Ticket {i+1} has wrong tierId: {ticket.get('tierId')}")
+                
+                # Check uniqueness
+                if len(ticket_ids) != len(tickets):
+                    success = False
+                    issues.append("Ticket IDs are not unique")
+                
+                if len(ticket_numbers) != len(tickets):
+                    success = False
+                    issues.append("Ticket numbers are not unique")
+                
+                if success:
                     self.log_result(
-                        "Direct Email Send", 
-                        True, 
-                        f"✅ Email sent successfully with messageId: {data.get('messageId')}",
-                        data
+                        "Registration Creation with Unique Tickets",
+                        True,
+                        f"✅ Created registration with {len(tickets)} unique tickets, all with proper IDs and QR codes",
+                        {
+                            "registration_id": registration.get('id'),
+                            "ticket_count": len(tickets),
+                            "ticket_ids": [t.get('ticketId') for t in tickets],
+                            "ticket_numbers": [t.get('ticketNumber') for t in tickets]
+                        }
                     )
                 else:
                     self.log_result(
-                        "Direct Email Send", 
-                        False, 
-                        "❌ Response doesn't indicate success or missing messageId",
+                        "Registration Creation with Unique Tickets",
+                        False,
+                        f"❌ Issues found: {'; '.join(issues)}",
                         data
                     )
             else:
                 self.log_result(
-                    "Direct Email Send", 
-                    False, 
+                    "Registration Creation with Unique Tickets",
+                    False,
                     f"HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Direct Email Send", False, f"Exception: {str(e)}")
+            self.log_result("Registration Creation with Unique Tickets", False, f"Exception: {str(e)}")
 
     def test_confirmation_email_simulation(self):
         """Test Case 3: Confirmation Email Test (simulating webhook call)"""
