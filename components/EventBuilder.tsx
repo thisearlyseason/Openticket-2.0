@@ -350,12 +350,14 @@ export const EventBuilder = () => {
                 const isNewPublish = !id || (id && formData.isDraft);
 
                 if (isNewPublish && eventsThisMonth >= planDetails.eventLimit) {
-                    const upgradeMsg = plan === 'free' 
-                        ? 'Upgrade to Pro for 10 events/month or Premium for unlimited events.'
-                        : 'Upgrade to Premium for unlimited events.';
-                    showAlert({
+                    const suggestedPlan = plan === 'free' ? 'pro' : 'premium';
+                    setUpgradeModal({
+                        open: true,
                         title: "Monthly Limit Reached",
-                        message: `You have reached the limit of ${planDetails.eventLimit} published events this month on the ${planDetails.name} plan. ${upgradeMsg}`
+                        message: `You've published ${eventsThisMonth} events this month, reaching your ${planDetails.name} plan limit of ${planDetails.eventLimit} events/month.`,
+                        suggestedPlan,
+                        currentLimit: planDetails.eventLimit,
+                        requested: eventsThisMonth + 1
                     });
                     return;
                 }
