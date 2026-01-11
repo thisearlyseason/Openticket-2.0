@@ -25,6 +25,9 @@ export const MyTickets = () => {
         transferStatus?: 'transferred_out' | 'transferred_in';
         transferredFrom?: string;
         transferredTo?: string;
+        attendeeName?: string; // Individual attendee name
+        originalAttendeeName?: string; // Original name before transfer
+        checkedIn?: boolean; // Check-in status
     }
 
     interface EventGroup {
