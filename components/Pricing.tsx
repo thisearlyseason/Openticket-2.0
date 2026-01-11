@@ -319,6 +319,40 @@ export const Pricing = () => {
                     </Button>
                 </Card>
 
+                {/* ENTERPRISE PLAN */}
+                <Card className="p-6 border-2 border-amber-500 dark:border-amber-600 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 relative hover:-translate-y-2 transition-transform duration-300">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm">
+                        CUSTOM
+                    </div>
+                    <div className="mb-4 mt-2">
+                        <h3 className="text-xl font-bold text-amber-600 dark:text-amber-400 mb-2 flex items-center gap-2">
+                            <Shield size={20} fill="currentColor" /> Enterprise
+                        </h3>
+                        <div className="text-3xl font-black text-gray-900 dark:text-white">
+                            Custom
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">For high-volume organizations</p>
+                    </div>
+                    <div className="space-y-3 mb-6 border-t border-amber-200 dark:border-amber-800 pt-4">
+                        {PLANS.enterprise.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-start text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                <Check size={16} className="text-amber-600 dark:text-amber-400 mr-2 mt-0.5 shrink-0" />
+                                <span>{feature}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-start text-xs font-bold text-amber-700 dark:text-amber-400">
+                            <span className="mr-2">•</span>
+                            <span>Negotiable rates</span>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => navigate('/enterprise')}
+                        className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+                    >
+                        Contact Sales
+                    </Button>
+                </Card>
+
             </div>
 
             {/* Currency Notice */}
