@@ -195,9 +195,37 @@ console.log(JSON.stringify({
     def test_registration_creation_with_unique_tickets(self):
         """Test Case 2: Registration Creation with Unique Tickets"""
         try:
+            # First, get a real event ID from the public events
+            events_response = self.session.get(f"{BACKEND_URL}/api/events/public")
+            
+            if events_response.status_code != 200:
+                self.log_result(
+                    "Registration Creation with Unique Tickets",
+                    False,
+                    "❌ Could not fetch public events for testing",
+                    events_response.text
+                )
+                return
+            
+            events_data = events_response.json()
+            events = events_data.get('events', [])
+            
+            if not events:
+                self.log_result(
+                    "Registration Creation with Unique Tickets",
+                    False,
+                    "❌ No public events available for testing",
+                    events_data
+                )
+                return
+            
+            # Use the first available event
+            test_event = events[0]
+            event_id = test_event['id']
+            
             # Test creating a registration with multiple tickets
             payload = {
-                "event_id": "test-event-123",
+                "event_id": event_id,
                 "attendee_name": "Alice Johnson",
                 "attendee_email": "alice.johnson@example.com",
                 "tickets": [
@@ -282,6 +310,7 @@ console.log(JSON.stringify({
                         f"✅ Created registration with {len(tickets)} unique tickets, all with proper IDs and QR codes",
                         {
                             "registration_id": registration.get('id'),
+                            "event_id": event_id,
                             "ticket_count": len(tickets),
                             "ticket_ids": [t.get('ticketId') for t in tickets],
                             "ticket_numbers": [t.get('ticketNumber') for t in tickets]
