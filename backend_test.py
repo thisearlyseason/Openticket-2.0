@@ -304,63 +304,57 @@ console.log(JSON.stringify({
         except Exception as e:
             self.log_result("Registration Creation with Unique Tickets", False, f"Exception: {str(e)}")
 
-    def test_confirmation_email_simulation(self):
-        """Test Case 3: Confirmation Email Test (simulating webhook call)"""
+    def test_checkin_api_authentication(self):
+        """Test Case 3: Check-In API Authentication Requirements"""
         try:
-            # Simulate the confirmation email that would be sent by webhook
-            # This tests the internal API that webhook would call
+            # Test check-in endpoint without authentication
             payload = {
-                "to": "thisearlyseason@gmail.com",
-                "template": {
-                    "subject": "Your Ticket Confirmation for {{event_title}}",
-                    "body": """
-                    <h2>Thank you for your purchase, {{attendee_name}}!</h2>
-                    <p>Your tickets for <strong>{{event_title}}</strong> have been confirmed.</p>
-                    <p><strong>Event Details:</strong></p>
-                    <ul>
-                        <li>Event: {{event_title}}</li>
-                        <li>Date: {{event_date}}</li>
-                        <li>Location: {{event_location}}</li>
-                        <li>Ticket Type: {{ticket_type}}</li>
-                        <li>Order ID: {{order_id}}</li>
-                    </ul>
-                    <p>We look forward to seeing you at the event!</p>
-                    """
-                }
+                "ticketId": "TKT-1736789012345-a7f3x9",
+                "eventId": "test-event-123"
             }
             
             response = self.session.post(
-                f"{BACKEND_URL}/api/email/send-test",
+                f"{BACKEND_URL}/api/registrations/checkin",
                 json=payload,
                 headers={'Content-Type': 'application/json'}
             )
             
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get('success') == True:
+            # Should return 401 or 403 for missing authentication
+            if response.status_code in [401, 403]:
+                try:
+                    data = response.json()
+                    error_message = data.get('error', '')
+                    
+                    if 'authorization' in error_message.lower() or 'token' in error_message.lower():
+                        self.log_result(
+                            "Check-In API Authentication",
+                            True,
+                            f"✅ Properly requires authentication: HTTP {response.status_code} - {error_message}",
+                            data
+                        )
+                    else:
+                        self.log_result(
+                            "Check-In API Authentication",
+                            True,
+                            f"✅ Properly blocks unauthorized access: HTTP {response.status_code}",
+                            data
+                        )
+                except:
                     self.log_result(
-                        "Confirmation Email Test", 
-                        True, 
-                        f"✅ Confirmation email template processed successfully: {data.get('messageId')}",
-                        data
-                    )
-                else:
-                    self.log_result(
-                        "Confirmation Email Test", 
-                        False, 
-                        "❌ Response doesn't indicate success",
-                        data
+                        "Check-In API Authentication",
+                        True,
+                        f"✅ Properly requires authentication: HTTP {response.status_code}",
+                        response.text
                     )
             else:
                 self.log_result(
-                    "Confirmation Email Test", 
-                    False, 
-                    f"HTTP {response.status_code}",
+                    "Check-In API Authentication",
+                    False,
+                    f"❌ Expected 401/403 for missing auth, got HTTP {response.status_code}",
                     response.text
                 )
         except Exception as e:
-            self.log_result("Confirmation Email Test", False, f"Exception: {str(e)}")
+            self.log_result("Check-In API Authentication", False, f"Exception: {str(e)}")
 
     def check_backend_logs_for_email_errors(self):
         """Test Case 4: Check Backend Logs for Email Errors"""
