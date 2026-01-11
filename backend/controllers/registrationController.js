@@ -546,7 +546,7 @@ export const transferTicket = async (req, res) => {
             .insert({
                 id: transferId,
                 registration_id: id,
-                ticket_key: ticketKey,
+                ticket_key: effectiveTicketKey,
                 event_id: registration.event_id,
                 sender_user_id: senderUserId,
                 sender_email: registration.attendee_email,
@@ -593,7 +593,7 @@ export const transferTicket = async (req, res) => {
         await supabase.from('audit_logs').insert({
             action: 'TRANSFER_INITIATED',
             entity_type: 'ticket',
-            entity_id: ticketKey,
+            entity_id: effectiveTicketKey,
             user_id: senderUserId,
             details: {
                 transferId,
