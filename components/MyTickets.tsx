@@ -583,6 +583,42 @@ export const MyTickets = () => {
                     />
                 )
             }
+
+            {/* Transfer Undo Modal */}
+            {undoModal.isOpen && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-zinc-900 w-full max-w-sm p-8 rounded-[2.5rem] shadow-2xl text-center space-y-6">
+                        <div className="w-20 h-20 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                            <Send size={32} className="text-amber-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Transfer Pending</h3>
+                            <p className="text-zinc-500 text-sm">
+                                Your ticket is being transferred. You can undo this action.
+                            </p>
+                        </div>
+                        <div className="text-5xl font-black text-amber-500">
+                            {undoModal.countdown}s
+                        </div>
+                        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
+                            <div 
+                                className="h-full bg-amber-500 transition-all duration-1000 ease-linear"
+                                style={{ width: `${(undoModal.countdown / 5) * 100}%` }}
+                            />
+                        </div>
+                        <Button 
+                            onClick={handleUndoTransfer}
+                            variant="outline"
+                            className="w-full rounded-xl font-black border-2 border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        >
+                            Undo Transfer ({undoModal.countdown}s)
+                        </Button>
+                        <p className="text-xs text-zinc-400">
+                            Transfer will complete automatically when timer expires
+                        </p>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
