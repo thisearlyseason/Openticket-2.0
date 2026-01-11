@@ -172,7 +172,7 @@ export const LandingPage = () => {
                 </div>
                 <div className="max-w-7xl mx-auto border-t border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-zinc-600 text-sm">
                     <p>&copy; {new Date().getFullYear()} OpenTicket. All rights reserved.</p>
-                    <div className="flex gap-6">
+                    <div className="flex items-center gap-6">
                         <a href="#" className="hover:text-white transition-colors"><Instagram size={20} /></a>
                         <a href="#" className="hover:text-white transition-colors"><Twitter size={20} /></a>
                         <a href="#" className="hover:text-white transition-colors"><Linkedin size={20} /></a>
