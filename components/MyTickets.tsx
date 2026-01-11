@@ -457,44 +457,39 @@ export const MyTickets = () => {
                         <div className="flex gap-4">
                             <Button variant="outline" onClick={() => setTransferModal({ ...transferModal, isOpen: false })} className="flex-1 rounded-xl font-black">Cancel</Button>
                             <Button className="flex-1 rounded-xl font-black" onClick={async () => {
-                                if (!transferModal.name || !transferModal.email) {
+                                if (!transferModal.email) {
                                     await confirm({
                                         title: 'Missing Information',
-                                        message: 'Please fill in all details',
+                                        message: 'Please enter the recipient email address',
                                         confirmText: 'OK',
                                         variant: 'warning'
                                     });
                                     return;
                                 }
 
-                                const confirmed = await confirm({
-                                    title: 'Transfer Ticket',
-                                    message: 'Transfer this ticket? This action cannot be undone.',
-                                    confirmText: 'Transfer',
-                                    variant: 'warning'
-                                });
+                                try {
+                                    // Initiate transfer via new API
+                                    const result = await StorageService.initiateTicketTransfer(
+                                        transferModal.ticket!.reg.id,
+                                        transferModal.ticket!.key,
+                                        transferModal.email,
+                                        transferModal.name
+                                    );
 
-                                if (confirmed) {
-                                    try {
-                                        await StorageService.updateTicketHolder(transferModal.ticket!.reg.id, transferModal.ticket!.ticketArrayIndex!, transferModal.name, transferModal.email);
-                                        await confirm({
-                                            title: 'Success',
-                                            message: 'Ticket transferred successfully!',
-                                            confirmText: 'OK',
-                                            variant: 'info'
-                                        });
+                                    if (result.success) {
+                                        // Show undo modal with countdown
                                         setTransferModal({ ...transferModal, isOpen: false });
-                                        if (user) loadTickets(user.email); // Reload
-                                    } catch (e: any) {
-                                        await confirm({
-                                            title: 'Error',
-                                            message: 'Transfer failed: ' + e.message,
-                                            confirmText: 'OK',
-                                            variant: 'danger'
-                                        });
+                                        showUndoModal(result.transferId, result.undoExpiresAt);
                                     }
+                                } catch (e: any) {
+                                    await confirm({
+                                        title: 'Transfer Failed',
+                                        message: e.message || 'Failed to initiate transfer',
+                                        confirmText: 'OK',
+                                        variant: 'danger'
+                                    });
                                 }
-                            }}>Confirm Transfer</Button>
+                            }}>Initiate Transfer</Button>
                         </div>
                     </div>
                 </div>
