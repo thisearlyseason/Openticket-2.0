@@ -167,23 +167,42 @@ export const MyTickets = () => {
             // Process Tickets
             if (reg.tickets && reg.tickets.length > 0) {
                 reg.tickets.forEach((t, tIdx) => {
+                    // Check if this entire ticket is transferred out
+                    const isTransferredOut = t.transferStatus === 'transferred_out';
+                    const isTransferredIn = t.transferStatus === 'transferred_in';
+                    
+                    // Skip transferred_out tickets unless in archived view
+                    if (isTransferredOut && activeTab !== 'archived') {
+                        return;
+                    }
+                    
                     for (let i = 0; i < t.quantity; i++) {
                         const key = `${t.tierId}-${i}`;
                         const isTicketHidden = reg.hiddenTicketKeys?.includes(key);
                         if (activeTab !== 'archived' && isTicketHidden) continue;
 
+                        // Determine status
+                        let ticketStatus = isTicketHidden ? 'hidden' : baseStatus;
+                        
                         ticketList.push({
                             reg, event,
-                            ticketInfo: { name: t.name, quantity: t.quantity, date: t.date },
+                            ticketInfo: { 
+                                name: t.name, 
+                                quantity: t.quantity, 
+                                date: t.date 
+                            },
                             uniqueIndex: i,
                             uniqueQrData: `TICKET:${reg.id}:${t.tierId}:${i}`,
                             ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-${t.tierId.slice(0, 3).toUpperCase()}-${i + 1}`,
                             ticketKey: key,
                             ticketArrayIndex: tIdx,
-                            status: isTicketHidden ? 'hidden' : baseStatus,
+                            status: ticketStatus,
                             hostName: event.organizer,
                             isAddOn: false,
-                            timestamp: reg.timestamp
+                            timestamp: reg.timestamp,
+                            transferStatus: t.transferStatus, // Add transfer status
+                            transferredFrom: isTransferredIn ? t.transferredFromEmail : undefined,
+                            transferredTo: isTransferredOut ? t.transferredToEmail : undefined
                         });
                     }
                 });
