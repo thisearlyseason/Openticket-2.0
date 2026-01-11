@@ -165,6 +165,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [onboardingResponses, setOnboardingResponses] = useState<any[]>([]);
     const [selectedOnboarding, setSelectedOnboarding] = useState<any | null>(null);
 
+    // Migration State
+    const [migrationRunning, setMigrationRunning] = useState(false);
+    const [migrationResults, setMigrationResults] = useState<any>(null);
+
     // Promo Code State
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [newPromo, setNewPromo] = useState({
