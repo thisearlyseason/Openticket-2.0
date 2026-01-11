@@ -222,14 +222,30 @@ class TicketTransferTester:
                         headers={'Content-Type': 'application/json'}
                     )
                 
-                # We're checking that endpoints exist and respond appropriately
-                if response.status_code == 404:
-                    endpoint_results.append(f"❌ {description}: Not found (404)")
-                elif response.status_code in [200, 400, 401, 403]:
-                    # These are all valid responses indicating the endpoint exists
-                    endpoint_results.append(f"✅ {description}: HTTP {response.status_code}")
+                # Check if endpoint exists and responds appropriately
+                if "finalize" in endpoint:
+                    # For finalize endpoint, 404 with JSON error means it's working
+                    if response.status_code == 404:
+                        try:
+                            error_data = response.json()
+                            if "Transfer not found" in error_data.get('error', ''):
+                                endpoint_results.append(f"✅ {description}: HTTP {response.status_code} (working correctly)")
+                            else:
+                                endpoint_results.append(f"❌ {description}: Unexpected 404 response")
+                        except:
+                            endpoint_results.append(f"❌ {description}: 404 without JSON response")
+                    elif response.status_code in [200, 400, 401, 403]:
+                        endpoint_results.append(f"✅ {description}: HTTP {response.status_code}")
+                    else:
+                        endpoint_results.append(f"⚠️ {description}: Unexpected HTTP {response.status_code}")
                 else:
-                    endpoint_results.append(f"⚠️ {description}: Unexpected HTTP {response.status_code}")
+                    # For other endpoints, any non-404 response means they exist
+                    if response.status_code in [200, 400, 401, 403]:
+                        endpoint_results.append(f"✅ {description}: HTTP {response.status_code}")
+                    elif response.status_code == 404:
+                        endpoint_results.append(f"❌ {description}: Not found (404)")
+                    else:
+                        endpoint_results.append(f"⚠️ {description}: Unexpected HTTP {response.status_code}")
                     
             except Exception as e:
                 endpoint_results.append(f"❌ {description}: Exception - {str(e)}")
