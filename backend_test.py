@@ -11,7 +11,7 @@ import uuid
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://onboard-restore.preview.emergentagent.com"
+BACKEND_URL = "https://money-trails.preview.emergentagent.com"
 
 class EmailSystemTester:
     def __init__(self):

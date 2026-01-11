@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://onboard-restore.preview.emergentagent.com"
+BACKEND_URL = "https://money-trails.preview.emergentagent.com"
 
 def test_email_status():
     """Test 1: GET /api/email/status - Should return Resend as configured"""
