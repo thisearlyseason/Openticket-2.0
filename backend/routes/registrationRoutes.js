@@ -9,6 +9,11 @@ router.get('/:eventId', verifyToken, registrationController.getRegistrationsByEv
 router.put('/:id', verifyToken, registrationController.updateRegistration);
 router.post('/:id/refund', verifyToken, registrationController.refundRegistration);
 router.post('/:id/refund-addon', verifyToken, registrationController.refundAddOn);
+
+// Ticket Transfer Routes
 router.post('/:id/transfer', verifyToken, registrationController.transferTicket);
+router.post('/:id/transfer/undo', verifyToken, registrationController.undoTransfer);
+router.post('/:id/transfer/finalize', registrationController.finalizeTransfer);
+router.get('/:id/transfer/:transferId', verifyToken, registrationController.getTransferStatus);
 
 export default router;
