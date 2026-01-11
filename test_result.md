@@ -1,6 +1,84 @@
 # Test Results
 
-## Current Testing Session - January 8, 2026
+## Current Testing Session - January 11, 2026
+
+### Test Focus: Ticket Transfer System - Complete End-to-End Flow
+
+---
+
+## 🔧 LATEST FIXES - Ticket Transfer System
+
+### Critical Bug Fix: Transfer Finalization
+**Root Cause Identified:**
+- Backend was attempting to insert non-existent columns (`source`, `transferred_from_registration_id`) into the `registrations` table
+- This caused the recipient registration creation to fail silently
+- Transfer record was marked as "pending" but never completed
+
+**Fixes Applied:**
+1. ✅ Removed non-existent database columns from registration insert
+2. ✅ Added comprehensive logging throughout the finalization flow
+3. ✅ Fixed frontend UI to properly handle transfer statuses
+4. ✅ Added visual indicators for transferred-in tickets
+5. ✅ Prevented re-transfer of already-transferred tickets
+
+**What Changed:**
+- `/app/backend/controllers/registrationController.js`: 
+  - Removed `source` and `transferred_from_registration_id` fields
+  - Added extensive debug logging for each step
+  - Improved error handling and feedback
+- `/app/components/MyTickets.tsx`:
+  - Added `transferStatus`, `transferredFrom`, `transferredTo` to DisplayTicket interface
+  - Filter out `transferred_out` tickets from sender's view
+  - Show "Transferred In" badge for received tickets
+  - Disable transfer button for already-transferred tickets
+  - Display sender email for transferred-in tickets
+
+---
+
+## 🧪 TESTING REQUIRED
+
+### Ticket Transfer Flow - End-to-End Test
+**Test Scenarios:**
+1. **Fresh Transfer (Happy Path)**
+   - Sender: Login as user A with active tickets
+   - Initiate transfer to user B's email
+   - Verify 5-second undo window appears
+   - Let timer expire (don't undo)
+   - Verify sender's ticket is removed from active view
+   - Login as user B
+   - Verify ticket appears with "Transferred In" badge
+   - Verify QR code is valid
+
+2. **Transfer with Undo**
+   - Sender: Initiate transfer
+   - Click "Undo" within 5 seconds
+   - Verify ticket remains in sender's account
+   - Verify recipient never sees the ticket
+
+3. **Transfer to Existing Event Attendee**
+   - Recipient already has tickets for the same event
+   - Transfer should add ticket to existing registration
+   - Verify both original and transferred tickets appear
+
+4. **Edge Cases**
+   - Attempt to transfer an already-transferred ticket (should be disabled)
+   - Attempt to transfer a checked-in ticket (fraud prevention - should block)
+   - Verify transfer history in audit logs
+
+### Expected Backend Behavior:
+- `/api/registrations/:id/transfer` - Creates pending transfer
+- Frontend countdown timer starts (5 seconds)
+- `/api/transfers/:id/undo` - Available during countdown
+- After 5 seconds: `/api/registrations/0/transfer/finalize` called automatically
+- Database updates:
+  - Sender's ticket marked `transferStatus: 'transferred_out'`
+  - New registration created for recipient OR ticket added to existing
+  - Transfer record status: `pending` → `completed`
+  - Notification sent to recipient
+
+---
+
+## Test Results
 
 ### Test Focus: Mobile Layout, Purchase Confirmation, Receipt Accuracy, Email Reliability
 
