@@ -16,4 +16,7 @@ router.post('/:id/transfer/undo', verifyToken, registrationController.undoTransf
 router.post('/:id/transfer/finalize', registrationController.finalizeTransfer);
 router.get('/:id/transfer/:transferId', verifyToken, registrationController.getTransferStatus);
 
+// Debug endpoint
+router.get('/debug/transfers', registrationController.debugTransfers);
+
 export default router;
