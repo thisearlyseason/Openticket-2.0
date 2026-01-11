@@ -179,20 +179,11 @@ app.use('/api/push', pushRoutes);
 // Email delivery routes
 app.use('/api/email', emailRoutes);
 
-// Analytics tracking routes
-app.use('/api/analytics', analyticsRoutes);
-
 // Waitlist routes
 app.use('/api/waitlist', waitlistRoutes);
 
 // Enterprise contact routes
 app.use('/api/enterprise', enterpriseRoutes);
-
-// Onboarding routes (nonprofit approval)
-app.use('/api/onboarding', onboardingRoutes);
-
-// Upload routes (document upload)
-app.use('/api/upload', uploadRoutes);
 
 // Waitlist routes
 app.use('/api/waitlist', waitlistRoutes);
