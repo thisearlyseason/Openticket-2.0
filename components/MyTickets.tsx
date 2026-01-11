@@ -135,11 +135,16 @@ export const MyTickets = () => {
     }, [navigate, activeTab]);
 
     const loadTickets = async (email: string) => {
+        console.log('[MyTickets] Loading tickets for email:', email);
         const userRegistrations = await StorageService.getRegistrationsByEmail(email);
+        console.log('[MyTickets] Found registrations:', userRegistrations.length);
+        
         const now = Date.now();
         const groups: Record<string, { event: Event, tickets: DisplayTicket[], timestamp: number }> = {};
 
         for (const { reg, event } of userRegistrations) {
+            console.log('[MyTickets] Processing registration:', reg.id, 'with', reg.tickets?.length || 0, 'tickets');
+            
             const isRegHidden = reg.hiddenForAttendee === true;
             const isRefunded = reg.paymentStatus === 'refunded';
             let isExpired = false;
@@ -153,11 +158,20 @@ export const MyTickets = () => {
 
             // View Filtering Logic
             if (activeTab === 'archived') {
-                if (!isRegHidden && !isRefunded && !isExpired) continue;
+                if (!isRegHidden && !isRefunded && !isExpired) {
+                    console.log('[MyTickets] Skipping registration in archived view (not archived)');
+                    continue;
+                }
             } else if (activeTab === 'past') {
-                if (isRegHidden || isRefunded || isExpired || !isPastEvent) continue;
+                if (isRegHidden || isRefunded || isExpired || !isPastEvent) {
+                    console.log('[MyTickets] Skipping registration in past view (not past event)');
+                    continue;
+                }
             } else { // active
-                if (isRegHidden || isRefunded || isExpired || isPastEvent) continue;
+                if (isRegHidden || isRefunded || isExpired || isPastEvent) {
+                    console.log('[MyTickets] Skipping registration in active view:', { isRegHidden, isRefunded, isExpired, isPastEvent });
+                    continue;
+                }
             }
 
             if (!groups[event.id]) groups[event.id] = { event, tickets: [], timestamp: 0 };
