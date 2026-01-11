@@ -206,7 +206,7 @@ class TicketTransferTester:
             ("GET", "/api/registrations/debug/transfers", "Debug endpoint"),
             ("POST", "/api/registrations/test-id/transfer", "Initiate transfer"),
             ("POST", "/api/registrations/test-id/transfer/undo", "Undo transfer"),
-            ("POST", "/api/registrations/0/transfer/finalize", "Finalize transfer")
+            ("POST", "/api/registrations/test-id/transfer/finalize", "Finalize transfer")
         ]
         
         endpoint_results = []
@@ -218,15 +218,18 @@ class TicketTransferTester:
                 else:
                     response = self.session.post(
                         f"{BACKEND_URL}{endpoint}",
-                        json={"test": "data"},
+                        json={"transferId": "test-transfer-123"} if "finalize" in endpoint else {"test": "data"},
                         headers={'Content-Type': 'application/json'}
                     )
                 
-                # We're just checking that endpoints exist and don't return 404
-                if response.status_code != 404:
+                # We're checking that endpoints exist and respond appropriately
+                if response.status_code == 404:
+                    endpoint_results.append(f"❌ {description}: Not found (404)")
+                elif response.status_code in [200, 400, 401, 403]:
+                    # These are all valid responses indicating the endpoint exists
                     endpoint_results.append(f"✅ {description}: HTTP {response.status_code}")
                 else:
-                    endpoint_results.append(f"❌ {description}: Not found (404)")
+                    endpoint_results.append(f"⚠️ {description}: Unexpected HTTP {response.status_code}")
                     
             except Exception as e:
                 endpoint_results.append(f"❌ {description}: Exception - {str(e)}")
