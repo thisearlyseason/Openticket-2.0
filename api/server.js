@@ -129,7 +129,9 @@ app.use('/api/', generalLimiter);
 // CRITICAL: Must be BEFORE express.json() to preserve signature
 app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
-app.use(express.json());
+// Increase JSON body limit to handle base64 encoded files (e.g., nonprofit documents)
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
 // Request logger
 app.use((req, res, next) => {
