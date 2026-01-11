@@ -879,24 +879,41 @@ export const finalizeTransfer = async (req, res) => {
             transferredToUserId: transfer.recipient_user_id
         };
 
-        await supabase
+        console.log(`[Transfer] Updating sender's registration with modified tickets`);
+        const { data: updatedSenderReg, error: updateError } = await supabase
             .from('registrations')
             .update({ 
                 tickets
             })
-            .eq('id', transfer.registration_id);
+            .eq('id', transfer.registration_id)
+            .select();
+
+        console.log(`[Transfer] Sender registration update result:`, updatedSenderReg);
+        console.log(`[Transfer] Sender registration update error:`, updateError);
+        
+        if (updateError) {
+            console.log(`[Transfer] ERROR updating sender registration:`, updateError);
+            throw updateError;
+        }
 
         // 7. Create new registration for recipient (or add to existing)
         let recipientRegistrationId;
 
         // Check if recipient already has a registration for this event
-        const { data: existingRecipientReg } = await supabase
+        console.log(`[Transfer] Checking for existing recipient registration...`);
+        console.log(`[Transfer] Event ID: ${transfer.event_id}`);
+        console.log(`[Transfer] Recipient email: ${transfer.recipient_email}`);
+        
+        const { data: existingRecipientReg, error: recipientCheckError } = await supabase
             .from('registrations')
             .select('*')
             .eq('event_id', transfer.event_id)
             .eq('attendee_email', transfer.recipient_email)
             .eq('payment_status', 'paid')
             .single();
+
+        console.log(`[Transfer] Existing recipient reg:`, JSON.stringify(existingRecipientReg, null, 2));
+        console.log(`[Transfer] Recipient check error:`, recipientCheckError);
 
         const transferredTicket = {
             ...ticket,
