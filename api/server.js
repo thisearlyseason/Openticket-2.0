@@ -29,6 +29,9 @@ import pushRoutes from '../backend/routes/pushRoutes.js';
 import emailRoutes from '../backend/routes/emailRoutes.js';
 import analyticsRoutes from '../backend/routes/analyticsRoutes.js';
 import waitlistRoutes from '../backend/routes/waitlistRoutes.js';
+import enterpriseRoutes from '../backend/routes/enterpriseRoutes.js';
+import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
+import uploadRoutes from '../backend/routes/uploadRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
