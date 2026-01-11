@@ -34,7 +34,6 @@ import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
 import affiliateRoutes from '../backend/routes/affiliateRoutes.js';
-import stripeRoutes from '../backend/routes/stripeRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
