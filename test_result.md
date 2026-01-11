@@ -2,6 +2,106 @@
 
 ## Current Testing Session - January 11, 2026
 
+### Test Focus: Ticket Visibility & Metadata Display Fixes
+
+---
+
+## 🔧 CRITICAL FIXES - Ticket Visibility & Ownership
+
+### Issues Addressed:
+1. ✅ Tickets not appearing in My Tickets after purchase
+2. ✅ Missing metadata display (attendee names, ticket numbers, purchase dates)
+3. ✅ Superadmin ticket visibility issues
+4. ✅ Transfer history not displaying correctly
+
+### Changes Made:
+
+**1. TypeScript Interface Updates (`/app/types.ts`):**
+- Updated `PurchasedTicket` interface to include all unique ticket fields:
+  - `ticketId`, `ticketNumber`, `qrCodeData`
+  - `attendeeName`, `originalAttendeeName`
+  - `checkedIn`, `checkedInAt`, `checkedInBy`
+  - Transfer tracking fields
+- Updated `Registration` interface:
+  - Added `userId` field for user-based queries
+  - Added `source: 'transfer'` option
+  - Added `createdAt` timestamp
+
+**2. Backend Query Enhancements (`/app/backend/controllers/registrationController.js`):**
+- Updated `getAllRegistrations` to support querying by `user_id`
+- Added logging for better debugging
+- Maintained security requirements (at least one filter required)
+
+**3. Frontend Service Updates (`/app/services/storageService.ts`):**
+- Enhanced `getRegistrationsByEmail` to also support `userId` parameter
+- Added comprehensive logging for debugging visibility issues
+
+**4. UI Display Improvements (`/app/components/MyTickets.tsx`):**
+- Added display of all metadata:
+  - ✅ Purchase Order ID (last 8 chars of registration ID)
+  - ✅ Purchase Date/Time
+  - ✅ Ticket Status (Active/Transferred/Used)
+  - ✅ Attendee Name with transfer history (strikethrough)
+  - ✅ Unique Ticket Number
+- Added extensive debug logging to track ticket visibility
+- Improved grid layout to show all fields (now 8 data points)
+
+**5. Status Display Logic:**
+- Active tickets show as "Active" (green)
+- Transferred-in show as "Transferred In" (green)
+- Transferred-out show as "Transferred Out" (orange)
+- Used/checked-in show as "Used" (blue)
+- Refunded show as "Refunded" (red)
+- Pay at door show as "Pay at Door" (yellow)
+
+---
+
+## 🧪 TESTING REQUIRED
+
+### Critical Test Scenarios:
+
+1. **Fresh Ticket Purchase**
+   - User purchases 2 tickets
+   - Verify both tickets appear in My Tickets immediately (no refresh needed)
+   - Verify all metadata displays correctly:
+     - Attendee names
+     - Unique ticket numbers (TKT-XXX)
+     - Purchase order ID
+     - Purchase date/time
+     - Status: "Active"
+
+2. **Superadmin Purchase**
+   - Superadmin purchases tickets
+   - Verify tickets appear in My Tickets
+   - Verify tickets appear in Admin views
+   - Verify Purchase Order ID is visible
+
+3. **Ticket Transfer**
+   - Transfer ticket from User A to User B
+   - User A: Verify ticket removed from active, status shows "Transferred Out"
+   - User B: Verify ticket appears with "Transferred In" status
+   - User B: Verify original name shown with strikethrough
+   - Superadmin: Verify transferred ticket still visible (read-only)
+
+4. **Check Console Logs**
+   - Open browser console
+   - Navigate to My Tickets
+   - Verify logs show:
+     - `[MyTickets] Loading tickets for email: ...`
+     - `[MyTickets] Found registrations: X`
+     - `[MyTickets] Processing registration: ... with X tickets`
+     - `[MyTickets] Processed X tickets for event ...`
+     - `[MyTickets] Final event groups: X events with tickets`
+
+5. **Backend Logging**
+   - Check backend logs for registration queries:
+     - `[Registrations] Found X registrations for query`
+   - Check for any errors during ticket generation
+
+---
+
+## Test Results
+
 ### Test Focus: Unique Ticket System - Individual Ticket IDs & QR Codes
 
 ---
