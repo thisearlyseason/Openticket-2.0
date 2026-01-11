@@ -105,6 +105,26 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] No useConfirm context errors on any page
 - [x] Fee structure calculations verified for all plans
 
+#### Soft Limit Enforcement (January 11, 2026)
+- [x] **Plan Limit Indicator:** Visual progress bar in EventBuilder Tickets step
+  - Shows ticket capacity usage (green → amber at 80% → red at 100%)
+  - Located at `/app/components/EventBuilder.tsx` lines 970-1020
+- [x] **Upgrade Modal:** Clean modal with plan suggestions when limits exceeded
+  - Includes "View Plans" button navigating to `/pricing`
+  - Located at `/app/components/EventBuilder.tsx` lines 2101-2150
+- [x] **Monthly Event Limit Check:** Enforces events/month limit for Free and Pro plans
+
+#### Comprehensive E2E Testing (January 11, 2026)
+- [x] Landing page loads with Sign In, Pricing, Explore buttons
+- [x] Auth page displays Sign In/Sign Up/Find Tickets tabs
+- [x] Role selection (Attendee, Organizer) works correctly
+- [x] Non-profit signup shows verification fields
+- [x] Pricing page shows all 4 plans with correct fees
+- [x] Enterprise Contact Sales form works with authentication
+- [x] Super Admin dashboard shows Access Denied for non-admins
+- [x] EventBuilder requires auth and shows plan limits
+- [x] Backend health checks pass (9/9 API tests passed)
+
 ---
 
 ### ✅ Analytics & Financial Data Audit (January 7, 2026 - Latest)
