@@ -415,5 +415,496 @@ export const refundAddOn = async (req, res) => {
 };
 
 export const transferTicket = async (req, res) => {
-    res.status(501).json({ error: "Transfer not implemented yet" });
+    try {
+        const { id } = req.params; // Registration ID
+        const { recipientEmail, ticketKey } = req.body;
+        const senderUserId = req.user.uid;
+
+        console.log(`[Transfer] Initiating transfer: registration=${id}, ticket=${ticketKey}, to=${recipientEmail}`);
+
+        // 1. Validate input
+        if (!recipientEmail || !ticketKey) {
+            return res.status(400).json({ error: 'Recipient email and ticket key are required' });
+        }
+
+        // 2. Fetch the registration
+        const { data: registration, error: regError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (regError || !registration) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // 3. Verify sender owns this registration
+        if (registration.user_id !== senderUserId) {
+            return res.status(403).json({ error: 'You do not own this ticket' });
+        }
+
+        // 4. Find the specific ticket
+        const tickets = registration.tickets || [];
+        const ticketIndex = tickets.findIndex(t => t.key === ticketKey || t.id === ticketKey);
+        
+        if (ticketIndex === -1) {
+            return res.status(404).json({ error: 'Ticket not found in registration' });
+        }
+
+        const ticket = tickets[ticketIndex];
+
+        // 5. FRAUD PREVENTION CHECKS
+        
+        // 5a. Check if ticket is already checked in
+        const checkInStatuses = registration.check_in_statuses || {};
+        if (checkInStatuses[ticketKey]?.checkedIn || registration.checked_in) {
+            return res.status(400).json({ error: 'Cannot transfer a checked-in ticket' });
+        }
+
+        // 5b. Check if ticket is already pending transfer
+        if (ticket.transferStatus === 'pending') {
+            return res.status(400).json({ error: 'This ticket already has a pending transfer' });
+        }
+
+        // 5c. Check if ticket was already transferred out
+        if (ticket.transferStatus === 'transferred_out') {
+            return res.status(400).json({ error: 'This ticket has already been transferred' });
+        }
+
+        // 5d. Rate limit: Check transfer attempts in last hour
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+        const { data: recentTransfers, error: rateError } = await supabase
+            .from('ticket_transfers')
+            .select('id')
+            .eq('ticket_key', ticketKey)
+            .gte('created_at', oneHourAgo);
+
+        if (!rateError && recentTransfers && recentTransfers.length >= 5) {
+            // Log suspicious activity
+            await supabase.from('audit_logs').insert({
+                action: 'SUSPICIOUS_TRANSFER_RATE',
+                entity_type: 'ticket',
+                entity_id: ticketKey,
+                user_id: senderUserId,
+                details: { attempts: recentTransfers.length, recipientEmail },
+                created_at: new Date().toISOString()
+            });
+            return res.status(429).json({ 
+                error: 'Too many transfer attempts. Please try again later.',
+                fraudFlag: true 
+            });
+        }
+
+        // 5e. Check for circular transfer (A → B → A within 24 hours)
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: circularCheck } = await supabase
+            .from('ticket_transfers')
+            .select('*')
+            .eq('ticket_key', ticketKey)
+            .eq('recipient_email', registration.attendee_email)
+            .gte('created_at', oneDayAgo);
+
+        if (circularCheck && circularCheck.length > 0) {
+            await supabase.from('audit_logs').insert({
+                action: 'SUSPICIOUS_CIRCULAR_TRANSFER',
+                entity_type: 'ticket',
+                entity_id: ticketKey,
+                user_id: senderUserId,
+                details: { recipientEmail, originalOwner: registration.attendee_email },
+                created_at: new Date().toISOString()
+            });
+            return res.status(400).json({ 
+                error: 'Circular transfers are not allowed within 24 hours',
+                fraudFlag: true 
+            });
+        }
+
+        // 6. Find or verify recipient exists (optional - can transfer to any email)
+        const { data: recipientProfile } = await supabase
+            .from('profiles')
+            .select('id, email, name')
+            .eq('email', recipientEmail.toLowerCase())
+            .single();
+
+        // 7. Create transfer record with PENDING status
+        const transferId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const { data: transferRecord, error: transferError } = await supabase
+            .from('ticket_transfers')
+            .insert({
+                id: transferId,
+                registration_id: id,
+                ticket_key: ticketKey,
+                event_id: registration.event_id,
+                sender_user_id: senderUserId,
+                sender_email: registration.attendee_email,
+                sender_name: registration.attendee_name,
+                recipient_email: recipientEmail.toLowerCase(),
+                recipient_user_id: recipientProfile?.id || null,
+                recipient_name: recipientProfile?.name || null,
+                status: 'pending',
+                undo_expires_at: new Date(Date.now() + 5000).toISOString(), // 5 seconds
+                created_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (transferError) {
+            console.error('[Transfer] Error creating transfer record:', transferError);
+            throw transferError;
+        }
+
+        // 8. Update ticket status to pending
+        const updatedTickets = [...tickets];
+        updatedTickets[ticketIndex] = {
+            ...ticket,
+            transferStatus: 'pending',
+            transferId: transferId,
+            transferInitiatedAt: new Date().toISOString()
+        };
+
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({ 
+                tickets: updatedTickets,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id);
+
+        if (updateError) {
+            // Rollback transfer record
+            await supabase.from('ticket_transfers').delete().eq('id', transferId);
+            throw updateError;
+        }
+
+        // 9. Log the transfer initiation
+        await supabase.from('audit_logs').insert({
+            action: 'TRANSFER_INITIATED',
+            entity_type: 'ticket',
+            entity_id: ticketKey,
+            user_id: senderUserId,
+            details: {
+                transferId,
+                recipientEmail,
+                registrationId: id,
+                eventId: registration.event_id
+            },
+            created_at: new Date().toISOString()
+        });
+
+        console.log(`[Transfer] Transfer initiated: ${transferId}`);
+
+        res.json({
+            success: true,
+            transferId,
+            status: 'pending',
+            undoExpiresAt: transferRecord.undo_expires_at,
+            message: 'Transfer initiated. You have 5 seconds to undo.'
+        });
+
+    } catch (error) {
+        console.error('[Transfer] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
 };
+
+/**
+ * Undo a pending transfer (within 5 second window)
+ * POST /api/registrations/:id/transfer/undo
+ */
+export const undoTransfer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { transferId } = req.body;
+        const userId = req.user.uid;
+
+        console.log(`[Transfer] Undo requested: transfer=${transferId}`);
+
+        // 1. Fetch transfer record
+        const { data: transfer, error: transferError } = await supabase
+            .from('ticket_transfers')
+            .select('*')
+            .eq('id', transferId)
+            .single();
+
+        if (transferError || !transfer) {
+            return res.status(404).json({ error: 'Transfer not found' });
+        }
+
+        // 2. Verify sender owns the transfer
+        if (transfer.sender_user_id !== userId) {
+            return res.status(403).json({ error: 'You cannot undo this transfer' });
+        }
+
+        // 3. Check if still within undo window
+        if (transfer.status !== 'pending') {
+            return res.status(400).json({ error: 'Transfer already finalized or cancelled' });
+        }
+
+        const undoExpires = new Date(transfer.undo_expires_at);
+        if (new Date() > undoExpires) {
+            return res.status(400).json({ error: 'Undo window has expired' });
+        }
+
+        // 4. Cancel the transfer
+        const { error: cancelError } = await supabase
+            .from('ticket_transfers')
+            .update({
+                status: 'cancelled',
+                undone_at: new Date().toISOString()
+            })
+            .eq('id', transferId);
+
+        if (cancelError) throw cancelError;
+
+        // 5. Restore ticket to active status
+        const { data: registration } = await supabase
+            .from('registrations')
+            .select('tickets')
+            .eq('id', id)
+            .single();
+
+        if (registration) {
+            const tickets = registration.tickets || [];
+            const ticketIndex = tickets.findIndex(t => t.key === transfer.ticket_key || t.id === transfer.ticket_key);
+            
+            if (ticketIndex !== -1) {
+                tickets[ticketIndex] = {
+                    ...tickets[ticketIndex],
+                    transferStatus: 'active',
+                    transferId: null,
+                    transferInitiatedAt: null
+                };
+
+                await supabase
+                    .from('registrations')
+                    .update({ tickets, updated_at: new Date().toISOString() })
+                    .eq('id', id);
+            }
+        }
+
+        // 6. Log the undo
+        await supabase.from('audit_logs').insert({
+            action: 'TRANSFER_UNDONE',
+            entity_type: 'ticket',
+            entity_id: transfer.ticket_key,
+            user_id: userId,
+            details: { transferId },
+            created_at: new Date().toISOString()
+        });
+
+        console.log(`[Transfer] Transfer undone: ${transferId}`);
+
+        res.json({ success: true, message: 'Transfer cancelled successfully' });
+
+    } catch (error) {
+        console.error('[Transfer] Undo error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Finalize a pending transfer (called by cron or after undo window)
+ * POST /api/registrations/:id/transfer/finalize
+ */
+export const finalizeTransfer = async (req, res) => {
+    try {
+        const { transferId } = req.body;
+
+        console.log(`[Transfer] Finalizing transfer: ${transferId}`);
+
+        // 1. Fetch transfer record
+        const { data: transfer, error: transferError } = await supabase
+            .from('ticket_transfers')
+            .select('*')
+            .eq('id', transferId)
+            .single();
+
+        if (transferError || !transfer) {
+            return res.status(404).json({ error: 'Transfer not found' });
+        }
+
+        // 2. Check if still pending
+        if (transfer.status !== 'pending') {
+            return res.status(400).json({ error: `Transfer is ${transfer.status}, not pending` });
+        }
+
+        // 3. Verify undo window has expired
+        const undoExpires = new Date(transfer.undo_expires_at);
+        if (new Date() < undoExpires) {
+            return res.status(400).json({ error: 'Undo window has not expired yet' });
+        }
+
+        // 4. Get original registration
+        const { data: originalReg } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', transfer.registration_id)
+            .single();
+
+        if (!originalReg) {
+            return res.status(404).json({ error: 'Original registration not found' });
+        }
+
+        // 5. Find the ticket
+        const tickets = originalReg.tickets || [];
+        const ticketIndex = tickets.findIndex(t => t.key === transfer.ticket_key || t.id === transfer.ticket_key);
+        
+        if (ticketIndex === -1) {
+            return res.status(404).json({ error: 'Ticket not found' });
+        }
+
+        const ticket = tickets[ticketIndex];
+
+        // 6. Update sender's ticket to transferred_out
+        tickets[ticketIndex] = {
+            ...ticket,
+            transferStatus: 'transferred_out',
+            transferId: transferId,
+            transferFinalizedAt: new Date().toISOString(),
+            transferredToEmail: transfer.recipient_email,
+            transferredToUserId: transfer.recipient_user_id
+        };
+
+        await supabase
+            .from('registrations')
+            .update({ 
+                tickets,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', transfer.registration_id);
+
+        // 7. Create new registration for recipient (or add to existing)
+        let recipientRegistrationId;
+
+        // Check if recipient already has a registration for this event
+        const { data: existingRecipientReg } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('event_id', transfer.event_id)
+            .eq('attendee_email', transfer.recipient_email)
+            .eq('payment_status', 'paid')
+            .single();
+
+        const transferredTicket = {
+            ...ticket,
+            key: `${ticket.key}_transferred_${Date.now()}`,
+            transferStatus: 'transferred_in',
+            transferId: transferId,
+            transferredFromEmail: transfer.sender_email,
+            transferredFromUserId: transfer.sender_user_id,
+            transferredAt: new Date().toISOString(),
+            originalTicketKey: ticket.key
+        };
+
+        if (existingRecipientReg) {
+            // Add ticket to existing registration
+            const existingTickets = existingRecipientReg.tickets || [];
+            await supabase
+                .from('registrations')
+                .update({
+                    tickets: [...existingTickets, transferredTicket],
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', existingRecipientReg.id);
+            
+            recipientRegistrationId = existingRecipientReg.id;
+        } else {
+            // Create new registration for recipient
+            const { data: newReg, error: newRegError } = await supabase
+                .from('registrations')
+                .insert({
+                    event_id: transfer.event_id,
+                    user_id: transfer.recipient_user_id,
+                    attendee_name: transfer.recipient_name || transfer.recipient_email.split('@')[0],
+                    attendee_email: transfer.recipient_email,
+                    tickets: [transferredTicket],
+                    payment_status: 'paid',
+                    approval_status: 'approved',
+                    source: 'transfer',
+                    transferred_from_registration_id: transfer.registration_id,
+                    created_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (newRegError) throw newRegError;
+            recipientRegistrationId = newReg.id;
+        }
+
+        // 8. Update transfer record to completed
+        await supabase
+            .from('ticket_transfers')
+            .update({
+                status: 'completed',
+                recipient_registration_id: recipientRegistrationId,
+                finalized_at: new Date().toISOString()
+            })
+            .eq('id', transferId);
+
+        // 9. Create notification for recipient
+        if (transfer.recipient_user_id) {
+            await supabase.from('notifications').insert({
+                user_id: transfer.recipient_user_id,
+                type: 'transfer',
+                title: '🎟️ Ticket Received!',
+                message: `${transfer.sender_name || transfer.sender_email} has transferred a ticket to you.`,
+                read: false,
+                data: { transferId, eventId: transfer.event_id },
+                created_at: new Date().toISOString()
+            });
+        }
+
+        // 10. Log finalization
+        await supabase.from('audit_logs').insert({
+            action: 'TRANSFER_COMPLETED',
+            entity_type: 'ticket',
+            entity_id: transfer.ticket_key,
+            user_id: transfer.sender_user_id,
+            details: {
+                transferId,
+                recipientEmail: transfer.recipient_email,
+                recipientRegistrationId
+            },
+            created_at: new Date().toISOString()
+        });
+
+        console.log(`[Transfer] Transfer completed: ${transferId}`);
+
+        res.json({ 
+            success: true, 
+            message: 'Transfer completed successfully',
+            recipientRegistrationId
+        });
+
+    } catch (error) {
+        console.error('[Transfer] Finalize error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Get transfer status
+ * GET /api/registrations/:id/transfer/:transferId
+ */
+export const getTransferStatus = async (req, res) => {
+    try {
+        const { transferId } = req.params;
+
+        const { data: transfer, error } = await supabase
+            .from('ticket_transfers')
+            .select('*')
+            .eq('id', transferId)
+            .single();
+
+        if (error || !transfer) {
+            return res.status(404).json({ error: 'Transfer not found' });
+        }
+
+        res.json({ transfer });
+
+    } catch (error) {
+        console.error('[Transfer] Get status error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
