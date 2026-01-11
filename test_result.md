@@ -690,7 +690,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://money-trails.preview.emergentagent.com  
+**Backend URL:** https://pass-hand.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
