@@ -624,8 +624,7 @@ export const transferTicket = async (req, res) => {
         const { error: updateError } = await supabase
             .from('registrations')
             .update({ 
-                tickets: updatedTickets,
-                updated_at: new Date().toISOString()
+                tickets: updatedTickets
             })
             .eq('id', id);
 
