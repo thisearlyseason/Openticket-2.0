@@ -445,13 +445,26 @@ export const transferTicket = async (req, res) => {
 
         // 4. Find the specific ticket
         const tickets = registration.tickets || [];
-        const ticketIndex = tickets.findIndex(t => t.key === ticketKey || t.id === ticketKey);
+        // ticketKey format from frontend: "${tierId}-${index}" e.g., "tier123-0"
+        const [tierIdPart, indexPart] = ticketKey.split('-');
+        const ticketKeyIndex = parseInt(indexPart, 10);
+        
+        let ticketIndex = tickets.findIndex(t => t.key === ticketKey || t.id === ticketKey);
+        
+        // If not found by key/id, try matching by tierId
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart || t.id === tierIdPart);
+        }
         
         if (ticketIndex === -1) {
+            console.log('[Transfer] Ticket not found. Looking for:', ticketKey);
+            console.log('[Transfer] Available tickets:', JSON.stringify(tickets.map(t => ({ key: t.key, id: t.id, tierId: t.tierId, name: t.name }))));
             return res.status(404).json({ error: 'Ticket not found in registration' });
         }
 
         const ticket = tickets[ticketIndex];
+        // Store the ticketKey for later use (fraud checks, etc.)
+        const effectiveTicketKey = ticket.key || ticket.id || ticketKey;
 
         // 5. FRAUD PREVENTION CHECKS
         
