@@ -210,35 +210,25 @@ export const Pricing = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
                 {/* FREE PLAN */}
-                <Card className="p-8 border-zinc-200 dark:border-zinc-800 relative hover:-translate-y-2 transition-transform duration-300">
-                    <div className="mb-6">
+                <Card className="p-6 border-zinc-200 dark:border-zinc-800 relative hover:-translate-y-2 transition-transform duration-300">
+                    <div className="mb-4">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{PLANS.free.name}</h3>
-                        <div className="text-4xl font-black text-gray-900 dark:text-white">$0<span className="text-sm font-medium text-gray-500">/mo</span></div>
-                        <p className="text-sm text-gray-500 mt-2">For small events & meetups.</p>
+                        <div className="text-3xl font-black text-gray-900 dark:text-white">$0<span className="text-sm font-medium text-gray-500">/mo</span></div>
+                        <p className="text-xs text-gray-500 mt-2">For small events & meetups</p>
                     </div>
-                    <div className="space-y-4 mb-8 border-t border-zinc-100 dark:border-zinc-800 pt-6">
-                        <div className="flex items-start font-bold text-zinc-900 dark:text-white">
-                            <Check size={18} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                            <span>50 Tickets / Event</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                            <span>3 Events / Month</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Platform Donation Button</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="text-green-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Offline Payments Allowed</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-400">
-                            <Check size={18} className="mr-2 mt-0.5 shrink-0 opacity-50" />
-                            <span className="text-sm">2.75% + $0.99 per Ticket</span>
+                    <div className="space-y-3 mb-6 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                        {PLANS.free.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-start text-sm text-zinc-600 dark:text-zinc-400">
+                                <Check size={16} className="text-green-500 mr-2 mt-0.5 shrink-0" />
+                                <span>{feature}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-start text-xs text-zinc-500 dark:text-zinc-500">
+                            <span className="mr-2">•</span>
+                            <span>4.5% + $0.99 per ticket</span>
                         </div>
                     </div>
                     <Button
@@ -252,7 +242,7 @@ export const Pricing = () => {
                 </Card>
 
                 {/* PRO PLAN */}
-                <Card className="p-8 border-primary relative shadow-[0_0_30px_rgba(236,72,153,0.15)] md:scale-105 z-10 bg-white dark:bg-zinc-900">
+                <Card className="p-6 border-primary relative shadow-[0_0_30px_rgba(236,72,153,0.15)] md:scale-105 z-10 bg-white dark:bg-zinc-900">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-b-lg shadow-sm">
                         MOST POPULAR
                     </div>
