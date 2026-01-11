@@ -428,14 +428,22 @@ class TicketTransferTester:
             if response.status_code != 404:  # Endpoint exists
                 endpoints_working += 1
             
-            # Test finalize endpoint - use correct path
+            # Test finalize endpoint - check for proper error response
             response = self.session.post(
                 f"{BACKEND_URL}/api/registrations/test/transfer/finalize",
                 json={"transferId": "test"},
                 headers={'Content-Type': 'application/json'}
             )
-            if response.status_code != 404:  # Endpoint exists
-                endpoints_working += 1
+            # For finalize, 404 with "Transfer not found" means it's working
+            if response.status_code == 404:
+                try:
+                    error_data = response.json()
+                    if "Transfer not found" in error_data.get('error', ''):
+                        endpoints_working += 1  # This means the endpoint is working
+                except:
+                    pass  # If we can't parse JSON, endpoint might not be working properly
+            elif response.status_code != 404:
+                endpoints_working += 1  # Any other response means endpoint exists
             
             success_rate = (endpoints_working / total_endpoints) * 100
             
