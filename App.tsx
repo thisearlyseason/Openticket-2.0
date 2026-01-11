@@ -257,19 +257,52 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                                                                 <div className="p-8 text-center text-zinc-400 text-xs">No notifications</div>
                                                             ) : (
                                                                 notifications.map(n => (
-                                                                    <div key={n.id} onClick={async () => {
-                                                                        if (!n.read) {
-                                                                            await NotificationService.markAsRead(n.id);
-                                                                            setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
-                                                                        }
-                                                                    }} className={`p-3 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-colors ${!n.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
-                                                                        <div className="font-bold text-sm mb-1">{n.title}</div>
-                                                                        <div className="text-xs text-zinc-500">{n.message}</div>
-                                                                        <div className="text-[10px] text-zinc-400 mt-2">{new Date(n.timestamp).toLocaleDateString()}</div>
+                                                                    <div key={n.id} className={`p-3 border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors ${!n.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                                                                        <div className="flex justify-between items-start gap-2">
+                                                                            <div 
+                                                                                className="flex-1 cursor-pointer"
+                                                                                onClick={async () => {
+                                                                                    if (!n.read) {
+                                                                                        await NotificationService.markAsRead(n.id);
+                                                                                        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+                                                                                    }
+                                                                                }}
+                                                                            >
+                                                                                <div className="font-bold text-sm mb-1">{n.title}</div>
+                                                                                <div className="text-xs text-zinc-500">{n.message}</div>
+                                                                                <div className="text-[10px] text-zinc-400 mt-2">{new Date(n.timestamp).toLocaleDateString()}</div>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={async (e) => {
+                                                                                    e.stopPropagation();
+                                                                                    await NotificationService.deleteNotification(n.id);
+                                                                                    setNotifications(prev => prev.filter(x => x.id !== n.id));
+                                                                                }}
+                                                                                className="p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                                                title="Delete notification"
+                                                                            >
+                                                                                <X size={14} />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 ))
                                                             )}
                                                         </div>
+                                                        {notifications.length > 0 && (
+                                                            <div className="p-2 border-t border-zinc-100 dark:border-zinc-800">
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        for (const n of notifications) {
+                                                                            await NotificationService.deleteNotification(n.id);
+                                                                        }
+                                                                        setNotifications([]);
+                                                                    }}
+                                                                    className="w-full text-xs text-zinc-500 hover:text-red-500 py-1 transition-colors"
+                                                                >
+                                                                    Clear all notifications
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </>
                                             )}
