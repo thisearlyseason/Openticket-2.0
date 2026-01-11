@@ -158,12 +158,13 @@ export const PLAN_VERSIONS = {
     },
     
     // Current Plans (v2) - New users
+    // NOTE: feePercent and feeFixed MUST match backend/utils/priceCalculator.js PLAN_FEES
     free_v2: {
         version: 2,
         name: 'Free',
         priceMonthly: 0,
         priceYearly: 0,
-        feePercent: 0.045,
+        feePercent: 0.0275,  // 2.75% - matches priceCalculator.js
         feeFixed: 0.99,
         ticketLimit: 100, // Per event
         eventLimit: 999999, // Unlimited events
@@ -181,8 +182,8 @@ export const PLAN_VERSIONS = {
         name: 'Pro',
         priceMonthly: 39,
         priceYearly: 390,
-        feePercent: 0.029,
-        feeFixed: 0.69,
+        feePercent: 0.015,  // 1.5% - matches priceCalculator.js
+        feeFixed: 0.75,
         ticketLimit: 1000, // Per event
         eventLimit: 999999, // Unlimited
         monthlyTicketLimit: 4000,
@@ -199,8 +200,8 @@ export const PLAN_VERSIONS = {
         name: 'Premium',
         priceMonthly: 110,
         priceYearly: 1100,
-        feePercent: 0.019,
-        feeFixed: 0.49,
+        feePercent: 0.0075,  // 0.75% - matches priceCalculator.js
+        feeFixed: 0.30,
         ticketLimit: 3000, // Per event
         eventLimit: 999999, // Unlimited
         monthlyTicketLimit: 10000,
