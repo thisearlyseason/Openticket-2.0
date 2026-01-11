@@ -104,13 +104,14 @@ const clearCache = (type: 'events' | 'regs' | 'all' = 'all') => {
 // New users get the latest version automatically
 
 export const PLAN_VERSIONS = {
-    // Legacy Plans (v1) - Existing users only
+    // Legacy Plans (v1) - Existing users only (grandfathered)
+    // NOTE: These legacy users keep their original fee structure
     free_v1: {
         version: 1,
         name: 'Free',
         priceMonthly: 0,
         priceYearly: 0,
-        feePercent: 0.045,
+        feePercent: 0.045,  // Legacy: 4.5%
         feeFixed: 0.99,
         ticketLimit: 50,
         eventLimit: 3,
@@ -127,7 +128,7 @@ export const PLAN_VERSIONS = {
         name: 'Pro',
         priceMonthly: 39,
         priceYearly: 390,
-        feePercent: 0.029,
+        feePercent: 0.029,  // Legacy: 2.9%
         feeFixed: 0.69,
         ticketLimit: 250,
         eventLimit: 10,
@@ -144,7 +145,7 @@ export const PLAN_VERSIONS = {
         name: 'Premium',
         priceMonthly: 110,
         priceYearly: 1100,
-        feePercent: 0.019,
+        feePercent: 0.019,  // Legacy: 1.9%
         feeFixed: 0.49,
         ticketLimit: 999999,
         eventLimit: 9999,
