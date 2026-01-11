@@ -22,6 +22,9 @@ export const MyTickets = () => {
         isAddOn: boolean;
         addOnAnswer?: string;
         timestamp: number;
+        transferStatus?: 'transferred_out' | 'transferred_in';
+        transferredFrom?: string;
+        transferredTo?: string;
     }
 
     interface EventGroup {
