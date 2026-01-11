@@ -529,12 +529,37 @@ console.log(JSON.stringify({
     def test_backward_compatibility(self):
         """Test Case 6: Backward Compatibility with Legacy Tickets"""
         try:
-            # Test that the system can handle legacy ticket format
-            # This tests the registration endpoint's ability to process both formats
+            # First, get a real event ID from the public events
+            events_response = self.session.get(f"{BACKEND_URL}/api/events/public")
+            
+            if events_response.status_code != 200:
+                self.log_result(
+                    "Backward Compatibility",
+                    False,
+                    "❌ Could not fetch public events for testing",
+                    events_response.text
+                )
+                return
+            
+            events_data = events_response.json()
+            events = events_data.get('events', [])
+            
+            if not events:
+                self.log_result(
+                    "Backward Compatibility",
+                    False,
+                    "❌ No public events available for testing",
+                    events_data
+                )
+                return
+            
+            # Use the first available event
+            test_event = events[0]
+            event_id = test_event['id']
             
             # Create a registration that simulates legacy format (before transformation)
             legacy_payload = {
-                "event_id": "test-event-legacy",
+                "event_id": event_id,
                 "attendee_name": "Bob Legacy",
                 "attendee_email": "bob.legacy@example.com",
                 "tickets": [
@@ -603,6 +628,7 @@ console.log(JSON.stringify({
                         f"✅ Legacy ticket format successfully transformed to new format with unique IDs",
                         {
                             "registration_id": registration.get('id'),
+                            "event_id": event_id,
                             "transformed_ticket": tickets[0] if tickets else None
                         }
                     )
