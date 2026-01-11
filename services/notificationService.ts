@@ -62,5 +62,15 @@ export const NotificationService = {
         } else {
             await fetchSupabase(`/notifications/${notifId}`, 'PUT', { read: true });
         }
+    },
+
+    deleteNotification: async (notifId: string) => {
+        if (isOffline) {
+            const all = JSON.parse(localStorage.getItem('openticket_notifications') || '[]');
+            const filtered = all.filter((n: any) => n.id !== notifId);
+            localStorage.setItem('openticket_notifications', JSON.stringify(filtered));
+        } else {
+            await fetchSupabase(`/notifications/${notifId}`, 'DELETE');
+        }
     }
 };
