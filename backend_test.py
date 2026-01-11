@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Complete Email System Testing
-Tests the complete email system after fixes as requested in review
+Backend API Testing for OpenTicket Platform - Unique Ticket Generation System Testing
+Tests the unique ticket generation system and check-in API as requested in review
 """
 
 import requests
 import json
 import time
 import uuid
+import subprocess
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://pass-hand.preview.emergentagent.com"
 
-class EmailSystemTester:
+class TicketSystemTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
