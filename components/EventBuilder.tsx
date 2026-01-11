@@ -2045,6 +2045,57 @@ export const EventBuilder = () => {
                 title={errorModal.title}
                 message={errorModal.message}
             />
+
+            {/* Upgrade Plan Modal */}
+            {upgradeModal.open && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                                <AlertCircle size={24} className="text-amber-400" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">{upgradeModal.title}</h3>
+                        </div>
+                        
+                        <p className="text-zinc-300 mb-4">{upgradeModal.message}</p>
+                        
+                        {upgradeModal.suggestedPlan && (
+                            <div className="bg-zinc-800/50 rounded-xl p-4 mb-6">
+                                <p className="text-sm text-zinc-400 mb-2">Recommended upgrade:</p>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <span className="font-bold text-[#E0FF20] text-lg capitalize">{upgradeModal.suggestedPlan}</span>
+                                        <span className="text-zinc-400 text-sm ml-2">
+                                            {upgradeModal.suggestedPlan === 'pro' && '• Up to 1,000 tickets/event'}
+                                            {upgradeModal.suggestedPlan === 'premium' && '• Up to 3,000 tickets/event'}
+                                            {upgradeModal.suggestedPlan === 'enterprise' && '• Unlimited capacity'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setUpgradeModal({ ...upgradeModal, open: false })}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setUpgradeModal({ ...upgradeModal, open: false });
+                                    navigate('/pricing');
+                                }}
+                                className="flex-1 bg-[#E0FF20] hover:bg-[#c8e01c] text-black border-none font-bold"
+                            >
+                                View Plans
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
