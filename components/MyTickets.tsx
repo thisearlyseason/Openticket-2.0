@@ -537,7 +537,20 @@ export const MyTickets = () => {
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Attendee</label>
-                                            <div className="font-bold text-zinc-900 dark:text-white truncate">{ticket.reg.attendeeName}</div>
+                                            <div className="font-bold text-zinc-900 dark:text-white">
+                                                {ticket.originalAttendeeName && (
+                                                    <div className="line-through text-zinc-400 text-sm mb-1">
+                                                        {ticket.originalAttendeeName}
+                                                    </div>
+                                                )}
+                                                <div className="truncate">
+                                                    {ticket.attendeeName || ticket.reg.attendeeName}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Ticket #</label>
+                                            <div className="font-mono font-bold text-zinc-900 dark:text-white">{ticket.ticketIdDisplay}</div>
                                         </div>
                                     </div>
 
