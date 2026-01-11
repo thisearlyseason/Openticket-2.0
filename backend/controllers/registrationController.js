@@ -1,5 +1,7 @@
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
+import { generateUniqueTickets } from '../utils/ticketGenerator.js';
+
 const require = createRequire(import.meta.url);
 
 const getStripe = () => {
@@ -17,14 +19,35 @@ export const createRegistration = async (req, res) => {
             .select('capacity, registered_count')
             .eq('id', registrationData.event_id)
             .single();
-            
-        const requestedQty = registrationData.tickets ? registrationData.tickets.length : 1;
+        
+        // Calculate total ticket count from quantities
+        let requestedQty = 0;
+        if (registrationData.tickets && Array.isArray(registrationData.tickets)) {
+            requestedQty = registrationData.tickets.reduce((sum, ticket) => sum + (ticket.quantity || 1), 0);
+        } else {
+            requestedQty = 1;
+        }
 
         if (eventData && eventData.capacity && (eventData.registered_count || 0) + requestedQty > eventData.capacity) {
             return res.status(400).json({ error: "Event capacity reached." });
         }
 
-        // 2. Sanitize & Secure Security Status
+        // 2. Transform tickets to unique ticket structure
+        if (registrationData.tickets && Array.isArray(registrationData.tickets)) {
+            const attendeeName = registrationData.attendee_name || 'Guest';
+            const assignedNames = registrationData.assigned_names || []; // Optional: names assigned during checkout
+            
+            registrationData.tickets = generateUniqueTickets(
+                registrationData.tickets,
+                null, // Registration ID not yet available
+                attendeeName,
+                assignedNames
+            );
+            
+            console.log(`[Registration] Generated ${registrationData.tickets.length} unique tickets with IDs and QR codes`);
+        }
+
+        // 3. Sanitize & Secure Security Status
         const payload = {
             ...registrationData,
             payment_status: 'pending',
@@ -50,6 +73,8 @@ export const createRegistration = async (req, res) => {
             .select();
 
         if (error) throw error;
+        
+        console.log(`[Registration] Created registration ${data[0].id} with ${data[0].tickets?.length || 0} unique tickets`);
         res.status(201).json({ registration: data[0] });
     } catch (error) {
         console.error("Create Registration Error:", error);
