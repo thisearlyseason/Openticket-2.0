@@ -435,14 +435,47 @@ export interface Event {
 }
 
 export interface PurchasedTicket {
+  // Legacy fields
   tierId: string;
   name: string;
-  pricePerTicket: number;
+  pricePerTicket?: number;
+  price?: number;  // Alternative field name
   quantity: number;
   date?: string;
-  status?: 'valid' | 'refunded' | 'used';
+  status?: 'valid' | 'refunded' | 'used' | 'cancelled';
+  
+  // NEW: Unique ticket identifiers
+  ticketId?: string;  // Unique ID: TKT-{timestamp}-{hash}
+  ticketNumber?: string;  // Human-readable: TKT-ABC123
+  qrCodeData?: string;  // QR code data (usually same as ticketId)
+  
+  // Attendee information
   attendeeName?: string;
   attendeeEmail?: string;
+  originalAttendeeName?: string;  // For transfer history
+  
+  // Check-in tracking
+  checkedIn?: boolean;
+  checkedInAt?: string;
+  checkedInBy?: string;
+  
+  // Transfer tracking
+  transferStatus?: 'transferred_out' | 'transferred_in' | null;
+  transferredToEmail?: string;
+  transferredToUserId?: string;
+  transferredFromEmail?: string;
+  transferredFromUserId?: string;
+  transferId?: string;
+  
+  // Metadata
+  createdAt?: string;
+  purchaseDate?: string;
+  
+  // Legacy compatibility
+  key?: string;
+  id?: string;
+  tierIndex?: number;
+  indexInTier?: number;
 }
 
 export interface PurchasedAddOn {
