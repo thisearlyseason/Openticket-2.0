@@ -282,45 +282,31 @@ export const Pricing = () => {
                 </Card>
 
                 {/* PREMIUM PLAN */}
-                <Card className="p-8 border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-black relative hover:-translate-y-2 transition-transform duration-300">
+                <Card className="p-6 border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-zinc-50 to-white dark:from-zinc-900 dark:to-black relative hover:-translate-y-2 transition-transform duration-300">
                     {hasNonprofitDiscount && (
                         <div className="absolute top-4 right-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-1">
                             <Gift size={12} />
                             20% OFF
                         </div>
                     )}
-                    <div className="mb-6">
+                    <div className="mb-4">
                         <h3 className="text-xl font-bold text-purple-500 mb-2 flex items-center gap-2"><Zap size={20} fill="currentColor" /> {PLANS.premium.name}</h3>
-                        <div className="text-4xl font-black text-gray-900 dark:text-white flex items-end">
+                        <div className="text-3xl font-black text-gray-900 dark:text-white flex items-end">
                             {getPriceDisplay('premium')}
                             <span className="text-sm font-medium text-gray-500 mb-1 ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
                         </div>
-                        <p className="text-sm text-gray-500 mt-2">Maximum power & branding.</p>
+                        <p className="text-xs text-gray-500 mt-2">Maximum power & branding</p>
                     </div>
-                    <div className="space-y-4 mb-8 border-t border-zinc-100 dark:border-zinc-800 pt-6">
-                        <div className="flex items-start font-bold text-zinc-900 dark:text-white">
-                            <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Unlimited Tickets</span>
-                        </div>
-                        <div className="flex items-start font-bold text-zinc-900 dark:text-white">
-                            <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Unlimited Events</span>
-                        </div>
-                        <div className="flex items-start text-zinc-600 dark:text-zinc-300">
-                            <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Dedicated Priority Support</span>
-                        </div>
-                        <div className="flex items-start text-zinc-500 dark:text-zinc-400">
-                            <Clock size={18} className="text-amber-500 mr-2 mt-0.5 shrink-0" />
-                            <span>White Labeling <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full ml-1">Coming Soon</span></span>
-                        </div>
-                        <div className="flex items-start text-zinc-500 dark:text-zinc-400">
-                            <Clock size={18} className="text-amber-500 mr-2 mt-0.5 shrink-0" />
-                            <span>Custom Domain <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full ml-1">Coming Soon</span></span>
-                        </div>
-                        <div className="flex items-start">
-                            <Check size={18} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
-                            <span className="text-sm text-green-600 dark:text-secondary font-bold">0.75% + $0.30 Ticket Fees</span>
+                    <div className="space-y-3 mb-6 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                        {PLANS.premium.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-start text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                <Check size={16} className="text-purple-500 mr-2 mt-0.5 shrink-0" />
+                                <span>{feature}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-start text-xs font-bold text-purple-600 dark:text-purple-400">
+                            <span className="mr-2">•</span>
+                            <span>1.9% + $0.49 per ticket</span>
                         </div>
                     </div>
                     <Button
