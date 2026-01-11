@@ -2,6 +2,152 @@
 
 ## Current Testing Session - January 11, 2026
 
+### Test Focus: Unique Ticket System - Individual Ticket IDs & QR Codes
+
+---
+
+## 🎟️ MAJOR SYSTEM REFACTOR - Unique Ticket Generation
+
+### Problem Statement
+The previous ticket system had critical flaws:
+- Tickets stored with `quantity` field (e.g., 3 tickets as one record)
+- QR codes constructed as `TICKET:{regId}:{tierId}:{index}` - not truly unique
+- No unique ticket IDs or ticket numbers
+- Check-in affected all tickets with same tier
+- Transfers didn't preserve individual ticket identity
+
+### Solution Implemented: Hybrid Ticket System
+
+**Architecture:**
+- Each purchased ticket now gets unique identifiers:
+  - `ticketId`: Unique ID (format: `TKT-{timestamp}-{random}`)
+  - `ticketNumber`: Human-readable number (format: `TKT-ABC123`)
+  - `qrCodeData`: QR code encodes only the ticketId
+- Backward compatible with legacy tickets
+- Individual ticket quantity is always 1
+
+**New Ticket Structure:**
+```javascript
+{
+  ticketId: "TKT-1736789012345-a7f3x9",
+  ticketNumber: "TKT-ABC123",
+  qrCodeData: "TKT-1736789012345-a7f3x9",
+  
+  tierId: "general",
+  name: "General Admission",
+  quantity: 1,  // Always 1 for unique tickets
+  
+  attendeeName: "John Doe",
+  originalAttendeeName: null,  // For transfer history
+  
+  status: "valid",
+  checkedIn: false,
+  checkedInAt: null,
+  
+  transferStatus: null,
+  // ... other fields
+}
+```
+
+**Files Modified:**
+1. ✅ `/app/backend/utils/ticketGenerator.js` - NEW utility for generating unique IDs
+2. ✅ `/app/backend/controllers/registrationController.js`:
+   - Updated `createRegistration` to generate unique tickets
+   - Added new `checkInTicket` endpoint for individual ticket validation
+3. ✅ `/app/backend/controllers/stripeWebhookController.js`:
+   - Updated payment confirmation to use unique ticket generation
+4. ✅ `/app/backend/routes/registrationRoutes.js`:
+   - Added `POST /api/registrations/checkin` route
+5. ✅ `/app/components/MyTickets.tsx`:
+   - Updated to display unique ticket numbers
+   - Show transfer history (strikethrough original name)
+   - Handle both new and legacy ticket structures
+6. ✅ `/app/components/CheckInPortal.tsx`:
+   - Updated QR scanner to use new check-in API
+   - Support for both new (TKT-xxx) and legacy (TICKET:xxx) formats
+
+**Key Features:**
+- ✅ Each ticket has unique ID and QR code
+- ✅ Transfer history preserved (original name with strikethrough)
+- ✅ Check-in validates individual tickets only
+- ✅ Backward compatible with existing tickets
+- ✅ Unique ticket numbers displayed on tickets
+- ✅ No duplicate QR codes possible
+
+---
+
+## 🧪 TESTING REQUIRED
+
+### Critical Test Scenarios:
+
+1. **New Ticket Purchase (Multiple Tickets)**
+   - Buy 3 tickets for same event
+   - Verify each ticket has:
+     - Unique ticket ID (TKT-xxx format)
+     - Unique ticket number  
+     - Unique QR code
+   - Verify all 3 tickets show in "My Tickets"
+   - Verify each displays correct attendee name
+
+2. **QR Code Scanning**
+   - Generate 3 tickets
+   - Scan QR code of ticket #1
+   - Verify only ticket #1 is checked in
+   - Verify tickets #2 and #3 remain unchecked
+   - Attempt to re-scan ticket #1 → Should show "Already checked in"
+
+3. **Name Assignment**
+   - During checkout, assign different names to each ticket
+   - Verify each ticket shows assigned name (not buyer name)
+   - Check MyTickets page shows individual names
+
+4. **Transfer with Name History**
+   - Transfer ticket from User A (name: "Alice") to User B
+   - On User B's side, verify ticket shows:
+     - Original name "Alice" (struck through)
+     - New name "Bob" (below it)
+   - Verify QR code remains the same
+   - Verify ticket ID unchanged
+
+5. **Legacy Ticket Compatibility**
+   - Verify existing tickets (old format) still work
+   - Verify old QR codes still scan correctly
+   - Check-in should work for both formats
+
+6. **Fraud Prevention**
+   - Attempt to transfer checked-in ticket → Should block
+   - Attempt duplicate check-in → Should block
+   - Verify transfer preserves ticket ID
+
+### Backend API Testing:
+
+**New Check-in Endpoint:**
+```bash
+curl -X POST {API_URL}/api/registrations/checkin \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {token}" \
+  -d '{"ticketId": "TKT-1736789012345-a7f3x9", "eventId": "{event_id}"}'
+```
+
+Expected Response:
+```json
+{
+  "success": true,
+  "message": "Check-in successful",
+  "ticket": {
+    "ticketId": "TKT-1736789012345-a7f3x9",
+    "ticketNumber": "TKT-ABC123",
+    "attendeeName": "John Doe",
+    "tierName": "General Admission",
+    "checkedInAt": "2026-01-11T23:00:00Z"
+  }
+}
+```
+
+---
+
+## Test Results
+
 ### Test Focus: Ticket Transfer System - Complete End-to-End Flow
 
 ---
