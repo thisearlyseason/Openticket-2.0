@@ -386,7 +386,7 @@ class TicketTransferTester:
                 "1. POST /api/registrations/:id/transfer - Creates pending transfer",
                 "2. 5-second undo window with frontend countdown",
                 "3. POST /api/registrations/:id/transfer/undo - Available during countdown",
-                "4. POST /api/registrations/0/transfer/finalize - Called after 5 seconds",
+                "4. POST /api/registrations/:id/transfer/finalize - Called after 5 seconds",
                 "5. Database updates: sender marked transferred_out, recipient gets new registration"
             ]
             
@@ -412,9 +412,9 @@ class TicketTransferTester:
             if response.status_code != 404:  # Endpoint exists
                 endpoints_working += 1
             
-            # Test finalize endpoint
+            # Test finalize endpoint - use correct path
             response = self.session.post(
-                f"{BACKEND_URL}/api/registrations/0/transfer/finalize",
+                f"{BACKEND_URL}/api/registrations/test/transfer/finalize",
                 json={"transferId": "test"},
                 headers={'Content-Type': 'application/json'}
             )
