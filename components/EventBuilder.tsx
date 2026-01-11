@@ -58,6 +58,16 @@ export const EventBuilder = () => {
     const [errorModal, setErrorModal] = useState<{ open: boolean, title?: string, message: string }>({ open: false, message: '' });
     const { showToast, showConfirm, showAlert } = useGlobalUI();
 
+    // Upgrade Modal State
+    const [upgradeModal, setUpgradeModal] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        suggestedPlan: string | null;
+        currentLimit: number;
+        requested: number;
+    }>({ open: false, title: '', message: '', suggestedPlan: null, currentLimit: 0, requested: 0 });
+
     // Expanded Ticket State
     const [expandedTierIndex, setExpandedTierIndex] = useState<number | null>(null);
 
