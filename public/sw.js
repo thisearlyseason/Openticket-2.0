@@ -16,28 +16,38 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker v2...');
+  console.log(`[SW] Installing Service Worker ${SW_VERSION}...`);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log(`[SW] ${SW_VERSION} installed, skipping waiting`);
+        return self.skipWaiting();
+      })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker...');
+  console.log(`[SW] Activating Service Worker ${SW_VERSION}...`);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
+      console.log('[SW] Found caches:', cacheNames);
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== OFFLINE_CACHE)
-          .map((name) => caches.delete(name))
+          .filter((name) => name.startsWith('openticket') && name !== CACHE_NAME && name !== OFFLINE_CACHE)
+          .map((name) => {
+            console.log(`[SW] Deleting old cache: ${name}`);
+            return caches.delete(name);
+          })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log(`[SW] ${SW_VERSION} now active and controlling all clients`);
+      return self.clients.claim();
+    })
   );
 });
 
