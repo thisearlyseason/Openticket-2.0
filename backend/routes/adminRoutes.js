@@ -1011,7 +1011,7 @@ router.get('/affiliates', verifyToken, requireAdmin, async (req, res) => {
  * Run database migrations (admin only)
  * Body: { migration: 'assign_plan_ids', dryRun: true/false }
  */
-router.post('/run-migration', requireAdmin, async (req, res) => {
+router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
     try {
         const { migration, dryRun = true } = req.body;
         
