@@ -41,13 +41,12 @@ class TestPublicEndpoints:
         assert isinstance(data["events"], list)
         print(f"✅ /api/events/public returns {len(data['events'])} events")
     
-    def test_events_endpoint(self):
-        """Test /api/events returns events list"""
+    def test_events_endpoint_requires_auth(self):
+        """Test /api/events requires authentication"""
         response = requests.get(f"{BASE_URL}/api/events")
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, list)
-        print(f"✅ /api/events returns {len(data)} events")
+        # Should return 401 without auth
+        assert response.status_code == 401
+        print("✅ /api/events requires authentication (401)")
 
 
 class TestEnterpriseEndpoint:
