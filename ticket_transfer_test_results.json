@@ -27,7 +27,7 @@
         }
       ]
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:31"
   },
   {
     "test": "Transfer Initiation Validation",
@@ -37,7 +37,7 @@
       "status_code": 401,
       "response": "{\"error\":\"Missing Authorization header\"}"
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:31"
   },
   {
     "test": "Undo Transfer Validation",
@@ -46,7 +46,7 @@
     "response_data": {
       "status_code": 401
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:31"
   },
   {
     "test": "Finalize Transfer Validation",
@@ -55,30 +55,30 @@
     "response_data": {
       "error": "Transfer not found"
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:31"
   },
   {
     "test": "Transfer Endpoints Structure",
-    "success": false,
-    "details": "Endpoint availability check: 3/4 endpoints found",
+    "success": true,
+    "details": "Endpoint availability check: 4/4 endpoints found",
     "response_data": {
       "endpoint_results": [
         "\u2705 Debug endpoint: HTTP 200",
         "\u2705 Initiate transfer: HTTP 401",
         "\u2705 Undo transfer: HTTP 401",
-        "\u274c Finalize transfer: Not found (404)"
+        "\u2705 Finalize transfer: HTTP 404 (working correctly)"
       ]
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:32"
   },
   {
     "test": "Backend Logs Transfer Check",
     "success": true,
     "details": "\u2705 No critical transfer errors found (includes expected validation errors). System responding correctly",
     "response_data": {
-      "log_excerpt": "FINALIZE ==========\n[Transfer] Finalizing transfer: test-transfer-123\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n2026-01-11T22:38:30.211Z - GET /api/registrations/debug/transfers\n2026-01-11T22:38:30.434Z - POST /api/registrations/test-id/transfer\n[Auth] Missing Authorization header\n2026-01-11T22:38:30.443Z - POST /api/registrations/test-id/transfer/undo\n[Auth] Missing Authorization header\n2026-01-11T22:38:30.451Z - POST /api/registrations/test-id/transfer/finalize\n[Transfer] ========== START FINALIZE ==========\n[Transfer] Finalizing transfer: test-transfer-123\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n"
+      "log_excerpt": "FINALIZE ==========\n[Transfer] Finalizing transfer: test-transfer-123\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n2026-01-11T22:39:31.798Z - GET /api/registrations/debug/transfers\n2026-01-11T22:39:31.931Z - POST /api/registrations/test-id/transfer\n[Auth] Missing Authorization header\n2026-01-11T22:39:31.940Z - POST /api/registrations/test-id/transfer/undo\n[Auth] Missing Authorization header\n2026-01-11T22:39:31.948Z - POST /api/registrations/test-id/transfer/finalize\n[Transfer] ========== START FINALIZE ==========\n[Transfer] Finalizing transfer: test-transfer-123\n[Transfer] Transfer record: null\n[Transfer] Transfer error: {\n  code: 'PGRST116',\n  details: 'The result contains 0 rows',\n  hint: null,\n  message: 'Cannot coerce the result to a single JSON object'\n}\n[Transfer] ERROR: Transfer not found\n"
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:32"
   },
   {
     "test": "Database Schema Validation",
@@ -105,12 +105,12 @@
         "fraud_flag"
       ]
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:32"
   },
   {
     "test": "Transfer Flow Documentation",
-    "success": false,
-    "details": "\u2705 Transfer flow endpoints: 2/3 available (67%)",
+    "success": true,
+    "details": "\u2705 Transfer flow endpoints: 3/3 available (100%)",
     "response_data": {
       "flow_steps": [
         "1. POST /api/registrations/:id/transfer - Creates pending transfer",
@@ -119,9 +119,9 @@
         "4. POST /api/registrations/:id/transfer/finalize - Called after 5 seconds",
         "5. Database updates: sender marked transferred_out, recipient gets new registration"
       ],
-      "endpoints_available": 2
+      "endpoints_available": 3
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:32"
   },
   {
     "test": "Fraud Prevention Features",
@@ -134,6 +134,6 @@
         "\u2705 Invalid email format handled gracefully"
       ]
     },
-    "timestamp": "2026-01-11 22:38:30"
+    "timestamp": "2026-01-11 22:39:32"
   }
 ]
