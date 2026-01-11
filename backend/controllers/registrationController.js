@@ -826,8 +826,7 @@ export const finalizeTransfer = async (req, res) => {
         await supabase
             .from('registrations')
             .update({ 
-                tickets,
-                updated_at: new Date().toISOString()
+                tickets
             })
             .eq('id', transfer.registration_id);
 
@@ -845,13 +844,13 @@ export const finalizeTransfer = async (req, res) => {
 
         const transferredTicket = {
             ...ticket,
-            key: `${ticket.key}_transferred_${Date.now()}`,
+            key: `${ticket.key || ticket.id || ticket.tierId}_transferred_${Date.now()}`,
             transferStatus: 'transferred_in',
             transferId: transferId,
             transferredFromEmail: transfer.sender_email,
             transferredFromUserId: transfer.sender_user_id,
             transferredAt: new Date().toISOString(),
-            originalTicketKey: ticket.key
+            originalTicketKey: ticket.key || ticket.id || ticket.tierId
         };
 
         if (existingRecipientReg) {
@@ -860,8 +859,7 @@ export const finalizeTransfer = async (req, res) => {
             await supabase
                 .from('registrations')
                 .update({
-                    tickets: [...existingTickets, transferredTicket],
-                    updated_at: new Date().toISOString()
+                    tickets: [...existingTickets, transferredTicket]
                 })
                 .eq('id', existingRecipientReg.id);
             
