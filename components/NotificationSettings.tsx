@@ -21,7 +21,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
             setPermission(PushNotificationService.getPermissionStatus());
             
             if (PushNotificationService.isPushSupported()) {
-                const subscribed = await PushNotificationService.isSubscribed();
+                // Get auth token to verify server-side subscription
+                const token = await StorageService.getAuthToken();
+                const subscribed = await PushNotificationService.isSubscribed(token || undefined);
                 setIsSubscribed(subscribed);
             }
             
