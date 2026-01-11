@@ -34,48 +34,163 @@ class TicketSystemTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_email_status_check(self):
-        """Test Case 1: Email Status Check - GET /api/email/status"""
+    def test_ticket_generator_utility(self):
+        """Test Case 1: Ticket Generator Utility - Test unique ID generation"""
         try:
-            response = self.session.get(f"{BACKEND_URL}/api/email/status")
+            # Test the ticket generator utility directly via Node.js
+            test_script = """
+const { generateTicketId, generateTicketNumber, generateUniqueTickets } = require('/app/backend/utils/ticketGenerator.js');
+
+// Test 1: Generate ticket IDs
+console.log('Test 1: Ticket ID Generation');
+const id1 = generateTicketId();
+const id2 = generateTicketId();
+console.log('ID 1:', id1);
+console.log('ID 2:', id2);
+console.log('IDs are unique:', id1 !== id2);
+
+// Test 2: Generate ticket numbers
+console.log('\\nTest 2: Ticket Number Generation');
+const num1 = generateTicketNumber();
+const num2 = generateTicketNumber();
+console.log('Number 1:', num1);
+console.log('Number 2:', num2);
+console.log('Numbers are unique:', num1 !== num2);
+
+// Test 3: Generate unique tickets from tier
+console.log('\\nTest 3: Unique Tickets from Tier');
+const tickets = [{
+  tierId: 'general',
+  name: 'General Admission',
+  quantity: 3,
+  price: 25.00
+}];
+const uniqueTickets = generateUniqueTickets(tickets, 'reg-123', 'John Doe', []);
+console.log('Generated', uniqueTickets.length, 'unique tickets');
+uniqueTickets.forEach((t, i) => {
+  console.log(`Ticket ${i+1}: ${t.ticketNumber} (${t.ticketId})`);
+});
+
+// Output results as JSON for parsing
+console.log('\\n=== RESULTS ===');
+console.log(JSON.stringify({
+  id1: id1,
+  id2: id2,
+  idsUnique: id1 !== id2,
+  num1: num1,
+  num2: num2,
+  numbersUnique: num1 !== num2,
+  ticketCount: uniqueTickets.length,
+  tickets: uniqueTickets.map(t => ({
+    ticketId: t.ticketId,
+    ticketNumber: t.ticketNumber,
+    qrCodeData: t.qrCodeData,
+    quantity: t.quantity
+  }))
+}));
+"""
             
-            if response.status_code == 200:
-                data = response.json()
+            # Write test script to temporary file
+            with open('/tmp/test_ticket_generator.js', 'w') as f:
+                f.write(test_script)
+            
+            # Execute the test script
+            result = subprocess.run(
+                ['node', '/tmp/test_ticket_generator.js'],
+                capture_output=True,
+                text=True,
+                cwd='/app'
+            )
+            
+            if result.returncode == 0:
+                output_lines = result.stdout.strip().split('\n')
                 
-                # Check expected response structure from review request
-                expected_configured = True
-                expected_available = True
-                expected_provider = "resend"
-                expected_sender = "tickets@openticket.events"
+                # Find the JSON results
+                json_start = -1
+                for i, line in enumerate(output_lines):
+                    if line.strip() == '=== RESULTS ===':
+                        json_start = i + 1
+                        break
                 
-                # Validate response structure
-                if (data.get('configured') == expected_configured and 
-                    data.get('available') == expected_available and 
-                    data.get('provider') == expected_provider and 
-                    data.get('senderEmail') == expected_sender):
-                    
-                    self.log_result(
-                        "Email Status Check", 
-                        True, 
-                        f"✅ Expected response: configured={data.get('configured')}, available={data.get('available')}, provider={data.get('provider')}, senderEmail={data.get('senderEmail')}",
-                        data
-                    )
+                if json_start != -1 and json_start < len(output_lines):
+                    try:
+                        results = json.loads(output_lines[json_start])
+                        
+                        # Validate results
+                        success = True
+                        issues = []
+                        
+                        # Check ticket ID format
+                        if not results['id1'].startswith('TKT-') or not results['id2'].startswith('TKT-'):
+                            success = False
+                            issues.append("Ticket IDs don't follow TKT-{timestamp}-{hash} format")
+                        
+                        # Check ticket number format
+                        if not results['num1'].startswith('TKT-') or not results['num2'].startswith('TKT-'):
+                            success = False
+                            issues.append("Ticket numbers don't follow TKT-{6 chars} format")
+                        
+                        # Check uniqueness
+                        if not results['idsUnique']:
+                            success = False
+                            issues.append("Generated ticket IDs are not unique")
+                        
+                        if not results['numbersUnique']:
+                            success = False
+                            issues.append("Generated ticket numbers are not unique")
+                        
+                        # Check ticket generation
+                        if results['ticketCount'] != 3:
+                            success = False
+                            issues.append(f"Expected 3 tickets, got {results['ticketCount']}")
+                        
+                        # Check individual ticket properties
+                        for i, ticket in enumerate(results['tickets']):
+                            if ticket['quantity'] != 1:
+                                success = False
+                                issues.append(f"Ticket {i+1} has quantity {ticket['quantity']}, expected 1")
+                            
+                            if ticket['qrCodeData'] != ticket['ticketId']:
+                                success = False
+                                issues.append(f"Ticket {i+1} QR code data doesn't match ticket ID")
+                        
+                        if success:
+                            self.log_result(
+                                "Ticket Generator Utility",
+                                True,
+                                f"✅ All tests passed: Generated unique IDs, numbers, and {results['ticketCount']} individual tickets",
+                                results
+                            )
+                        else:
+                            self.log_result(
+                                "Ticket Generator Utility",
+                                False,
+                                f"❌ Issues found: {'; '.join(issues)}",
+                                results
+                            )
+                    except json.JSONDecodeError as e:
+                        self.log_result(
+                            "Ticket Generator Utility",
+                            False,
+                            f"❌ Failed to parse test results: {str(e)}",
+                            result.stdout
+                        )
                 else:
                     self.log_result(
-                        "Email Status Check", 
-                        False, 
-                        f"❌ Response mismatch - Expected: configured={expected_configured}, available={expected_available}, provider={expected_provider}, senderEmail={expected_sender}. Got: {data}",
-                        data
+                        "Ticket Generator Utility",
+                        False,
+                        "❌ Could not find test results in output",
+                        result.stdout
                     )
             else:
                 self.log_result(
-                    "Email Status Check", 
-                    False, 
-                    f"HTTP {response.status_code}",
-                    response.text
+                    "Ticket Generator Utility",
+                    False,
+                    f"❌ Test script failed with return code {result.returncode}",
+                    result.stderr
                 )
         except Exception as e:
-            self.log_result("Email Status Check", False, f"Exception: {str(e)}")
+            self.log_result("Ticket Generator Utility", False, f"Exception: {str(e)}")
 
     def test_direct_email_send(self):
         """Test Case 2: Direct Email Send - POST /api/email/send to thisearlyseason@gmail.com"""
