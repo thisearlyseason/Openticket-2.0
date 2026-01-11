@@ -299,6 +299,8 @@ export const MyTickets = () => {
                     }
                 });
             }
+            
+            console.log('[MyTickets] Processed', ticketList.length, 'tickets for event', event.title);
             groups[event.id].tickets.push(...ticketList);
         }
 
@@ -311,6 +313,11 @@ export const MyTickets = () => {
                 tickets: g.tickets.sort((a, b) => b.timestamp - a.timestamp),
                 mostRecentTimestamp: g.timestamp
             }));
+
+        console.log('[MyTickets] Final event groups:', result.length, 'events with tickets');
+        result.forEach(g => {
+            console.log(`  - ${g.event.title}: ${g.totalTickets} tickets`);
+        });
 
         setEventGroups(result.sort((a, b) => b.mostRecentTimestamp - a.mostRecentTimestamp));
     };
