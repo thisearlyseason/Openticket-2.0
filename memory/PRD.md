@@ -65,19 +65,37 @@ OpenTicket is a full-stack event ticketing platform that enables organizers to s
 - [x] **All Financial Flows Verified:** Ticket purchase, subscription, refunds, affiliate commissions
 - [x] **Fee Structure Synchronized:** Backend and frontend now use identical fees
 
-#### Platform Fee Structure (SYNCHRONIZED)
+#### Platform Fee Structure (CORRECT VALUES)
 | Plan | Percentage | Fixed Fee |
 |------|------------|-----------|
-| Free | 2.75% | $0.99 |
-| Pro | 1.5% | $0.75 |
-| Premium | 0.75% | $0.30 |
-| Enterprise | 1.5% | $0.39 |
+| Free | 4.5% | $0.99 |
+| Pro | 2.9% | $0.69 |
+| Premium | 1.9% | $0.49 |
+| Enterprise | 1.9% | $0.49 |
 
 #### Critical Blockers Fixed
 - [x] **Duplicate App.tsx Removed:** Deleted `/app/components/App.tsx` (was causing confusion)
 - [x] **ConfirmProvider Verified:** `/app/App.tsx` correctly wraps entire app with ConfirmProvider
-- [x] **Fee Display Fixed:** `Pricing.tsx` now shows correct fee percentages (was showing old 4.5%/2.9%/1.9%)
+- [x] **Fee Display Fixed:** `Pricing.tsx` now shows correct fee percentages
 - [x] **Enterprise Plan Added:** Added enterprise fees to `priceCalculator.js`
+- [x] **Signup 500 Error Fixed:** Increased JSON body limit to 15MB for base64 document uploads
+- [x] **Non-profit Banner Working:** User confirmed banner shows correctly
+
+#### Database Migration System (January 11, 2026)
+- [x] **Migration Script:** `/app/backend/migrations/assign_plan_ids.js`
+  - Assigns `plan_id` (e.g., 'free_v1', 'pro_v1') to existing users for grandfathering
+  - Supports dry-run mode for testing
+  - Batch processing for large datasets
+- [x] **Admin Endpoint:** `POST /api/admin/run-migration`
+  - Body: `{ migration: 'assign_plan_ids', dryRun: true/false }`
+
+#### Build System Caching Improvements (January 11, 2026)
+- [x] **Service Worker Versioning:** Updated to v4 with proper cache invalidation
+- [x] **Vite Build Cache Busting:** Added timestamp to entry file names
+- [x] **Cache Utilities:** `/app/services/cacheUtils.ts`
+  - `clearAllCaches()` - Clears service worker and browser caches
+  - `hardRefresh()` - Full cache clear and reload
+  - `getBuildInfo()` - Returns build timestamp for debugging
 
 #### Test Results (9/9 Passed)
 - [x] `/api/ping` - Returns 'pong'
