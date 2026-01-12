@@ -75,14 +75,34 @@ export const MobileCheckInScanner: React.FC = () => {
         
         setIsLoading(true);
         try {
-            const eventData = await StorageService.getEvent(id);
+            let eventData: Event | null = null;
+            
+            // Try online first
+            if (navigator.onLine) {
+                eventData = await StorageService.getEvent(id);
+                if (eventData) {
+                    // Cache for offline use
+                    await offlineSyncService.cacheEvent(id, eventData);
+                }
+            } else {
+                // Use cached data if offline
+                eventData = await offlineSyncService.getCachedEvent(id);
+            }
+            
             if (!eventData) {
                 throw new Error('Event not found');
             }
             setEvent(eventData);
             
             // Load registrations to calculate stats
-            const registrations = await StorageService.getRegistrations(id);
+            let registrations: any[] = [];
+            if (navigator.onLine) {
+                registrations = await StorageService.getRegistrations(id);
+                await offlineSyncService.cacheRegistrations(id, registrations);
+            } else {
+                registrations = await offlineSyncService.getCachedRegistrations(id);
+            }
+            
             const tickets = registrations.flatMap(r => r.tickets || []);
             
             setStats({
@@ -94,6 +114,26 @@ export const MobileCheckInScanner: React.FC = () => {
             console.error('Error loading event:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadPendingSync = async () => {
+        try {
+            const pending = await offlineSyncService.getPendingCheckIns();
+            setPendingSync(pending.length);
+        } catch (error) {
+            console.error('Error loading pending sync:', error);
+        }
+    };
+
+    const loadAnalytics = async () => {
+        if (!id) return;
+        
+        try {
+            const analyticsData = await scanAnalyticsService.getAnalytics(id);
+            setAnalytics(analyticsData);
+        } catch (error) {
+            console.error('Error loading analytics:', error);
         }
     };
 
