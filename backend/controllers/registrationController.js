@@ -735,7 +735,7 @@ export const transferTicket = async (req, res) => {
         // Store the ticketKey for later use (fraud checks, etc.)
         const effectiveTicketKey = ticket.key || ticket.id || ticket.tierId || ticketKey;
 
-        // 5. FRAUD PREVENTION CHECKS
+        // 5. ENHANCED FRAUD PREVENTION CHECKS
         
         // 5a. Check if ticket is already checked in
         const checkInStatuses = registration.check_in_statuses || {};
@@ -753,57 +753,27 @@ export const transferTicket = async (req, res) => {
             return res.status(400).json({ error: 'This ticket has already been transferred' });
         }
 
-        // 5d. Rate limit: Check transfer attempts in last hour
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-        const { data: recentTransfers, error: rateError } = await supabase
-            .from('ticket_transfers')
-            .select('id')
-            .eq('ticket_key', effectiveTicketKey)
-            .gte('created_at', oneHourAgo);
+        // 5d. Run comprehensive fraud prevention checks
+        const fraudCheck = await fraudPreventionService.performFraudChecks({
+            ticketKey: effectiveTicketKey,
+            userId: senderUserId,
+            userEmail: registration.attendee_email,
+            recipientEmail: recipientEmail
+        });
 
-        if (!rateError && recentTransfers && recentTransfers.length >= 5) {
-            // Log suspicious activity
-            await supabase.from('security_audit_logs').insert({
-                action: 'SUSPICIOUS_TRANSFER_RATE',
-                entity_type: 'ticket',
-                entity_id: effectiveTicketKey,
-                user_id: senderUserId,
-                user_email: registration.attendee_email,
-                details: { attempts: recentTransfers.length, recipientEmail },
-                severity: 'warning',
-                created_at: new Date().toISOString()
-            });
-            return res.status(429).json({ 
-                error: 'Too many transfer attempts. Please try again later.',
-                fraudFlag: true 
+        if (fraudCheck.blocked) {
+            console.log(`[Transfer] Blocked by fraud prevention: ${fraudCheck.reason}`);
+            return res.status(fraudCheck.reason === 'temporary_ban' || fraudCheck.reason === 'auto_ban' ? 403 : 429).json({
+                error: fraudCheck.message,
+                reason: fraudCheck.reason,
+                strikes: fraudCheck.strikes,
+                expiresAt: fraudCheck.expiresAt,
+                fraudFlag: true
             });
         }
 
-        // 5e. Check for circular transfer (A → B → A within 24 hours)
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        const { data: circularCheck } = await supabase
-            .from('ticket_transfers')
-            .select('*')
-            .eq('ticket_key', effectiveTicketKey)
-            .eq('recipient_email', registration.attendee_email)
-            .gte('created_at', oneDayAgo);
+        console.log(`[Transfer] Fraud checks passed for user ${senderUserId} (${fraudCheck.strikes || 0} strikes)`);
 
-        if (circularCheck && circularCheck.length > 0) {
-            await supabase.from('security_audit_logs').insert({
-                action: 'SUSPICIOUS_CIRCULAR_TRANSFER',
-                entity_type: 'ticket',
-                entity_id: effectiveTicketKey,
-                user_id: senderUserId,
-                user_email: registration.attendee_email,
-                details: { recipientEmail, originalOwner: registration.attendee_email },
-                severity: 'warning',
-                created_at: new Date().toISOString()
-            });
-            return res.status(400).json({ 
-                error: 'Circular transfers are not allowed within 24 hours',
-                fraudFlag: true 
-            });
-        }
 
         // 6. Find or verify recipient exists (optional - can transfer to any email)
         const { data: recipientProfile } = await supabase
