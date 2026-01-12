@@ -8,6 +8,7 @@ import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Sen
 import { useConfirm } from './ConfirmContext';
 import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
+import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
 
 interface FinancialTransaction {
     id: string;
