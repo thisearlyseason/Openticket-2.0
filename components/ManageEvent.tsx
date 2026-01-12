@@ -237,11 +237,26 @@ export const ManageEvent = () => {
                                     <QrCode size={24} />
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-[10px] font-bold uppercase text-zinc-500">Scan Mode</span>
+                                    <span className="text-[10px] font-bold uppercase text-zinc-500">Desktop</span>
                                 </div>
                             </div>
                             <h3 className="font-bold text-lg">Check-In Portal</h3>
-                            <p className="text-xs text-zinc-500">Scan tickets at the door</p>
+                            <p className="text-xs text-zinc-500">Full-featured check-in</p>
+                        </Card>
+                    </Link>
+
+                    <Link to={`/mobile-scanner/${event.id}`} className="block group">
+                        <Card className="p-6 cursor-pointer hover:border-[#ec4899] transition-all hover:-translate-y-1 h-full border-2 border-[#ec4899]/30">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-[#ec4899]/10 text-[#ec4899] rounded-xl group-hover:bg-[#ec4899] group-hover:text-white transition-colors">
+                                    <QrCode size={24} />
+                                </div>
+                                <div className="text-right">
+                                    <Badge className="bg-[#ec4899] text-white border-none text-[10px]">NEW</Badge>
+                                </div>
+                            </div>
+                            <h3 className="font-bold text-lg">Mobile Scanner</h3>
+                            <p className="text-xs text-zinc-500">Fast mobile check-in 📱</p>
                         </Card>
                     </Link>
 
