@@ -109,7 +109,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'security' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
     // Broadcast State
@@ -1122,7 +1122,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['users', 'events', 'registrations', 'finance', 'affiliates', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'].map(tab => (
+                {['users', 'events', 'registrations', 'finance', 'affiliates', 'security', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
