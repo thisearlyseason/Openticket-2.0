@@ -40,6 +40,139 @@ router.get('/financials', verifyToken, requireAdmin, adminController.getFinancia
 // Event financials (owner or admin)
 router.get('/events/:eventId/financials', verifyToken, adminController.getEventFinancials);
 
+// Request payout for event (owner only)
+router.post('/events/:eventId/request-payout', verifyToken, async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Verify event ownership
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('id, title, organizer_id, end_date')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        if (event.organizer_id !== req.user.uid) {
+            return res.status(403).json({ error: 'Access denied. You can only request payouts for your own events.' });
+        }
+
+        // Check if event has ended
+        const eventEndDate = new Date(event.end_date);
+        const now = new Date();
+        if (eventEndDate > now) {
+            return res.status(400).json({ 
+                error: `Event must end before payout is available. Event ends on ${eventEndDate.toLocaleDateString()}.` 
+            });
+        }
+
+        // Get financial transactions for this event
+        const { data: transactions, error: txError } = await supabase
+            .from('financial_transactions')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('status', 'succeeded');
+
+        if (txError) {
+            console.error('Error fetching transactions:', txError);
+            return res.status(500).json({ error: 'Failed to fetch financial data' });
+        }
+
+        // Calculate net earnings
+        const netEarnings = (transactions || []).reduce((sum, tx) => {
+            return sum + (Number(tx.organizer_net) || 0);
+        }, 0);
+
+        if (netEarnings <= 0) {
+            return res.status(400).json({ error: 'No net earnings available for payout.' });
+        }
+
+        // Check if there are any pending transactions
+        const { data: pendingTx } = await supabase
+            .from('financial_transactions')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('payout_status', 'pending');
+
+        if (pendingTx && pendingTx.length > 0) {
+            return res.status(400).json({ 
+                error: 'Waiting for pending transactions to settle before payout is available.' 
+            });
+        }
+
+        // Check if payout already requested
+        const { data: existingPayout } = await supabase
+            .from('organizer_payouts')
+            .select('id, status')
+            .eq('event_id', eventId)
+            .eq('status', 'pending')
+            .single();
+
+        if (existingPayout) {
+            return res.status(400).json({ error: 'Payout request already pending for this event.' });
+        }
+
+        // Create payout request
+        const { data: payout, error: payoutError } = await supabase
+            .from('organizer_payouts')
+            .insert({
+                event_id: eventId,
+                organizer_id: req.user.uid,
+                amount: netEarnings,
+                status: 'pending',
+                requested_at: new Date().toISOString(),
+                transaction_count: transactions?.length || 0
+            })
+            .select()
+            .single();
+
+        if (payoutError) {
+            console.error('Error creating payout request:', payoutError);
+            return res.status(500).json({ error: 'Failed to create payout request' });
+        }
+
+        // Update transaction payout status
+        await supabase
+            .from('financial_transactions')
+            .update({ payout_status: 'requested' })
+            .eq('event_id', eventId)
+            .eq('status', 'succeeded');
+
+        // Log the action
+        await supabase.from('audit_logs').insert({
+            timestamp: new Date().toISOString(),
+            actor_id: req.user.uid,
+            actor_type: 'organizer',
+            action: 'request_payout',
+            target_type: 'event',
+            target_id: eventId,
+            details: { 
+                amount: netEarnings, 
+                transactionCount: transactions?.length || 0,
+                eventTitle: event.title 
+            }
+        }).catch(e => console.warn('Audit log failed:', e));
+
+        res.json({ 
+            success: true, 
+            message: 'Payout request submitted successfully',
+            payout: {
+                id: payout.id,
+                amount: netEarnings,
+                status: 'pending',
+                requestedAt: payout.requested_at
+            }
+        });
+    } catch (error) {
+        console.error('Payout request error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Audit Log Routes
 router.get('/audit-logs', verifyToken, requireAdmin, async (req, res) => {
     try {
