@@ -425,6 +425,59 @@ export const EventFinance = () => {
                 </Card>
             )}
 
+            {/* Payout Request Card */}
+            <Card className="p-6 border-2 border-primary/20">
+                <div className="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 className="text-lg font-bold mb-1">💰 Request Payout</h3>
+                        <p className="text-sm text-zinc-500">
+                            Request a payout of your net earnings to your connected Stripe account
+                        </p>
+                    </div>
+                    <Button
+                        onClick={() => handleRequestPayout()}
+                        disabled={!canRequestPayout()}
+                        className="whitespace-nowrap"
+                    >
+                        <DollarSign size={16} className="mr-2" />
+                        Request ${summary.netEarnings.toFixed(2)}
+                    </Button>
+                </div>
+                
+                {/* Payout Status Messages */}
+                {!canRequestPayout() && (
+                    <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <div className="flex items-start gap-3">
+                            <Clock className="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+                            <div className="flex-1">
+                                <p className="font-bold text-orange-900 dark:text-orange-100 text-sm mb-1">
+                                    Payout Not Available Yet
+                                </p>
+                                <p className="text-sm text-orange-700 dark:text-orange-300">
+                                    {getPayoutBlockReason()}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {canRequestPayout() && summary.netEarnings > 0 && (
+                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-start gap-3">
+                            <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
+                            <div className="flex-1">
+                                <p className="font-bold text-green-900 dark:text-green-100 text-sm mb-1">
+                                    Ready for Payout
+                                </p>
+                                <p className="text-sm text-green-700 dark:text-green-300">
+                                    Your event has ended and funds are available for payout.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Card>
+
             {/* Transaction History */}
             <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
