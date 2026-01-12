@@ -801,3 +801,116 @@ export const Billing = () => {
         </div>
     );
 };
+
+// Upcoming Payouts Component
+const UpcomingPayoutsCard: React.FC<{ userId: string }> = ({ userId }) => {
+    const [upcomingPayouts, setUpcomingPayouts] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { showToast } = useGlobalUI();
+
+    useEffect(() => {
+        loadUpcomingPayouts();
+    }, [userId]);
+
+    const loadUpcomingPayouts = async () => {
+        setIsLoading(true);
+        try {
+            const token = await getAuthToken();
+            const response = await fetch('/api/admin/upcoming-payouts', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUpcomingPayouts(data.payouts || []);
+            }
+        } catch (error) {
+            console.error('Failed to load upcoming payouts:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <Card className="p-6">
+                <div className="flex items-center justify-center py-8">
+                    <Loader2 className="animate-spin text-primary" size={24} />
+                </div>
+            </Card>
+        );
+    }
+
+    if (upcomingPayouts.length === 0) {
+        return null; // Don't show card if no upcoming payouts
+    }
+
+    return (
+        <Card className="p-6 border-2 border-blue-200 dark:border-blue-900/50">
+            <div className="flex items-start justify-between mb-4">
+                <div>
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                        <Clock className="text-blue-600" size={20} />
+                        Upcoming Payouts
+                    </h3>
+                    <p className="text-sm text-zinc-500">Funds released after events end</p>
+                </div>
+                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                    {upcomingPayouts.length} pending
+                </Badge>
+            </div>
+
+            <div className="space-y-3">
+                {upcomingPayouts.map((payout, idx) => {
+                    const releaseDate = new Date(payout.releaseDate);
+                    const now = new Date();
+                    const daysUntil = Math.ceil((releaseDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                    const isPastDue = daysUntil < 0;
+
+                    return (
+                        <div 
+                            key={idx} 
+                            className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                        >
+                            <div className="flex-1">
+                                <div className="font-bold text-gray-900 dark:text-white">
+                                    {payout.eventTitle}
+                                </div>
+                                <div className="text-xs text-zinc-500 mt-1 flex items-center gap-2">
+                                    <Calendar size={12} />
+                                    Release: {releaseDate.toLocaleDateString()}
+                                    {isPastDue ? (
+                                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
+                                            Ready
+                                        </Badge>
+                                    ) : (
+                                        <span className="text-blue-600 dark:text-blue-400">
+                                            in {daysUntil} day{daysUntil !== 1 ? 's' : ''}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                                    ${payout.amount.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-zinc-500">net earnings</div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="text-sm text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-blue-600" />
+                    Total upcoming: <span className="font-bold">
+                        ${upcomingPayouts.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                    </span>
+                </div>
+            </div>
+        </Card>
+    );
+};
