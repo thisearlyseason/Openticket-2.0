@@ -391,6 +391,11 @@ export const AffiliateDashboard = () => {
                         </div>
                     </Card>
 
+                    {/* Affiliate Payouts Management */}
+                    <div className="animate-in fade-in slide-in-from-bottom-7">
+                        <AffiliatePayouts />
+                    </div>
+
                     {/* Recent Earnings Table */}
                     <Card className="p-6 border-zinc-200 dark:border-zinc-800">
                         <h3 className="font-bold text-lg mb-4 text-zinc-900 dark:text-white">Recent Earnings</h3>
