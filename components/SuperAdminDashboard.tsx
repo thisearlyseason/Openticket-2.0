@@ -114,11 +114,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'security' | 'analytics' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
-    // Broadcast State
-    const [broadcastMsg, setBroadcastMsg] = useState('');
-    const [broadcastTarget, setBroadcastTarget] = useState<'all' | 'organizers' | 'affiliates'>('all');
-    const [activeNotification, setActiveNotification] = useState<any>(null);
-
     // Affiliate State
     const [affiliates, setAffiliates] = useState<AffiliateData[]>([]);
     const [affiliatePayouts, setAffiliatePayouts] = useState<AffiliatePayout[]>([]);
