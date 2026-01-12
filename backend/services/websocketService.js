@@ -97,9 +97,17 @@ class WebSocketService {
      */
     async setupPostgresListener() {
         try {
+            // Get connection string from environment
+            const connectionString = process.env.MONGO_URL;
+            
+            if (!connectionString || !connectionString.startsWith('postgresql://')) {
+                console.log('[WebSocket] Skipping PostgreSQL listener - not a PostgreSQL connection');
+                return;
+            }
+
             // Create dedicated PostgreSQL client for LISTEN
             this.pgClient = new Client({
-                connectionString: process.env.MONGO_URL, // Note: This is actually PostgreSQL (Supabase)
+                connectionString: connectionString
             });
 
             await this.pgClient.connect();
@@ -123,6 +131,7 @@ class WebSocketService {
 
         } catch (error) {
             console.error('[WebSocket] Failed to setup PostgreSQL listener:', error);
+            console.log('[WebSocket] WebSocket will continue without PostgreSQL NOTIFY support');
         }
     }
 
