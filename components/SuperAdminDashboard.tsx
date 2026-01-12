@@ -194,6 +194,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [donationCustomEnd, setDonationCustomEnd] = useState('');
     const [filteredDonations, setFilteredDonations] = useState<any[]>([]);
 
+    // Suspicious Activity State
+    const [suspiciousActivities, setSuspiciousActivities] = useState<any[]>([]);
+    const [loadingSuspicious, setLoadingSuspicious] = useState(false);
+    const [suspiciousSeverityFilter, setSuspiciousSeverityFilter] = useState<'all' | 'info' | 'warning' | 'critical'>('all');
+
     const currentUser = StorageService.getCurrentUser();
 
     // Check Resend status from backend API
