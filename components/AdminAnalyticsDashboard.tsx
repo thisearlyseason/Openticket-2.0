@@ -260,6 +260,21 @@ export const AdminAnalyticsDashboard: React.FC = () => {
                 </Card>
             </div>
 
+            {/* Charts Section */}
+            {showCharts && (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <DailyTrendsChart data={chartData.daily} />
+                        <SuccessRateTrendChart data={chartData.daily} />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <HourlyScansChart data={chartData.hourly} />
+                        <PerformanceMetricsChart data={eventAnalytics} />
+                    </div>
+                </div>
+            )}
+
             {/* Events Table */}
             <Card className="bg-zinc-900 border-zinc-800 overflow-hidden">
                 <div className="p-6 border-b border-zinc-800">
