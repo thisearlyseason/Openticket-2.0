@@ -690,6 +690,19 @@ export const initCronJobs = () => {
     }, { timezone: 'UTC' });
     console.log('[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)');
 
+    // Analytics Cleanup - Weekly on Sunday at 4 AM UTC
+    cron.schedule('0 4 * * 0', async () => {
+        console.log('[CRON] Triggered: Analytics Cleanup (90 days retention)');
+        try {
+            const scanAnalyticsService = (await import('./scanAnalyticsService.js')).default;
+            const result = await scanAnalyticsService.deleteOldAnalytics(90);
+            console.log('[CRON] Analytics cleanup completed:', result);
+        } catch (error) {
+            console.error('[CRON] Analytics cleanup job failed:', error);
+        }
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)');
+
     cronInitialized = true;
     console.log('[CRON] All jobs initialized successfully');
 };
