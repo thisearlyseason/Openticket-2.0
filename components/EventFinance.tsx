@@ -71,26 +71,22 @@ export const EventFinance = () => {
         return true;
     };
 
-    const getPayoutBlockReason = () => {
-        if (!event || !summary) return 'Loading...';
+    const getPayoutBlockReason = (): string => {
+        if (!event) return 'Event data not available';
         
-        const eventEndDate = new Date(event.endDate);
+        const eventDate = new Date(event.date);
         const now = new Date();
         
-        if (eventEndDate > now) {
-            return `Event must end before payout is available. Event ends on ${eventEndDate.toLocaleDateString()}.`;
+        if (eventDate > now) {
+            const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            return `Event must end before payout is available. Your event is in ${daysUntil} day${daysUntil !== 1 ? 's' : ''} (${eventDate.toLocaleDateString()}).`;
         }
         
-        if (summary.netEarnings <= 0) {
+        if (summary && summary.netEarnings <= 0) {
             return 'No net earnings available for payout.';
         }
         
-        const hasPendingTransactions = transactions.some(tx => tx.payout_status === 'pending');
-        if (hasPendingTransactions) {
-            return 'Waiting for pending transactions to settle before payout is available.';
-        }
-        
-        return 'Payout requirements not met.';
+        return 'Payout not available at this time.';
     };
 
     const handleRequestPayout = async () => {
