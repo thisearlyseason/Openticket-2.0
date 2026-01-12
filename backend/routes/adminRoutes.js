@@ -1473,4 +1473,148 @@ router.get('/security-audit-logs/suspicious', verifyToken, requireAdmin, async (
     }
 });
 
+// ========================================
+// ADMIN ANALYTICS DASHBOARD ENDPOINTS
+// ========================================
+
+/**
+ * GET /api/admin/analytics/overview
+ * Get system-wide analytics overview
+ */
+router.get('/analytics/overview', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { period = '30d' } = req.query;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Calculate time filter
+        let timeFilter = null;
+        if (period !== 'all') {
+            const days = parseInt(period);
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+            timeFilter = cutoff.getTime();
+        }
+
+        // Get all events with their analytics from materialized view
+        const { data: mvData, error: mvError } = await supabase
+            .from('mv_event_scan_summary')
+            .select('*');
+
+        if (mvError && mvError.code !== '42P01') {
+            console.error('[Admin Analytics] Error fetching from materialized view:', mvError);
+        }
+
+        // Get events details
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title');
+
+        if (eventsError) throw eventsError;
+
+        // Merge data
+        const eventAnalytics = (mvData || []).map(mv => {
+            const event = events?.find(e => e.id === mv.event_id);
+            return {
+                eventId: mv.event_id,
+                eventTitle: event?.title || 'Unknown Event',
+                totalScans: parseInt(mv.total_scans),
+                successfulScans: parseInt(mv.successful_scans),
+                failedScans: parseInt(mv.failed_scans),
+                successRate: parseFloat(mv.success_rate),
+                avgDuration: parseInt(mv.avg_duration),
+                lastScanAt: mv.last_scan_at
+            };
+        }).sort((a, b) => b.totalScans - a.totalScans);
+
+        // Calculate global stats
+        const globalStats = {
+            totalEvents: eventAnalytics.length,
+            totalScans: eventAnalytics.reduce((sum, e) => sum + e.totalScans, 0),
+            avgSuccessRate: eventAnalytics.length > 0
+                ? eventAnalytics.reduce((sum, e) => sum + e.successRate, 0) / eventAnalytics.length
+                : 0,
+            avgScanTime: eventAnalytics.length > 0
+                ? Math.round(eventAnalytics.reduce((sum, e) => sum + e.avgDuration, 0) / eventAnalytics.length)
+                : 0
+        };
+
+        res.json({
+            success: true,
+            events: eventAnalytics,
+            globalStats
+        });
+
+    } catch (error) {
+        console.error('[Admin Analytics] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/admin/analytics/refresh-views
+ * Refresh materialized views manually
+ */
+router.post('/analytics/refresh-views', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+
+        const { error } = await supabase.rpc('refresh_scan_analytics_views');
+
+        if (error) {
+            console.error('[Admin Analytics] Refresh failed:', error);
+            throw error;
+        }
+
+        res.json({
+            success: true,
+            message: 'Materialized views refreshed successfully'
+        });
+
+    } catch (error) {
+        console.error('[Admin Analytics] Refresh error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/admin/analytics/export-all
+ * Export all analytics to CSV
+ */
+router.get('/analytics/export-all', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const scanAnalyticsService = (await import('../services/scanAnalyticsService.js')).default;
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Get all events
+        const { data: events, error } = await supabase
+            .from('events')
+            .select('id, title');
+
+        if (error) throw error;
+
+        // Generate CSV for all events
+        let combinedCsv = 'Event ID,Event Title,Timestamp,Date/Time,Success,Duration (ms),Ticket ID,Error Message,Scan Method,Platform,Online\n';
+
+        for (const event of events || []) {
+            const csv = await scanAnalyticsService.exportToCsv(event.id);
+            if (csv) {
+                const lines = csv.split('\n').slice(1); // Skip header
+                lines.forEach(line => {
+                    if (line.trim()) {
+                        combinedCsv += `"${event.id}","${event.title}",${line}\n`;
+                    }
+                });
+            }
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="all-analytics-${Date.now()}.csv"`);
+        res.send(combinedCsv);
+
+    } catch (error) {
+        console.error('[Admin Analytics] Export error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
