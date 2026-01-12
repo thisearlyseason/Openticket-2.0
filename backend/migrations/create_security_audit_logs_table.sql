@@ -1,4 +1,5 @@
 -- Security Audit Log Table for Ticket Transfers and Fraud Detection
+-- FIXED VERSION: Corrected RLS policy type casting
 -- Run this in Supabase SQL Editor
 
 CREATE TABLE IF NOT EXISTS public.security_audit_logs (
