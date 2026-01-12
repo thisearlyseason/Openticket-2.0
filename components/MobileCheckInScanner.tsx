@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRScanner } from './QRScanner';
 import { StorageService } from '../services/storageService';
+import { offlineSyncService } from '../services/offlineSyncService';
+import { scanAnalyticsService } from '../services/scanAnalyticsService';
 import { Event, Registration } from '../types';
 import { Button, Card, Badge } from './UI';
-import { QrCode, CheckCircle2, XCircle, Users, Clock, Zap, AlertTriangle, Smartphone, WifiOff, ArrowLeft, BarChart3, RotateCw, Ticket, UserCheck } from 'lucide-react';
+import { QrCode, CheckCircle2, XCircle, Users, Clock, Zap, AlertTriangle, Smartphone, WifiOff, ArrowLeft, BarChart3, RotateCw, Ticket, UserCheck, Database, TrendingUp } from 'lucide-react';
 import { getAuthToken } from '../services/firebaseConfig';
 
 interface ScanResult {
@@ -29,6 +31,9 @@ export const MobileCheckInScanner: React.FC = () => {
     });
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [pendingSync, setPendingSync] = useState(0);
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [analytics, setAnalytics] = useState<any>(null);
 
     // Monitor online status
     useEffect(() => {
@@ -47,7 +52,23 @@ export const MobileCheckInScanner: React.FC = () => {
     // Load event and stats
     useEffect(() => {
         loadEventData();
+        loadPendingSync();
+        
+        // Initialize offline sync
+        offlineSyncService.init().catch(console.error);
     }, [id]);
+
+    // Listen for sync completion
+    useEffect(() => {
+        const handleSyncComplete = (event: any) => {
+            console.log('[Scanner] Sync complete:', event.detail);
+            loadPendingSync();
+            loadEventData(); // Refresh stats
+        };
+
+        window.addEventListener('pwa-sync-complete', handleSyncComplete);
+        return () => window.removeEventListener('pwa-sync-complete', handleSyncComplete);
+    }, []);
 
     const loadEventData = async () => {
         if (!id) return;
