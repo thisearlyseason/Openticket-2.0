@@ -272,7 +272,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         checkResendStatus().catch(console.error);
         setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
-        loadPromoCodes();
     }, [navigate, embedded]);
 
     // Re-check Resend status when switching to settings tab
