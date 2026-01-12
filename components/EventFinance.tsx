@@ -52,21 +52,17 @@ export const EventFinance = () => {
 
     const user = StorageService.getCurrentUser();
 
-    // Payout functions
-    const canRequestPayout = () => {
+    // Check if payout can be requested
+    const canRequestPayout = (): boolean => {
         if (!event || !summary) return false;
         
         // Check if event has ended
-        const eventEndDate = new Date(event.endDate);
+        const eventDate = new Date(event.date);
         const now = new Date();
-        if (eventEndDate > now) return false;
+        if (eventDate > now) return false;
         
         // Check if there are net earnings
         if (summary.netEarnings <= 0) return false;
-        
-        // Check if there are any pending transactions
-        const hasPendingTransactions = transactions.some(tx => tx.payout_status === 'pending');
-        if (hasPendingTransactions) return false;
         
         return true;
     };
