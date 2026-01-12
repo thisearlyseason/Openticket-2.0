@@ -832,60 +832,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
-    const handleCreatePromoCode = async () => {
-        if (!newPromo.code.trim()) {
-            window.alert('Please enter a promo code');
-            return;
-        }
-
-        const promoCode: PromoCode = {
-            id: `promo-${Date.now()}`,
-            code: newPromo.code.toUpperCase(),
-            type: newPromo.type,
-            value: newPromo.value,
-            target: newPromo.target,
-            targetPlans: newPromo.targetPlans,
-            usageLimit: newPromo.usageLimit || undefined,
-            usageCount: 0,
-            expiresAt: newPromo.expiresAt || undefined,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-
-        await StorageService.createPromoCode(promoCode);
-        loadPromoCodes();
-        setNewPromo({
-            code: '',
-            type: 'percentage',
-            value: 10,
-            target: 'all',
-            targetPlans: [],
-            usageLimit: 0,
-            expiresAt: ''
-        });
-        window.alert('Promo code created successfully!');
-    };
-
-    const handleTogglePromoCode = async (promo: PromoCode) => {
-        await StorageService.updatePromoCode(promo.id, { isActive: !promo.isActive });
-        loadPromoCodes();
-    };
-
-    const handleDeletePromoCode = async (promo: PromoCode) => {
-        const confirmed = await confirm({
-            title: 'Delete Promo Code',
-            message: `Delete promo code "${promo.code}"?`,
-            confirmText: 'Delete',
-            variant: 'danger'
-        });
-
-        if (confirmed) {
-            await StorageService.deletePromoCode(promo.id);
-            loadPromoCodes();
-        }
-    };
-
-    const handleSavePlatformSettings = async () => {
+    // Non-profit approval handler - shows confirmation modal
+    const showApproveConfirmation = (applicationId: string, userId: string) => {
         if (!currentUser) return;
         await StorageService.updateUser(currentUser.id, {
             stripeConnectId: platformStripeId,
