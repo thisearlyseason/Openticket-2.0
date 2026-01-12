@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Unique Ticket Generation System Testing
-Tests the unique ticket generation system and check-in API as requested in review
+Backend API Testing for OpenTicket Platform - Affiliate Payout System Testing
+Tests the newly integrated Affiliate Payout System as requested in review
 """
 
 import requests
@@ -14,7 +14,7 @@ from typing import Dict, Any
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://eventsystem-1.preview.emergentagent.com"
 
-class TicketSystemTester:
+class AffiliatePayoutTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
