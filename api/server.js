@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import http from 'http';
 
 // Load environment variables - check both locations
 const __filename = fileURLToPath(import.meta.url);
@@ -39,8 +40,10 @@ import { handleWebhook } from '../backend/controllers/stripeWebhookController.js
 
 // Services
 import { initCronJobs } from '../backend/services/cronService.js';
+import websocketService from '../backend/services/websocketService.js';
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5001;
 
 // Trust proxy - required for rate limiting behind reverse proxy (Kubernetes/nginx)
