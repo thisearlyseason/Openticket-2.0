@@ -1,5 +1,5 @@
 -- Security Audit Log Table for Ticket Transfers and Fraud Detection
--- CLEAN VERSION: Handles first-time creation properly
+-- CONSOLIDATED FINAL VERSION
 -- Run this in Supabase SQL Editor
 
 -- Create the table (will skip if exists)
