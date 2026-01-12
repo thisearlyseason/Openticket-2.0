@@ -5,7 +5,6 @@ import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import Card from '../../ui/Card';
 import Badge from '../../ui/Badge';
-import type { PromoCode } from '../types';
 
 interface PromoCodesTabProps {
     confirm: (options: {
