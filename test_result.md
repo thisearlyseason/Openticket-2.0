@@ -357,7 +357,7 @@ The ticket transfer system backend is **fully functional** and ready for product
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly on https://ticketing-fix.preview.emergentagent.com
+   - Application loads correctly on https://ticketflow-111.preview.emergentagent.com
    - Authentication UI renders properly (Sign In, Sign Up, Find Tickets tabs)
    - My Tickets page structure is accessible
    - Navigation system functional
@@ -724,7 +724,7 @@ Need manual testing by user to verify persistence across:
 **Message:** Google Authentication Flow Re-Testing completed after backend error handler fix. Key findings:
 
 **✅ GOOGLE LOGIN UI VERIFICATION:**
-- Auth page loads correctly at `https://ticketing-fix.preview.emergentagent.com/#/auth`
+- Auth page loads correctly at `https://ticketflow-111.preview.emergentagent.com/#/auth`
 - "Continue with Google" button is visible and properly positioned
 - Authentication form structure is correct with Sign In/Sign Up/Find Tickets tabs
 - UI components render without errors
@@ -1220,7 +1220,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://ticketing-fix.preview.emergentagent.com  
+**Backend URL:** https://ticketflow-111.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
@@ -1459,7 +1459,7 @@ The unique ticket system refactor has been successfully implemented and verified
 ### Test User Setup:
 - Need affiliate user with `affiliateCode` set
 - Test URL: `http://localhost:3000/#/affiliate`
-- External API URL for backend: `https://ticketing-fix.preview.emergentagent.com/api`
+- External API URL for backend: `https://ticketflow-111.preview.emergentagent.com/api`
 
 ---
 

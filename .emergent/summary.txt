@@ -2,344 +2,190 @@
 The user's goal is to evolve their event ticketing platform by implementing a series of critical features and fixes. This involves:
 1.  **Ticket Transfer System:** Build and debug an atomic ticket transfer system with a 5-second undo window, clear UX states, an audit trail, and fraud prevention. The core bug was that transfers would not finalize correctly, leaving tickets in a limbo state.
 2.  **Unique Ticket Generation:** Refactor the entire ticket system to move away from a quantity-based model. Each individual ticket must have a unique Ticket ID, Ticket Number, and scannable QR code. This is critical for accurate check-in and ownership tracking.
-3.  **Ticket Visibility and Ownership:** Fix bugs where purchased or transferred tickets do not appear in the correct user's My Tickets section. Ensure Superadmins have a complete view of all tickets. All tickets must display key metadata: Attendee Name, Ticket Number, Purchase Order ID, and Purchase Date. Transferred tickets should show a name history (original name struck through).
+3.  **Ticket Visibility and Ownership:** Fix bugs where purchased or transferred tickets do not appear in the correct user's My Tickets section. Ensure Superadmins have a complete view of all tickets.
 4.  **Payment Flow and Payouts:**
     *   Fix a critical bug where paid events skip the Stripe payment screen and are incorrectly marked as pending, making tickets invisible.
     *   Implement a robust payout system for event organizers and affiliates.
-5.  **Mobile Check-in:** Build a dedicated, mobile-optimized check-in scanner interface with PWA support, offline capabilities, and analytics.
-6.  **Admin Dashboards & Analytics:** Enhance the Super Admin dashboard with security monitoring, real-time analytics, data visualizations, and performance optimizations.
+5.  **Mobile Check-in:** Build a dedicated, mobile-optimized check-in scanner interface with PWA support and offline capabilities.
+6.  **Admin Dashboards & Analytics:** Enhance the Super Admin dashboard, fix multiple broken tabs (Security, Promo Codes, Analytics), and refactor its large codebase.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack event ticketing platform with a React frontend, FastAPI backend (migrated to Node.js/Express in a previous session), and a Supabase (PostgreSQL) database.
-
-A significant amount of work has been completed in this session, building upon previous features:
-- The affiliate payout system was successfully integrated into the frontend.
-- A new, separate  table was created to fix a schema mismatch, and a Security tab was added to the Super Admin dashboard to view suspicious activities.
-- A mobile-first check-in scanner component () was built with PWA support, offline sync via IndexedDB, and scan analytics.
-- Major backend enhancements were implemented, including:
-    - An admin analytics dashboard with real-time updates via WebSockets () and charts ().
-    - Performance-enhancing materialized views.
-    - A cron job for automatic data cleanup.
-- However, the recent integration of WebSockets appears to have broken the Google authentication flow, which is the current critical issue.
+The application is a full-stack event ticketing platform with a React frontend, Node.js/Express backend, and a Supabase (PostgreSQL) database. In this session, the agent fixed a critical Google login bug, consolidated several database migrations, and enhanced the fraud prevention logic. However, the session ended with the application in an unusable state due to an infinite reload loop, likely caused by conflicting service workers and aggressive browser caching. Several tabs in the Super Admin Dashboard (Security, Promo Codes, Analytics) are also broken. The agent's last action was to completely remove all service worker files to try and stabilize the application.
 
 **Last working item**:
-    - Last item agent was working: Debugging a critical Google login failure. The user reports  after the agent integrated a WebSocket service. The agent identified that the WebSocket service was misconfigured, causing the server to crash. A fix was applied to allow the server to start, but the user confirmed the login error persists.
-    - Status: BLOCKED
+    - Last item agent was working: Fixing a critical infinite reload loop that makes the entire application unusable. The user reported the page reloads every few seconds, preventing any interaction. This issue is also blocking the verification of fixes for other broken features (Security Tab, Promo Codes). The agent identified that multiple conflicting service workers were the likely cause.
+    - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? Frontend testing agent. This is a critical end-to-end authentication flow. The agent must simulate the Google login, inspect the network request to , and analyze the 500 error response from the backend logs to find the root cause.
+    - Which testing method agent to use? Manual testing by user confirmation first, then Frontend testing agent. The first step is to confirm with the user that the reloading has stopped after they perform a hard cache clear. Once stable, the agent must use the frontend testing agent to verify the fixes for the Security and Promo Code tabs.
     - User Testing Done: Y
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Google login is broken (P0)
-  - Issue 2: Materialized view migration fails (P1)
-  - Issue 3: Security audit log migration has a history of failures (P2)
-  - Issue 4: Recurring cron job error for abandoned carts (P2)
+  - Issue 1: Infinite Reload Loop on Entire Application (P0)
+  - Issue 2: Security Tab in Super Admin Dashboard Crashes (P0)
+  - Issue 3: Promo Codes are Not Saved or Displayed (P1)
+  - Issue 4: Analytics Tab in Super Admin Dashboard is Broken (P2)
+  - Issue 5: Vercel build fails due to  dependency (P2)
   
   Issues Detail:
   - Issue 1: 
-     - **Description**: After integrating a WebSocket service in , the Google login flow broke, resulting in a 500 error on the  call. The agent's initial fix allowed the server to run but did not resolve the underlying authentication error.
-     - **Attempted fixes**: Disabled the PostgreSQL / functionality within  because it was misconfigured and crashing the server. This was only a partial fix.
+     - **Description**: The entire application is unusable as it is stuck in an infinite reload loop. This is the highest priority blocker.
+     - **Attempted fixes**: The agent identified multiple conflicting service workers (, ) as the root cause. The agent's final actions were to delete all service worker files from the project () and comment out the registration code in  and .
      - **Next debug checklist**: 
-        1. Examine the backend logs (==> /var/log/supervisor/backend.err.log <==
-[CRON] Error fetching abandoned carts: {
-  code: '42703',
-  details: null,
-  hint: null,
-  message: 'column registrations.abandoned_email_sent does not exist'
-}
-[WebSocket] Failed to setup PostgreSQL listener: Error: connect ECONNREFUSED 127.0.0.1:5432
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
-  errno: -111,
-  code: 'ECONNREFUSED',
-  syscall: 'connect',
-  address: '127.0.0.1',
-  port: 5432
-}
-
-==> /var/log/supervisor/backend.out.log <==
-[CRON] Triggered: Post-Event Follow-ups
-[CRON] Starting post-event follow-up job...
-[CRON] No recent events for follow-up
-2026-01-12T05:31:13.849Z - GET /api/health
-2026-01-12T05:35:35.031Z - GET /api/admin/affiliate/earnings
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.039Z - GET /api/admin/affiliate/payouts
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.064Z - POST /api/admin/affiliate/request-payout
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.075Z - POST /api/admin/affiliate/request-payout
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.089Z - POST /api/admin/affiliate/request-payout
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.096Z - GET /api/admin/affiliate/payouts
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.105Z - GET /api/admin/affiliate/earnings
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.112Z - GET /api/admin/affiliate/payouts
-[Auth] Missing Authorization header
-2026-01-12T05:35:35.119Z - POST /api/admin/affiliate/request-payout
-[Auth] Missing Authorization header
-2026-01-12T05:40:54.355Z - GET /api/auth/profiles/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:40:55.549Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:40:55.722Z - GET /api/auth/profiles/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:40:56.173Z - GET /api/admin/affiliate/earnings
-2026-01-12T05:40:56.418Z - GET /api/admin/affiliate/payouts
-2026-01-12T05:41:25.623Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:41:55.621Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:42:25.599Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:42:56.893Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:43:26.949Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:43:56.941Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:44:38.943Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:45:38.880Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:46:38.898Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:47:38.940Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:48:11.898Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-2026-01-12T05:48:25.554Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
-[CRON] Triggered: Event Reminders (24h check)
-[CRON] Starting event reminder job...
-[CRON] Triggered: Abandoned Cart Emails
-[CRON] Starting abandoned cart job...
-[CRON] No events in 24h window
-[CRON] Triggered: Post-Event Follow-ups
-[CRON] Starting post-event follow-up job...
-[CRON] No recent events for follow-up
-2026-01-12T06:40:51.230Z - POST /api/auth/google-login
-[dotenv@17.2.3] injecting env (15) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
-Supabase Service Initialized
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
-Firebase Admin Initialized Successfully
-[PushService] Initialized with VAPID keys
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
-[Server] RESEND_API_KEY configured: true
-[Server] SENDER_EMAIL: tickets@openticket.events
-🚀 OpenTicket API Server running on http://0.0.0.0:8001
-[WebSocket] Initializing Socket.IO server...
-[WebSocket] ✅ Socket.IO server initialized
-[Server] ✅ WebSocket service initialized
-[CRON] Initializing scheduled jobs...
-[CRON] ✅ Event Reminders scheduled (hourly)
-[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
-[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
-[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
-[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
-[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
-[CRON] All jobs initialized successfully
-2026-01-12T06:41:32.511Z - GET /api/health
-[dotenv@17.2.3] injecting env (15) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
-Supabase Service Initialized
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
-Firebase Admin Initialized Successfully
-[PushService] Initialized with VAPID keys
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
-[Server] RESEND_API_KEY configured: true
-[Server] SENDER_EMAIL: tickets@openticket.events
-🚀 OpenTicket API Server running on http://0.0.0.0:8001
-[WebSocket] Initializing Socket.IO server...
-[WebSocket] Skipping PostgreSQL listener - not a PostgreSQL connection
-[WebSocket] ✅ Socket.IO server initialized
-[Server] ✅ WebSocket service initialized
-[CRON] Initializing scheduled jobs...
-[CRON] ✅ Event Reminders scheduled (hourly)
-[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
-[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
-[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
-[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
-[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
-[CRON] All jobs initialized successfully
-2026-01-12T06:41:57.476Z - GET /api/health
-[dotenv@17.2.3] injecting env (15) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
-Supabase Service Initialized
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-Firebase Admin Initialized Successfully
-[PushService] Initialized with VAPID keys
-[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
-[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: ⚙️  enable debug logging with { debug: true }
-[Server] RESEND_API_KEY configured: true
-[Server] SENDER_EMAIL: tickets@openticket.events
-🚀 OpenTicket API Server running on http://0.0.0.0:8001
-[WebSocket] Initializing Socket.IO server...
-[WebSocket] Note: PostgreSQL NOTIFY disabled (using Supabase REST API)
-[WebSocket] ✅ Socket.IO server initialized
-[Server] ✅ WebSocket service initialized
-[CRON] Initializing scheduled jobs...
-[CRON] ✅ Event Reminders scheduled (hourly)
-[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
-[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
-[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
-[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
-[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
-[CRON] All jobs initialized successfully
-2026-01-12T06:42:41.575Z - GET /api/health
-[dotenv@17.2.3] injecting env (15) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
-Supabase Service Initialized
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
-Firebase Admin Initialized Successfully
-[PushService] Initialized with VAPID keys
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
-[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-[Server] RESEND_API_KEY configured: true
-[Server] SENDER_EMAIL: tickets@openticket.events
-🚀 OpenTicket API Server running on http://0.0.0.0:8001
-[WebSocket] Initializing Socket.IO server...
-[WebSocket] Note: PostgreSQL NOTIFY disabled (using Supabase REST API)
-[WebSocket] ✅ Socket.IO server initialized
-[Server] ✅ WebSocket service initialized
-[CRON] Initializing scheduled jobs...
-[CRON] ✅ Event Reminders scheduled (hourly)
-[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
-[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
-[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
-[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
-[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
-[CRON] All jobs initialized successfully) immediately after reproducing the Google login failure to find the specific 500 error stack trace.
-        2. Review changes made to  for the WebSocket integration. The error is likely in how the Express app, HTTP server, and Socket.io are initialized and how routes are attached.
-        3. Check the  controller in  for any code that might conflict with the new server setup.
-     - **Why fix this issue and what will be achieved with the fix?**: This is a critical, app-breaking bug. Users cannot log in. Fixing it will restore core functionality.
-     - **Status**:  IN PROGRESS
+        1.  Confirm with the user that the reloading has stopped after they have **unregistered all service workers in their browser's developer tools** and performed a hard cache clear (e.g., Ctrl+Shift+R or Cmd+Shift+R).
+        2.  If the issue persists, inspect the browser's network tab for any redirect loops or repetitive script calls that could be causing the reload.
+     - **Why fix this issue and what will be achieved with the fix?**: The application is completely unusable. Fixing this will restore basic functionality and allow other bugs to be tested and verified.
+     - **Status**:  USER VERIFICATION PENDING
      - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: both
+     - **Should Test frontend/backend/both after fix?**: frontend
      - **Blocked on other issue**: None
 
   - Issue 2: 
-     - **Description**: The user reported an error running the materialized views migration (): . This happens because a concurrent refresh requires a unique index on the view.
-     - **Attempted fixes**: The agent created a  file that adds unique indexes before the refresh function is created. User has not confirmed if this fix works.
+     - **Description**: The Security Tab in the Super Admin dashboard crashes with a .
+     - **Attempted fixes**: The agent added defensive code (e.g., , ) to the  component to prevent mapping over an undefined  array. The agent also ensured the API error handling in  correctly sets the state to an empty array  on failure. These fixes have not been verified due to the reload loop and browser caching.
      - **Next debug checklist**: 
-        1. Confirm with the user if they have tried running the  version.
-        2. If it still fails, provide one consolidated, idempotent SQL script that DROPS the views and functions  before creating them correctly with the required unique indexes.
-     - **Why fix this issue and what will be achieved with the fix?**: This will enable the performance-enhancing materialized views for the admin analytics dashboard.
-     - **Status**:  USER VERIFICATION PENDING
-     - **Is recurring issue?**: N
-     - **Should Test frontend/backend/both after fix?**: backend
-     - **Blocked on other issue**: None
+        1.  Once the reload issue is resolved, navigate to the Security tab.
+        2.  If it still crashes, check the Network tab in the browser's developer tools for the response from the  API call. Ensure the backend returns a JSON object with a  property (even if it's an empty array).
+     - **Why fix this issue and what will be achieved with the fix?**: This will restore access to a critical security monitoring feature for admins.
+     - **Status**:  BLOCKED
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on other issue**: Issue 1: Infinite Reload Loop on Entire Application
 
   - Issue 3: 
-     - **Description**: The user encountered multiple errors ( cast error, ) while trying to run the migration for the  table.
-     - **Attempted fixes**: The agent created three different versions of the migration file (, , ) to address the errors. This has created confusion and file clutter.
+     - **Description**: When a super admin creates a promo code, it shows a success message but does not appear in the Active Promo Codes list, rendering the feature useless.
+     - **Attempted fixes**: The agent correctly diagnosed that the  database table is missing. A migration file was created at . The frontend  was also updated to handle the correct data structure.
      - **Next debug checklist**: 
-        1. Consolidate the logic from  into a single, clean, and final  file.
-        2. Ensure the script uses  for table creation and  for dropping RLS policies to be safely re-runnable.
-        3. Guide the user to run this single, consolidated file.
-     - **Why fix this issue and what will be achieved with the fix?**: This will correctly set up the database table required for logging suspicious ticket transfer activity.
-     - **Status**:  USER VERIFICATION PENDING
+        1.  **Crucially, confirm with the user that they have run the SQL script located at  in their Supabase database.** This is the primary blocker for this feature.
+        2.  Once the table is created and the app is stable, test the creation flow again.
+     - **Why fix this issue and what will be achieved with the fix?**: This enables a core marketing and sales feature of the application.
+     - **Status**:  BLOCKED
      - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: backend
-     - **Blocked on other issue**: None
+     - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on other issue**: Issue 1: Infinite Reload Loop on Entire Application, and pending user action (DB migration).
 
   - Issue 4: 
-     - **Description**: Backend logs repeatedly show a cron job error: .
-     - **Attempted fixes**: None. The agent has ignored this error throughout the session.
+     - **Description**: The user reported that the Analytics tab in the Super Admin dashboard is also showing an error.
+     - **Attempted fixes**: The agent identified and added a missing import for  in .
      - **Next debug checklist**: 
-        1. Locate the abandoned cart cron job logic in .
-        2. Check the database schema for the  table. The error indicates the  column is missing.
-        3. Create a new migration file to add this boolean column to the  table.
-     - **Why fix this issue and what will be achieved with the fix?**: This will fix a failing cron job and enable the abandoned cart email reminder functionality.
+        1.  Once the app is stable, navigate to the Analytics tab and check the browser console for any new errors.
+     - **Why fix this issue and what will be achieved with the fix?**: Restores access to the admin analytics dashboard.
+     - **Status**:  BLOCKED
+     - **Is recurring issue?**: N
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on other issue**: Issue 1: Infinite Reload Loop on Entire Application
+
+  - Issue 5: 
+     - **Description**: The Vercel deployment build was failing with the error .
+     - **Attempted fixes**: As a temporary workaround to unblock deployment, the agent commented out the WebSocket-related code in  and the  hook.
+     - **Next debug checklist**: 
+        1.  This is a lower priority. After the critical bugs are fixed, investigate a proper solution. This might involve using a dynamic import  inside a  hook to ensure it's only loaded on the client side.
+     - **Why fix this issue and what will be achieved with the fix?**: This will re-enable the real-time analytics functionality on the admin dashboard.
      - **Status**:  NOT STARTED
-     - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: backend
+     - **Is recurring issue?**: N
+     - **Should Test frontend/backend/both after fix?**: frontend
      - **Blocked on other issue**: None
 
 **In progress Task List**:
-(None)
+  - Task 1: 
+     - **Description**: Refactor the  component (over 3,000 lines) into smaller, more manageable child components for each tab.
+     - **Where to resume**: The  and  tabs have been successfully extracted into . The next step is to apply the same pattern (documented in ) to the other tabs (Users, Events, Security, etc.).
+     - **What will be achieved with this?**: Improved code maintainability, readability, and performance. It will also make it easier to debug issues in the future.
+     - **Status**:  IN PROGRESS
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on something**: All P0/P1 issues must be resolved first to provide a stable foundation for further refactoring.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-    - **P1:** Implement fraud prevention *rules* for ticket transfers (e.g., rate limiting, blocking circular transfers). The logging is done, but the blocking logic is not.
-    - **P1:** Consolidate all the partial/failed migration files (, , ) into single, idempotent, final versions for the user to run.
-- **Future Tasks:**
-    - **P2:** Implement White Labeling for the Premium plan.
-    - **P2:** Implement Custom Domain for the Premium plan.
-    - **P3:** Add more advanced features to the admin dashboards, such as automated anomaly detection, predictive analytics, and PDF report downloads.
+- **Upcoming Tasks**:
+    - **P1**: Complete the refactoring of .
+    - **P2**: Re-enable the real-time analytics feature by properly fixing the  build issue.
+- **Future Tasks**:
+    - Implement White Labeling for the Premium plan.
+    - Implement Custom Domain for the Premium plan.
+    - Add more advanced features to the admin dashboards (anomaly detection, predictive analytics, PDF report downloads).
 
 **Completed work in this session**
-- **Affiliate Payout UI Integrated:** The  component was added to the .
-- **Security Audit System:** Fixed the audit log schema mismatch by creating a  table and integrated it with a new Security tab in the Super Admin dashboard.
-- **Mobile Check-In App (v1):** Created  as a dedicated, mobile-friendly PWA with offline sync (IndexedDB) and analytics.
-- **Admin Analytics Dashboard:** Built a new dashboard () integrated into the Super Admin page.
-- **Real-time & Visualization:** Implemented real-time updates using WebSockets () and data visualization charts () for the new analytics dashboard.
-- **Backend Optimizations:** Added a data cleanup cron job and created (but failed to deploy) materialized views for query performance.
+- **Critical Auth Fix:** Resolved the application-breaking Google login error (500 on ) by correcting the global error handler in .
+- **Database Migrations:** Consolidated and fixed several SQL migration files and created a new one to resolve a persistent cron job error related to abandoned carts.
+- **Fraud Prevention Logic:** Implemented a robust, persistent fraud prevention service on the backend for ticket transfers.
+- **UI Refinements:** Fixed the layout of the Upcoming Payouts card and began the large-scale refactoring of the Super Admin Dashboard by extracting two tabs.
+- **Deployment Unblocked:** Implemented a temporary workaround to resolve a Vercel build failure, allowing the user to deploy their application.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1**: Recurring cron job error: .
-     - **Debug checklist**:
-       1. Check  to find the failing query.
-       2. Create a SQL migration to add the  column to the  table.
-     - **Why to solve this issue and what will be achieved with this?**: It will fix a core business logic feature (abandoned cart recovery) that is currently broken.
-     - **Should Test frontend/backend/both after fix**: backend
-     - **Is recurring issue?**: Y
+(All previously known issues are now captured in the 'All Pending/In progress Issue list')
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**: The  500 error was noted as resolved in the previous session but has recurred in this session as the current top-priority blocker.
-  - **Recurrence count**: 1 in this session (was 3+ previously).
+  - **Issue recurrence in previous fork**: The  500 error recurred and was fixed. The Security tab crash is also a recurring problem.
+  - **Recurrence count**: 2+
   - **Status**: IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Real-time Data with WebSockets:** Using  to push live data from the server to the Admin Analytics Dashboard.
-- **PWA (Progressive Web App):** Using a  and  to enable offline capabilities and an installable mobile experience for the check-in scanner.
-- **Offline First with IndexedDB:** Caching check-in scans locally when offline and syncing with the backend when a connection is restored.
-- **Data Visualization:** Using the  library to create interactive charts for the analytics dashboard.
-- **PostgreSQL Materialized Views:** An attempt to improve query performance for the analytics dashboard by pre-calculating aggregates.
-- **Node.js/Express Server Configuration:** The recent modification of  to support both Express REST APIs and Socket.io is a key area of focus for debugging the current login issue.
+- **Service Worker Conflict:** The core of the current problem is a conflict between multiple service workers (, ) causing an infinite reload loop and preventing any frontend changes from being seen. The agent's solution was to disable them entirely.
+- **Vite Build Process:** The project uses Vite. A build issue with  required a workaround (commenting out the feature) to enable deployment.
+- **Component Refactoring:** An incremental refactoring strategy is being used to break down a monolithic 3000+ line React component () into smaller, reusable pieces.
 
 **key DB schema**
-  - **security_audit_logs**: 
-  - **scan_analytics**: 
-  - **Materialized Views**: , ,  (pending successful migration).
+  - **promo_codes**:  (creation pending user action).
+  - **registrations**: Added new column  (TIMESTAMPTZ).
+
+**changes in tech stack**
+  - None.
 
 **All files of reference**
-- : Critical file for the login bug. The WebSocket integration likely interfered with the Express route handling.
-- : The service whose misconfiguration caused the initial server crashes.
-- : Has become extremely large and needs refactoring.
-- : The new PWA-enabled scanner component.
-- : This directory contains multiple failed/corrected migration files that need consolidation.
+- **Critical Files for Current Bugs**:
+    - : Contains the code for the broken Security and Analytics tabs.
+    - : Component for the non-functional promo code feature.
+    - : **The user MUST run this SQL script to fix the promo code issue.**
+- **Files Modified for Workarounds**:
+    - , : Service worker registration was disabled here.
+    - , : WebSocket functionality was disabled here.
+- **Deleted Files**:
+    - 
+    - 
 
 **Areas that need refactoring**:
-- ****: This component is now over 3000 lines and manages state and UI for users, events, affiliates, security, and analytics. It must be broken down into a layout with child components/routes for each tab to be maintainable.
-- **Migration Files**: The practice of creating , ,  files is unsustainable. The next agent should consolidate these into single, idempotent scripts and remove the obsolete versions.
-- ****: The server setup logic has become complex. It could be cleaned up by moving the WebSocket and server initialization into separate, more organized modules.
+- ****: This remains the highest priority for refactoring. The task is currently in progress.
+- **PWA/Service Worker Implementation**: Once the application is stable, the service worker functionality needs to be re-implemented correctly from scratch using a single, clean file to avoid future conflicts.
 
 **key api endpoints**
-- : Fetches security logs.
-- : Fetches aggregate data for the admin dashboard.
-- : Fetches time-series data for the admin charts.
-- : Endpoint for the mobile scanner to sync offline data.
+- : Endpoint to create new promo codes.
+- : Endpoint to fetch data for the Security tab.
 
 **Critical Info for New Agent**
-- **PRIORITY #1: GOOGLE LOGIN IS BROKEN.** Users cannot log in with Google. This is an application-breaking bug. The investigation should start with the changes made to  for the WebSocket integration, as this is the most likely cause of the 500 error on .
-- **User Is Blocked on Migrations:** The user has reported errors running migrations for both the security logs and materialized views. You must provide clean, consolidated, and re-runnable (idempotent) SQL scripts for the user and guide them to execute them. Do not create more  files.
-- **Ignored Cron Error:** There is a persistent cron job error () in the logs that the previous agent ignored. This should be fixed to restore abandoned cart functionality.
+- **The application is currently unusable due to an infinite reload loop.** Your absolute first priority is to guide the user to resolve this. Instruct them to **manually unregister all service workers from their browser's developer tools** and then perform a hard cache clear. Confirm with them that the reloading has stopped before proceeding.
+- **The Promo Code feature will not work until the user runs the database migration.** The file is located at . You must guide the user to execute this SQL in their Supabase editor.
+- **Do not attempt to re-enable any service worker or PWA functionality.** The previous implementation was flawed and caused critical stability issues. This should be treated as a future task only after the application is fully stable.
+- **The real-time analytics feature is disabled.** This was a temporary workaround for a build issue and can be addressed after the main P0/P1 bugs are resolved.
 
 **documents and test reports created in this job**
 - 
 - 
 - 
 - 
-- Multiple migration files in .
+- 
+- 
 
-**Last 10 User Messages and any pending HUMAN messages**
-1. **User**: Reports SQL error for materialized views (). (PENDING)
-2. **Agent**: Provides a  SQL file with unique indexes.
-3. **User**: Asks to continue with WebSocket and charts implementation. (DONE)
-4. **Agent**: Implements WebSockets and Recharts.
-5. **User**: Reports a Google login failure (). (PENDING - CRITICAL)
-6. **Agent**: Investigates, finds a server crash issue related to WebSocket DB connection, and applies a partial fix.
-7. **User**: Confirms the Google login error *still* exists after the fix. (PENDING - CRITICAL)
-8. **Agent**: Acknowledges the issue is not solved.
-9. **User**: No new messages. Waiting for a fix for the login issue.
+**Last 10 User Messages and any pending HUMAN messages** 
+- **User:** The app keeps reloading every 0.5 seconds, and the Security and Promo Code errors are still present. (PENDING - CRITICAL)
+- **User:** Confirms the service worker fix did not work, the app is still reloading, and the same errors persist. (PENDING - CRITICAL)
+- **User:** Reports that the Security tab still crashes with a  error and Promo Codes are not being saved. (PENDING)
+- **User:** Provides detailed stack traces for the Security tab crash and console logs for the promo code issue. (PENDING)
+- **User:** Initial report that the Security tab and Promo Codes tab are broken after the refactoring work. (PENDING)
+- **User:** Asks to continue with the full Super Admin dashboard refactoring. (IN PROGRESS)
+- **User:** Confirms Google login is working and asks to proceed with fraud prevention and dashboard refactoring. (DONE)
+- **User:** Confirms all 3 database migrations were run successfully. (DONE)
 
 **Project Health Check:**
-- **Broken:**
-    - **Google Authentication**: Users cannot log in. This is the highest priority issue.
-    - **Database Migrations**: Several key features (security logs, analytics views) are not functional because their migrations are failing.
-    - **Abandoned Cart Cron Job**: This background job is consistently failing due to a missing database column.
-- **Mocked:**
+- **Broken**:
+    - **Entire Application**: Stuck in an infinite reload loop, making it unusable.
+    - **Super Admin Security Tab**: Crashes on load with a  error.
+    - **Super Admin Promo Codes Tab**: Created codes are not saved or displayed.
+    - **Super Admin Analytics Tab**: Displays an error.
+- **Mocked**:
     - None.
 
 **3rd Party Integrations**
@@ -347,22 +193,16 @@ Firebase Admin Initialized Successfully
 - **Firebase**: Authentication
 - **Stripe**: Payment Processing
 - **Resend**: Transactional Emails
-- **Fixer.io**: Currency Exchange Rates
-- **multer**: Middleware for file uploads
-- **socket.io / socket.io-client**: Real-time communication
-- **recharts**: Data visualization/charts
+- **socket.io / socket.io-client**: Real-time communication (currently disabled due to build issues).
 
 **Testing status**
-  - Testing agent used after significant changes: NO
-  - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: Several  migration files, many of which are broken or obsolete.
-  - Known regressions: Google Authentication.
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: YES
+  - Test files created: Several  migration files.
+  - Known regressions: The entire application's stability has regressed into an infinite reload loop. The Security and Promo Code tabs are non-functional.
 
 **Credentials to test flow:**
 - All necessary credentials are in environment variables.
 
 **What agent forgot to execute**
-- The agent failed to resolve the root cause of the Google login failure.
-- The agent never fixed the recurring cron job error for .
-- The agent did not consolidate the many failed migration files into clean, final versions for the user, leaving the migrations in a broken state.
-- The agent implemented security *logging* but forgot to implement the actual fraud *prevention* (blocking) logic requested in the original prompt.</analysis>
+- The agent failed to resolve the root cause of the browser caching and service worker conflict, leading to a situation where fixes were implemented but could not be verified by the user. The final step of instructing the user to manually unregister the service workers from their browser was missed, which is a critical step in resolving such issues.</analysis>
