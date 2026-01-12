@@ -892,7 +892,7 @@ export const StorageService = {
 
     createPromoCode: async (promoCode: any): Promise<boolean> => {
         try {
-            await fetchSupabase('/admin/promo-codes', true, 'POST', promoCode);
+            await postSupabase('/admin/promo-codes', 'POST', promoCode);
             return true;
         } catch (e) {
             console.error("Failed to create promo code", e);
@@ -902,7 +902,7 @@ export const StorageService = {
 
     updatePromoCode: async (id: string, updates: any): Promise<boolean> => {
         try {
-            await fetchSupabase(`/admin/promo-codes/${id}`, true, 'PUT', updates);
+            await postSupabase(`/admin/promo-codes/${id}`, 'PUT', updates);
             return true;
         } catch (e) {
             console.error("Failed to update promo code", e);
@@ -912,7 +912,7 @@ export const StorageService = {
 
     deletePromoCode: async (id: string): Promise<boolean> => {
         try {
-            await fetchSupabase(`/admin/promo-codes/${id}`, true, 'DELETE');
+            await postSupabase(`/admin/promo-codes/${id}`, 'DELETE');
             return true;
         } catch (e) {
             console.error("Failed to delete promo code", e);
