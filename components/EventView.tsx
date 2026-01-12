@@ -920,9 +920,20 @@ export const EventView = () => {
                                                 </div>
                                                 <div>
                                                     <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">Status</h3>
-                                                    <Badge color={event.requiresApproval ? 'yellow' : 'secondary'} className="h-10 px-6 text-sm">
-                                                        {event.requiresApproval ? 'Pending Approval' : 'Confirmed'}
-                                                    </Badge>
+                                                    {completedRegistration?.paymentStatus === 'offline_pending' ? (
+                                                        <div className="space-y-2">
+                                                            <Badge className="h-10 px-6 text-sm bg-orange-500 text-white font-black border-none">
+                                                                ⏳ PENDING OFFLINE PAYMENT
+                                                            </Badge>
+                                                            <p className="text-xs font-bold text-orange-600 dark:text-orange-400">
+                                                                Complete payment at check-in or via organizer instructions
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <Badge color={event.requiresApproval ? 'yellow' : 'secondary'} className="h-10 px-6 text-sm">
+                                                            {event.requiresApproval ? 'Pending Approval' : 'Confirmed'}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </div>
 
