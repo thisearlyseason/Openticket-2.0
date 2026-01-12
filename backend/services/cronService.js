@@ -686,7 +686,7 @@ export const initCronJobs = () => {
     // Scheduled Affiliate Payouts - Daily at midnight UTC
     cron.schedule('0 0 * * *', async () => {
         console.log('[CRON] Triggered: Scheduled Affiliate Payouts');
-        await processScheduledAffiliate Payouts();
+        await processScheduledAffiliatePayouts();
     }, { timezone: 'UTC' });
     console.log('[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)');
 
