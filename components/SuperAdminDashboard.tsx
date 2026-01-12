@@ -295,7 +295,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             console.log('[SuperAdmin] Settings tab active, checking Resend status...');
             checkResendStatus().catch(console.error);
         }
-    }, [activeTab]);
+        if (activeTab === 'security') {
+            console.log('[SuperAdmin] Security tab active, loading suspicious activities...');
+            loadSuspiciousActivities().catch(console.error);
+        }
+    }, [activeTab, suspiciousSeverityFilter]);
 
     const refreshData = async () => {
         try {
