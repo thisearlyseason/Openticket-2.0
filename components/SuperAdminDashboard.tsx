@@ -2394,7 +2394,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <AlertTriangle className="text-yellow-500" size={20} />
                                 </div>
                                 <div className="text-3xl font-bold text-white">
-                                    {suspiciousActivities.length}
+                                    {(suspiciousActivities || []).length}
                                 </div>
                             </Card>
                             <Card className="p-6 bg-zinc-900 border-zinc-800">
@@ -2403,7 +2403,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <Clock className="text-orange-500" size={20} />
                                 </div>
                                 <div className="text-3xl font-bold text-white">
-                                    {suspiciousActivities.filter(a => a.action === 'SUSPICIOUS_TRANSFER_RATE').length}
+                                    {(suspiciousActivities || []).filter(a => a.action === 'SUSPICIOUS_TRANSFER_RATE').length}
                                 </div>
                             </Card>
                             <Card className="p-6 bg-zinc-900 border-zinc-800">
@@ -2412,7 +2412,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <RefreshCw className="text-red-500" size={20} />
                                 </div>
                                 <div className="text-3xl font-bold text-white">
-                                    {suspiciousActivities.filter(a => a.action === 'SUSPICIOUS_CIRCULAR_TRANSFER').length}
+                                    {(suspiciousActivities || []).filter(a => a.action === 'SUSPICIOUS_CIRCULAR_TRANSFER').length}
                                 </div>
                             </Card>
                         </div>
