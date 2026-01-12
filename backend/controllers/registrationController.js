@@ -861,17 +861,19 @@ export const transferTicket = async (req, res) => {
         }
 
         // 9. Log the transfer initiation
-        await supabase.from('audit_logs').insert({
+        await supabase.from('security_audit_logs').insert({
             action: 'TRANSFER_INITIATED',
             entity_type: 'ticket',
             entity_id: effectiveTicketKey,
             user_id: senderUserId,
+            user_email: registration.attendee_email,
             details: {
                 transferId,
                 recipientEmail,
                 registrationId: id,
                 eventId: registration.event_id
             },
+            severity: 'info',
             created_at: new Date().toISOString()
         });
 
