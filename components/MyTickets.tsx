@@ -143,7 +143,7 @@ export const MyTickets = () => {
         const groups: Record<string, { event: Event, tickets: DisplayTicket[], timestamp: number }> = {};
 
         for (const { reg, event } of userRegistrations) {
-            console.log('[MyTickets] Processing registration:', reg.id, 'with', reg.tickets?.length || 0, 'tickets');
+            console.log('[MyTickets] Processing registration:', reg.id, 'payment:', reg.paymentStatus, 'with', reg.tickets?.length || 0, 'tickets');
             
             const isRegHidden = reg.hiddenForAttendee === true;
             const isRefunded = reg.paymentStatus === 'refunded';
@@ -155,6 +155,17 @@ export const MyTickets = () => {
             const eventDateStr = event.date + 'T' + (event.time || '00:00');
             const eventTimestamp = new Date(eventDateStr).getTime();
             const isPastEvent = !isNaN(eventTimestamp) && eventTimestamp < now;
+            
+            console.log('[MyTickets] Registration filters:', {
+                id: reg.id,
+                paymentStatus: reg.paymentStatus,
+                isRegHidden,
+                isRefunded,
+                isExpired,
+                isPastEvent,
+                eventDate: eventDateStr,
+                activeTab
+            });
 
             // View Filtering Logic
             if (activeTab === 'archived') {
