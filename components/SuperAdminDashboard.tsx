@@ -785,45 +785,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
-    const handleSendBroadcast = async () => {
-        if (!broadcastMsg.trim()) return;
-        
-        try {
-            const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/notifications/broadcast', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    message: broadcastMsg,
-                    title: '📢 Announcement',
-                    target: broadcastTarget,
-                    type: 'broadcast'
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok) {
-                setBroadcastMsg('');
-                refreshData();
-                window.alert(`Broadcast sent to ${result.sent} ${broadcastTarget === 'all' ? 'users' : broadcastTarget}!`);
-            } else {
-                window.alert(`Failed to send broadcast: ${result.error}`);
-            }
-        } catch (error: any) {
-            console.error('Broadcast error:', error);
-            window.alert(`Failed to send broadcast: ${error.message}`);
-        }
-    };
-
-    const handleClearBroadcast = () => {
-        StorageService.clearSystemNotification();
-        refreshData();
-    };
-
     const handleToggleBan = async (user: User) => {
         if (user.isAdmin) return;
         const confirmMsg = user.isBanned
