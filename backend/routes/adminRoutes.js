@@ -1161,6 +1161,10 @@ router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
                 const { assignPlanIds } = await import('../migrations/assign_plan_ids.js');
                 results = await assignPlanIds({ dryRun });
                 break;
+            case 'create_organizer_payouts_table':
+                const { createOrganizerPayoutsTable } = await import('../migrations/create_organizer_payouts_table.js');
+                results = await createOrganizerPayoutsTable({ dryRun });
+                break;
             default:
                 return res.status(400).json({ error: `Unknown migration: ${migration}` });
         }
