@@ -51,6 +51,79 @@ export const EventFinance = () => {
 
     const user = StorageService.getCurrentUser();
 
+    // Payout functions
+    const canRequestPayout = () => {
+        if (!event || !summary) return false;
+        
+        // Check if event has ended
+        const eventEndDate = new Date(event.endDate);
+        const now = new Date();
+        if (eventEndDate > now) return false;
+        
+        // Check if there are net earnings
+        if (summary.netEarnings <= 0) return false;
+        
+        // Check if there are any pending transactions
+        const hasPendingTransactions = transactions.some(tx => tx.payout_status === 'pending');
+        if (hasPendingTransactions) return false;
+        
+        return true;
+    };
+
+    const getPayoutBlockReason = () => {
+        if (!event || !summary) return 'Loading...';
+        
+        const eventEndDate = new Date(event.endDate);
+        const now = new Date();
+        
+        if (eventEndDate > now) {
+            return `Event must end before payout is available. Event ends on ${eventEndDate.toLocaleDateString()}.`;
+        }
+        
+        if (summary.netEarnings <= 0) {
+            return 'No net earnings available for payout.';
+        }
+        
+        const hasPendingTransactions = transactions.some(tx => tx.payout_status === 'pending');
+        if (hasPendingTransactions) {
+            return 'Waiting for pending transactions to settle before payout is available.';
+        }
+        
+        return 'Payout requirements not met.';
+    };
+
+    const handleRequestPayout = async () => {
+        if (!canRequestPayout() || !eventId) return;
+        
+        try {
+            const token = await getAuthToken();
+            if (!token) {
+                showToast('Authentication required', 'error');
+                return;
+            }
+
+            const response = await fetch(`/api/admin/events/${eventId}/request-payout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                showToast('Payout request submitted successfully', 'success');
+                // Refresh financial data to update payout status
+                handleRefresh();
+            } else {
+                const error = await response.json();
+                showToast(error.message || 'Failed to request payout', 'error');
+            }
+        } catch (error) {
+            console.error('Payout request failed:', error);
+            showToast('Failed to request payout', 'error');
+        }
+    };
+
     const loadFinancials = async () => {
         if (!eventId) {
             setIsLoading(false);
