@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Megaphone, Send } from 'lucide-react';
 import { StorageService } from '../../../services/storageService';
-import Button from '../../ui/Button';
-import RichTextarea from '../../ui/RichTextarea';
+import { Button, RichTextarea } from '../../UI';
 
 interface BroadcastTabProps {
     refreshData: () => Promise<void>;
