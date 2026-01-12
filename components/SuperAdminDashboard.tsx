@@ -166,17 +166,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [migrationRunning, setMigrationRunning] = useState(false);
     const [migrationResults, setMigrationResults] = useState<any>(null);
 
-    // Promo Code State
-    const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
-    const [newPromo, setNewPromo] = useState({
-        code: '',
-        type: 'percentage' as 'percentage' | 'fixed',
-        value: 10,
-        target: 'all' as 'subscription' | 'ticket' | 'all',
-        targetPlans: [] as string[],
-        usageLimit: 0,
-        expiresAt: ''
-    });
 
     // Platform Settings State
     const [platformStripeId, setPlatformStripeId] = useState('');
