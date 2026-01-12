@@ -86,4 +86,32 @@ router.get('/organizer', verifyToken, async (req, res) => {
     }
 });
 
+// Receive scan analytics from mobile scanner
+router.post('/scan-metrics', verifyToken, async (req, res) => {
+    try {
+        const { metrics } = req.body;
+        
+        if (!metrics || !Array.isArray(metrics)) {
+            return res.status(400).json({ error: 'Invalid metrics data' });
+        }
+
+        // In a real implementation, you would save these to MongoDB
+        // For now, we'll just acknowledge receipt
+        console.log(`[Analytics] Received ${metrics.length} scan metrics`);
+        
+        // TODO: Store in MongoDB scan_analytics collection
+        // const supabase = (await import('../services/supabase.js')).default;
+        // await supabase.from('scan_analytics').insert(metrics);
+
+        res.json({
+            success: true,
+            received: metrics.length,
+            message: 'Metrics received successfully'
+        });
+    } catch (error) {
+        console.error('[Analytics] Error processing metrics:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
