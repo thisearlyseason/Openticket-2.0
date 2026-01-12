@@ -357,7 +357,7 @@ The ticket transfer system backend is **fully functional** and ready for product
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly on https://pass-hand.preview.emergentagent.com
+   - Application loads correctly on https://eventsystem-1.preview.emergentagent.com
    - Authentication UI renders properly (Sign In, Sign Up, Find Tickets tabs)
    - My Tickets page structure is accessible
    - Navigation system functional
@@ -1183,7 +1183,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://pass-hand.preview.emergentagent.com  
+**Backend URL:** https://eventsystem-1.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:

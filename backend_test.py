@@ -12,7 +12,7 @@ import subprocess
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://pass-hand.preview.emergentagent.com"
+BACKEND_URL = "https://eventsystem-1.preview.emergentagent.com"
 
 class TicketSystemTester:
     def __init__(self):
