@@ -498,6 +498,153 @@ const sendWeeklyAffiliateSummaries = async () => {
 };
 
 /**
+ * Process Scheduled Affiliate Payouts
+ * Runs daily at midnight to check for scheduled payouts that are due
+ * Transfers funds via Stripe and updates status
+ */
+const processScheduledAffiliatePayouts = async () => {
+    console.log('[CRON] Starting scheduled affiliate payout processing...');
+    
+    try {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // End of today
+
+        // Get all scheduled payouts due today or earlier
+        const { data: payouts, error: fetchError } = await supabase
+            .from('affiliate_payouts')
+            .select(`
+                *,
+                affiliates:affiliate_id (
+                    id,
+                    code,
+                    user_id,
+                    stripe_account_id,
+                    profiles:user_id (
+                        email,
+                        display_name,
+                        name
+                    )
+                )
+            `)
+            .eq('status', 'scheduled')
+            .lte('scheduled_for', today.toISOString());
+
+        if (fetchError) {
+            console.error('[CRON] Error fetching scheduled payouts:', fetchError);
+            return;
+        }
+
+        if (!payouts || payouts.length === 0) {
+            console.log('[CRON] No scheduled payouts due today');
+            return;
+        }
+
+        console.log(`[CRON] Found ${payouts.length} scheduled payout(s) to process`);
+
+        let processedCount = 0;
+        let failedCount = 0;
+
+        for (const payout of payouts) {
+            try {
+                console.log(`[CRON] Processing payout ${payout.id} for affiliate ${payout.affiliates.code}`);
+
+                // Verify affiliate has Stripe account
+                if (!payout.affiliates.stripe_account_id) {
+                    console.error(`[CRON] Affiliate ${payout.affiliates.code} has no Stripe account`);
+                    
+                    await supabase
+                        .from('affiliate_payouts')
+                        .update({
+                            status: 'failed',
+                            notes: 'No Stripe account connected'
+                        })
+                        .eq('id', payout.id);
+                    
+                    failedCount++;
+                    continue;
+                }
+
+                // Convert amount to cents
+                const amountInCents = Math.round(payout.amount * 100);
+
+                // Create Stripe transfer
+                const transfer = await stripe.transfers.create({
+                    amount: amountInCents,
+                    currency: 'usd',
+                    destination: payout.affiliates.stripe_account_id,
+                    description: `Affiliate commission payout for ${payout.affiliates.code}`,
+                    metadata: {
+                        payout_id: payout.id,
+                        affiliate_id: payout.affiliate_id,
+                        affiliate_code: payout.affiliates.code,
+                        payout_method: 'scheduled'
+                    }
+                });
+
+                console.log(`[CRON] ✅ Stripe transfer created: ${transfer.id}`);
+
+                // Update payout record to paid
+                await supabase
+                    .from('affiliate_payouts')
+                    .update({
+                        status: 'paid',
+                        paid_at: new Date().toISOString(),
+                        stripe_payout_id: transfer.id,
+                        notes: `Automatically processed on ${new Date().toLocaleDateString()}`
+                    })
+                    .eq('id', payout.id);
+
+                processedCount++;
+
+                // Send email notification
+                try {
+                    const affiliateName = payout.affiliates.profiles.display_name || 
+                                        payout.affiliates.profiles.name || 
+                                        'Affiliate';
+                    const affiliateEmail = payout.affiliates.profiles.email;
+
+                    if (affiliateEmail) {
+                        await sendEmailWithProvider(
+                            affiliateEmail,
+                            '💰 Your affiliate commission has been paid!',
+                            `
+                                <h2>Payment Processed!</h2>
+                                <p>Hi ${affiliateName},</p>
+                                <p>Great news! Your scheduled affiliate commission of <strong>$${payout.amount.toFixed(2)}</strong> has been successfully transferred to your Stripe account.</p>
+                                <p><small>Transfer ID: ${transfer.id}</small></p>
+                                <p>Thank you for being a valued affiliate partner!</p>
+                            `,
+                            payout.affiliates.user_id
+                        );
+                    }
+                } catch (emailError) {
+                    console.error('[CRON] Failed to send email notification:', emailError);
+                }
+
+            } catch (stripeError) {
+                console.error(`[CRON] ❌ Stripe error for payout ${payout.id}:`, stripeError);
+                
+                await supabase
+                    .from('affiliate_payouts')
+                    .update({
+                        status: 'failed',
+                        notes: `Stripe error: ${stripeError.message}`
+                    })
+                    .eq('id', payout.id);
+                
+                failedCount++;
+            }
+        }
+
+        console.log(`[CRON] Scheduled payout processing completed`);
+        console.log(`[CRON] ✅ Success: ${processedCount}, ❌ Failed: ${failedCount}, Total: ${payouts.length}`);
+
+    } catch (error) {
+        console.error('[CRON] Unexpected error in processScheduledAffiliatePayouts:', error);
+    }
+};
+
+/**
  * Initialize all cron jobs
  */
 export const initCronJobs = () => {
