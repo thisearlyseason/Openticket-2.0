@@ -1438,4 +1438,39 @@ router.post('/process-scheduled-payouts', verifyToken, requireAdmin, async (req,
     }
 });
 
+// Get suspicious activities from security audit logs (Super Admin only)
+router.get('/security-audit-logs/suspicious', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const { severity } = req.query; // optional filter: 'info', 'warning', 'critical'
+
+        let query = supabase
+            .from('security_audit_logs')
+            .select('*')
+            .like('action', 'SUSPICIOUS%')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (severity && ['info', 'warning', 'critical'].includes(severity)) {
+            query = query.eq('severity', severity);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('[Security Audit Logs] Error fetching suspicious activities:', error);
+            throw error;
+        }
+
+        res.json({
+            success: true,
+            logs: data || [],
+            count: data?.length || 0
+        });
+    } catch (error) {
+        console.error('[Security Audit Logs] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
