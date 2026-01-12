@@ -603,17 +603,17 @@ class AffiliatePayoutTester:
         return passed == total
 
 if __name__ == "__main__":
-    tester = TicketSystemTester()
+    tester = AffiliatePayoutTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/ticket_system_test_results.json', 'w') as f:
+    with open('/app/affiliate_payout_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/ticket_system_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/affiliate_payout_test_results.json")
     
     if success:
-        print("\n🎉 All Unique Ticket System tests PASSED!")
+        print("\n🎉 All Affiliate Payout System tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
