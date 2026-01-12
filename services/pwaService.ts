@@ -7,6 +7,20 @@ export class PWAService {
 
   // Register service worker
   async register(): Promise<void> {
+    // SERVICE WORKER COMPLETELY DISABLED - Causing infinite reload
+    console.log('[PWA] Service Worker registration DISABLED to fix cache issues');
+    
+    // Unregister any existing service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        console.log('[PWA] Unregistering existing service worker:', registration.scope);
+        await registration.unregister();
+      }
+    }
+    return;
+    
+    /* DISABLED CODE TO PREVENT SERVICE WORKER ISSUES
     if (!('serviceWorker' in navigator)) {
       console.log('[PWA] Service Workers not supported');
       return;
