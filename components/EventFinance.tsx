@@ -95,11 +95,13 @@ export const EventFinance = () => {
 
     const handleRequestPayout = async () => {
         if (!canRequestPayout() || !eventId) return;
+
+        setIsRequestingPayout(true);
         
         try {
             const token = await getAuthToken();
             if (!token) {
-                showToast('Authentication required', 'error');
+                showToast('Please log in to request payout', 'error');
                 return;
             }
 
@@ -111,17 +113,20 @@ export const EventFinance = () => {
                 }
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                showToast('Payout request submitted successfully', 'success');
-                // Refresh financial data to update payout status
-                handleRefresh();
+                showToast(`Payout request submitted successfully! Amount: $${data.amount.toFixed(2)}`, 'success');
+                // Reload financials to show updated status
+                await loadFinancials();
             } else {
-                const error = await response.json();
-                showToast(error.message || 'Failed to request payout', 'error');
+                showToast(data.error || 'Failed to request payout', 'error');
             }
         } catch (error) {
-            console.error('Payout request failed:', error);
-            showToast('Failed to request payout', 'error');
+            console.error('Error requesting payout:', error);
+            showToast('Failed to request payout. Please try again.', 'error');
+        } finally {
+            setIsRequestingPayout(false);
         }
     };
 
