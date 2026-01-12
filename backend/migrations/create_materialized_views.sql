@@ -114,12 +114,41 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_event_scan_summary;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scans_by_hour;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scan_errors;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_daily_scan_trends;
+    -- Refresh with CONCURRENTLY to avoid locking tables
+    -- This allows queries to continue while refreshing
+    BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_event_scan_summary;
+        RAISE NOTICE 'Refreshed mv_event_scan_summary';
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Failed to refresh mv_event_scan_summary: %', SQLERRM;
+    END;
     
-    RAISE NOTICE 'All scan analytics materialized views refreshed successfully';
+    BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scans_by_hour;
+        RAISE NOTICE 'Refreshed mv_scans_by_hour';
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Failed to refresh mv_scans_by_hour: %', SQLERRM;
+    END;
+    
+    BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scan_errors;
+        RAISE NOTICE 'Refreshed mv_scan_errors';
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Failed to refresh mv_scan_errors: %', SQLERRM;
+    END;
+    
+    BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_daily_scan_trends;
+        RAISE NOTICE 'Refreshed mv_daily_scan_trends';
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE WARNING 'Failed to refresh mv_daily_scan_trends: %', SQLERRM;
+    END;
+    
+    RAISE NOTICE '✅ All scan analytics materialized views refresh completed';
 END;
 $$;
 
