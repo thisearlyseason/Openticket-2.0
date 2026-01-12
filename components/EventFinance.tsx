@@ -48,6 +48,7 @@ export const EventFinance = () => {
     const [registrations, setRegistrations] = useState<Registration[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
     const user = StorageService.getCurrentUser();
 
