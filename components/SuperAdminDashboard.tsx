@@ -248,6 +248,31 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
+    // Load suspicious activities from security audit logs
+    const loadSuspiciousActivities = async () => {
+        setLoadingSuspicious(true);
+        try {
+            const token = await import('../services/firebaseConfig').then(m => m.getAuthToken());
+            const severityParam = suspiciousSeverityFilter !== 'all' ? `?severity=${suspiciousSeverityFilter}` : '';
+            const response = await fetch(`/api/admin/security-audit-logs/suspicious${severityParam}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setSuspiciousActivities(data.logs || []);
+            } else {
+                console.error('Failed to load suspicious activities:', await response.text());
+            }
+        } catch (error) {
+            console.error('Error loading suspicious activities:', error);
+        } finally {
+            setLoadingSuspicious(false);
+        }
+    };
+
     useEffect(() => {
         // When embedded, the parent component already verified admin access
         if (!embedded && (!currentUser || !currentUser.isAdmin)) {
