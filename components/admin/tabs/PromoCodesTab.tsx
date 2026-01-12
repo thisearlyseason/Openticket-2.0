@@ -43,32 +43,42 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
             return;
         }
 
-        const promoCode = {
-            id: `promo-${Date.now()}`,
-            code: newPromo.code.toUpperCase(),
-            type: newPromo.type,
-            value: newPromo.value,
-            target: newPromo.target,
-            targetPlans: newPromo.targetPlans,
-            usageLimit: newPromo.usageLimit || 0,
-            usageCount: 0,
-            expiresAt: newPromo.expiresAt || undefined,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
+        try {
+            const promoCode = {
+                id: `promo-${Date.now()}`,
+                code: newPromo.code.toUpperCase(),
+                type: newPromo.type,
+                value: newPromo.value,
+                target: newPromo.target,
+                targetPlans: newPromo.targetPlans,
+                usageLimit: newPromo.usageLimit || 0,
+                usageCount: 0,
+                expiresAt: newPromo.expiresAt || undefined,
+                isActive: true,
+                createdAt: new Date().toISOString()
+            };
 
-        await StorageService.createPromoCode(promoCode);
-        loadPromoCodes();
-        setNewPromo({
-            code: '',
-            type: 'percentage',
-            value: 10,
-            target: 'all',
-            targetPlans: [],
-            usageLimit: 0,
-            expiresAt: ''
-        });
-        window.alert('Promo code created successfully!');
+            const success = await StorageService.createPromoCode(promoCode);
+            
+            if (success) {
+                await loadPromoCodes();
+                setNewPromo({
+                    code: '',
+                    type: 'percentage',
+                    value: 10,
+                    target: 'all',
+                    targetPlans: [],
+                    usageLimit: 0,
+                    expiresAt: ''
+                });
+                window.alert('Promo code created successfully!');
+            } else {
+                window.alert('Failed to create promo code. Please try again.');
+            }
+        } catch (error: any) {
+            console.error('Error creating promo code:', error);
+            window.alert(`Failed to create promo code: ${error.message}`);
+        }
     };
 
     const handleTogglePromoCode = async (promo: any) => {
