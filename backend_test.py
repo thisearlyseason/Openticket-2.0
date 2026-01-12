@@ -36,7 +36,6 @@ class AffiliatePayoutTester:
             print(f"   Response: {response_data}")
     
     def test_affiliate_earnings_endpoint(self):
-    def test_affiliate_earnings_endpoint(self):
         """Test Case 1: GET /api/admin/affiliate/earnings - Fetch earnings summary"""
         try:
             # Test without authentication first
