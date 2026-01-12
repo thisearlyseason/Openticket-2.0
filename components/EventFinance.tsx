@@ -524,11 +524,15 @@ export const EventFinance = () => {
                     </div>
                     <Button
                         onClick={() => handleRequestPayout()}
-                        disabled={!canRequestPayout()}
+                        disabled={!canRequestPayout() || isRequestingPayout}
                         className="whitespace-nowrap"
                     >
-                        <DollarSign size={16} className="mr-2" />
-                        Request ${summary.netEarnings.toFixed(2)}
+                        {isRequestingPayout ? (
+                            <Loader2 size={16} className="mr-2 animate-spin" />
+                        ) : (
+                            <DollarSign size={16} className="mr-2" />
+                        )}
+                        {isRequestingPayout ? 'Processing...' : `Request $${summary.netEarnings.toFixed(2)}`}
                     </Button>
                 </div>
                 
