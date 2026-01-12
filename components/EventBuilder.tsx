@@ -95,7 +95,7 @@ export const EventBuilder = () => {
         addOns: [], affiliates: [],
         absorbFees: false, taxRate: 0, capacity: 100,
         questions: [], gallery: [], reminders: [], imageUrl: '', coverImagePosition: 50,
-        paymentConfig: { method: 'none' },
+        paymentConfig: { method: 'online' }, // Default to online payment
         confirmationMessage: '', requiresApproval: false,
         specificWaiverText: '', specificWaiverPdfUrl: '', schedulePdfUrl: '', refundPolicy: '',
         enablePayAtDoor: false,
