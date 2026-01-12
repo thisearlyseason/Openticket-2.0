@@ -1248,4 +1248,176 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
     }
 });
 
+// Affiliate payout endpoints
+router.get('/affiliate/earnings', verifyToken, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const userId = req.user.uid;
+
+        // Get affiliate profile
+        const { data: affiliate } = await supabase
+            .from('affiliates')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+        if (!affiliate) {
+            return res.json({ total: 0, available: 0, pending: 0, paid: 0 });
+        }
+
+        // Calculate earnings from registrations
+        const { data: registrations } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('affiliate_code', affiliate.code)
+            .eq('payment_status', 'paid');
+
+        let totalEarnings = 0;
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+        (registrations || []).forEach(reg => {
+            const gross = (reg.tickets?.reduce((acc, t) => acc + ((t.price || t.pricePerTicket || 0) * 1), 0) || 0)
+                + (reg.donation_amount || 0);
+            const commission = gross * 0.05; // 5% commission rate
+            totalEarnings += commission;
+        });
+
+        // Get paid out amount
+        const { data: payouts } = await supabase
+            .from('affiliate_payouts')
+            .select('amount, status, created_at')
+            .eq('affiliate_id', affiliate.id);
+
+        let paidAmount = 0;
+        let pendingAmount = 0;
+
+        (payouts || []).forEach(payout => {
+            if (payout.status === 'paid') {
+                paidAmount += payout.amount;
+            } else if (payout.status === 'pending' || payout.status === 'scheduled') {
+                pendingAmount += payout.amount;
+            }
+        });
+
+        // Available = total - paid - pending
+        const availableAmount = Math.max(0, totalEarnings - paidAmount - pendingAmount);
+
+        res.json({
+            total: totalEarnings,
+            available: availableAmount,
+            pending: pendingAmount,
+            paid: paidAmount
+        });
+    } catch (error) {
+        console.error('[Affiliate Earnings] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/affiliate/payouts', verifyToken, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const userId = req.user.uid;
+
+        // Get affiliate profile
+        const { data: affiliate } = await supabase
+            .from('affiliates')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+        if (!affiliate) {
+            return res.json({ payouts: [] });
+        }
+
+        // Get payout history
+        const { data: payouts } = await supabase
+            .from('affiliate_payouts')
+            .select('*')
+            .eq('affiliate_id', affiliate.id)
+            .order('created_at', { ascending: false });
+
+        res.json({ payouts: payouts || [] });
+    } catch (error) {
+        console.error('[Affiliate Payouts] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/affiliate/request-payout', verifyToken, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const userId = req.user.uid;
+        const { method } = req.body; // 'manual' or 'scheduled'
+
+        // Get affiliate profile
+        const { data: affiliate } = await supabase
+            .from('affiliates')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+        if (!affiliate) {
+            return res.status(404).json({ error: 'Affiliate profile not found' });
+        }
+
+        // Calculate available earnings
+        const earningsRes = await fetch(`${req.protocol}://${req.get('host')}/api/admin/affiliate/earnings`, {
+            headers: { 'Authorization': req.headers.authorization }
+        });
+        const earnings = await earningsRes.json();
+
+        if (earnings.available <= 0) {
+            return res.status(400).json({ error: 'No funds available for payout' });
+        }
+
+        // Check for existing pending/scheduled payout
+        const { data: existingPayout } = await supabase
+            .from('affiliate_payouts')
+            .select('*')
+            .eq('affiliate_id', affiliate.id)
+            .in('status', ['pending', 'scheduled'])
+            .single();
+
+        if (existingPayout) {
+            return res.status(400).json({ error: 'You already have a pending payout request' });
+        }
+
+        // Calculate scheduled date if scheduled method
+        let scheduledFor = null;
+        if (method === 'scheduled') {
+            const now = new Date();
+            scheduledFor = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
+        }
+
+        // Create payout request
+        const { data: payout, error: payoutError } = await supabase
+            .from('affiliate_payouts')
+            .insert({
+                affiliate_id: affiliate.id,
+                amount: earnings.available,
+                status: method === 'scheduled' ? 'scheduled' : 'pending',
+                method: method,
+                scheduled_for: scheduledFor,
+                requested_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (payoutError) throw payoutError;
+
+        res.json({
+            success: true,
+            amount: earnings.available,
+            method: method,
+            scheduledFor: scheduledFor,
+            payoutId: payout.id
+        });
+    } catch (error) {
+        console.error('[Request Payout] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
