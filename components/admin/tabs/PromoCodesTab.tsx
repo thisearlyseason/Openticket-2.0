@@ -188,11 +188,11 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
                                 </td>
                                 <td className="p-4 capitalize">{promo.target}</td>
                                 <td className="p-4">
-                                    {promo.usage_count}/{promo.usage_limit || '∞'}
+                                    {promo.usage_count || promo.usageCount || 0}/{promo.usage_limit || promo.usageLimit || '∞'}
                                 </td>
                                 <td className="p-4">
-                                    <Badge color={promo.active ? 'green' : 'gray'}>
-                                        {promo.active ? 'Active' : 'Inactive'}
+                                    <Badge color={(promo.is_active ?? promo.active) ? 'green' : 'gray'}>
+                                        {(promo.is_active ?? promo.active) ? 'Active' : 'Inactive'}
                                     </Badge>
                                 </td>
                                 <td className="p-4 flex gap-2">
@@ -201,7 +201,7 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
                                         variant="outline" 
                                         onClick={() => handleTogglePromoCode(promo)}
                                     >
-                                        {promo.active ? 'Disable' : 'Enable'}
+                                        {(promo.is_active ?? promo.active) ? 'Disable' : 'Enable'}
                                     </Button>
                                     <button 
                                         onClick={() => handleDeletePromoCode(promo)} 
