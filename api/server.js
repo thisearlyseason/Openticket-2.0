@@ -211,19 +211,30 @@ app.use('/api/upload', uploadRoutes);
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('CRITICAL ERROR:', err);
-    // Return a Very Descriptive Plain Text error if JSON fails
+    
+    // Don't override if response already sent by controller
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    // Return JSON for API routes, plain text for others
     const errorDetails = {
-        message: err.message,
-        stack: err.stack,
-        code: err.code
+        error: err.message || 'Internal Server Error',
+        code: err.code || 'UNKNOWN',
+        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
     };
 
+    // API routes should return JSON
+    if (req.path.startsWith('/api/')) {
+        return res.status(err.status || 500).json(errorDetails);
+    }
+
+    // Non-API routes get plain text
     res.status(500).setHeader('Content-Type', 'text/plain').send(`
         INTERNAL SERVER ERROR
         =====================
         Message: ${err.message}
         Code: ${err.code || 'N/A'}
-        Details: ${JSON.stringify(errorDetails, null, 2)}
     `);
 });
 
