@@ -486,15 +486,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
-    const loadPromoCodes = async () => {
-        try {
-            const codes = await StorageService.getPromoCodes();
-            setPromoCodes(codes || []);
-        } catch (e) {
-            console.error("Failed to load promo codes", e);
-        }
-    };
-
     // Non-profit approval handler - shows confirmation modal
     const showApproveConfirmation = (applicationId: string, userId: string) => {
         setConfirmModal({
