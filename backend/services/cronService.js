@@ -2,6 +2,11 @@ import cron from 'node-cron';
 import supabase from './supabase.js';
 import { EmailService } from './serverEmail.js';
 import PushService from './pushService.js';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 
 /**
  * Cron Service - Handles scheduled tasks for OpenTicket
@@ -11,6 +16,7 @@ import PushService from './pushService.js';
  * - Abandoned Cart: Unpaid registrations > 12h or failed checkouts
  * - Post-Event Follow-up: 24h after event ends
  * - Weekly Affiliate Summary: Mondays 9 AM UTC
+ * - Scheduled Affiliate Payouts: Daily at midnight UTC
  */
 
 // Track if cron jobs are already initialized
