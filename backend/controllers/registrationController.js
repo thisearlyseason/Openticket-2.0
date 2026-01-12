@@ -969,12 +969,13 @@ export const undoTransfer = async (req, res) => {
         }
 
         // 6. Log the undo
-        await supabase.from('audit_logs').insert({
+        await supabase.from('security_audit_logs').insert({
             action: 'TRANSFER_UNDONE',
             entity_type: 'ticket',
             entity_id: transfer.ticket_key,
             user_id: userId,
-            details: { transferId },
+            details: { transferId, reason: 'User undone within undo window' },
+            severity: 'info',
             created_at: new Date().toISOString()
         });
 
