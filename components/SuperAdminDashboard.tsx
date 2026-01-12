@@ -2451,7 +2451,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 </td>
                                             </tr>
                                         ) : (
-                                            Array.isArray(suspiciousActivities) && suspiciousActivities.map((activity) => (
+                                            (suspiciousActivities || []).map((activity) => (
                                                 <tr key={activity.id} className="hover:bg-zinc-800/50 transition-colors">
                                                     <td className="p-4 text-sm text-zinc-400">
                                                         {new Date(activity.created_at).toLocaleString()}
