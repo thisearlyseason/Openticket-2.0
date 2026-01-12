@@ -34,7 +34,7 @@ class AffiliatePayoutTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_ticket_generator_utility(self):
+    def test_affiliate_earnings_endpoint(self):
         """Test Case 1: Ticket Generator Utility - Test unique ID generation"""
         try:
             # Test the ticket generator utility directly via Node.js
