@@ -59,7 +59,6 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       // Add hash to filenames for cache busting
       rollupOptions: {
-        external: ['socket.io-client'],
         output: {
           // Ensure unique file names with content hash
           entryFileNames: `assets/[name]-[hash]-${BUILD_TIMESTAMP}.js`,
@@ -67,10 +66,7 @@ export default defineConfig(({ mode }) => {
           assetFileNames: `assets/[name]-[hash].[ext]`,
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom', '@stripe/stripe-js'],
-            firebase: ['firebase/app', 'firebase/auth', 'firebase/storage']
-          },
-          globals: {
-            'socket.io-client': 'io'
+            firebase: ['firebase/app', 'firebase/auth', 'firebase/storage'],
           }
         }
       }
