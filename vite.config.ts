@@ -52,6 +52,9 @@ export default defineConfig(({ mode }) => {
         'node_modules'
       ]
     },
+    optimizeDeps: {
+      include: ['socket.io-client']
+    },
     build: {
       chunkSizeWarningLimit: 1000,
       // Add hash to filenames for cache busting
@@ -64,6 +67,7 @@ export default defineConfig(({ mode }) => {
           manualChunks: {
             vendor: ['react', 'react-dom', 'react-router-dom', '@stripe/stripe-js'],
             firebase: ['firebase/app', 'firebase/auth', 'firebase/storage'],
+            socketio: ['socket.io-client']
           }
         }
       }
