@@ -2651,6 +2651,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                     </div>
                 )}
 
+                {/* ANALYTICS TAB */}
+                {activeTab === 'analytics' && (
+                    <div className="p-8">
+                        <AdminAnalyticsDashboard />
+                    </div>
+                )}
+
                 {/* BROADCAST TAB */}
                 {activeTab === 'broadcast' && (
                     <div className="p-8">
