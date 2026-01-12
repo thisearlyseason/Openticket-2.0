@@ -477,9 +477,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 console.error("Failed to load onboarding responses", e);
             }
 
-            try {
-                setActiveNotification(StorageService.getSystemNotification());
-            } catch (e) { console.error(e); }
+ 
 
         } catch (e) {
             console.error("Dashboard Refresh Error", e);
