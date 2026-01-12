@@ -1,17 +1,13 @@
 // OpenTicket Service Worker
-// Version 1.0.0 - Mobile Scanner PWA Support
+// Version 2.0.0 - FORCE CACHE CLEAR FOR BUG FIXES
+const CACHE_VERSION = 'v2-1768240810646';
+const CACHE_NAME = `openticket-scanner-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `openticket-runtime-${CACHE_VERSION}`;
 
-const CACHE_NAME = 'openticket-scanner-v1';
-const RUNTIME_CACHE = 'openticket-runtime-v1';
+console.log('[SW] Service Worker v2 loaded - FORCE CACHE CLEAR');
 
 // Assets to cache immediately on install
-const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/static/css/main.css',
-  '/static/js/main.js'
-];
+const PRECACHE_ASSETS = [];  // Don't precache to force fresh loads
 
 // API endpoints that should use network-first strategy
 const API_ROUTES = [
@@ -20,17 +16,22 @@ const API_ROUTES = [
   '/api/admin'
 ];
 
-// Install event - cache essential assets
+// Install event - DELETE ALL OLD CACHES
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker v2 - CLEARING ALL CACHES...');
   
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[SW] Precaching assets');
-        return cache.addAll(PRECACHE_ASSETS);
-      })
-      .then(() => self.skipWaiting())
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[SW] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      console.log('[SW] All caches cleared, skipping waiting');
+      return self.skipWaiting();
+    })
   );
 });
 
