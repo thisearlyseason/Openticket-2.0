@@ -820,8 +820,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
-    // Non-profit approval handler - shows confirmation modal
-    const showApproveConfirmation = (applicationId: string, userId: string) => {
+    const handleSavePlatformSettings = async () => {
         if (!currentUser) return;
         await StorageService.updateUser(currentUser.id, {
             stripeConnectId: platformStripeId,
