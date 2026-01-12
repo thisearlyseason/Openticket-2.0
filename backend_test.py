@@ -9,6 +9,7 @@ import json
 import time
 import uuid
 import subprocess
+import os
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
