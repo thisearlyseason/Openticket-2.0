@@ -357,7 +357,7 @@ The ticket transfer system backend is **fully functional** and ready for product
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly on https://eventsystem-1.preview.emergentagent.com
+   - Application loads correctly on https://ticketing-fix.preview.emergentagent.com
    - Authentication UI renders properly (Sign In, Sign Up, Find Tickets tabs)
    - My Tickets page structure is accessible
    - Navigation system functional
@@ -1183,7 +1183,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://eventsystem-1.preview.emergentagent.com  
+**Backend URL:** https://ticketing-fix.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
@@ -1422,7 +1422,7 @@ The unique ticket system refactor has been successfully implemented and verified
 ### Test User Setup:
 - Need affiliate user with `affiliateCode` set
 - Test URL: `http://localhost:3000/#/affiliate`
-- External API URL for backend: `https://eventsystem-1.preview.emergentagent.com/api`
+- External API URL for backend: `https://ticketing-fix.preview.emergentagent.com/api`
 
 ---
 

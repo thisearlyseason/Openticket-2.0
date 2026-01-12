@@ -1,160 +1,346 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a robust and reliable ticket transfer system.
-
-PRODUCT REQUIREMENTS:
-1.  **Atomic Transfers:** Transfers must be atomic, placing tickets in a Pending Transfer state before finalization to prevent lost or duplicated tickets.
-2.  **5-Second Undo Window:** Senders must have a 5-second window to undo an initiated transfer. If not undone, the transfer finalizes automatically.
-3.  **Clear UX States:** The UI must clearly reflect the ticket's state for both sender (Transfer Pending, Transferred) and recipient (Transferred In). The recipient should not see the ticket during the undo window.
-4.  **Audit Trail:** Organizer and admin views must maintain a complete history of the transfer, including original owner, new owner, and timestamps.
-5.  **Fraud Prevention:** The system must prevent transfers of checked-in tickets, rate-limit transfer attempts, and block circular transfers. Suspicious activity should be logged for admin review.
-6.  **Data Model:** Introduce new states (, , , ) and persist all relevant transfer details, including user IDs, timestamps, and fraud flags.
+The user's goal is to evolve their event ticketing platform by implementing a series of critical features and fixes. This involves:
+1.  **Ticket Transfer System:** Build and debug an atomic ticket transfer system with a 5-second undo window, clear UX states, an audit trail, and fraud prevention. The core bug was that transfers would not finalize correctly, leaving tickets in a limbo state.
+2.  **Unique Ticket Generation:** Refactor the entire ticket system to move away from a quantity-based model. Each individual ticket must have a unique Ticket ID, Ticket Number, and scannable QR code. This is critical for accurate check-in and ownership tracking.
+3.  **Ticket Visibility and Ownership:** Fix bugs where purchased or transferred tickets do not appear in the correct user's My Tickets section. Ensure Superadmins have a complete view of all tickets. All tickets must display key metadata: Attendee Name, Ticket Number, Purchase Order ID, and Purchase Date. Transferred tickets should show a name history (original name struck through).
+4.  **Payment Flow and Payouts:**
+    *   Fix a critical bug where paid events skip the Stripe payment screen and are incorrectly marked as pending, making tickets invisible.
+    *   Implement a robust payout system for event organizers and affiliates.
+5.  **Mobile Check-in:** Build a dedicated, mobile-optimized check-in scanner interface with PWA support, offline capabilities, and analytics.
+6.  **Admin Dashboards & Analytics:** Enhance the Super Admin dashboard with security monitoring, real-time analytics, data visualizations, and performance optimizations.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack event ticketing platform using a React frontend, a Node.js/Express backend, and a Supabase (PostgreSQL) database. The agent has just built the initial version of the ticket transfer system, including:
-- Backend API endpoints to initiate, undo, and finalize transfers.
-- A  table in the database to track the process.
-- Frontend UI in the My Tickets section with a modal to initiate a transfer and a 5-second countdown modal to undo it.
-The system is functionally built but is failing during the finalization step, where the ownership change doesn't correctly reflect for the sender or the recipient.
+The application is a full-stack event ticketing platform with a React frontend, FastAPI backend (migrated to Node.js/Express in a previous session), and a Supabase (PostgreSQL) database.
+
+A significant amount of work has been completed in this session, building upon previous features:
+- The affiliate payout system was successfully integrated into the frontend.
+- A new, separate  table was created to fix a schema mismatch, and a Security tab was added to the Super Admin dashboard to view suspicious activities.
+- A mobile-first check-in scanner component () was built with PWA support, offline sync via IndexedDB, and scan analytics.
+- Major backend enhancements were implemented, including:
+    - An admin analytics dashboard with real-time updates via WebSockets () and charts ().
+    - Performance-enhancing materialized views.
+    - A cron job for automatic data cleanup.
+- However, the recent integration of WebSockets appears to have broken the Google authentication flow, which is the current critical issue.
 
 **Last working item**:
-    - Last item agent was working: Debugging the ticket transfer finalization process. The user reported that after a transfer is initiated and the undo window expires, the transfer appears to complete, but the recipient never receives the ticket, and the sender's ticket does not update to show a Transferred status.
-    - Status: IN PROGRESS
+    - Last item agent was working: Debugging a critical Google login failure. The user reports  after the agent integrated a WebSocket service. The agent identified that the WebSocket service was misconfigured, causing the server to crash. A fix was applied to allow the server to start, but the user confirmed the login error persists.
+    - Status: BLOCKED
     - Agent Testing Done: N
-    - Which testing method agent to use? both. This requires end-to-end testing: backend testing () to verify the  endpoint logic atomicity, and frontend testing (testing agent) to confirm the UI updates correctly for both sender and recipient after a transfer.
-    - User Testing Done: Y (Failed)
+    - Which testing method agent to use? Frontend testing agent. This is a critical end-to-end authentication flow. The agent must simulate the Google login, inspect the network request to , and analyze the 500 error response from the backend logs to find the root cause.
+    - User Testing Done: Y
 
 **All Pending/In progress Issue list**:
-  - Issue 1:  Ticket transfer does not finalize correctly (P0 - Blocker)
+  - Issue 1: Google login is broken (P0)
+  - Issue 2: Materialized view migration fails (P1)
+  - Issue 3: Security audit log migration has a history of failures (P2)
+  - Issue 4: Recurring cron job error for abandoned carts (P2)
   
   Issues Detail:
   - Issue 1: 
-     - **Description**: The ticket transfer process fails at the finalization step. Although the sender's UI shows the undo modal and then it disappears (implying completion), the recipient does not receive the ticket, and the sender's ticket remains in its original active state instead of being marked as Transferred.
-     - **Attempted fixes**:
-        - The agent initially diagnosed and fixed a bug where the frontend was using  instead of  when calling the API.
-        - The agent then fixed a more complex bug where the backend's ticket matching logic was too simple. Six different matching strategies were implemented in  to handle various ticket data structures in the database.
-        - The agent identified that the  table was missing an  column that the code was trying to update, and removed the column from the update statements.
-        - The agent identified a logic flaw where the  function was not ed in the frontend countdown timer and the UI wasn't correctly set up to display the new Transferred status. A fix was implemented.
-     - **Next debug checklist**:
-        1. **Verify Backend Finalization Logic**: Add extensive logging to the  function in . Trace the entire process: finding the transfer record, updating the sender's registration, and creating the new registration for the recipient. Check the results of each Supabase query.
-        2. **Isolate Backend with **: Manually test the  endpoint using a valid  from a pending transfer to see if the backend logic works correctly in isolation.
-        3. **Check Frontend State Management**: Review . Ensure that after  is called, the ticket list is being re-fetched or the local state is being updated correctly to reflect the Transferred Out status for the sender and Transferred In for the recipient.
-        4. **Review  Ticket Matching**: The ticket matching logic was fixed in  but may have been missed in . Double-check that  in  uses the same robust, multi-strategy ticket matching logic. (Agent did this, but a re-check is warranted).
-     - **Why fix this issue and what will be achieved with the fix?**: This is the core functionality requested by the user. Fixing it will complete the ticket transfer feature.
+     - **Description**: After integrating a WebSocket service in , the Google login flow broke, resulting in a 500 error on the  call. The agent's initial fix allowed the server to run but did not resolve the underlying authentication error.
+     - **Attempted fixes**: Disabled the PostgreSQL / functionality within  because it was misconfigured and crashing the server. This was only a partial fix.
+     - **Next debug checklist**: 
+        1. Examine the backend logs (==> /var/log/supervisor/backend.err.log <==
+[CRON] Error fetching abandoned carts: {
+  code: '42703',
+  details: null,
+  hint: null,
+  message: 'column registrations.abandoned_email_sent does not exist'
+}
+[WebSocket] Failed to setup PostgreSQL listener: Error: connect ECONNREFUSED 127.0.0.1:5432
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 5432
+}
+
+==> /var/log/supervisor/backend.out.log <==
+[CRON] Triggered: Post-Event Follow-ups
+[CRON] Starting post-event follow-up job...
+[CRON] No recent events for follow-up
+2026-01-12T05:31:13.849Z - GET /api/health
+2026-01-12T05:35:35.031Z - GET /api/admin/affiliate/earnings
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.039Z - GET /api/admin/affiliate/payouts
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.064Z - POST /api/admin/affiliate/request-payout
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.075Z - POST /api/admin/affiliate/request-payout
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.089Z - POST /api/admin/affiliate/request-payout
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.096Z - GET /api/admin/affiliate/payouts
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.105Z - GET /api/admin/affiliate/earnings
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.112Z - GET /api/admin/affiliate/payouts
+[Auth] Missing Authorization header
+2026-01-12T05:35:35.119Z - POST /api/admin/affiliate/request-payout
+[Auth] Missing Authorization header
+2026-01-12T05:40:54.355Z - GET /api/auth/profiles/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:40:55.549Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:40:55.722Z - GET /api/auth/profiles/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:40:56.173Z - GET /api/admin/affiliate/earnings
+2026-01-12T05:40:56.418Z - GET /api/admin/affiliate/payouts
+2026-01-12T05:41:25.623Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:41:55.621Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:42:25.599Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:42:56.893Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:43:26.949Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:43:56.941Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:44:38.943Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:45:38.880Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:46:38.898Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:47:38.940Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:48:11.898Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+2026-01-12T05:48:25.554Z - GET /api/notifications/twUJdSJAjhY7YSxBKZ7DUMxNXuh1
+[CRON] Triggered: Event Reminders (24h check)
+[CRON] Starting event reminder job...
+[CRON] Triggered: Abandoned Cart Emails
+[CRON] Starting abandoned cart job...
+[CRON] No events in 24h window
+[CRON] Triggered: Post-Event Follow-ups
+[CRON] Starting post-event follow-up job...
+[CRON] No recent events for follow-up
+2026-01-12T06:40:51.230Z - POST /api/auth/google-login
+[dotenv@17.2.3] injecting env (15) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+Supabase Service Initialized
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Firebase Admin Initialized Successfully
+[PushService] Initialized with VAPID keys
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[Server] RESEND_API_KEY configured: true
+[Server] SENDER_EMAIL: tickets@openticket.events
+🚀 OpenTicket API Server running on http://0.0.0.0:8001
+[WebSocket] Initializing Socket.IO server...
+[WebSocket] ✅ Socket.IO server initialized
+[Server] ✅ WebSocket service initialized
+[CRON] Initializing scheduled jobs...
+[CRON] ✅ Event Reminders scheduled (hourly)
+[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
+[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
+[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
+[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
+[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
+[CRON] All jobs initialized successfully
+2026-01-12T06:41:32.511Z - GET /api/health
+[dotenv@17.2.3] injecting env (15) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Supabase Service Initialized
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+Firebase Admin Initialized Successfully
+[PushService] Initialized with VAPID keys
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[Server] RESEND_API_KEY configured: true
+[Server] SENDER_EMAIL: tickets@openticket.events
+🚀 OpenTicket API Server running on http://0.0.0.0:8001
+[WebSocket] Initializing Socket.IO server...
+[WebSocket] Skipping PostgreSQL listener - not a PostgreSQL connection
+[WebSocket] ✅ Socket.IO server initialized
+[Server] ✅ WebSocket service initialized
+[CRON] Initializing scheduled jobs...
+[CRON] ✅ Event Reminders scheduled (hourly)
+[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
+[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
+[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
+[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
+[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
+[CRON] All jobs initialized successfully
+2026-01-12T06:41:57.476Z - GET /api/health
+[dotenv@17.2.3] injecting env (15) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+Supabase Service Initialized
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+Firebase Admin Initialized Successfully
+[PushService] Initialized with VAPID keys
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: ⚙️  enable debug logging with { debug: true }
+[Server] RESEND_API_KEY configured: true
+[Server] SENDER_EMAIL: tickets@openticket.events
+🚀 OpenTicket API Server running on http://0.0.0.0:8001
+[WebSocket] Initializing Socket.IO server...
+[WebSocket] Note: PostgreSQL NOTIFY disabled (using Supabase REST API)
+[WebSocket] ✅ Socket.IO server initialized
+[Server] ✅ WebSocket service initialized
+[CRON] Initializing scheduled jobs...
+[CRON] ✅ Event Reminders scheduled (hourly)
+[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
+[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
+[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
+[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
+[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
+[CRON] All jobs initialized successfully
+2026-01-12T06:42:41.575Z - GET /api/health
+[dotenv@17.2.3] injecting env (15) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+Supabase Service Initialized
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+Firebase Admin Initialized Successfully
+[PushService] Initialized with VAPID keys
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (1) from backend/.env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[Server] RESEND_API_KEY configured: true
+[Server] SENDER_EMAIL: tickets@openticket.events
+🚀 OpenTicket API Server running on http://0.0.0.0:8001
+[WebSocket] Initializing Socket.IO server...
+[WebSocket] Note: PostgreSQL NOTIFY disabled (using Supabase REST API)
+[WebSocket] ✅ Socket.IO server initialized
+[Server] ✅ WebSocket service initialized
+[CRON] Initializing scheduled jobs...
+[CRON] ✅ Event Reminders scheduled (hourly)
+[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)
+[CRON] ✅ Post-Event Follow-ups scheduled (hourly)
+[CRON] ✅ Weekly Affiliate Summary scheduled (Mondays 9 AM UTC)
+[CRON] ✅ Scheduled Affiliate Payouts scheduled (daily at midnight UTC)
+[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)
+[CRON] All jobs initialized successfully) immediately after reproducing the Google login failure to find the specific 500 error stack trace.
+        2. Review changes made to  for the WebSocket integration. The error is likely in how the Express app, HTTP server, and Socket.io are initialized and how routes are attached.
+        3. Check the  controller in  for any code that might conflict with the new server setup.
+     - **Why fix this issue and what will be achieved with the fix?**: This is a critical, app-breaking bug. Users cannot log in. Fixing it will restore core functionality.
      - **Status**:  IN PROGRESS
-     - **Is recurring issue?**: N
+     - **Is recurring issue?**: Y
      - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on other issue**: None
+
+  - Issue 2: 
+     - **Description**: The user reported an error running the materialized views migration (): . This happens because a concurrent refresh requires a unique index on the view.
+     - **Attempted fixes**: The agent created a  file that adds unique indexes before the refresh function is created. User has not confirmed if this fix works.
+     - **Next debug checklist**: 
+        1. Confirm with the user if they have tried running the  version.
+        2. If it still fails, provide one consolidated, idempotent SQL script that DROPS the views and functions  before creating them correctly with the required unique indexes.
+     - **Why fix this issue and what will be achieved with the fix?**: This will enable the performance-enhancing materialized views for the admin analytics dashboard.
+     - **Status**:  USER VERIFICATION PENDING
+     - **Is recurring issue?**: N
+     - **Should Test frontend/backend/both after fix?**: backend
+     - **Blocked on other issue**: None
+
+  - Issue 3: 
+     - **Description**: The user encountered multiple errors ( cast error, ) while trying to run the migration for the  table.
+     - **Attempted fixes**: The agent created three different versions of the migration file (, , ) to address the errors. This has created confusion and file clutter.
+     - **Next debug checklist**: 
+        1. Consolidate the logic from  into a single, clean, and final  file.
+        2. Ensure the script uses  for table creation and  for dropping RLS policies to be safely re-runnable.
+        3. Guide the user to run this single, consolidated file.
+     - **Why fix this issue and what will be achieved with the fix?**: This will correctly set up the database table required for logging suspicious ticket transfer activity.
+     - **Status**:  USER VERIFICATION PENDING
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: backend
+     - **Blocked on other issue**: None
+
+  - Issue 4: 
+     - **Description**: Backend logs repeatedly show a cron job error: .
+     - **Attempted fixes**: None. The agent has ignored this error throughout the session.
+     - **Next debug checklist**: 
+        1. Locate the abandoned cart cron job logic in .
+        2. Check the database schema for the  table. The error indicates the  column is missing.
+        3. Create a new migration file to add this boolean column to the  table.
+     - **Why fix this issue and what will be achieved with the fix?**: This will fix a failing cron job and enable the abandoned cart email reminder functionality.
+     - **Status**:  NOT STARTED
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: backend
+     - **Blocked on other issue**: None
 
 **In progress Task List**:
-  - Task 1:  Complete the ticket transfer system (P0)
-
- Task Detail:
-  - Task 1: 
-     - **Where to resume**: Resuming the debugging of the  flow, focusing on why the database state and frontend UI are not updating after the undo window expires.
-     - **What will be achieved with this?**: A reliable, atomic ticket transfer system with a working undo feature, as specified in the user's requirements.
-     - **Status**:  IN PROGRESS
-     - **Should Test frontend/backend/both after fix?**: both
-     - **Blocked on something**: The finalization bug.
+(None)
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1:** Implement fraud prevention rules for ticket transfers (rate limiting, circular transfer blocks) as defined in the original prompt.
-    - **P1:** Create a Super Admin UI to review suspicious transfer activity logs.
+    - **P1:** Implement fraud prevention *rules* for ticket transfers (e.g., rate limiting, blocking circular transfers). The logging is done, but the blocking logic is not.
+    - **P1:** Consolidate all the partial/failed migration files (, , ) into single, idempotent, final versions for the user to run.
 - **Future Tasks:**
     - **P2:** Implement White Labeling for the Premium plan.
     - **P2:** Implement Custom Domain for the Premium plan.
-    - **P3:** Build a React Native mobile app.
+    - **P3:** Add more advanced features to the admin dashboards, such as automated anomaly detection, predictive analytics, and PDF report downloads.
 
 **Completed work in this session**
-- **Critical Blockers Resolved**:
-  - Fixed the fatal  error by deleting a duplicate  file.
-  - Fixed the non-profit signup 500 error () by increasing the Express JSON body size limit in .
-- **Full-Stack Notification System**:
-  - **Push Notifications Fixed**: Diagnosed and fixed a complex issue preventing push notifications on production by correcting VAPID key configuration, fixing frontend API URL logic, and creating a  table to persist subscriptions in the database for the serverless environment.
-  - **In-App Notifications Built**: Built the entire in-app notification system from scratch, as the previous implementation was stubbed. This included creating backend endpoints, a  database table, and updating the Test and Broadcast features to persist notifications.
-  - **Notification UI/UX Improved**: Added functionality to delete notifications, added a notification bell to the mobile UI, and fixed an HTML rendering bug in notification messages.
-- **Ticket Transfer System (Initial Build)**:
-  - Created backend APIs for initiating, undoing, and finalizing transfers in .
-  - Created the  database table schema.
-  - Built the frontend UI in  with modals for initiating and undoing transfers.
-  - Debugged and fixed several critical bugs during the initiation phase related to incorrect key mapping and inconsistent ticket data structures.
-- **Financial Audit & Fee Correction**: Performed a financial systems audit, identified a critical fee discrepancy between the frontend and backend, and corrected it based on user specifications.
-- **Database Migrations & Caching**: Created a DB migration for grandfathering user plans and added a UI button for it in the admin panel. Implemented a more robust service worker caching strategy.
-- **Plan Enforcement & Enterprise Flow**: Implemented soft limit enforcement for event creation and successfully tested the Contact Sales flow for the Enterprise plan.
+- **Affiliate Payout UI Integrated:** The  component was added to the .
+- **Security Audit System:** Fixed the audit log schema mismatch by creating a  table and integrated it with a new Security tab in the Super Admin dashboard.
+- **Mobile Check-In App (v1):** Created  as a dedicated, mobile-friendly PWA with offline sync (IndexedDB) and analytics.
+- **Admin Analytics Dashboard:** Built a new dashboard () integrated into the Super Admin page.
+- **Real-time & Visualization:** Implemented real-time updates using WebSockets () and data visualization charts () for the new analytics dashboard.
+- **Backend Optimizations:** Added a data cleanup cron job and created (but failed to deploy) materialized views for query performance.
+
+**Earlier issues found/mentioned but not fixed**
+   - **Issue 1**: Recurring cron job error: .
+     - **Debug checklist**:
+       1. Check  to find the failing query.
+       2. Create a SQL migration to add the  column to the  table.
+     - **Why to solve this issue and what will be achieved with this?**: It will fix a core business logic feature (abandoned cart recovery) that is currently broken.
+     - **Should Test frontend/backend/both after fix**: backend
+     - **Is recurring issue?**: Y
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**:  error and  500 error.
-  - **Recurrence count**: 3+
-  - **Status**: RESOLVED
+  - **Issue recurrence in previous fork**: The  500 error was noted as resolved in the previous session but has recurred in this session as the current top-priority blocker.
+  - **Recurrence count**: 1 in this session (was 3+ previously).
+  - **Status**: IN PROGRESS
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Atomic Operations with State Machines**: The ticket transfer system uses states (, , ) to manage the transfer process atomically and prevent race conditions.
-- **Client-Side Undo Pattern**: A  based 5-second undo window is implemented on the client, which triggers a finalization call if not cancelled by the user.
-- **Server-Side State Validation**: The system now validates push notification subscriptions against the database () rather than relying solely on the browser's state, making it compatible with serverless environments.
-- **Robust Data Matching**: Implemented multiple fallback strategies to match a ticket within a registration record, accounting for inconsistent data structures from legacy data.
+- **Real-time Data with WebSockets:** Using  to push live data from the server to the Admin Analytics Dashboard.
+- **PWA (Progressive Web App):** Using a  and  to enable offline capabilities and an installable mobile experience for the check-in scanner.
+- **Offline First with IndexedDB:** Caching check-in scans locally when offline and syncing with the backend when a connection is restored.
+- **Data Visualization:** Using the  library to create interactive charts for the analytics dashboard.
+- **PostgreSQL Materialized Views:** An attempt to improve query performance for the analytics dashboard by pre-calculating aggregates.
+- **Node.js/Express Server Configuration:** The recent modification of  to support both Express REST APIs and Socket.io is a key area of focus for debugging the current login issue.
 
 **key DB schema**
-  - **ticket_transfers**: 
-  - **notifications**: 
-  - **push_subscriptions**: 
+  - **security_audit_logs**: 
+  - **scan_analytics**: 
+  - **Materialized Views**: , ,  (pending successful migration).
 
 **All files of reference**
-- : Contains the core logic for the entire ticket transfer process. This is the most critical file for the current bug.
-- : The primary frontend component for managing and initiating ticket transfers.
-- : Contains the frontend API calls for initiating and finalizing transfers.
-- : The source of truth for the  table schema.
+- : Critical file for the login bug. The WebSocket integration likely interfered with the Express route handling.
+- : The service whose misconfiguration caused the initial server crashes.
+- : Has become extremely large and needs refactoring.
+- : The new PWA-enabled scanner component.
+- : This directory contains multiple failed/corrected migration files that need consolidation.
 
 **Areas that need refactoring**:
-- ****: This controller has grown significantly and now handles ticket purchases, check-ins, and complex transfers. It should be refactored to separate concerns, perhaps by moving transfer-related logic into its own .
-- ****: This component is becoming very large. The logic for the various modals (Transfer, Undo, Receipt) could be extracted into their own smaller components.
+- ****: This component is now over 3000 lines and manages state and UI for users, events, affiliates, security, and analytics. It must be broken down into a layout with child components/routes for each tab to be maintainable.
+- **Migration Files**: The practice of creating , ,  files is unsustainable. The next agent should consolidate these into single, idempotent scripts and remove the obsolete versions.
+- ****: The server setup logic has become complex. It could be cleaned up by moving the WebSocket and server initialization into separate, more organized modules.
 
 **key api endpoints**
-- **Ticket Transfer:**
-  - : Initiates a ticket transfer.
-  - : Cancels a pending transfer within the 5-second window.
-  - : Finalizes the transfer after the window expires.
-- **Notifications:**
-  - : Fetches in-app notifications for the logged-in user.
-  - : Marks a notification as read.
-  - : Deletes a single notification.
-  - : Deletes all notifications for the user.
-  - : Sends a broadcast message to a target audience.
+- : Fetches security logs.
+- : Fetches aggregate data for the admin dashboard.
+- : Fetches time-series data for the admin charts.
+- : Endpoint for the mobile scanner to sync offline data.
 
 **Critical Info for New Agent**
-- The user is testing on their live production site (), but the code changes made by the agent are only in the preview environment. The user frequently reports errors from production that are already fixed in preview. **You must remind the user to Save to GitHub and wait for their Vercel deployment to complete before testing.**
-- The database schema is now correct. The user has already run the SQL scripts for , , and . Errors like relation already exists are expected and can be ignored. The current ticket transfer bug is in the application code, not the DB schema.
-- The root of the current bug is in the  step. The  and  steps appear to be working from the user's perspective. Focus your investigation on  in the backend and how the UI in  responds after that call is made.
+- **PRIORITY #1: GOOGLE LOGIN IS BROKEN.** Users cannot log in with Google. This is an application-breaking bug. The investigation should start with the changes made to  for the WebSocket integration, as this is the most likely cause of the 500 error on .
+- **User Is Blocked on Migrations:** The user has reported errors running migrations for both the security logs and materialized views. You must provide clean, consolidated, and re-runnable (idempotent) SQL scripts for the user and guide them to execute them. Do not create more  files.
+- **Ignored Cron Error:** There is a persistent cron job error () in the logs that the previous agent ignored. This should be fixed to restore abandoned cart functionality.
 
 **documents and test reports created in this job**
 - 
 - 
 - 
 - 
-- 
-- 
-- 
+- Multiple migration files in .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User**: Reports the ticket transfer worked kinda. The undo button showed, but the recipient didn't get the ticket and the sender's ticket status didn't update. (IN PROGRESS)
-2.  **Agent**: Investigates, finds multiple potential issues in the  logic on both frontend and backend, and applies fixes.
-3.  **User**: Confirms the database migration scripts for  and  were already run, as they are getting already exists errors.
-4.  **Agent**: Explains that the already exists errors are good news and mean the database is ready.
-5.  **User**: Reports another  column error from their live site.
-6.  **Agent**: Fixes the code to not update the non-existent column and reminds the user to deploy the changes.
-7.  **User**: Reports a 404 error from their live site for the transfer endpoint.
-8.  **Agent**: Explains again that the user is testing on production with old code. Implements more robust ticket matching logic as a precaution and tells the user to deploy.
-9.  **User**: Asks for the SQL to create the  table.
-10. **Agent**: Provides the SQL script for the  table.
+1. **User**: Reports SQL error for materialized views (). (PENDING)
+2. **Agent**: Provides a  SQL file with unique indexes.
+3. **User**: Asks to continue with WebSocket and charts implementation. (DONE)
+4. **Agent**: Implements WebSockets and Recharts.
+5. **User**: Reports a Google login failure (). (PENDING - CRITICAL)
+6. **Agent**: Investigates, finds a server crash issue related to WebSocket DB connection, and applies a partial fix.
+7. **User**: Confirms the Google login error *still* exists after the fix. (PENDING - CRITICAL)
+8. **Agent**: Acknowledges the issue is not solved.
+9. **User**: No new messages. Waiting for a fix for the login issue.
 
 **Project Health Check:**
 - **Broken:**
-  - Ticket Transfer Finalization: The core logic that completes the transfer by assigning ownership to the recipient and updating the sender's state is not working.
+    - **Google Authentication**: Users cannot log in. This is the highest priority issue.
+    - **Database Migrations**: Several key features (security logs, analytics views) are not functional because their migrations are failing.
+    - **Abandoned Cart Cron Job**: This background job is consistently failing due to a missing database column.
 - **Mocked:**
-  - None.
+    - None.
 
 **3rd Party Integrations**
 - **Supabase**: PostgreSQL Database & File Storage
@@ -163,15 +349,20 @@ The system is functionally built but is failing during the finalization step, wh
 - **Resend**: Transactional Emails
 - **Fixer.io**: Currency Exchange Rates
 - **multer**: Middleware for file uploads
+- **socket.io / socket.io-client**: Real-time communication
+- **recharts**: Data visualization/charts
 
 **Testing status**
-  - Testing agent used after significant changes: YES (for financial audit and plan enforcement)
+  - Testing agent used after significant changes: NO
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: YES ()
-  - Known regressions: None in this session.
+  - Test files created: Several  migration files, many of which are broken or obsolete.
+  - Known regressions: Google Authentication.
 
 **Credentials to test flow:**
 - All necessary credentials are in environment variables.
 
 **What agent forgot to execute**
-- The agent has not yet implemented the fraud prevention aspects (rate limiting, circular transfer checks) of the ticket transfer system, as they are focused on getting the core transfer functionality working first. This is an upcoming task.</analysis>
+- The agent failed to resolve the root cause of the Google login failure.
+- The agent never fixed the recurring cron job error for .
+- The agent did not consolidate the many failed migration files into clean, final versions for the user, leaving the migrations in a broken state.
+- The agent implemented security *logging* but forgot to implement the actual fraud *prevention* (blocking) logic requested in the original prompt.</analysis>
