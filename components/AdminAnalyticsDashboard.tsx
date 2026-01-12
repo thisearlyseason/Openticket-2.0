@@ -34,14 +34,16 @@ export const AdminAnalyticsDashboard: React.FC = () => {
         methods: {}
     });
 
-    // WebSocket connection for real-time updates
-    const { isConnected, connectionError } = useWebSocket({
-        subscribeGlobal: true,
-        onAnalyticsUpdate: (data) => {
-            console.log('[Admin Analytics] Real-time update received:', data);
-            loadAnalytics(); // Refresh data when update received
-        }
-    });
+    // Temporarily disabled WebSocket for Vercel deployment
+    // const { isConnected, connectionError } = useWebSocket({
+    //     subscribeGlobal: true,
+    //     onAnalyticsUpdate: (data) => {
+    //         console.log('[Admin Analytics] Real-time update received:', data);
+    //         loadAnalytics(); // Refresh data when update received
+    //     }
+    // });
+    const isConnected = false;
+    const connectionError = null;
 
     useEffect(() => {
         loadAnalytics();
