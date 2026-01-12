@@ -762,12 +762,14 @@ export const transferTicket = async (req, res) => {
 
         if (!rateError && recentTransfers && recentTransfers.length >= 5) {
             // Log suspicious activity
-            await supabase.from('audit_logs').insert({
+            await supabase.from('security_audit_logs').insert({
                 action: 'SUSPICIOUS_TRANSFER_RATE',
                 entity_type: 'ticket',
                 entity_id: effectiveTicketKey,
                 user_id: senderUserId,
+                user_email: registration.attendee_email,
                 details: { attempts: recentTransfers.length, recipientEmail },
+                severity: 'warning',
                 created_at: new Date().toISOString()
             });
             return res.status(429).json({ 
@@ -786,12 +788,14 @@ export const transferTicket = async (req, res) => {
             .gte('created_at', oneDayAgo);
 
         if (circularCheck && circularCheck.length > 0) {
-            await supabase.from('audit_logs').insert({
+            await supabase.from('security_audit_logs').insert({
                 action: 'SUSPICIOUS_CIRCULAR_TRANSFER',
                 entity_type: 'ticket',
                 entity_id: effectiveTicketKey,
                 user_id: senderUserId,
+                user_email: registration.attendee_email,
                 details: { recipientEmail, originalOwner: registration.attendee_email },
+                severity: 'warning',
                 created_at: new Date().toISOString()
             });
             return res.status(400).json({ 
@@ -1242,22 +1246,27 @@ export const finalizeTransfer = async (req, res) => {
         }
 
         // 10. Log finalization
-        console.log(`[Transfer] Creating audit log`);
-        const { error: auditError } = await supabase.from('audit_logs').insert({
+        console.log(`[Transfer] Creating security audit log`);
+        const { error: auditError } = await supabase.from('security_audit_logs').insert({
             action: 'TRANSFER_COMPLETED',
             entity_type: 'ticket',
             entity_id: transfer.ticket_key,
             user_id: transfer.sender_user_id,
+            user_email: transfer.sender_email,
             details: {
                 transferId,
                 recipientEmail: transfer.recipient_email,
+                recipientUserId: transfer.recipient_user_id,
                 recipientRegistrationId
             },
+            severity: 'info',
             created_at: new Date().toISOString()
         });
         
         if (auditError) {
-            console.log(`[Transfer] WARNING: Failed to create audit log:`, auditError);
+            console.log(`[Transfer] WARNING: Failed to create security audit log:`, auditError);
+        } else {
+            console.log(`[Transfer] Security audit log created successfully`);
         }
 
         console.log(`[Transfer] ========== FINALIZE COMPLETE ==========`);
