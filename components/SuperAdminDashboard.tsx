@@ -252,9 +252,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 setSuspiciousActivities(data.logs || []);
             } else {
                 console.error('Failed to load suspicious activities:', await response.text());
+                setSuspiciousActivities([]); // Always set to empty array on error
             }
         } catch (error) {
             console.error('Error loading suspicious activities:', error);
+            setSuspiciousActivities([]); // Always set to empty array on error
         } finally {
             setLoadingSuspicious(false);
         }
