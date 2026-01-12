@@ -653,14 +653,10 @@ export const transferTicket = async (req, res) => {
 
         // 4. Find the specific ticket
         const tickets = registration.tickets || [];
-        // ticketKey format from frontend: "${tierId}-${index}" e.g., "tier123-0"
-        const keyParts = ticketKey.split('-');
-        const tierIdPart = keyParts.slice(0, -1).join('-'); // Handle UUIDs with dashes
-        const indexPart = keyParts[keyParts.length - 1];
-        const ticketKeyIndex = parseInt(indexPart, 10);
         
-        console.log('[Transfer] Looking for ticket:', { ticketKey, tierIdPart, ticketKeyIndex });
+        console.log('[Transfer] Looking for ticket:', { ticketKey });
         console.log('[Transfer] Available tickets:', JSON.stringify(tickets.map(t => ({ 
+            ticketId: t.ticketId,
             key: t.key, 
             id: t.id, 
             tierId: t.tierId, 
@@ -671,22 +667,40 @@ export const transferTicket = async (req, res) => {
         // Try multiple matching strategies
         let ticketIndex = -1;
         
-        // Strategy 1: Direct key match
-        ticketIndex = tickets.findIndex(t => t.key === ticketKey);
+        // Strategy 0: NEW - Match by unique ticketId (for new ticket structure)
+        ticketIndex = tickets.findIndex(t => t.ticketId === ticketKey);
+        if (ticketIndex !== -1) {
+            console.log('[Transfer] Matched by ticketId (new structure)');
+        }
         
-        // Strategy 2: Direct id match
+        // Strategy 1: Direct key match (legacy)
+        if (ticketIndex === -1) {
+            ticketIndex = tickets.findIndex(t => t.key === ticketKey);
+            if (ticketIndex !== -1) console.log('[Transfer] Matched by key');
+        }
+        
+        // Strategy 2: Direct id match (legacy)
         if (ticketIndex === -1) {
             ticketIndex = tickets.findIndex(t => t.id === ticketKey);
+            if (ticketIndex !== -1) console.log('[Transfer] Matched by id');
         }
         
-        // Strategy 3: Match by tierId
+        // For legacy format, parse the key
+        const keyParts = ticketKey.split('-');
+        const tierIdPart = keyParts.slice(0, -1).join('-');
+        const indexPart = keyParts[keyParts.length - 1];
+        const ticketKeyIndex = parseInt(indexPart, 10);
+        
+        // Strategy 3: Match by tierId (legacy)
         if (ticketIndex === -1) {
             ticketIndex = tickets.findIndex(t => t.tierId === tierIdPart);
+            if (ticketIndex !== -1) console.log('[Transfer] Matched by tierId');
         }
         
-        // Strategy 4: Match by id equals tierIdPart
+        // Strategy 4: Match by id equals tierIdPart (legacy)
         if (ticketIndex === -1) {
             ticketIndex = tickets.findIndex(t => t.id === tierIdPart);
+            if (ticketIndex !== -1) console.log('[Transfer] Matched by id=tierIdPart');
         }
         
         // Strategy 5: For single ticket registrations, just use index 0
@@ -695,7 +709,7 @@ export const transferTicket = async (req, res) => {
             console.log('[Transfer] Using single ticket fallback');
         }
         
-        // Strategy 6: Match by index if within bounds and quantity > ticketKeyIndex
+        // Strategy 6: Match by index if within bounds and quantity > ticketKeyIndex (legacy)
         if (ticketIndex === -1 && !isNaN(ticketKeyIndex)) {
             // Find ticket where the index falls within its quantity
             let runningIndex = 0;
