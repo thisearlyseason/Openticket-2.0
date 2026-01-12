@@ -17,6 +17,7 @@ import { Billing } from './components/Billing';
 import { LandingPage } from './components/LandingPage';
 import { Contact } from './components/Contact';
 import { CheckInPortal } from './components/CheckInPortal';
+import { MobileCheckInScanner } from './components/MobileCheckInScanner';
 import { RefundsPage } from './components/RefundsPage';
 import { AffiliateDashboard } from './components/AffiliateDashboard';
 import { AttendeeManager } from './components/AttendeeManager';
@@ -551,6 +552,7 @@ const MainContent = () => {
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/checkin/:id" element={<CheckInPortal />} />
+                <Route path="/mobile-scanner/:id" element={<MobileCheckInScanner />} />
                 <Route path="/affiliate" element={<AffiliateDashboard />} />
                 <Route path="/affiliate-login" element={<AffiliateAuth />} />
                 <Route path="/create" element={<EventBuilder key={location.key} />} />
