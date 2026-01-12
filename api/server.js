@@ -232,8 +232,13 @@ export default app;
 
 // Start server for local development
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, '0.0.0.0', () => {
+    httpServer.listen(PORT, '0.0.0.0', () => {
         console.log(`🚀 OpenTicket API Server running on http://0.0.0.0:${PORT}`);
+        
+        // Initialize WebSocket service
+        websocketService.initialize(httpServer);
+        console.log('[Server] ✅ WebSocket service initialized');
+        
         // Initialize cron jobs after server starts
         initCronJobs();
     });
