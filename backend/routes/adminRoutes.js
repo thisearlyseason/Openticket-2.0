@@ -1181,4 +1181,71 @@ router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
     }
 });
 
+// Get upcoming payouts for organizer (event-based)
+router.get('/upcoming-payouts', verifyToken, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const userId = req.user.uid;
+
+        // Get all events owned by user that haven't ended yet or have pending payouts
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title, date, payment_config')
+            .eq('owner_id', userId);
+
+        if (eventsError) throw eventsError;
+
+        const upcomingPayouts = [];
+        const now = new Date();
+
+        for (const event of events) {
+            const eventDate = new Date(event.date);
+            
+            // Only include events that are upcoming or recently ended (within 30 days)
+            const daysSinceEvent = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
+            if (daysSinceEvent > 30) continue; // Skip old events
+            
+            // Calculate net earnings for this event
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('*')
+                .eq('event_id', event.id)
+                .eq('payment_status', 'paid');
+
+            if (!registrations || registrations.length === 0) continue;
+
+            let netEarnings = 0;
+            registrations.forEach(reg => {
+                const gross = (reg.tickets?.reduce((acc, t) => acc + ((t.price || t.pricePerTicket || 0) * 1), 0) || 0)
+                    + (reg.donation_amount || 0)
+                    + (reg.add_ons?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0);
+                
+                const fees = (reg.service_fee || 0) + (reg.stripe_fee || (gross * 0.029 + 0.30));
+                netEarnings += (gross - fees);
+            });
+
+            if (netEarnings <= 0) continue;
+
+            // Release date is event date (funds available after event)
+            upcomingPayouts.push({
+                eventId: event.id,
+                eventTitle: event.title,
+                eventDate: event.date,
+                releaseDate: eventDate, // Funds released on event date
+                amount: netEarnings,
+                status: eventDate <= now ? 'ready' : 'pending',
+                daysUntil: Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            });
+        }
+
+        // Sort by release date (soonest first)
+        upcomingPayouts.sort((a, b) => new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime());
+
+        res.json({ payouts: upcomingPayouts });
+    } catch (error) {
+        console.error('[Upcoming Payouts] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
