@@ -35,25 +35,31 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - IMMEDIATELY take control and clear ALL caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker v2 - FORCE RELOAD');
   
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((cacheName) => {
-              return cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE;
-            })
-            .map((cacheName) => {
-              console.log('[SW] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            })
-        );
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then((cacheNames) => {
+      // Delete ALL caches again to be sure
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[SW] Deleting cache on activate:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      console.log('[SW] Taking control of all clients');
+      return self.clients.claim();
+    }).then(() => {
+      // Force reload all clients
+      return self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          console.log('[SW] Posting reload message to client');
+          client.postMessage({ type: 'FORCE_RELOAD' });
+        });
+      });
+    })
   );
 });
 
