@@ -42,15 +42,18 @@ SELECT
     EXTRACT(HOUR FROM to_timestamp(timestamp / 1000))::INTEGER as hour,
     COUNT(*)::BIGINT as scan_count,
     COUNT(*) FILTER (WHERE success = true)::BIGINT as successful_count,
-    ROUND(AVG(duration)::NUMERIC, 0) as avg_duration
+    ROUND(AVG(duration)::NUMERIC, 0) as avg_duration,
+    -- Add row_number for uniqueness
+    ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY EXTRACT(HOUR FROM to_timestamp(timestamp / 1000))::INTEGER) as rn
 FROM public.scan_analytics
 GROUP BY event_id, hour
 ORDER BY event_id, scan_count DESC;
 
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_mv_scans_by_hour_event 
-ON public.mv_scans_by_hour(event_id);
+-- Create UNIQUE index (required for CONCURRENTLY refresh)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_scans_by_hour_unique 
+ON public.mv_scans_by_hour(event_id, hour);
 
+-- Additional indexes
 CREATE INDEX IF NOT EXISTS idx_mv_scans_by_hour_count 
 ON public.mv_scans_by_hour(scan_count DESC);
 
@@ -65,16 +68,19 @@ SELECT
     COUNT(*)::BIGINT as error_count,
     ROUND(AVG(duration)::NUMERIC, 0) as avg_error_duration,
     MIN(created_at) as first_occurrence,
-    MAX(created_at) as last_occurrence
+    MAX(created_at) as last_occurrence,
+    -- Add row_number for uniqueness
+    ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY COUNT(*) DESC) as rn
 FROM public.scan_analytics
 WHERE success = false AND error_message IS NOT NULL
 GROUP BY event_id, error_message
 ORDER BY event_id, error_count DESC;
 
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_mv_scan_errors_event 
-ON public.mv_scan_errors(event_id);
+-- Create UNIQUE index (required for CONCURRENTLY refresh)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_scan_errors_unique 
+ON public.mv_scan_errors(event_id, error_message);
 
+-- Additional indexes
 CREATE INDEX IF NOT EXISTS idx_mv_scan_errors_count 
 ON public.mv_scan_errors(error_count DESC);
 
@@ -95,9 +101,9 @@ FROM public.scan_analytics
 GROUP BY event_id, scan_date
 ORDER BY event_id, scan_date DESC;
 
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_mv_daily_scan_trends_event_date 
-ON public.mv_daily_scan_trends(event_id, scan_date DESC);
+-- Create UNIQUE index (required for CONCURRENTLY refresh)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_daily_scan_trends_unique 
+ON public.mv_daily_scan_trends(event_id, scan_date);
 
 -- ========================================
 -- FUNCTION: Refresh All Materialized Views
