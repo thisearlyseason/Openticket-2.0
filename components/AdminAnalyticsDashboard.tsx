@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button } from './UI';
 import { BarChart3, TrendingUp, Clock, AlertTriangle, RefreshCw, Download, Calendar, Users, Zap, Activity, Wifi, WifiOff } from 'lucide-react';
 import { getAuthToken } from '../services/firebaseConfig';
-import { useWebSocket } from '../hooks/useWebSocket';
+// import { useWebSocket } from '../hooks/useWebSocket'; // Temporarily disabled for Vercel deployment
 import { HourlyScansChart, DailyTrendsChart, ScanMethodsChart, SuccessRateTrendChart, PerformanceMetricsChart } from './AnalyticsCharts';
 
 interface EventAnalytics {
