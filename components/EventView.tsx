@@ -729,8 +729,17 @@ export const EventView = () => {
                 }
                 return; // Redirect happens here
             } else if (total === 0) {
+                console.log('[EventView] Free event detected (total = 0), skipping Stripe');
                 paymentStatus = 'completed';
+            } else {
+                console.log('[EventView] Skipping Stripe:', {
+                    reason: event.paymentConfig.method !== 'online' ? 'Payment method not online' : 'Total is 0 or negative',
+                    paymentMethod: event.paymentConfig.method,
+                    finalTotal
+                });
             }
+
+            console.log('[EventView] Creating registration with paymentStatus:', paymentStatus);
 
             const newReg: Registration = {
                 id: `reg-${Date.now()}`,
