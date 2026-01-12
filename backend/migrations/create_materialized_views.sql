@@ -1,11 +1,19 @@
--- Materialized Views for Scan Analytics Performance Optimization
+-- Materialized Views for Scan Analytics - FIXED VERSION
+-- This version includes proper unique indexes for CONCURRENTLY refresh
 -- Run this in Supabase SQL Editor
 
 -- ========================================
--- MATERIALIZED VIEW: Event Scan Summary
+-- DROP EXISTING VIEWS (if any)
 -- ========================================
--- Pre-aggregated summary per event for fast dashboard loading
-CREATE MATERIALIZED VIEW IF NOT EXISTS public.mv_event_scan_summary AS
+DROP MATERIALIZED VIEW IF EXISTS public.mv_event_scan_summary CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS public.mv_scans_by_hour CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS public.mv_scan_errors CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS public.mv_daily_scan_trends CASCADE;
+
+-- ========================================
+-- MATERIALIZED VIEW 1: Event Scan Summary
+-- ========================================
+CREATE MATERIALIZED VIEW public.mv_event_scan_summary AS
 SELECT 
     event_id,
     COUNT(*)::BIGINT as total_scans,
@@ -28,67 +36,58 @@ SELECT
 FROM public.scan_analytics
 GROUP BY event_id;
 
--- Create unique index for fast lookups
-CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_event_scan_summary_event 
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX idx_mv_event_scan_summary_event 
 ON public.mv_event_scan_summary(event_id);
 
 -- ========================================
--- MATERIALIZED VIEW: Hourly Scan Distribution
+-- MATERIALIZED VIEW 2: Scans by Hour
 -- ========================================
--- Pre-calculated scans by hour for all events
-CREATE MATERIALIZED VIEW IF NOT EXISTS public.mv_scans_by_hour AS
+CREATE MATERIALIZED VIEW public.mv_scans_by_hour AS
 SELECT 
     event_id,
     EXTRACT(HOUR FROM to_timestamp(timestamp / 1000))::INTEGER as hour,
     COUNT(*)::BIGINT as scan_count,
     COUNT(*) FILTER (WHERE success = true)::BIGINT as successful_count,
-    ROUND(AVG(duration)::NUMERIC, 0) as avg_duration,
-    -- Add row_number for uniqueness
-    ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY EXTRACT(HOUR FROM to_timestamp(timestamp / 1000))::INTEGER) as rn
+    ROUND(AVG(duration)::NUMERIC, 0) as avg_duration
 FROM public.scan_analytics
-GROUP BY event_id, hour
-ORDER BY event_id, scan_count DESC;
+GROUP BY event_id, hour;
 
--- Create UNIQUE index (required for CONCURRENTLY refresh)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_scans_by_hour_unique 
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX idx_mv_scans_by_hour_unique 
 ON public.mv_scans_by_hour(event_id, hour);
 
--- Additional indexes
-CREATE INDEX IF NOT EXISTS idx_mv_scans_by_hour_count 
+-- Additional index for sorting
+CREATE INDEX idx_mv_scans_by_hour_count 
 ON public.mv_scans_by_hour(scan_count DESC);
 
 -- ========================================
--- MATERIALIZED VIEW: Error Analytics
+-- MATERIALIZED VIEW 3: Scan Errors
 -- ========================================
--- Pre-aggregated error breakdown per event
-CREATE MATERIALIZED VIEW IF NOT EXISTS public.mv_scan_errors AS
+CREATE MATERIALIZED VIEW public.mv_scan_errors AS
 SELECT 
     event_id,
     error_message,
     COUNT(*)::BIGINT as error_count,
     ROUND(AVG(duration)::NUMERIC, 0) as avg_error_duration,
     MIN(created_at) as first_occurrence,
-    MAX(created_at) as last_occurrence,
-    -- Add row_number for uniqueness
-    ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY COUNT(*) DESC) as rn
+    MAX(created_at) as last_occurrence
 FROM public.scan_analytics
 WHERE success = false AND error_message IS NOT NULL
-GROUP BY event_id, error_message
-ORDER BY event_id, error_count DESC;
+GROUP BY event_id, error_message;
 
--- Create UNIQUE index (required for CONCURRENTLY refresh)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_scan_errors_unique 
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX idx_mv_scan_errors_unique 
 ON public.mv_scan_errors(event_id, error_message);
 
--- Additional indexes
-CREATE INDEX IF NOT EXISTS idx_mv_scan_errors_count 
+-- Additional index for sorting
+CREATE INDEX idx_mv_scan_errors_count 
 ON public.mv_scan_errors(error_count DESC);
 
 -- ========================================
--- MATERIALIZED VIEW: Daily Scan Trends
+-- MATERIALIZED VIEW 4: Daily Scan Trends
 -- ========================================
--- Daily aggregated scans for trend analysis
-CREATE MATERIALIZED VIEW IF NOT EXISTS public.mv_daily_scan_trends AS
+CREATE MATERIALIZED VIEW public.mv_daily_scan_trends AS
 SELECT 
     event_id,
     DATE(created_at) as scan_date,
@@ -98,15 +97,14 @@ SELECT
     MIN(duration) as min_duration,
     MAX(duration) as max_duration
 FROM public.scan_analytics
-GROUP BY event_id, scan_date
-ORDER BY event_id, scan_date DESC;
+GROUP BY event_id, scan_date;
 
--- Create UNIQUE index (required for CONCURRENTLY refresh)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_daily_scan_trends_unique 
+-- UNIQUE index required for CONCURRENTLY refresh
+CREATE UNIQUE INDEX idx_mv_daily_scan_trends_unique 
 ON public.mv_daily_scan_trends(event_id, scan_date);
 
 -- ========================================
--- FUNCTION: Refresh All Materialized Views
+-- REFRESH FUNCTION
 -- ========================================
 CREATE OR REPLACE FUNCTION refresh_scan_analytics_views()
 RETURNS void
@@ -114,49 +112,21 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    -- Refresh with CONCURRENTLY to avoid locking tables
-    -- This allows queries to continue while refreshing
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_event_scan_summary;
-        RAISE NOTICE 'Refreshed mv_event_scan_summary';
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE WARNING 'Failed to refresh mv_event_scan_summary: %', SQLERRM;
-    END;
+    -- Use CONCURRENTLY to avoid locking (safe for production)
+    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_event_scan_summary;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scans_by_hour;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scan_errors;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_daily_scan_trends;
     
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scans_by_hour;
-        RAISE NOTICE 'Refreshed mv_scans_by_hour';
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE WARNING 'Failed to refresh mv_scans_by_hour: %', SQLERRM;
-    END;
-    
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_scan_errors;
-        RAISE NOTICE 'Refreshed mv_scan_errors';
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE WARNING 'Failed to refresh mv_scan_errors: %', SQLERRM;
-    END;
-    
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_daily_scan_trends;
-        RAISE NOTICE 'Refreshed mv_daily_scan_trends';
-    EXCEPTION
-        WHEN OTHERS THEN
-            RAISE WARNING 'Failed to refresh mv_daily_scan_trends: %', SQLERRM;
-    END;
-    
-    RAISE NOTICE '✅ All scan analytics materialized views refresh completed';
+    RAISE NOTICE '✅ All materialized views refreshed successfully';
 END;
 $$;
 
 -- ========================================
--- OPTIMIZED QUERY FUNCTIONS USING MATERIALIZED VIEWS
+-- OPTIMIZED QUERY FUNCTIONS
 -- ========================================
 
--- Fast event summary from materialized view
+-- Fast event summary
 CREATE OR REPLACE FUNCTION get_fast_scan_summary(p_event_id TEXT)
 RETURNS TABLE (
     total_scans BIGINT,
@@ -195,7 +165,7 @@ BEGIN
 END;
 $$;
 
--- Fast peak hour detection from materialized view
+-- Fast peak hour detection
 CREATE OR REPLACE FUNCTION get_fast_peak_hour(p_event_id TEXT)
 RETURNS TABLE (
     hour INTEGER,
@@ -216,7 +186,7 @@ BEGIN
 END;
 $$;
 
--- Fast error breakdown from materialized view
+-- Fast error breakdown
 CREATE OR REPLACE FUNCTION get_fast_error_breakdown(
     p_event_id TEXT,
     p_limit INTEGER DEFAULT 10
@@ -241,37 +211,25 @@ END;
 $$;
 
 -- ========================================
--- AUTO-REFRESH TRIGGER
+-- AUTO-REFRESH TRIGGER (Optional)
 -- ========================================
--- Automatically refresh views after inserts (debounced)
 
 CREATE OR REPLACE FUNCTION trigger_refresh_analytics_views()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    -- Use pg_notify to trigger async refresh (processed by separate worker)
+    -- Notify to trigger async refresh
     PERFORM pg_notify('refresh_analytics_views', NEW.event_id);
     RETURN NEW;
 END;
 $$;
 
+DROP TRIGGER IF EXISTS after_scan_insert_refresh ON public.scan_analytics;
 CREATE TRIGGER after_scan_insert_refresh
 AFTER INSERT ON public.scan_analytics
 FOR EACH ROW
 EXECUTE FUNCTION trigger_refresh_analytics_views();
-
--- ========================================
--- SCHEDULED REFRESH (via pg_cron if available)
--- ========================================
--- If pg_cron extension is enabled, schedule auto-refresh every 5 minutes
-
--- Uncomment if pg_cron is installed:
--- SELECT cron.schedule(
---     'refresh-scan-analytics',
---     '*/5 * * * *',  -- Every 5 minutes
---     'SELECT refresh_scan_analytics_views();'
--- );
 
 -- ========================================
 -- PERMISSIONS
@@ -288,29 +246,32 @@ GRANT ALL ON public.mv_scan_errors TO service_role;
 GRANT ALL ON public.mv_daily_scan_trends TO service_role;
 
 -- ========================================
--- COMMENTS
+-- INITIAL REFRESH
 -- ========================================
 
-COMMENT ON MATERIALIZED VIEW public.mv_event_scan_summary IS 'Pre-aggregated scan summary per event for fast dashboard queries';
-COMMENT ON MATERIALIZED VIEW public.mv_scans_by_hour IS 'Hourly scan distribution for peak time analysis';
-COMMENT ON MATERIALIZED VIEW public.mv_scan_errors IS 'Error frequency breakdown per event';
-COMMENT ON MATERIALIZED VIEW public.mv_daily_scan_trends IS 'Daily scan trends for historical analysis';
-COMMENT ON FUNCTION refresh_scan_analytics_views() IS 'Refresh all scan analytics materialized views';
-
--- Initial refresh
 SELECT refresh_scan_analytics_views();
 
--- Notify schema change
-NOTIFY pgrst, 'reload schema';
+-- ========================================
+-- VERIFICATION
+-- ========================================
 
--- Success message
 DO $$ 
+DECLARE
+    v_count INTEGER;
 BEGIN 
-    RAISE NOTICE '✅ Materialized views created and refreshed successfully!';
-    RAISE NOTICE '📊 Available views:';
-    RAISE NOTICE '   - mv_event_scan_summary';
+    SELECT COUNT(*) INTO v_count FROM public.mv_event_scan_summary;
+    RAISE NOTICE '✅ Materialized views created successfully!';
+    RAISE NOTICE '📊 Found % events with analytics', v_count;
+    RAISE NOTICE '';
+    RAISE NOTICE '📋 Available views:';
+    RAISE NOTICE '   - mv_event_scan_summary (%  events)', v_count;
     RAISE NOTICE '   - mv_scans_by_hour';
     RAISE NOTICE '   - mv_scan_errors';
     RAISE NOTICE '   - mv_daily_scan_trends';
-    RAISE NOTICE '⚡ Use get_fast_scan_summary() for 10x faster queries!';
+    RAISE NOTICE '';
+    RAISE NOTICE '⚡ Available functions:';
+    RAISE NOTICE '   - get_fast_scan_summary(event_id)';
+    RAISE NOTICE '   - get_fast_peak_hour(event_id)';
+    RAISE NOTICE '   - get_fast_error_breakdown(event_id)';
+    RAISE NOTICE '   - refresh_scan_analytics_views()';
 END $$;
