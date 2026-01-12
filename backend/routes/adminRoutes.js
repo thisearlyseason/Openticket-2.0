@@ -1420,4 +1420,22 @@ router.post('/affiliate/request-payout', verifyToken, async (req, res) => {
     }
 });
 
+// Manual trigger for scheduled payout processing (for testing)
+router.post('/process-scheduled-payouts', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        console.log('[Admin] Manually triggering scheduled payout processing...');
+        
+        const cronService = (await import('../services/cronService.js')).default;
+        await cronService.triggerScheduledPayouts();
+        
+        res.json({ 
+            success: true,
+            message: 'Scheduled payout processing triggered successfully'
+        });
+    } catch (error) {
+        console.error('[Admin] Error triggering scheduled payouts:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
