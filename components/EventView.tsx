@@ -642,11 +642,25 @@ export const EventView = () => {
 
             const finalTotal = total + serviceFee;
 
+            console.log('[EventView] Payment check:', {
+                paymentMethod: event.paymentConfig.method,
+                finalTotal,
+                total,
+                serviceFee,
+                hasStripeConnect: !!organizerUser?.stripeConnectId,
+                stripeConnectId: organizerUser?.stripeConnectId
+            });
+
             let paymentStatus: any = event.paymentConfig.method === 'online' ? 'pending' : 'offline_pending';
             let paymentIntentId = undefined;
 
             if (event.paymentConfig.method === 'online' && finalTotal > 0) {
-                if (!organizerUser?.stripeConnectId) throw new Error("Online payments not connected by organizer.");
+                console.log('[EventView] Entering Stripe checkout flow...');
+                
+                if (!organizerUser?.stripeConnectId) {
+                    console.error('[EventView] Stripe Connect not configured!');
+                    throw new Error("Online payments not connected by organizer.");
+                }
 
                 // Validate that server breakdown is loaded and total matches
                 if (orderBreakdown) {
