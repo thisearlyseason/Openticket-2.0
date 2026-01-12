@@ -181,6 +181,9 @@ app.use('/api/push', pushRoutes);
 // Email delivery routes
 app.use('/api/email', emailRoutes);
 
+// Analytics routes
+app.use('/api/analytics', analyticsRoutes);
+
 // Waitlist routes
 app.use('/api/waitlist', waitlistRoutes);
 
