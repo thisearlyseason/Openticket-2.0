@@ -1,6 +1,7 @@
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
 import { generateUniqueTickets } from '../utils/ticketGenerator.js';
+import fraudPreventionService from '../services/fraudPreventionService.js';
 
 const require = createRequire(import.meta.url);
 
