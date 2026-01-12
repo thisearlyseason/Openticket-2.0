@@ -739,11 +739,20 @@ export const EventView = () => {
                 console.log('[EventView] Free event detected (total = 0), skipping Stripe');
                 paymentStatus = 'completed';
             } else {
-                console.log('[EventView] Skipping Stripe:', {
-                    reason: event.paymentConfig.method !== 'online' ? 'Payment method not online' : 'Total is 0 or negative',
-                    paymentMethod: event.paymentConfig.method,
-                    finalTotal
+                console.warn('[EventView] WARNING: Paid event but skipping Stripe!', {
+                    reason: paymentMethod !== 'online' ? 'Payment method is not online' : 'Unknown',
+                    paymentMethod,
+                    finalTotal,
+                    total,
+                    hasStripeConnect,
+                    eventPaymentConfig: event.paymentConfig
                 });
+                
+                // If it's a paid event but Stripe is being skipped, this is likely an error
+                if (finalTotal > 0 && paymentMethod === 'online') {
+                    console.error('[EventView] CRITICAL: Paid event with online payment but not redirecting to Stripe!');
+                    console.error('[EventView] This will create a pending registration that won\'t complete');
+                }
             }
 
             console.log('[EventView] Creating registration with paymentStatus:', paymentStatus);
