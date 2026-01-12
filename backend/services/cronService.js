@@ -701,11 +701,13 @@ export const triggerWeeklySummary = async () => await sendWeeklyAffiliateSummari
 export const triggerEventReminders = async () => await sendEventReminders();
 export const triggerAbandonedCart = async () => await sendAbandonedCartEmails();
 export const triggerPostEventFollowups = async () => await sendPostEventFollowups();
+export const triggerScheduledPayouts = async () => await processScheduledAffiliatePayouts();
 
 export default { 
     initCronJobs, 
     triggerWeeklySummary, 
     triggerEventReminders, 
     triggerAbandonedCart, 
-    triggerPostEventFollowups 
+    triggerPostEventFollowups,
+    triggerScheduledPayouts
 };
