@@ -32,8 +32,9 @@ class WebSocketService {
         // Setup connection handlers
         this.setupConnectionHandlers();
 
-        // Setup PostgreSQL listener
-        this.setupPostgresListener();
+        // Note: PostgreSQL NOTIFY listener disabled when using Supabase REST API
+        // Use manual refresh or polling instead
+        console.log('[WebSocket] Note: PostgreSQL NOTIFY disabled (using Supabase REST API)');
 
         console.log('[WebSocket] ✅ Socket.IO server initialized');
     }
