@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button } from './UI';
-import { BarChart3, TrendingUp, Clock, AlertTriangle, RefreshCw, Download, Calendar, Users, Zap, Activity } from 'lucide-react';
+import { BarChart3, TrendingUp, Clock, AlertTriangle, RefreshCw, Download, Calendar, Users, Zap, Activity, Wifi, WifiOff } from 'lucide-react';
 import { getAuthToken } from '../services/firebaseConfig';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { HourlyScansChart, DailyTrendsChart, ScanMethodsChart, SuccessRateTrendChart, PerformanceMetricsChart } from './AnalyticsCharts';
 
 interface EventAnalytics {
     eventId: string;
@@ -25,6 +27,21 @@ export const AdminAnalyticsDashboard: React.FC = () => {
         avgScanTime: 0
     });
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+    const [showCharts, setShowCharts] = useState(false);
+    const [chartData, setChartData] = useState<any>({
+        hourly: [],
+        daily: [],
+        methods: {}
+    });
+
+    // WebSocket connection for real-time updates
+    const { isConnected, connectionError } = useWebSocket({
+        subscribeGlobal: true,
+        onAnalyticsUpdate: (data) => {
+            console.log('[Admin Analytics] Real-time update received:', data);
+            loadAnalytics(); // Refresh data when update received
+        }
+    });
 
     useEffect(() => {
         loadAnalytics();
@@ -46,11 +63,43 @@ export const AdminAnalyticsDashboard: React.FC = () => {
                 const data = await response.json();
                 setEventAnalytics(data.events || []);
                 setGlobalStats(data.globalStats || {});
+                
+                // Load chart data if charts are visible
+                if (showCharts) {
+                    await loadChartData(token);
+                }
             }
         } catch (error) {
             console.error('Error loading analytics:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadChartData = async (token: string) => {
+        try {
+            // Load aggregated chart data from materialized views
+            const [hourlyRes, dailyRes] = await Promise.all([
+                fetch('/api/admin/analytics/hourly-data', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('/api/admin/analytics/daily-data', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
+
+            if (hourlyRes.ok && dailyRes.ok) {
+                const hourlyData = await hourlyRes.json();
+                const dailyData = await dailyRes.json();
+
+                setChartData({
+                    hourly: hourlyData.data || [],
+                    daily: dailyData.data || [],
+                    methods: globalStats // Use global stats for methods
+                });
+            }
+        } catch (error) {
+            console.error('Error loading chart data:', error);
         }
     };
 
@@ -121,10 +170,26 @@ export const AdminAnalyticsDashboard: React.FC = () => {
                     <h2 className="text-2xl font-black text-white mb-2 flex items-center gap-2">
                         <BarChart3 size={32} className="text-[#ec4899]" />
                         Scan Analytics Dashboard
+                        {isConnected ? (
+                            <Badge className="bg-green-600 text-white border-none text-xs">
+                                <Wifi size={12} /> Live
+                            </Badge>
+                        ) : (
+                            <Badge className="bg-zinc-600 text-white border-none text-xs">
+                                <WifiOff size={12} /> Offline
+                            </Badge>
+                        )}
                     </h2>
                     <p className="text-zinc-400 text-sm">System-wide scanner performance metrics</p>
                 </div>
                 <div className="flex gap-3">
+                    <Button
+                        onClick={() => setShowCharts(!showCharts)}
+                        className="bg-purple-600 hover:bg-purple-700 border-none"
+                    >
+                        <TrendingUp size={16} />
+                        {showCharts ? 'Hide' : 'Show'} Charts
+                    </Button>
                     <Button
                         onClick={refreshMaterializedViews}
                         disabled={refreshing}
