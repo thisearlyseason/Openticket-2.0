@@ -559,10 +559,10 @@ export const Billing = () => {
                         <Button disabled className="w-full bg-zinc-800 text-zinc-500 border-none">No funds available</Button>
                     )}
                 </Card>
-
-                {/* Upcoming Payouts Section */}
-                <UpcomingPayoutsCard userId={user.id} />
             </div>
+
+            {/* Upcoming Payouts Section - Full Width */}
+            <UpcomingPayoutsCard userId={user.id} />
 
             {balanceDue > 0 && (
                 <Card className="p-6 border-red-200 dark:border-red-900">
