@@ -167,7 +167,7 @@ export const EventBuilder = () => {
                     // Organizer name and email - ALWAYS populated from user profile
                     organizer: displayName || 'Your Name',
                     organizerEmail: displayEmail || user.email || '',
-                    paymentConfig: { method: (updatedUser?.defaultPaymentMethod as any) || user.defaultPaymentMethod || 'none', link: updatedUser?.defaultPaymentLink || user.defaultPaymentLink, instructions: updatedUser?.defaultPaymentInstructions || user.defaultPaymentInstructions },
+                    paymentConfig: { method: (updatedUser?.defaultPaymentMethod as any) || user.defaultPaymentMethod || 'online', link: updatedUser?.defaultPaymentLink || user.defaultPaymentLink, instructions: updatedUser?.defaultPaymentInstructions || user.defaultPaymentInstructions }, // Default to online
                     confirmationMessage: updatedUser?.defaultConfirmationTemplate || user.defaultConfirmationTemplate,
                     refundPolicy: updatedUser?.defaultRefundPolicy || user.defaultRefundPolicy,
                     waiverConfig: updatedUser?.defaultWaiver ? {
