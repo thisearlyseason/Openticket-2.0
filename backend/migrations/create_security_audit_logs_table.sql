@@ -45,7 +45,7 @@ CREATE POLICY "Superadmins can view all security audit logs" ON public.security_
     USING (
         EXISTS (
             SELECT 1 FROM public.profiles 
-            WHERE id = auth.uid() AND (role = 'superadmin' OR is_admin = true)
+            WHERE profiles.id = auth.uid() AND (profiles.role = 'superadmin' OR profiles.is_admin = true)
         )
     );
 
