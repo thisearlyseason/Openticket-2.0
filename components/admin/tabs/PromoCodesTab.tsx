@@ -16,7 +16,7 @@ interface PromoCodesTabProps {
 }
 
 export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
-    const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+    const [promoCodes, setPromoCodes] = useState<any[]>([]);
     const [newPromo, setNewPromo] = useState({
         code: '',
         type: 'percentage' as 'percentage' | 'fixed',
