@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Trash2 } from 'lucide-react';
 import { StorageService } from '../../../services/storageService';
-import Button from '../../ui/Button';
-import Input from '../../ui/Input';
-import Card from '../../ui/Card';
-import Badge from '../../ui/Badge';
+import { Button, Input, Card, Badge } from '../../UI';
 
 interface PromoCodesTabProps {
     confirm: (options: {
