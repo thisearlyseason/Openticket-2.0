@@ -2440,7 +2440,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     <div>Loading suspicious activities...</div>
                                                 </td>
                                             </tr>
-                                        ) : (suspiciousActivities || []).length === 0 ? (
+                                        ) : !suspiciousActivities || suspiciousActivities.length === 0 ? (
                                             <tr>
                                                 <td colSpan={6} className="p-8 text-center text-zinc-500">
                                                     <CheckCircle2 className="mx-auto mb-2 text-green-500" size={32} />
@@ -2449,7 +2449,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 </td>
                                             </tr>
                                         ) : (
-                                            (suspiciousActivities || []).map((activity) => (
+                                            Array.isArray(suspiciousActivities) && suspiciousActivities.map((activity) => (
                                                 <tr key={activity.id} className="hover:bg-zinc-800/50 transition-colors">
                                                     <td className="p-4 text-sm text-zinc-400">
                                                         {new Date(activity.created_at).toLocaleString()}
