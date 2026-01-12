@@ -139,12 +139,13 @@ export const MobileCheckInScanner: React.FC = () => {
 
     // Handle QR scan
     const handleScan = useCallback(async (qrData: string) => {
-        if (isProcessing) return;
+        if (isProcessing || !id) return;
         
         setIsProcessing(true);
+        const scanStartTime = Date.now();
         
         try {
-            // Extract ticket ID from QR data (assuming format: ticketId or JSON)
+            // Extract ticket ID from QR data
             let ticketId: string;
             try {
                 const parsed = JSON.parse(qrData);
@@ -153,7 +154,43 @@ export const MobileCheckInScanner: React.FC = () => {
                 ticketId = qrData;
             }
 
-            // Call check-in API
+            // Check if online
+            if (!navigator.onLine) {
+                // Queue for offline sync
+                const token = await getAuthToken();
+                await offlineSyncService.queueCheckIn(ticketId, id, token);
+                
+                const scanResult: ScanResult = {
+                    success: true,
+                    message: 'Queued for sync (offline)',
+                    attendeeName: 'Offline Check-in',
+                    ticketType: 'Pending Sync',
+                    timestamp: Date.now()
+                };
+                
+                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setPendingSync(prev => prev + 1);
+                
+                // Track analytics
+                await scanAnalyticsService.trackScan({
+                    eventId: id,
+                    ticketId,
+                    success: true,
+                    duration: Date.now() - scanStartTime,
+                    timestamp: Date.now(),
+                    scanMethod: 'camera'
+                });
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([150, 50, 150]);
+                }
+                
+                playSuccessSound();
+                setIsProcessing(false);
+                return;
+            }
+
+            // Online - process immediately
             const token = await getAuthToken();
             const response = await fetch('/api/registrations/checkin/ticket', {
                 method: 'POST',
@@ -165,6 +202,7 @@ export const MobileCheckInScanner: React.FC = () => {
             });
 
             const result = await response.json();
+            const scanDuration = Date.now() - scanStartTime;
 
             if (response.ok) {
                 // Success
@@ -183,12 +221,20 @@ export const MobileCheckInScanner: React.FC = () => {
                     pending: Math.max(0, prev.pending - 1)
                 }));
                 
-                // Haptic feedback
+                // Track analytics
+                await scanAnalyticsService.trackScan({
+                    eventId: id,
+                    ticketId,
+                    success: true,
+                    duration: scanDuration,
+                    timestamp: Date.now(),
+                    scanMethod: 'camera'
+                });
+                
                 if (navigator.vibrate) {
                     navigator.vibrate([200, 100, 200]);
                 }
                 
-                // Audio feedback
                 playSuccessSound();
             } else {
                 // Error
@@ -200,7 +246,17 @@ export const MobileCheckInScanner: React.FC = () => {
                 
                 setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
                 
-                // Error haptic
+                // Track analytics
+                await scanAnalyticsService.trackScan({
+                    eventId: id,
+                    ticketId,
+                    success: false,
+                    errorMessage: result.error,
+                    duration: scanDuration,
+                    timestamp: Date.now(),
+                    scanMethod: 'camera'
+                });
+                
                 if (navigator.vibrate) {
                     navigator.vibrate([100, 50, 100, 50, 100]);
                 }
@@ -218,13 +274,25 @@ export const MobileCheckInScanner: React.FC = () => {
             
             setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
             
+            // Track analytics
+            if (id) {
+                await scanAnalyticsService.trackScan({
+                    eventId: id,
+                    success: false,
+                    errorMessage: error.message,
+                    duration: Date.now() - scanStartTime,
+                    timestamp: Date.now(),
+                    scanMethod: 'camera'
+                });
+            }
+            
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100, 50, 100]);
             }
         } finally {
             setIsProcessing(false);
         }
-    }, [isProcessing]);
+    }, [isProcessing, id]);
 
     // Audio feedback
     const playSuccessSound = () => {
