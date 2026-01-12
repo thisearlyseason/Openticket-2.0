@@ -1,0 +1,382 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { QRScanner } from './QRScanner';
+import { StorageService } from '../services/storageService';
+import { Event, Registration } from '../types';
+import { Button, Card, Badge } from './UI';
+import { QrCode, CheckCircle2, XCircle, Users, Clock, Zap, AlertTriangle, Smartphone, WifiOff, ArrowLeft, BarChart3, RotateCw, Ticket, UserCheck } from 'lucide-react';
+import { getAuthToken } from '../services/firebaseConfig';
+
+interface ScanResult {
+    success: boolean;
+    message: string;
+    attendeeName?: string;
+    ticketType?: string;
+    timestamp: number;
+}
+
+export const MobileCheckInScanner: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [event, setEvent] = useState<Event | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [showScanner, setShowScanner] = useState(false);
+    const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        checkedIn: 0,
+        pending: 0
+    });
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    // Monitor online status
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+        
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Load event and stats
+    useEffect(() => {
+        loadEventData();
+    }, [id]);
+
+    const loadEventData = async () => {
+        if (!id) return;
+        
+        setIsLoading(true);
+        try {
+            const eventData = await StorageService.getEvent(id);
+            if (!eventData) {
+                throw new Error('Event not found');
+            }
+            setEvent(eventData);
+            
+            // Load registrations to calculate stats
+            const registrations = await StorageService.getRegistrations(id);
+            const tickets = registrations.flatMap(r => r.tickets || []);
+            
+            setStats({
+                total: tickets.length,
+                checkedIn: tickets.filter(t => t.checkedIn).length,
+                pending: tickets.filter(t => !t.checkedIn).length
+            });
+        } catch (error) {
+            console.error('Error loading event:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Handle QR scan
+    const handleScan = useCallback(async (qrData: string) => {
+        if (isProcessing) return;
+        
+        setIsProcessing(true);
+        
+        try {
+            // Extract ticket ID from QR data (assuming format: ticketId or JSON)
+            let ticketId: string;
+            try {
+                const parsed = JSON.parse(qrData);
+                ticketId = parsed.ticketId || parsed.id || qrData;
+            } catch {
+                ticketId = qrData;
+            }
+
+            // Call check-in API
+            const token = await getAuthToken();
+            const response = await fetch('/api/registrations/checkin/ticket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ ticketId })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Success
+                const scanResult: ScanResult = {
+                    success: true,
+                    message: 'Check-in successful!',
+                    attendeeName: result.attendeeName || 'Guest',
+                    ticketType: result.ticketType || 'Ticket',
+                    timestamp: Date.now()
+                };
+                
+                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setStats(prev => ({
+                    ...prev,
+                    checkedIn: prev.checkedIn + 1,
+                    pending: Math.max(0, prev.pending - 1)
+                }));
+                
+                // Haptic feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200]);
+                }
+                
+                // Audio feedback
+                playSuccessSound();
+            } else {
+                // Error
+                const scanResult: ScanResult = {
+                    success: false,
+                    message: result.error || 'Check-in failed',
+                    timestamp: Date.now()
+                };
+                
+                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                
+                // Error haptic
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100, 50, 100]);
+                }
+                
+                playErrorSound();
+            }
+        } catch (error: any) {
+            console.error('Check-in error:', error);
+            
+            const scanResult: ScanResult = {
+                success: false,
+                message: error.message || 'Network error',
+                timestamp: Date.now()
+            };
+            
+            setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+            
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100, 50, 100]);
+            }
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [isProcessing]);
+
+    // Audio feedback
+    const playSuccessSound = () => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    };
+
+    const playErrorSound = () => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 300;
+        oscillator.type = 'square';
+        gainNode.gain.value = 0.2;
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ec4899] border-t-transparent mx-auto mb-4" />
+                    <p className="text-white/60">Loading event...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!event) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center p-4">
+                <Card className="p-8 text-center bg-zinc-900 border-zinc-800">
+                    <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+                    <h2 className="text-xl font-bold text-white mb-2">Event Not Found</h2>
+                    <p className="text-zinc-400 mb-4">Unable to load event details</p>
+                    <Button onClick={() => navigate('/dashboard')}>
+                        <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+            {/* Header */}
+            <div className="bg-black/50 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-10">
+                <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <button
+                            onClick={() => navigate(`/manage/${id}`)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                        >
+                            <ArrowLeft size={20} className="text-white" />
+                        </button>
+                        
+                        <div className="flex items-center gap-2">
+                            {!isOnline && (
+                                <Badge className="bg-orange-600 text-white border-none flex items-center gap-1">
+                                    <WifiOff size={12} /> Offline
+                                </Badge>
+                            )}
+                            <button
+                                onClick={loadEventData}
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                <RotateCw size={20} className="text-white" />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h1 className="text-xl font-black text-white mb-1 line-clamp-1">{event.title}</h1>
+                    <p className="text-sm text-zinc-400 flex items-center gap-2">
+                        <Smartphone size={14} /> Mobile Check-In Scanner
+                    </p>
+                </div>
+
+                {/* Stats Bar */}
+                <div className="grid grid-cols-3 divide-x divide-zinc-800 bg-black/30">
+                    <div className="p-3 text-center">
+                        <div className="text-2xl font-black text-white">{stats.total}</div>
+                        <div className="text-xs text-zinc-500 uppercase font-bold">Total</div>
+                    </div>
+                    <div className="p-3 text-center">
+                        <div className="text-2xl font-black text-[#ec4899]">{stats.checkedIn}</div>
+                        <div className="text-xs text-zinc-500 uppercase font-bold">Checked In</div>
+                    </div>
+                    <div className="p-3 text-center">
+                        <div className="text-2xl font-black text-orange-500">{stats.pending}</div>
+                        <div className="text-xs text-zinc-500 uppercase font-bold">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="p-4 pb-24">
+                {/* Scan Button */}
+                <button
+                    onClick={() => setShowScanner(true)}
+                    className="w-full bg-gradient-to-r from-[#ec4899] to-[#8b5cf6] text-white rounded-2xl p-8 shadow-lg shadow-[#ec4899]/30 hover:shadow-xl hover:shadow-[#ec4899]/40 transition-all active:scale-95 mb-6"
+                >
+                    <QrCode size={64} className="mx-auto mb-4" />
+                    <div className="text-2xl font-black mb-2">Scan Ticket</div>
+                    <div className="text-sm opacity-90">Tap to open camera scanner</div>
+                </button>
+
+                {/* Recent Scans */}
+                <div className="mb-6">
+                    <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                        <Clock size={20} className="text-[#ec4899]" /> Recent Activity
+                    </h2>
+                    
+                    {scanResults.length === 0 ? (
+                        <Card className="p-8 text-center bg-zinc-900/50 border-zinc-800">
+                            <Ticket size={48} className="mx-auto mb-3 text-zinc-700" />
+                            <p className="text-zinc-500 text-sm">No scans yet</p>
+                            <p className="text-zinc-600 text-xs mt-1">Scan your first ticket to get started</p>
+                        </Card>
+                    ) : (
+                        <div className="space-y-3">
+                            {scanResults.map((result, index) => (
+                                <Card
+                                    key={index}
+                                    className={`p-4 border-l-4 ${
+                                        result.success
+                                            ? 'bg-green-900/20 border-green-500'
+                                            : 'bg-red-900/20 border-red-500'
+                                    } border-r border-t border-b border-zinc-800`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className={`p-2 rounded-lg ${
+                                            result.success ? 'bg-green-600' : 'bg-red-600'
+                                        }`}>
+                                            {result.success ? (
+                                                <CheckCircle2 size={20} className="text-white" />
+                                            ) : (
+                                                <XCircle size={20} className="text-white" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-white mb-1">
+                                                {result.success ? result.attendeeName : result.message}
+                                            </div>
+                                            {result.success && result.ticketType && (
+                                                <div className="text-sm text-zinc-400 mb-1">{result.ticketType}</div>
+                                            )}
+                                            <div className="text-xs text-zinc-500">
+                                                {new Date(result.timestamp).toLocaleTimeString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-2 gap-3">
+                    <button
+                        onClick={() => navigate(`/manage/${id}/attendees`)}
+                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
+                    >
+                        <Users size={24} className="text-[#ec4899] mb-2" />
+                        <div className="text-sm font-bold text-white">All Attendees</div>
+                        <div className="text-xs text-zinc-500">View full list</div>
+                    </button>
+                    
+                    <button
+                        onClick={() => navigate(`/manage/${id}/analytics`)}
+                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
+                    >
+                        <BarChart3 size={24} className="text-blue-500 mb-2" />
+                        <div className="text-sm font-bold text-white">Analytics</div>
+                        <div className="text-xs text-zinc-500">View insights</div>
+                    </button>
+                </div>
+            </div>
+
+            {/* QR Scanner Modal */}
+            <QRScanner
+                isOpen={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScan={handleScan}
+            />
+
+            {/* Processing Overlay */}
+            {isProcessing && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#ec4899] border-t-transparent mx-auto mb-4" />
+                        <p className="text-white font-bold">Processing...</p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default MobileCheckInScanner;
