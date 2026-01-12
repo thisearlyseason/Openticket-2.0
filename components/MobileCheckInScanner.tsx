@@ -515,6 +515,105 @@ export const MobileCheckInScanner: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Analytics Modal */}
+            {showAnalytics && analytics && (
+                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto">
+                    <div className="min-h-screen p-4">
+                        <div className="max-w-2xl mx-auto">
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-6 pt-4">
+                                <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                                    <TrendingUp size={28} className="text-[#ec4899]" />
+                                    Scan Analytics
+                                </h2>
+                                <button
+                                    onClick={() => setShowAnalytics(false)}
+                                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-2 gap-3 mb-6">
+                                <Card className="p-4 bg-zinc-900 border-zinc-800">
+                                    <div className="text-3xl font-black text-white mb-1">{analytics.totalScans}</div>
+                                    <div className="text-xs text-zinc-500 uppercase font-bold">Total Scans</div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-900 border-zinc-800">
+                                    <div className="text-3xl font-black text-green-500 mb-1">{analytics.successRate}%</div>
+                                    <div className="text-xs text-zinc-500 uppercase font-bold">Success Rate</div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-900 border-zinc-800">
+                                    <div className="text-3xl font-black text-blue-500 mb-1">{analytics.averageScanTime}ms</div>
+                                    <div className="text-xs text-zinc-500 uppercase font-bold">Avg Scan Time</div>
+                                </Card>
+                                <Card className="p-4 bg-zinc-900 border-zinc-800">
+                                    <div className="text-3xl font-black text-orange-500 mb-1">{analytics.scansPerMinute}</div>
+                                    <div className="text-xs text-zinc-500 uppercase font-bold">Scans/Min</div>
+                                </Card>
+                            </div>
+
+                            {/* Performance */}
+                            <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
+                                <h3 className="font-bold text-white mb-3">Performance</h3>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-400">Fastest Scan:</span>
+                                        <span className="text-green-500 font-bold">{analytics.fastestScan}ms</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-400">Slowest Scan:</span>
+                                        <span className="text-red-500 font-bold">{analytics.slowestScan}ms</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-zinc-400">Peak Time:</span>
+                                        <span className="text-white font-bold">{analytics.peakScanTime}</span>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            {/* Scan Methods */}
+                            {Object.keys(analytics.scansByMethod).length > 0 && (
+                                <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
+                                    <h3 className="font-bold text-white mb-3">Scan Methods</h3>
+                                    <div className="space-y-2">
+                                        {Object.entries(analytics.scansByMethod).map(([method, count]: [string, any]) => (
+                                            <div key={method} className="flex justify-between items-center">
+                                                <span className="text-zinc-400 capitalize">{method}:</span>
+                                                <span className="text-white font-bold">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            )}
+
+                            {/* Error Breakdown */}
+                            {Object.keys(analytics.errorBreakdown).length > 0 && (
+                                <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
+                                    <h3 className="font-bold text-white mb-3">Error Breakdown</h3>
+                                    <div className="space-y-2">
+                                        {Object.entries(analytics.errorBreakdown).map(([error, count]: [string, any]) => (
+                                            <div key={error} className="flex justify-between items-center text-sm">
+                                                <span className="text-zinc-400 flex-1 truncate">{error}:</span>
+                                                <span className="text-red-500 font-bold ml-2">{count}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </Card>
+                            )}
+
+                            <Button
+                                onClick={() => setShowAnalytics(false)}
+                                className="w-full bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
+                            >
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
