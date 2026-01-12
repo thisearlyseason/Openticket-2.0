@@ -47,18 +47,18 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
             return;
         }
 
-        const promoCode: PromoCode = {
+        const promoCode = {
             id: `promo-${Date.now()}`,
             code: newPromo.code.toUpperCase(),
             type: newPromo.type,
             value: newPromo.value,
             target: newPromo.target,
-            target_plans: newPromo.targetPlans,
-            usage_limit: newPromo.usageLimit || 0,
-            usage_count: 0,
-            expires_at: newPromo.expiresAt || undefined,
-            active: true,
-            created_at: new Date().toISOString()
+            targetPlans: newPromo.targetPlans,
+            usageLimit: newPromo.usageLimit || 0,
+            usageCount: 0,
+            expiresAt: newPromo.expiresAt || undefined,
+            isActive: true,
+            createdAt: new Date().toISOString()
         };
 
         await StorageService.createPromoCode(promoCode);
