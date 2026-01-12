@@ -1356,3 +1356,70 @@ The unique ticket system refactor has been successfully implemented and verified
 **Test Registrations Created:**
 - Registration 1: `cf42af51-468e-4597-99fe-323a86a401e5` (2 unique tickets)
 - Registration 2: `286d88a5-eafc-4318-8f37-394419c8fe0d` (1 legacy ticket transformed)
+
+---
+
+## 🎯 NEXT TESTING TASK - Affiliate Payout System Integration
+
+### Implementation Summary (January 12, 2026):
+
+**What Was Completed:**
+1. ✅ Integrated `AffiliatePayouts` component into `AffiliateDashboard.tsx`
+2. ✅ Added component import to the dashboard
+3. ✅ Positioned component in the affiliate dashboard UI (after AI Marketing Lab, before Recent Earnings)
+4. ✅ Verified backend API endpoints exist (`/api/admin/affiliate/earnings`, `/api/admin/affiliate/request-payout`, `/api/admin/affiliate/payouts`)
+5. ✅ Database migration `create_affiliate_payouts_table.sql` confirmed executed by user
+
+**Features to Test:**
+
+### Backend API Testing:
+1. **GET /api/admin/affiliate/earnings** - Fetch affiliate earnings summary
+   - Should return: `{ total, pending, paid, available }`
+   - Requires authentication token
+   - Test with valid affiliate user
+
+2. **POST /api/admin/affiliate/request-payout** - Request payout (manual or scheduled)
+   - Body: `{ method: 'manual' | 'scheduled' }`
+   - Should validate available balance > 0
+   - Should create payout record in `affiliate_payouts` table
+   - Manual: immediate processing request
+   - Scheduled: set to last day of month
+
+3. **GET /api/admin/affiliate/payouts** - Fetch payout history
+   - Should return list of payouts with status (pending, scheduled, paid, failed)
+   - Include dates: `requestedAt`, `scheduledFor`, `paidAt`
+
+### Frontend UI Testing:
+1. Navigate to `/affiliate` route (Affiliate Dashboard)
+2. Verify `AffiliatePayouts` component renders with:
+   - Earnings summary cards (Total Earned, Available, Pending, Paid Out)
+   - Payout request section with two options:
+     - Manual Payout (immediate)
+     - Scheduled Payout (end of month)
+   - Request button disabled when available balance is 0
+   - Payout history table showing past requests
+3. Test payout request flow:
+   - Select manual payout option
+   - Click "Request Payout" button
+   - Verify success toast message
+   - Verify payout appears in history
+4. Test scheduled payout flow:
+   - Select scheduled payout option
+   - Verify "Next: [date]" displays last day of current month
+   - Click "Request Payout" button
+   - Verify scheduled date is shown in confirmation
+
+### Success Criteria:
+- ✅ Backend APIs respond with correct data structure
+- ✅ Frontend component renders without errors
+- ✅ Earnings data loads and displays correctly
+- ✅ Manual payout request creates record successfully
+- ✅ Scheduled payout sets correct date (last day of month)
+- ✅ Payout history displays with proper formatting
+- ✅ Error handling works for insufficient balance
+- ✅ UI updates after successful payout request
+
+### Test User Setup:
+- Need affiliate user with `affiliateCode` set
+- Test URL: `http://localhost:3000/#/affiliate`
+- External API URL for backend: `https://eventsystem-1.preview.emergentagent.com/api`
