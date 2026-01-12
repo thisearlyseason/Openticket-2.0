@@ -72,6 +72,7 @@ export class PWAService {
     } catch (error) {
       console.error('[PWA] Service Worker registration failed:', error);
     }
+    */
   }
 
   // Register background sync for offline check-ins
