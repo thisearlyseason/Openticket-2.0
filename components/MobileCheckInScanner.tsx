@@ -130,10 +130,35 @@ export const MobileCheckInScanner: React.FC = () => {
         if (!id) return;
         
         try {
+            // Try to get from backend first (if online)
+            if (navigator.onLine) {
+                const token = await getAuthToken();
+                const response = await fetch(`/api/analytics/scan-summary/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setAnalytics(data.analytics);
+                    return;
+                }
+            }
+
+            // Fallback to IndexedDB
             const analyticsData = await scanAnalyticsService.getAnalytics(id);
             setAnalytics(analyticsData);
         } catch (error) {
             console.error('Error loading analytics:', error);
+            
+            // Fallback to IndexedDB on error
+            try {
+                const analyticsData = await scanAnalyticsService.getAnalytics(id);
+                setAnalytics(analyticsData);
+            } catch (fallbackError) {
+                console.error('Fallback analytics failed:', fallbackError);
+            }
         }
     };
 
