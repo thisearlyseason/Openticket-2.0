@@ -75,8 +75,9 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
         window.alert('Promo code created successfully!');
     };
 
-    const handleTogglePromoCode = async (promo: PromoCode) => {
-        await StorageService.updatePromoCode(promo.id, { active: !promo.active });
+    const handleTogglePromoCode = async (promo: any) => {
+        const currentStatus = promo.is_active ?? promo.active;
+        await StorageService.updatePromoCode(promo.id, { isActive: !currentStatus });
         loadPromoCodes();
     };
 
