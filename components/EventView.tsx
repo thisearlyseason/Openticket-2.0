@@ -642,22 +642,29 @@ export const EventView = () => {
 
             const finalTotal = total + serviceFee;
 
+            // CRITICAL FIX: Ensure paymentConfig exists and has valid method
+            const paymentMethod = event.paymentConfig?.method || 'online'; // Default to online if missing
+            const hasStripeConnect = !!organizerUser?.stripeConnectId;
+            
             console.log('[EventView] Payment check:', {
-                paymentMethod: event.paymentConfig.method,
+                paymentMethod,
+                paymentConfigExists: !!event.paymentConfig,
                 finalTotal,
                 total,
                 serviceFee,
-                hasStripeConnect: !!organizerUser?.stripeConnectId,
-                stripeConnectId: organizerUser?.stripeConnectId
+                hasStripeConnect,
+                stripeConnectId: organizerUser?.stripeConnectId,
+                eventPriceType: event.priceType,
+                eventPrice: event.price
             });
 
-            let paymentStatus: any = event.paymentConfig.method === 'online' ? 'pending' : 'offline_pending';
+            let paymentStatus: any = paymentMethod === 'online' ? 'pending' : 'offline_pending';
             let paymentIntentId = undefined;
 
-            if (event.paymentConfig.method === 'online' && finalTotal > 0) {
+            if (paymentMethod === 'online' && finalTotal > 0) {
                 console.log('[EventView] Entering Stripe checkout flow...');
                 
-                if (!organizerUser?.stripeConnectId) {
+                if (!hasStripeConnect) {
                     console.error('[EventView] Stripe Connect not configured!');
                     throw new Error("Online payments not connected by organizer.");
                 }
