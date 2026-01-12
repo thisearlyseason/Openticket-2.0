@@ -371,8 +371,16 @@ export const MobileCheckInScanner: React.FC = () => {
                                     <WifiOff size={12} /> Offline
                                 </Badge>
                             )}
+                            {pendingSync > 0 && (
+                                <Badge className="bg-blue-600 text-white border-none flex items-center gap-1">
+                                    <Database size={12} /> {pendingSync} Pending
+                                </Badge>
+                            )}
                             <button
-                                onClick={loadEventData}
+                                onClick={() => {
+                                    loadEventData();
+                                    loadPendingSync();
+                                }}
                                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                             >
                                 <RotateCw size={20} className="text-white" />
@@ -469,12 +477,15 @@ export const MobileCheckInScanner: React.FC = () => {
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 gap-3">
                     <button
-                        onClick={() => navigate(`/manage/${id}/attendees`)}
+                        onClick={() => {
+                            loadAnalytics();
+                            setShowAnalytics(true);
+                        }}
                         className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
                     >
-                        <Users size={24} className="text-[#ec4899] mb-2" />
-                        <div className="text-sm font-bold text-white">All Attendees</div>
-                        <div className="text-xs text-zinc-500">View full list</div>
+                        <TrendingUp size={24} className="text-[#ec4899] mb-2" />
+                        <div className="text-sm font-bold text-white">Scan Analytics</div>
+                        <div className="text-xs text-zinc-500">View performance</div>
                     </button>
                     
                     <button
@@ -482,8 +493,8 @@ export const MobileCheckInScanner: React.FC = () => {
                         className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
                     >
                         <BarChart3 size={24} className="text-blue-500 mb-2" />
-                        <div className="text-sm font-bold text-white">Analytics</div>
-                        <div className="text-xs text-zinc-500">View insights</div>
+                        <div className="text-sm font-bold text-white">Event Analytics</div>
+                        <div className="text-xs text-zinc-500">Full insights</div>
                     </button>
                 </div>
             </div>
