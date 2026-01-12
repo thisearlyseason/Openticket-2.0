@@ -619,7 +619,35 @@ export const transferTicket = async (req, res) => {
         }
 
         // 3. Verify sender owns this registration
-        if (registration.user_id !== senderUserId) {
+        // Check both user_id and email (for backward compatibility and guest checkouts)
+        let senderOwnsTicket = false;
+        
+        // First check: user_id match (if available)
+        if (registration.user_id && registration.user_id === senderUserId) {
+            senderOwnsTicket = true;
+            console.log('[Transfer] Ownership verified by user_id');
+        }
+        
+        // Second check: Get user's email from profile and match with registration email
+        if (!senderOwnsTicket) {
+            const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('id', senderUserId)
+                .single();
+            
+            if (userProfile && userProfile.email === registration.attendee_email) {
+                senderOwnsTicket = true;
+                console.log('[Transfer] Ownership verified by email match');
+            }
+        }
+        
+        if (!senderOwnsTicket) {
+            console.log('[Transfer] Ownership verification failed:', {
+                regUserId: registration.user_id,
+                senderUserId: senderUserId,
+                regEmail: registration.attendee_email
+            });
             return res.status(403).json({ error: 'You do not own this ticket' });
         }
 
