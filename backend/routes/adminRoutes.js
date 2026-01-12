@@ -1473,6 +1473,57 @@ router.get('/security-audit-logs/suspicious', verifyToken, requireAdmin, async (
     }
 });
 
+// Get fraud statistics for a specific user (Super Admin only)
+router.get('/fraud-stats/:userId', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const fraudPreventionService = (await import('../services/fraudPreventionService.js')).default;
+        
+        const stats = await fraudPreventionService.getUserFraudStats(userId);
+        const blockStatus = await fraudPreventionService.isUserBlocked(userId);
+        
+        res.json({
+            success: true,
+            userId,
+            stats,
+            blockStatus
+        });
+    } catch (error) {
+        console.error('[Fraud Stats] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Unblock a user (Super Admin only) - removes cooldown/temp ban
+router.post('/fraud-unblock/:userId', verifyToken, requireAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const supabase = (await import('../services/supabase.js')).default;
+        
+        // Log the unblock action
+        await supabase.from('security_audit_logs').insert({
+            action: 'FRAUD_UNBLOCK_ADMIN',
+            entity_type: 'user',
+            entity_id: userId,
+            user_id: req.user.uid, // admin who unblocked
+            details: {
+                unblockedUserId: userId,
+                reason: 'Admin override'
+            },
+            severity: 'info',
+            created_at: new Date().toISOString()
+        });
+        
+        res.json({
+            success: true,
+            message: 'User unblocked successfully. Previous fraud flags have been noted but cooldown removed.'
+        });
+    } catch (error) {
+        console.error('[Fraud Unblock] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========================================
 // ADMIN ANALYTICS DASHBOARD ENDPOINTS
 // ========================================
