@@ -217,7 +217,16 @@ export const EventFinance = () => {
 
             if (isRefunded) {
                 refundCount++;
-                const refundAmt = reg.refundedAmount || reg.totalAmount || 0;
+                // Calculate total amount from tickets and addons if refundedAmount is not available
+                const ticketTotal = reg.tickets?.reduce((sum, t) => sum + (t.pricePerTicket * t.quantity), 0) || 0;
+                const addonTotal = reg.addOns?.reduce((sum, a) => sum + (a.price * a.quantity), 0) || 0;
+                const donation = reg.donationAmount || 0;
+                const tax = reg.taxAmount || 0;
+                const customFees = reg.customFeesAmount || 0;
+                const serviceFee = reg.serviceFee || 0;
+                const calculatedTotal = ticketTotal + addonTotal + donation + tax + customFees + serviceFee;
+                
+                const refundAmt = reg.refundedAmount || calculatedTotal;
                 refundedAmount += refundAmt;
                 mockTransactions.push({
                     id: `refund-${reg.id}`,
