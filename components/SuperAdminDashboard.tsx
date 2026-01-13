@@ -1524,7 +1524,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     {donationDateRange === 'all' ? 'Recent Donations' : 'Donations in Period'}
                                                 </h4>
                                                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                                                    {(donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).length > 0 ? (
+                                                    {((donationDateRange === 'all' ? stats.donationBreakdown?.recent : filteredRecent) || []).length > 0 ? (
                                                         (donationDateRange === 'all' ? stats.donationBreakdown?.recent || [] : filteredRecent || []).map((donation: any, idx: number) => (
                                                             <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
                                                                 <div className="flex-1 min-w-0">
