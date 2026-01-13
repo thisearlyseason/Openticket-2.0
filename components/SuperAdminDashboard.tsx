@@ -475,13 +475,23 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             // Load platform payouts
             try {
                 const [payouts, pendingSummary] = await Promise.all([
-                    StorageService.getPlatformPayouts(),
-                    StorageService.getPendingPayoutSummary()
+                    StorageService.getPlatformPayouts().catch(() => []),
+                    StorageService.getPendingPayoutSummary().catch(() => null)
                 ]);
-                setPlatformPayouts(payouts || []);
+                setPlatformPayouts(ensureArray(payouts));
                 setPendingPayoutSummary(pendingSummary);
             } catch (e) {
                 console.error("Failed to load platform payouts", e);
+                setPlatformPayouts([]);
+            }
+
+            // Load affiliate payouts
+            try {
+                const payouts = await StorageService.getAffiliatePayouts().catch(() => []);
+                setAffiliatePayouts(ensureArray(payouts));
+            } catch (e) {
+                console.error("Failed to load affiliate payouts", e);
+                setAffiliatePayouts([]);
             }
 
             // Load non-profit applications
@@ -492,11 +502,16 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setAllNonprofitApplications(data.data || []);
-                    setNonprofitApplications((data.data || []).filter((a: any) => a.status === 'pending'));
+                    setAllNonprofitApplications(ensureArray(data?.data));
+                    setNonprofitApplications(ensureArray(data?.data).filter((a: any) => a.status === 'pending'));
+                } else {
+                    setAllNonprofitApplications([]);
+                    setNonprofitApplications([]);
                 }
             } catch (e) {
                 console.error("Failed to load non-profit applications", e);
+                setAllNonprofitApplications([]);
+                setNonprofitApplications([]);
             }
 
             // Load onboarding responses
@@ -507,10 +522,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 });
                 if (response.ok) {
                     const data = await response.json();
-                    setOnboardingResponses(data.data || []);
+                    setOnboardingResponses(ensureArray(data?.data));
+                } else {
+                    setOnboardingResponses([]);
                 }
             } catch (e) {
                 console.error("Failed to load onboarding responses", e);
+                setOnboardingResponses([]);
             }
 
  
