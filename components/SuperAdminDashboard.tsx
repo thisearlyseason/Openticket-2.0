@@ -356,7 +356,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             try {
                 const affiliateAnalytics = await StorageService.getAffiliateAnalytics();
                 if (affiliateAnalytics && Array.isArray(affiliateAnalytics.affiliates)) {
-                    const affiliateDataList: AffiliateData[] = affiliateAnalytics.affiliates.map((aff: any) => ({
+                    console.log('[AUDIT] Mapping affiliateAnalytics.affiliates:', affiliateAnalytics.affiliates);
+                    const affiliateDataList: AffiliateData[] = (Array.isArray(affiliateAnalytics.affiliates) ? affiliateAnalytics.affiliates : []).map((aff: any) => ({
                         id: aff.id,
                         name: aff.name || 'Unknown',
                         email: aff.email || '',
@@ -701,7 +702,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             await StorageService.updateAffiliateRates(selectedAffiliate.id, updates);
             
             // Update local state
-            setAffiliates(prev => prev.map(aff => 
+            console.log('[AUDIT] Mapping affiliates prev state:', affiliates);
+            setAffiliates(prev => (Array.isArray(prev) ? prev : []).map(aff => 
                 aff.id === selectedAffiliate.id 
                     ? { ...aff, ...updates }
                     : aff
@@ -1410,7 +1412,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     }
                                 }
 
-                                const filteredRecent = stats.donationBreakdown.recent.filter((d: any) => {
+                                const filteredRecent = (Array.isArray(stats.donationBreakdown?.recent) ? stats.donationBreakdown.recent : []).filter((d: any) => {
                                     const dDate = new Date(d.createdAt);
                                     if (startDate && dDate < startDate) return false;
                                     if (dDate > endDate) return false;
