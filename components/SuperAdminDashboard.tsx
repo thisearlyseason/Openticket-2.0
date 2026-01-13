@@ -402,9 +402,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                     setAffiliates(affiliateDataList);
                 } else {
                     // Fallback to old method if analytics endpoint fails
-                    const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                    const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
-                        const affTransactions = (financials.recentTransactions || []).filter(
+                    const affiliateUsers = ensureArray(allUsers).filter(u => u.role === 'affiliate' && u.affiliateCode);
+                    const safeFinancialTx = ensureArray(financials?.recentTransactions);
+                    const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                        const affTransactions = safeFinancialTx.filter(
                             (tx: any) => tx.affiliate_code === aff.affiliateCode
                         );
                         const totalCommission = affTransactions.reduce(
@@ -433,9 +434,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             } catch (e) {
                 console.error("Failed to load affiliate analytics, using fallback", e);
                 // Fallback to calculating from users
-                const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
-                    const affTransactions = (financials.recentTransactions || []).filter(
+                const affiliateUsers = ensureArray(allUsers).filter(u => u.role === 'affiliate' && u.affiliateCode);
+                const safeFinancialTx = ensureArray(financials?.recentTransactions);
+                const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                    const affTransactions = safeFinancialTx.filter(
                         (tx: any) => tx.affiliate_code === aff.affiliateCode
                     );
                     const totalCommission = affTransactions.reduce(
