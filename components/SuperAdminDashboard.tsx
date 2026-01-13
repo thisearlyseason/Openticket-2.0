@@ -463,14 +463,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 });
                 setAffiliates(affiliateDataList);
             }
-            
-            // Load affiliate payouts
-            try {
-                const payouts = await StorageService.getAffiliatePayouts();
-                setAffiliatePayouts(payouts || []);
-            } catch (e) {
-                console.error("Failed to load affiliate payouts", e);
-            }
 
             // Load platform payouts
             try {
