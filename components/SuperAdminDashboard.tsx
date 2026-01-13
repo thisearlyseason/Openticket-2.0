@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { User, Event, Registration } from '../types';
@@ -10,6 +10,10 @@ import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
+
+// Safe array utility - ensures we never call array methods on undefined/null
+const ensureArray = <T,>(value: T[] | undefined | null): T[] => 
+    Array.isArray(value) ? value : [];
 
 interface FinancialTransaction {
     id: string;
