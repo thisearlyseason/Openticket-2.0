@@ -2354,7 +2354,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(affiliatePayouts || []).map(payout => (
+                                    {safeAffiliatePayouts.map(payout => (
                                         <tr key={payout.id} className="border-t border-zinc-800">
                                             <td className="p-4 text-xs">{new Date(payout.createdAt).toLocaleString()}</td>
                                             <td className="p-4 text-white">{payout.affiliateName}</td>
@@ -2369,7 +2369,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <td className="p-4 text-xs max-w-[150px] truncate">{payout.notes || '-'}</td>
                                         </tr>
                                     ))}
-                                    {affiliatePayouts.length === 0 && (
+                                    {safeAffiliatePayouts.length === 0 && (
                                         <tr><td colSpan={7} className="p-8 text-center">No payout history yet.</td></tr>
                                     )}
                                 </tbody>
