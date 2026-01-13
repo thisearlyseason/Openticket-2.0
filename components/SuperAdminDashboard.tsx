@@ -838,7 +838,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = stats.recentTransactions.map(tx => {
+        const rows = (stats.recentTransactions || []).map(tx => {
             const event = events.find(e => e.id === tx.event_id);
             return [
                 new Date(tx.created_at).toLocaleDateString(),
@@ -1494,7 +1494,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div>
                                                 <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
                                                 <div className="space-y-2">
-                                                    {Object.entries(stats.donationBreakdown.byAmount).map(([amount, count]) => {
+                                                    {Object.entries(stats.donationBreakdown?.byAmount || {}).map(([amount, count]) => {
                                                         const totalCount = donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount;
                                                         const percentage = totalCount > 0 
                                                             ? ((count as number) / totalCount * 100) 
