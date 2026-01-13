@@ -2095,7 +2095,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         {/* Affiliate List */}
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
                             <div className="p-4 border-b border-zinc-800 font-bold">
-                                All Affiliates ({affiliates.length})
+                                All Affiliates ({safeAffiliates.length})
                             </div>
                             <table className="w-full text-left text-sm text-zinc-400">
                                 <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
@@ -2111,7 +2111,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(affiliates || []).map(aff => (
+                                    {safeAffiliates.map(aff => (
                                         <tr key={aff.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                             <td className="p-4">
                                                 <div className="font-bold text-white">{aff.name}</div>
