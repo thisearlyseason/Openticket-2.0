@@ -1185,11 +1185,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 {activeTab === 'registrations' && (
                     <div className="overflow-x-auto">
                         <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
-                            <span className="font-bold text-white">All Registrations ({registrations.length})</span>
+                            <span className="font-bold text-white">All Registrations ({safeRegistrations.length})</span>
                             <Button size="sm" variant="outline" onClick={() => {
                                 const headers = ['Date', 'Event', 'Attendee Name', 'Email', 'Status', 'Amount', 'Affiliate', 'Promo Code'];
-                                const rows = (registrations || []).map(r => {
-                                    const event = events.find(e => e.id === r.eventId);
+                                const rows = safeRegistrations.map(r => {
+                                    const event = safeEvents.find(e => e.id === r.eventId);
                                     return [
                                         new Date(r.timestamp).toLocaleDateString(),
                                         event?.title || r.eventTitle || 'Unknown',
@@ -1226,8 +1226,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {(registrations || []).map(r => {
-                                    const event = events.find(e => e.id === r.eventId);
+                                {safeRegistrations.map(r => {
+                                    const event = safeEvents.find(e => e.id === r.eventId);
                                     const ticketCount = r.tickets?.length || 0;
                                     return (
                                         <tr key={r.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
