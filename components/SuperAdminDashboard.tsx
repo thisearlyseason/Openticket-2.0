@@ -873,7 +873,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportUsersCSV = () => {
         const headers = ['Name', 'Email', 'Role', 'Business Name', 'Business Type', 'Account Type', 'Created At'];
-        const rows = users.map(u => [
+        const rows = (users || []).map(u => [
             u.name || '',
             u.email || '',
             u.role || '',
@@ -1171,7 +1171,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <span className="font-bold text-white">All Registrations ({registrations.length})</span>
                             <Button size="sm" variant="outline" onClick={() => {
                                 const headers = ['Date', 'Event', 'Attendee Name', 'Email', 'Status', 'Amount', 'Affiliate', 'Promo Code'];
-                                const rows = registrations.map(r => {
+                                const rows = (registrations || []).map(r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     return [
                                         new Date(r.timestamp).toLocaleDateString(),
@@ -1522,7 +1522,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 </h4>
                                                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                                                     {(donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).length > 0 ? (
-                                                        (donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).map((donation: any, idx: number) => (
+                                    {(donationDateRange === 'all' ? stats.donationBreakdown?.recent || [] : filteredRecent || []).map((donation: any, idx: number) => (
                                                             <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="text-sm font-bold text-white truncate">{donation.attendeeName}</div>
@@ -1615,7 +1615,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {platformPayouts.slice(0, 5).map((payout: any) => (
+                                            {(platformPayouts || []).slice(0, 5).map((payout: any) => (
                                                 <tr key={payout.id} className="border-t border-zinc-800/50">
                                                     <td className="p-3 text-zinc-400">
                                                         {new Date(payout.created_at).toLocaleDateString()}
@@ -1838,7 +1838,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => {
                                     const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Commission%', 'Earnings', 'Paid', 'Pending'];
-                                    const rows = affiliates.map(a => [
+                                    const rows = (affiliates || []).map(a => [
                                         a.name, a.email, a.affiliateCode, a.clicks, a.conversions, 
                                         `${a.conversionRate.toFixed(1)}%`, `${a.commissionRate}%`, `$${a.totalEarnings.toFixed(2)}`,
                                         `$${a.paidOut.toFixed(2)}`, `$${a.pendingPayout.toFixed(2)}`
@@ -2300,7 +2300,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {selectedAffiliate.transactions.map((tx: any) => (
+                                                        {(selectedAffiliate?.transactions || []).map((tx: any) => (
                                                             <tr key={tx.id} className="border-t border-zinc-800">
                                                                 <td className="p-2 text-zinc-400">
                                                                     {new Date(tx.created_at).toLocaleDateString()}
