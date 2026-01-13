@@ -1174,7 +1174,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <span className="font-bold text-white">All Registrations ({registrations.length})</span>
                             <Button size="sm" variant="outline" onClick={() => {
                                 const headers = ['Date', 'Event', 'Attendee Name', 'Email', 'Status', 'Amount', 'Affiliate', 'Promo Code'];
-                                const rows = safeMap(registrations || [], "RegistrationsTab:registrations", r => {
+                                const rows = (registrations || []).map(r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     return [
                                         new Date(r.timestamp).toLocaleDateString(),
@@ -1212,7 +1212,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {safeMap(registrations || [], "RegistrationsTab:registrations", r => {
+                                {(registrations || []).map(r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     const ticketCount = r.tickets?.length || 0;
                                     return (
@@ -1783,7 +1783,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {safeMap(stats.recentTransactions || [], "downloadFinancialCSV:transactions", (tx: any) => (
+                                    {(stats.recentTransactions || []).map((tx: any) => (
                                         <tr key={tx.id} className="border-t border-zinc-800">
                                             <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
                                             <td className="p-4 text-white">{tx.event?.title || '-'}</td>
