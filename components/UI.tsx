@@ -659,7 +659,7 @@ export const ShareButtons = ({ title, url }: { title: string, url: string }) => 
 };
 
 export const Lightbox = ({ images, currentIndex, onClose, onChangeIndex }: { images: any[], currentIndex: number, onClose: () => void, onChangeIndex: (i: number) => void }) => {
-    if (currentIndex < 0) return null;
+    if (currentIndex < 0 || !images || images.length === 0) return null;
     const current = images[currentIndex];
 
     return (
