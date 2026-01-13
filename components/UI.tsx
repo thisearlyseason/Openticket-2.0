@@ -211,9 +211,10 @@ export const Textarea = ({ label, error, required, className = '', id, ...props 
     );
 };
 
-export const Select = ({ label, options, error, className = '', containerClassName = '', id, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string, options: { value: string, label: string }[], error?: string, containerClassName?: string }) => {
+export const Select = ({ label, options = [], error, className = '', containerClassName = '', id, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string, options?: { value: string, label: string }[], error?: string, containerClassName?: string }) => {
     const generatedId = React.useId();
     const inputId = id || generatedId;
+    const safeOptions = Array.isArray(options) ? options : [];
     return (
         <div className={`mb-4 ${containerClassName}`}>
             {label && <label htmlFor={inputId} className="block text-xs font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2 ml-1">{label}</label>}
@@ -223,7 +224,7 @@ export const Select = ({ label, options, error, className = '', containerClassNa
                     className={`w-full appearance-none bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-white text-base rounded-xl px-4 py-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all ${className}`}
                     {...props}
                 >
-                    {options.map((opt) => (
+                    {safeOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                 </select>
