@@ -141,10 +141,19 @@ export const DailyTrendsChart: React.FC<{ data: any[] }> = ({ data }) => {
  * Scan Methods Pie Chart
  */
 export const ScanMethodsChart: React.FC<{ data: { camera: number; upload: number; manual: number } }> = ({ data }) => {
+    // Guard against undefined data
+    if (!data) {
+        return (
+            <Card className="p-6 bg-zinc-900 border-zinc-800 text-center">
+                <p className="text-zinc-500">No scan method data available</p>
+            </Card>
+        );
+    }
+    
     const chartData = [
-        { name: 'Camera', value: data.camera },
-        { name: 'Upload', value: data.upload },
-        { name: 'Manual', value: data.manual }
+        { name: 'Camera', value: data.camera || 0 },
+        { name: 'Upload', value: data.upload || 0 },
+        { name: 'Manual', value: data.manual || 0 }
     ].filter(item => item.value > 0);
 
     if (chartData.length === 0) {
