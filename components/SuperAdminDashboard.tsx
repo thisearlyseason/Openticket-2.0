@@ -321,19 +321,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             let stripeFees = 0;
 
             // Calculate Stripe fees from transactions
-            if (financials.recentTransactions) {
+            if (financials.recentTransactions && Array.isArray(financials.recentTransactions)) {
                 stripeFees = financials.recentTransactions.reduce((acc: number, tx: any) => 
                     acc + (Number(tx.stripe_fee) || 0), 0);
             }
 
             // Calculate subscription revenue from user invoices
-            const subscriptionRevenue = allUsers.reduce((acc: number, user: User) => {
-                const userSubInvoices = user.invoices?.filter(inv => inv.type === 'subscription' && inv.status === 'paid') || [];
+            const subscriptionRevenue = ensureArray(allUsers).reduce((acc: number, user: User) => {
+                const userSubInvoices = ensureArray(user.invoices).filter(inv => inv.type === 'subscription' && inv.status === 'paid');
                 const userTotal = userSubInvoices.reduce((sum, inv) => sum + inv.amount, 0);
                 return acc + userTotal;
             }, 0);
 
-            const pending = allUsers.reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
+            const pending = ensureArray(allUsers).reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
 
             setStats({
                 platformFees,
