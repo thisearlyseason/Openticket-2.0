@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, AlertTriangle, Clock, CheckCircle2, Eye } from 'lucide-react';
-import { Card, Badge, Button, Select } from '../../UI';
+import { Card, Badge, Button, Select } from '../UI';
 
 interface SecurityTabProps {
     activeTab: string;
@@ -61,11 +61,12 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({ activeTab }) => {
     }, [activeTab, suspiciousSeverityFilter]);
 
     // Safety check - don't render if not on security tab or if activities is not an array
-    if (activeTab !== 'security' || !Array.isArray(suspiciousActivities)) {
+    if (activeTab !== 'security') {
         return null;
     }
 
-    const safeActivities = suspiciousActivities || [];
+    // Extra safety: ensure suspiciousActivities is always an array
+    const safeActivities = Array.isArray(suspiciousActivities) ? suspiciousActivities : [];
 
     return (
         <div className="p-8">
