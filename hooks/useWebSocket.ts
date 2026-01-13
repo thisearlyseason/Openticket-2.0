@@ -1,10 +1,10 @@
 /**
  * WebSocket Hook - Real-time analytics updates
  * Connects to backend Socket.IO server
+ * Uses dynamic import to avoid Vercel build issues
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface UseWebSocketOptions {
     eventId?: string;
@@ -13,6 +13,9 @@ interface UseWebSocketOptions {
     onAnalyticsUpdate?: (data: any) => void;
     onMetricsUpdate?: (data: any) => void;
 }
+
+// Type for socket.io client (dynamically imported)
+type SocketType = any;
 
 export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     const {
@@ -25,95 +28,120 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
     const [isConnected, setIsConnected] = useState(false);
     const [connectionError, setConnectionError] = useState<string | null>(null);
-    const socketRef = useRef<Socket | null>(null);
+    const socketRef = useRef<SocketType | null>(null);
+    const isInitializedRef = useRef(false);
 
     useEffect(() => {
-        // Get backend URL
-        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+        // Skip if already initialized or if running on server
+        if (isInitializedRef.current || typeof window === 'undefined') {
+            return;
+        }
 
-        // Initialize Socket.IO client
-        const socket = io(backendUrl, {
-            path: '/socket.io/',
-            transports: ['websocket', 'polling'],
-            reconnection: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            reconnectionAttempts: Infinity
-        });
+        isInitializedRef.current = true;
 
-        socketRef.current = socket;
+        // Dynamically import socket.io-client to avoid build issues
+        const initSocket = async () => {
+            try {
+                const { io } = await import('socket.io-client');
+                
+                // Get backend URL
+                const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-        // Connection handlers
-        socket.on('connect', () => {
-            console.log('[WebSocket] Connected:', socket.id);
-            setIsConnected(true);
-            setConnectionError(null);
+                // Initialize Socket.IO client
+                const socket = io(backendUrl, {
+                    path: '/socket.io/',
+                    transports: ['websocket', 'polling'],
+                    reconnection: true,
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 5000,
+                    reconnectionAttempts: Infinity
+                });
 
-            // Subscribe to event if provided
-            if (eventId) {
-                socket.emit('subscribe:event', eventId);
+                socketRef.current = socket;
+
+                // Connection handlers
+                socket.on('connect', () => {
+                    console.log('[WebSocket] Connected:', socket.id);
+                    setIsConnected(true);
+                    setConnectionError(null);
+
+                    // Subscribe to event if provided
+                    if (eventId) {
+                        socket.emit('subscribe:event', eventId);
+                    }
+
+                    // Subscribe to global analytics if requested
+                    if (subscribeGlobal) {
+                        socket.emit('subscribe:analytics');
+                    }
+                });
+
+                socket.on('disconnect', () => {
+                    console.log('[WebSocket] Disconnected');
+                    setIsConnected(false);
+                });
+
+                socket.on('connect_error', (error: Error) => {
+                    console.error('[WebSocket] Connection error:', error);
+                    setConnectionError(error.message);
+                    setIsConnected(false);
+                });
+
+                // Event handlers
+                socket.on('scan:updated', (data: any) => {
+                    console.log('[WebSocket] Scan updated:', data);
+                    if (onScanUpdate) {
+                        onScanUpdate(data);
+                    }
+                });
+
+                socket.on('analytics:updated', (data: any) => {
+                    console.log('[WebSocket] Analytics updated:', data);
+                    if (onAnalyticsUpdate) {
+                        onAnalyticsUpdate(data);
+                    }
+                });
+
+                socket.on('scan:metrics', (data: any) => {
+                    console.log('[WebSocket] Metrics update:', data);
+                    if (onMetricsUpdate) {
+                        onMetricsUpdate(data);
+                    }
+                });
+
+            } catch (error) {
+                console.error('[WebSocket] Failed to initialize:', error);
+                setConnectionError('Failed to initialize WebSocket');
             }
+        };
 
-            // Subscribe to global analytics if requested
-            if (subscribeGlobal) {
-                socket.emit('subscribe:analytics');
-            }
-        });
-
-        socket.on('disconnect', () => {
-            console.log('[WebSocket] Disconnected');
-            setIsConnected(false);
-        });
-
-        socket.on('connect_error', (error) => {
-            console.error('[WebSocket] Connection error:', error);
-            setConnectionError(error.message);
-            setIsConnected(false);
-        });
-
-        // Event handlers
-        socket.on('scan:updated', (data) => {
-            console.log('[WebSocket] Scan updated:', data);
-            if (onScanUpdate) {
-                onScanUpdate(data);
-            }
-        });
-
-        socket.on('analytics:updated', (data) => {
-            console.log('[WebSocket] Analytics updated:', data);
-            if (onAnalyticsUpdate) {
-                onAnalyticsUpdate(data);
-            }
-        });
-
-        socket.on('scan:metrics', (data) => {
-            console.log('[WebSocket] Metrics update:', data);
-            if (onMetricsUpdate) {
-                onMetricsUpdate(data);
-            }
-        });
+        initSocket();
 
         // Cleanup on unmount
         return () => {
-            if (eventId) {
-                socket.emit('unsubscribe:event', eventId);
+            if (socketRef.current) {
+                if (eventId) {
+                    socketRef.current.emit('unsubscribe:event', eventId);
+                }
+                socketRef.current.disconnect();
+                socketRef.current = null;
             }
-            socket.disconnect();
+            isInitializedRef.current = false;
         };
-    }, [eventId, subscribeGlobal]);
+    }, [eventId, subscribeGlobal, onScanUpdate, onAnalyticsUpdate, onMetricsUpdate]);
 
     // Manual subscription methods
-    const subscribeToEvent = (newEventId: string) => {
+    const subscribeToEvent = useCallback((newEventId: string) => {
         if (socketRef.current && isConnected) {
             socketRef.current.emit('subscribe:event', newEventId);
         }
-    };
+    }, [isConnected]);
 
-    const unsubscribeFromEvent = (eventIdToUnsub: string) => {
+    const unsubscribeFromEvent = useCallback((eventIdToUnsub: string) => {
         if (socketRef.current && isConnected) {
             socketRef.current.emit('unsubscribe:event', eventIdToUnsub);
         }
-    };
+    }, [isConnected]);
 
     return {
         isConnected,
