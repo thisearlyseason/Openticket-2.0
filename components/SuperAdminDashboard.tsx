@@ -354,7 +354,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             // Load affiliate data from new analytics endpoint
             try {
                 const affiliateAnalytics = await StorageService.getAffiliateAnalytics();
-                if (affiliateAnalytics && affiliateAnalytics.affiliates) {
+                if (affiliateAnalytics && Array.isArray(affiliateAnalytics.affiliates)) {
                     const affiliateDataList: AffiliateData[] = affiliateAnalytics.affiliates.map((aff: any) => ({
                         id: aff.id,
                         name: aff.name || 'Unknown',
@@ -374,8 +374,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                     setAffiliates(affiliateDataList);
                 } else {
                     // Fallback to old method if analytics endpoint fails
-                    const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
-                    const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                    const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
+                    const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
                         const affTransactions = (financials.recentTransactions || []).filter(
                             (tx: any) => tx.affiliate_code === aff.affiliateCode
                         );
@@ -405,8 +405,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             } catch (e) {
                 console.error("Failed to load affiliate analytics, using fallback", e);
                 // Fallback to calculating from users
-                const affiliateUsers = allUsers.filter(u => u.role === 'affiliate' && u.affiliateCode);
-                const affiliateDataList: AffiliateData[] = affiliateUsers.map(aff => {
+                const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
+                const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
                     const affTransactions = (financials.recentTransactions || []).filter(
                         (tx: any) => tx.affiliate_code === aff.affiliateCode
                     );
