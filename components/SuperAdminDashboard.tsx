@@ -1470,17 +1470,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 <Card className="p-4 bg-zinc-800/50 border-zinc-700">
                                                     <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
                                                     <div className="text-2xl font-black text-white">
-                                                        ${stats.donationBreakdown.count > 0 
-                                                            ? (stats.donationBreakdown.total / stats.donationBreakdown.count).toFixed(2) 
+                                                        ${(stats.donationBreakdown?.count || 0) > 0 
+                                                            ? ((stats.donationBreakdown?.total || 0) / (stats.donationBreakdown?.count || 1)).toFixed(2) 
                                                             : '0.00'}
                                                     </div>
                                                 </Card>
                                                 <Card className="p-4 bg-zinc-800/50 border-zinc-700">
                                                     <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Growth</div>
-                                                    <div className={`text-2xl font-black ${stats.donationBreakdown.thisMonth >= stats.donationBreakdown.lastMonth ? 'text-green-400' : 'text-red-400'}`}>
-                                                        {stats.donationBreakdown.lastMonth > 0 
-                                                            ? `${((stats.donationBreakdown.thisMonth - stats.donationBreakdown.lastMonth) / stats.donationBreakdown.lastMonth * 100).toFixed(0)}%`
-                                                            : stats.donationBreakdown.thisMonth > 0 ? '+100%' : '0%'}
+                                                    <div className={`text-2xl font-black ${(stats.donationBreakdown?.thisMonth || 0) >= (stats.donationBreakdown?.lastMonth || 0) ? 'text-green-400' : 'text-red-400'}`}>
+                                                        {(stats.donationBreakdown?.lastMonth || 0) > 0 
+                                                            ? `${(((stats.donationBreakdown?.thisMonth || 0) - (stats.donationBreakdown?.lastMonth || 0)) / (stats.donationBreakdown?.lastMonth || 1) * 100).toFixed(0)}%`
+                                                            : (stats.donationBreakdown?.thisMonth || 0) > 0 ? '+100%' : '0%'}
                                                     </div>
                                                 </Card>
                                             </div>
