@@ -855,8 +855,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = (stats.recentTransactions || []).map(tx => {
-            const event = events.find(e => e.id === tx.event_id);
+        const rows = ensureArray(stats.recentTransactions).map(tx => {
+            const event = safeEvents.find(e => e.id === tx.event_id);
             return [
                 new Date(tx.created_at).toLocaleDateString(),
                 tx.id,
