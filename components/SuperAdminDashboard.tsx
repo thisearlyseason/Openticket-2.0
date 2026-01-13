@@ -2043,7 +2043,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
                                         <Eye size={14} /> Top by Clicks
                                     </div>
-                                    {[...(affiliates || [])].sort((a, b) => b.clicks - a.clicks).slice(0, 3).map((aff, i) => (
+                                    {[...safeAffiliates].sort((a, b) => b.clicks - a.clicks).slice(0, 3).map((aff, i) => (
                                         <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
                                             <div className="flex items-center gap-2">
                                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
@@ -2060,7 +2060,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
                                         <CheckCircle size={14} /> Top by Conversions
                                     </div>
-                                    {[...(affiliates || [])].sort((a, b) => b.conversions - a.conversions).slice(0, 3).map((aff, i) => (
+                                    {[...safeAffiliates].sort((a, b) => b.conversions - a.conversions).slice(0, 3).map((aff, i) => (
                                         <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
                                             <div className="flex items-center gap-2">
                                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
@@ -2077,7 +2077,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <div className="text-xs font-bold text-zinc-500 uppercase mb-3 flex items-center gap-2">
                                         <DollarSign size={14} /> Top by Earnings
                                     </div>
-                                    {[...(affiliates || [])].sort((a, b) => b.totalEarnings - a.totalEarnings).slice(0, 3).map((aff, i) => (
+                                    {[...safeAffiliates].sort((a, b) => b.totalEarnings - a.totalEarnings).slice(0, 3).map((aff, i) => (
                                         <div key={aff.id} className="flex justify-between items-center py-2 border-b border-zinc-800 last:border-0">
                                             <div className="flex items-center gap-2">
                                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-zinc-400 text-black' : 'bg-amber-700 text-white'}`}>
