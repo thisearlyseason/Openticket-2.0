@@ -249,7 +249,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
             if (response.ok) {
                 const data = await response.json();
-                setSuspiciousActivities(data.logs || []);
+                // Ensure we ALWAYS set an array, never undefined/null
+                const logs = Array.isArray(data?.logs) ? data.logs : [];
+                setSuspiciousActivities(logs);
             } else {
                 console.error('Failed to load suspicious activities:', await response.text());
                 setSuspiciousActivities([]); // Always set to empty array on error
@@ -2359,7 +2361,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 )}
 
                 {/* SECURITY TAB - Suspicious Activity Monitoring */}
-                {activeTab === 'security' && (
+                {activeTab === 'security' && Array.isArray(suspiciousActivities) && (
                     <div className="p-8">
                         <div className="flex justify-between items-center mb-6">
                             <div>
