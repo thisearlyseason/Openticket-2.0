@@ -954,3 +954,24 @@ Implemented automatic local currency detection and charging for attendees while 
 - [x] **19 Backend Tests:** All passed (exchange rates, convert-price, create-order, supported currencies)
 - [x] **Frontend UI Tests:** Currency selector visibility, selection, message updates
 - [x] **Test File:** `/app/tests/test_auto_local_currency.py`
+
+
+### ✅ Critical Bug Fix - Super Admin Dashboard Crash (January 13, 2026)
+
+#### Issue
+- **TypeError: Cannot read properties of undefined (reading 'map')** crashed the entire Super Admin Dashboard
+- Root cause: A diagnostic function `safeMap()` was being used but was never imported or defined
+- This was a recurring P0 issue that blocked all admin functionality
+
+#### Fix Applied
+- Replaced all 7 `safeMap(array, "label", callback)` calls with standard `(array || []).map(callback)` pattern
+- Files modified:
+  - `/app/components/SuperAdminDashboard.tsx` - 6 instances fixed
+  - `/app/components/admin/tabs/PromoCodesTab.tsx` - 1 instance fixed
+- SecurityTab.tsx already had proper guards (`safeActivities` variable)
+
+#### Verification
+- ✅ Testing agent confirmed: 100% success rate, all pages load without TypeError
+- ✅ No remaining `safeMap` references in active code
+- ✅ Frontend loads correctly without JavaScript errors
+
