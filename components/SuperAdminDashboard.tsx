@@ -947,14 +947,14 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         (u.businessName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const filteredEvents = (events || []).filter(e =>
+    const filteredEvents = safeEvents.filter(e =>
         (e.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.organizer || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Get organizer name for an event
     const getOrganizerName = (ownerId: string) => {
-        const owner = users.find(u => u.id === ownerId);
+        const owner = safeUsers.find(u => u.id === ownerId);
         return owner?.name || owner?.email || 'Unknown';
     };
 
