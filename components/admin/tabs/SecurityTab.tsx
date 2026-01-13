@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, AlertTriangle, Clock, CheckCircle2, Eye } from 'lucide-react';
-import { Card, Badge, Button, Select } from '../UI';
+import { Card, Badge, Button, Select } from '../../UI';
 
 interface SecurityTabProps {
     activeTab: string;
