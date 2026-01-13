@@ -1084,3 +1084,40 @@ const initSocket = async () => {
 - ✅ No ErrorBoundary triggers
 - ✅ Public pages load without errors
 
+
+### ✅ API ERROR HANDLING HARDENING (January 13, 2026 - Session 5)
+
+#### Root Cause of Remaining Crashes
+When API calls return 401 Unauthorized:
+- `StorageService.getAdminFinancials()` returns undefined
+- Accessing `financials.recentTransactions` fails
+- State setters receive undefined instead of empty arrays
+
+#### Comprehensive API Error Handling Fixes
+1. **Wrapped getAdminFinancials() in try-catch** (Lines 329-334):
+   ```typescript
+   let financials: any = {};
+   try {
+       financials = await StorageService.getAdminFinancials() || {};
+   } catch (e) {
+       financials = {};
+   }
+   ```
+
+2. **All API response accesses use optional chaining**:
+   - `financials?.platformFees`, `financials?.recentTransactions`, etc.
+
+3. **All catch blocks explicitly set state to empty arrays**:
+   - `setAffiliates([])`, `setAllNonprofitApplications([])`, `setNonprofitApplications([])`
+   - `setOnboardingResponses([])`, `setPlatformPayouts([])`, `setAffiliatePayouts([])`
+
+4. **All state setters use ensureArray()**:
+   - `setPlatformPayouts(ensureArray(payouts))`
+   - `setAllNonprofitApplications(ensureArray(data?.data))`
+
+#### Verification
+- ✅ Testing Agent Iteration 40: 100% frontend success rate
+- ✅ Dashboard shows "Access Denied" gracefully when not authenticated
+- ✅ No crashes even when ALL API calls fail with 401
+
+
