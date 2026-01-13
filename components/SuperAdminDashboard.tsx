@@ -377,7 +377,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 } else {
                     // Fallback to old method if analytics endpoint fails
                     const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                    const affiliateDataList: AffiliateData[] = safeMap((affiliateUsers || []), "refreshData:affiliateUsers", aff => {
+                    const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
                         const affTransactions = (financials.recentTransactions || []).filter(
                             (tx: any) => tx.affiliate_code === aff.affiliateCode
                         );
@@ -408,7 +408,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 console.error("Failed to load affiliate analytics, using fallback", e);
                 // Fallback to calculating from users
                 const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                const affiliateDataList: AffiliateData[] = safeMap((affiliateUsers || []), "refreshData:affiliateUsers", aff => {
+                const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
                     const affTransactions = (financials.recentTransactions || []).filter(
                         (tx: any) => tx.affiliate_code === aff.affiliateCode
                     );
@@ -841,7 +841,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = safeMap(stats.recentTransactions || [], "downloadFinancialCSV:transactions", tx => {
+        const rows = (stats.recentTransactions || []).map(tx => {
             const event = events.find(e => e.id === tx.event_id);
             return [
                 new Date(tx.created_at).toLocaleDateString(),
@@ -876,7 +876,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportUsersCSV = () => {
         const headers = ['Name', 'Email', 'Role', 'Business Name', 'Business Type', 'Account Type', 'Created At'];
-        const rows = safeMap(users || [], "downloadUsersCSV:users", u => [
+        const rows = (users || []).map(u => [
             u.name || '',
             u.email || '',
             u.role || '',
