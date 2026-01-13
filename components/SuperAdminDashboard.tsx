@@ -320,35 +320,42 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 StorageService.getAllRegistrationsAdmin().catch(e => { console.error(e); return []; })
             ]);
 
-            setUsers(allUsers);
-            setEvents(allEvents);
-            setRegistrations(allRegs);
+            setUsers(allUsers || []);
+            setEvents(allEvents || []);
+            setRegistrations(allRegs || []);
 
-            // Fetch True Financials
-            const financials = await StorageService.getAdminFinancials();
+            // Fetch True Financials - with proper error handling
+            let financials: any = {};
+            try {
+                financials = await StorageService.getAdminFinancials() || {};
+            } catch (e) {
+                console.error('Failed to fetch admin financials:', e);
+                financials = {};
+            }
 
-            // Get actual values from financial transactions
-            const platformFees = financials.platformFees || 0;
-            const totalVolume = financials.totalVolume || 0;
-            const organizerNet = financials.organizerNet || 0;
-            const refundTotal = financials.refundTotal || 0;
-            const platformDonations = financials.platformDonations || 0;
+            // Get actual values from financial transactions - all with safe defaults
+            const platformFees = financials?.platformFees || 0;
+            const totalVolume = financials?.totalVolume || 0;
+            const organizerNet = financials?.organizerNet || 0;
+            const refundTotal = financials?.refundTotal || 0;
+            const platformDonations = financials?.platformDonations || 0;
             let stripeFees = 0;
 
             // Calculate Stripe fees from transactions
-            if (financials.recentTransactions && Array.isArray(financials.recentTransactions)) {
-                stripeFees = financials.recentTransactions.reduce((acc: number, tx: any) => 
+            const safeRecentTx = ensureArray(financials?.recentTransactions);
+            if (safeRecentTx.length > 0) {
+                stripeFees = safeRecentTx.reduce((acc: number, tx: any) => 
                     acc + (Number(tx.stripe_fee) || 0), 0);
             }
 
             // Calculate subscription revenue from user invoices
             const subscriptionRevenue = ensureArray(allUsers).reduce((acc: number, user: User) => {
-                const userSubInvoices = ensureArray(user.invoices).filter(inv => inv.type === 'subscription' && inv.status === 'paid');
+                const userSubInvoices = ensureArray(user?.invoices).filter(inv => inv.type === 'subscription' && inv.status === 'paid');
                 const userTotal = userSubInvoices.reduce((sum, inv) => sum + inv.amount, 0);
                 return acc + userTotal;
             }, 0);
 
-            const pending = ensureArray(allUsers).reduce((acc: number, u: User) => acc + (u.availablePayout || 0), 0);
+            const pending = ensureArray(allUsers).reduce((acc: number, u: User) => acc + (u?.availablePayout || 0), 0);
 
             setStats({
                 platformFees,
@@ -359,9 +366,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 stripeFees,
                 refundTotal,
                 platformDonations,
-                recentTransactions: financials.recentTransactions || [],
-                organizerBreakdown: financials.organizerBreakdown || [],
-                donationBreakdown: financials.donationBreakdown || {
+                recentTransactions: ensureArray(financials?.recentTransactions),
+                organizerBreakdown: ensureArray(financials?.organizerBreakdown),
+                donationBreakdown: financials?.donationBreakdown || {
                     total: 0,
                     count: 0,
                     byAmount: { '$1': 0, '$2': 0, '$5': 0, '$10': 0, 'other': 0 },
