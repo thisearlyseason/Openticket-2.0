@@ -2365,7 +2365,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 )}
 
                 {/* SECURITY TAB - Suspicious Activity Monitoring */}
-                <SecurityTab activeTab={activeTab} />
+                {activeTab === 'security' && (
+                    <SecurityTab activeTab={activeTab} />
+                )}
 
                 {/* ANALYTICS TAB */}
                 {activeTab === 'analytics' && (
