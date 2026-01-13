@@ -187,7 +187,7 @@ export const PromoCodesTab: React.FC<PromoCodesTabProps> = ({ confirm }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {promoCodes.map(promo => (
+                        {(promoCodes || []).map(promo => (
                             <tr key={promo.id} className="border-t border-zinc-800">
                                 <td className="p-4 font-mono font-bold text-[#E0FF20]">{promo.code}</td>
                                 <td className="p-4">
