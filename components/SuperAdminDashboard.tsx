@@ -2460,18 +2460,18 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Applications List */}
                             <div className="space-y-4">
-                                {(nonprofitFilter === 'all' ? allNonprofitApplications : 
-                                  nonprofitFilter === 'pending' ? nonprofitApplications :
-                                  allNonprofitApplications.filter(a => a.status === nonprofitFilter)
+                                {(nonprofitFilter === 'all' ? (allNonprofitApplications || []) : 
+                                  nonprofitFilter === 'pending' ? (nonprofitApplications || []) :
+                                  (allNonprofitApplications || []).filter(a => a.status === nonprofitFilter)
                                 ).length === 0 ? (
                                     <div className="bg-zinc-800/50 rounded-xl p-8 text-center">
                                         <Heart size={48} className="mx-auto mb-4 text-zinc-600" />
                                         <p className="text-zinc-400">No {nonprofitFilter} applications</p>
                                     </div>
                                 ) : (
-                                    ((nonprofitFilter === 'all' ? allNonprofitApplications : 
-                                      nonprofitFilter === 'pending' ? nonprofitApplications :
-                                      allNonprofitApplications.filter(a => a.status === nonprofitFilter)
+                                    ((nonprofitFilter === 'all' ? (allNonprofitApplications || []) : 
+                                      nonprofitFilter === 'pending' ? (nonprofitApplications || []) :
+                                      (allNonprofitApplications || []).filter(a => a.status === nonprofitFilter)
                                     ) || []).map(app => (
                                         <div
                                             key={app.id}
