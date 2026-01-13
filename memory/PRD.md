@@ -1085,6 +1085,37 @@ const initSocket = async () => {
 - ✅ Public pages load without errors
 
 
+### ✅ SELECT COMPONENT FIX (January 13, 2026 - Session 6)
+
+#### Root Cause Found
+The UI `Select` component in `/app/components/UI.tsx` had an unguarded `options.map()` call:
+```typescript
+// Before - CRASH if options is undefined
+{options.map((opt) => (
+    <option key={opt.value} value={opt.value}>{opt.label}</option>
+))}
+```
+
+#### Fix Applied
+```typescript
+// After - Safe with default empty array and Array.isArray check
+export const Select = ({ options = [], ... }) => {
+    const safeOptions = Array.isArray(options) ? options : [];
+    return (
+        ...
+        {safeOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+    );
+};
+```
+
+#### Verification
+- ✅ Local preview shows "Access Denied" without crash
+- ✅ No `.map()` errors in console logs
+
+
+
 ### ✅ API ERROR HANDLING HARDENING (January 13, 2026 - Session 5)
 
 #### Root Cause of Remaining Crashes
