@@ -2854,7 +2854,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         <p className="text-zinc-400">No onboarding responses yet</p>
                                     </div>
                                 ) : (
-                                    {(onboardingResponses || []).map(response => (
+                                    (onboardingResponses || []).map(response => (
                                         <div
                                             key={response.id}
                                             onClick={() => setSelectedOnboarding(response)}
