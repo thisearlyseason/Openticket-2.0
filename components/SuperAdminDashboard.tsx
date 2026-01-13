@@ -1431,7 +1431,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     }
                                 }
 
-                                const filteredRecent = (Array.isArray(stats.donationBreakdown?.recent) ? stats.donationBreakdown.recent : []).filter((d: any) => {
+                                const filteredRecent = safeDonationRecent.filter((d: any) => {
                                     const dDate = new Date(d.createdAt);
                                     if (startDate && dDate < startDate) return false;
                                     if (dDate > endDate) return false;
