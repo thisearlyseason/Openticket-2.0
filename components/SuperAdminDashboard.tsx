@@ -2590,7 +2590,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div>
                                                 <span className="text-zinc-500 text-sm">Onboarding Responses</span>
                                                 <div className="mt-2 bg-zinc-900/50 rounded-lg p-4 text-sm">
-                                                    {Object.entries(selectedNonprofit.onboarding[0].responses).map(([key, value]) => (
+                                                    {selectedNonprofit?.onboarding?.[0]?.responses && Object.entries(selectedNonprofit.onboarding[0].responses || {}).map(([key, value]) => (
                                                         <div key={key} className="flex justify-between py-1 border-b border-zinc-800 last:border-0">
                                                             <span className="text-zinc-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                                                             <span className="text-white">{Array.isArray(value) ? value.join(', ') : String(value)}</span>
@@ -2736,7 +2736,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         <div>
                                             <span className="text-zinc-500 text-sm">All Responses</span>
                                             <div className="mt-2 bg-zinc-900/50 rounded-lg p-4 text-sm space-y-2">
-                                                {selectedOnboarding.responses && Object.entries(selectedOnboarding.responses).map(([key, value]) => (
+                                                {selectedOnboarding?.responses && Object.entries(selectedOnboarding.responses || {}).map(([key, value]) => (
                                                     <div key={key} className="py-2 border-b border-zinc-800 last:border-0">
                                                         <span className="text-zinc-400 capitalize block text-xs mb-1">{key.replace(/([A-Z])/g, ' $1')}</span>
                                                         <span className="text-white">{Array.isArray(value) ? value.join(', ') : String(value)}</span>
