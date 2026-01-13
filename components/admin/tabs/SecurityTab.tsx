@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, AlertTriangle, Clock, CheckCircle2, Eye } from 'lucide-react';
 import { Card, Badge, Button, Select } from '../../UI';
+import { safeMap } from '../../../utils/safeMap';
 
 interface SecurityTabProps {
     activeTab: string;
@@ -39,8 +40,8 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({ activeTab }) => {
                 const data = await response.json();
                 // Ensure we ALWAYS set an array, never undefined/null
                 const logs = Array.isArray(data?.logs) ? data.logs : [];
+                console.log('[SecurityTab] Setting suspiciousActivities:', logs);
                 setSuspiciousActivities(logs);
-                console.log('[SecurityTab] Loaded activities:', logs.length);
             } else {
                 console.error('Failed to load suspicious activities:', await response.text());
                 setSuspiciousActivities([]);
@@ -60,13 +61,14 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({ activeTab }) => {
         }
     }, [activeTab, suspiciousSeverityFilter]);
 
-    // Safety check - don't render if not on security tab or if activities is not an array
+    // Safety check - don't render if not on security tab
     if (activeTab !== 'security') {
         return null;
     }
 
     // Extra safety: ensure suspiciousActivities is always an array
     const safeActivities = Array.isArray(suspiciousActivities) ? suspiciousActivities : [];
+    console.log('[SecurityTab] Rendering with safeActivities:', safeActivities.length, 'items');
 
     return (
         <div className="p-8">
@@ -160,7 +162,7 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({ activeTab }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                safeActivities.map((activity) => (
+                                safeMap(safeActivities, "SecurityTab:safeActivities", (activity) => (
                                     <tr key={activity.id} className="hover:bg-zinc-800/50 transition-colors">
                                         <td className="p-4 text-sm text-zinc-400">
                                             {new Date(activity.created_at).toLocaleString()}

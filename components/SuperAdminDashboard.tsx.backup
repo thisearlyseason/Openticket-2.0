@@ -378,7 +378,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 } else {
                     // Fallback to old method if analytics endpoint fails
                     const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                    const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
+                    const affiliateDataList: AffiliateData[] = safeMap((affiliateUsers || []), "refreshData:affiliateUsers", aff => {
                         const affTransactions = (financials.recentTransactions || []).filter(
                             (tx: any) => tx.affiliate_code === aff.affiliateCode
                         );
@@ -409,7 +409,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 console.error("Failed to load affiliate analytics, using fallback", e);
                 // Fallback to calculating from users
                 const affiliateUsers = (allUsers || []).filter(u => u.role === 'affiliate' && u.affiliateCode);
-                const affiliateDataList: AffiliateData[] = (affiliateUsers || []).map(aff => {
+                const affiliateDataList: AffiliateData[] = safeMap((affiliateUsers || []), "refreshData:affiliateUsers", aff => {
                     const affTransactions = (financials.recentTransactions || []).filter(
                         (tx: any) => tx.affiliate_code === aff.affiliateCode
                     );
@@ -842,7 +842,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = (stats.recentTransactions || []).map(tx => {
+        const rows = safeMap(stats.recentTransactions || [], "downloadFinancialCSV:transactions", tx => {
             const event = events.find(e => e.id === tx.event_id);
             return [
                 new Date(tx.created_at).toLocaleDateString(),
@@ -877,7 +877,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportUsersCSV = () => {
         const headers = ['Name', 'Email', 'Role', 'Business Name', 'Business Type', 'Account Type', 'Created At'];
-        const rows = (users || []).map(u => [
+        const rows = safeMap(users || [], "downloadUsersCSV:users", u => [
             u.name || '',
             u.email || '',
             u.role || '',
@@ -1175,7 +1175,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <span className="font-bold text-white">All Registrations ({registrations.length})</span>
                             <Button size="sm" variant="outline" onClick={() => {
                                 const headers = ['Date', 'Event', 'Attendee Name', 'Email', 'Status', 'Amount', 'Affiliate', 'Promo Code'];
-                                const rows = (registrations || []).map(r => {
+                                const rows = safeMap(registrations || [], "RegistrationsTab:registrations", r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     return [
                                         new Date(r.timestamp).toLocaleDateString(),
@@ -1213,7 +1213,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {(registrations || []).map(r => {
+                                {safeMap(registrations || [], "RegistrationsTab:registrations", r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     const ticketCount = r.tickets?.length || 0;
                                     return (
@@ -1784,7 +1784,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(stats.recentTransactions || []).map((tx: any) => (
+                                    {safeMap(stats.recentTransactions || [], "downloadFinancialCSV:transactions", (tx: any) => (
                                         <tr key={tx.id} className="border-t border-zinc-800">
                                             <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
                                             <td className="p-4 text-white">{tx.event?.title || '-'}</td>
