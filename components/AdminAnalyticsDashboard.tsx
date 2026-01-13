@@ -299,14 +299,14 @@ export const AdminAnalyticsDashboard: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800">
-                            {eventAnalytics.length === 0 ? (
+                            {(!eventAnalytics || eventAnalytics.length === 0) ? (
                                 <tr>
                                     <td colSpan={6} className="p-8 text-center text-zinc-500">
                                         No analytics data available for selected period
                                     </td>
                                 </tr>
                             ) : (
-                                eventAnalytics.map((event) => (
+                                (eventAnalytics || []).map((event) => (
                                     <tr key={event.eventId} className="hover:bg-zinc-800/50 transition-colors">
                                         <td className="p-4">
                                             <div className="font-bold text-white truncate max-w-xs">
