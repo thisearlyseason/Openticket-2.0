@@ -202,6 +202,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const safePlatformPayouts = useMemo(() => ensureArray(platformPayouts), [platformPayouts]);
     const safeAffiliatePayouts = useMemo(() => ensureArray(affiliatePayouts), [affiliatePayouts]);
     const safeOnboardingResponses = useMemo(() => ensureArray(onboardingResponses), [onboardingResponses]);
+    
+    // Safe stats nested arrays
+    const safeRecentTransactions = useMemo(() => ensureArray(stats.recentTransactions), [stats.recentTransactions]);
+    const safeOrganizerBreakdown = useMemo(() => ensureArray(stats.organizerBreakdown), [stats.organizerBreakdown]);
+    const safeDonationRecent = useMemo(() => ensureArray(stats.donationBreakdown?.recent), [stats.donationBreakdown?.recent]);
 
     // Check Resend status from backend API
     const checkResendStatus = async () => {
