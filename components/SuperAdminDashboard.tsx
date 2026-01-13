@@ -1617,7 +1617,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             </div>
 
                             {/* Payout History */}
-                            {platformPayouts.length > 0 && (
+                            {safePlatformPayouts.length > 0 && (
                                 <div className="bg-black/20 rounded-xl overflow-hidden">
                                     <div className="p-3 border-b border-zinc-800 text-xs font-bold text-zinc-500 uppercase">
                                         Recent Payouts
@@ -1632,7 +1632,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {(platformPayouts || []).slice(0, 5).map((payout: any) => (
+                                            {safePlatformPayouts.slice(0, 5).map((payout: any) => (
                                                 <tr key={payout.id} className="border-t border-zinc-800/50">
                                                     <td className="p-3 text-zinc-400">
                                                         {new Date(payout.created_at).toLocaleDateString()}
