@@ -9,7 +9,7 @@ import json
 import time
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://ticketflow-111.preview.emergentagent.com"
+BACKEND_URL = "https://ticketfix-3.preview.emergentagent.com"
 
 def test_email_status():
     """Test 1: GET /api/email/status - Should return Resend as configured"""
