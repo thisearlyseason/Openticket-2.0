@@ -10,6 +10,7 @@ import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
+import { safeMap, safeObjectEntries } from '../utils/safeMap';
 
 interface FinancialTransaction {
     id: string;
