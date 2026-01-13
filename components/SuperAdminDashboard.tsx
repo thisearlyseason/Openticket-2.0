@@ -1497,7 +1497,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div>
                                                 <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
                                                 <div className="space-y-2">
-                                                    {Object.entries(stats.donationBreakdown?.byAmount || {}).map(([amount, count]) => {
+                                                    {(Array.isArray(stats.donationBreakdown?.byAmount) ? Object.entries(stats.donationBreakdown.byAmount) : Object.entries(stats.donationBreakdown?.byAmount || {})).map(([amount, count]) => {
                                                         const totalCount = donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount;
                                                         const percentage = totalCount > 0 
                                                             ? ((count as number) / totalCount * 100) 
