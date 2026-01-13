@@ -287,6 +287,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
         if (activeTab === 'security') {
             console.log('[SuperAdmin] Security tab active, loading suspicious activities...');
+            console.log('[SuperAdmin] Current suspiciousActivities state:', suspiciousActivities, 'isArray:', Array.isArray(suspiciousActivities));
             loadSuspiciousActivities().catch(console.error);
         }
     }, [activeTab, suspiciousSeverityFilter]);
