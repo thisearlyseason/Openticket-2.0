@@ -2155,7 +2155,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </td>
                                         </tr>
                                     ))}
-                                    {affiliates.length === 0 && (
+                                    {safeAffiliates.length === 0 && (
                                         <tr><td colSpan={8} className="p-8 text-center text-zinc-500">
                                             No affiliates found. Affiliates will appear here once they join your program.
                                         </td></tr>
