@@ -1855,7 +1855,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => {
                                     const headers = ['Name', 'Email', 'Code', 'Clicks', 'Conversions', 'Rate', 'Commission%', 'Earnings', 'Paid', 'Pending'];
-                                    const rows = (affiliates || []).map(a => [
+                                    const rows = safeAffiliates.map(a => [
                                         a.name, a.email, a.affiliateCode, a.clicks, a.conversions, 
                                         `${a.conversionRate.toFixed(1)}%`, `${a.commissionRate}%`, `$${a.totalEarnings.toFixed(2)}`,
                                         `$${a.paidOut.toFixed(2)}`, `$${a.pendingPayout.toFixed(2)}`
