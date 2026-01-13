@@ -10,7 +10,6 @@ import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
-import { safeMap, safeObjectEntries } from '../utils/safeMap';
 
 interface FinancialTransaction {
     id: string;
@@ -1018,7 +1017,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {safeMap(['users', 'events', 'registrations', 'finance', 'affiliates', 'security', 'analytics', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'], "TabNavigation:tabs", tab => (
+                {['users', 'events', 'registrations', 'finance', 'affiliates', 'security', 'analytics', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
@@ -1057,7 +1056,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {safeMap(filteredUsers || [], "UsersTab:filteredUsers", u => (
+                                    {(filteredUsers || []).map(u => (
                                         <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                             <td className="p-4">
                                                 <div className="font-bold text-white">{u.name || 'No Name'}</div>
@@ -1113,7 +1112,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {safeMap(filteredEvents || [], "EventsTab:filteredEvents", e => (
+                                {(filteredEvents || []).map(e => (
                                     <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                         <td className="p-4">
                                             <div className="font-bold text-white">{e.title}</div>
@@ -1498,7 +1497,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div>
                                                 <h4 className="text-sm font-bold text-zinc-400 uppercase mb-3">Donation Distribution</h4>
                                                 <div className="space-y-2">
-                                                    {safeObjectEntries(stats.donationBreakdown?.byAmount || {}, "DonationDistribution:byAmount").map(([amount, count]) => {
+                                                    {Object.entries(stats.donationBreakdown?.byAmount || {}).map(([amount, count]) => {
                                                         const totalCount = donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount;
                                                         const percentage = totalCount > 0 
                                                             ? ((count as number) / totalCount * 100) 
@@ -1526,7 +1525,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 </h4>
                                                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                                                     {(donationDateRange === 'all' ? stats.donationBreakdown.recent : filteredRecent).length > 0 ? (
-                                                        safeMap(donationDateRange === 'all' ? stats.donationBreakdown?.recent || [] : filteredRecent || [], "DonationRecent:list", (donation: any, idx: number) => (
+                                                        (donationDateRange === 'all' ? stats.donationBreakdown?.recent || [] : filteredRecent || []).map((donation: any, idx: number) => (
                                                             <div key={idx} className="flex items-center justify-between p-2 bg-zinc-800/50 rounded-lg">
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="text-sm font-bold text-white truncate">{donation.attendeeName}</div>
@@ -1619,7 +1618,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {safeMap(platformPayouts || [], "UpcomingPayouts:platformPayouts", (payout: any) => (
+                                            {(platformPayouts || []).slice(0, 5).map((payout: any) => (
                                                 <tr key={payout.id} className="border-t border-zinc-800/50">
                                                     <td className="p-3 text-zinc-400">
                                                         {new Date(payout.created_at).toLocaleDateString()}

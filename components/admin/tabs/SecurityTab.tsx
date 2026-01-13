@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, AlertTriangle, Clock, CheckCircle2, Eye } from 'lucide-react';
 import { Card, Badge, Button, Select } from '../../UI';
-import { safeMap } from '../../../utils/safeMap';
 
 interface SecurityTabProps {
     activeTab: string;
@@ -162,7 +161,7 @@ export const SecurityTab: React.FC<SecurityTabProps> = ({ activeTab }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                safeMap(safeActivities, "SecurityTab:safeActivities", (activity) => (
+                                safeActivities.map((activity) => (
                                     <tr key={activity.id} className="hover:bg-zinc-800/50 transition-colors">
                                         <td className="p-4 text-sm text-zinc-400">
                                             {new Date(activity.created_at).toLocaleString()}
