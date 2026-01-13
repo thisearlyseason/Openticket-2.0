@@ -1751,7 +1751,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         )}
 
                         {/* Organizer Breakdown */}
-                        {(stats.organizerBreakdown?.length || 0) > 0 && (
+                        {safeOrganizerBreakdown.length > 0 && (
                             <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden mb-8">
                                 <div className="p-4 border-b border-zinc-800 font-bold flex items-center gap-2">
                                     <Building2 size={16} /> Revenue by Organizer
@@ -1767,7 +1767,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {ensureArray(stats.organizerBreakdown).map((org, idx) => (
+                                        {safeOrganizerBreakdown.map((org, idx) => (
                                             <tr key={idx} className="border-t border-zinc-800">
                                                 <td className="p-4">
                                                     <div className="font-bold text-white">{org.organizerName}</div>
@@ -1802,7 +1802,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {ensureArray(stats.recentTransactions).map((tx: any) => (
+                                    {safeRecentTransactions.map((tx: any) => (
                                         <tr key={tx.id} className="border-t border-zinc-800">
                                             <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
                                             <td className="p-4 text-white">{tx.event?.title || '-'}</td>
@@ -1812,7 +1812,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <td className="p-4 text-right font-mono text-green-500">${(tx.organizer_net || 0).toFixed(2)}</td>
                                         </tr>
                                     ))}
-                                    {(stats.recentTransactions?.length || 0) === 0 && (
+                                    {safeRecentTransactions.length === 0 && (
                                         <tr><td colSpan={6} className="p-8 text-center">No financial records found.</td></tr>
                                     )}
                                 </tbody>
