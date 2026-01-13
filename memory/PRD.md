@@ -975,3 +975,31 @@ Implemented automatic local currency detection and charging for attendees while 
 - ✅ No remaining `safeMap` references in active code
 - ✅ Frontend loads correctly without JavaScript errors
 
+
+### ✅ Deep Fix - Security Tab Crash (January 13, 2026 - Session 2)
+
+#### Root Cause Analysis
+After deeper investigation with troubleshoot agent, found the TRUE root cause:
+- **SecurityTab was rendered unconditionally** in SuperAdminDashboard.tsx (line 2368)
+- Even though SecurityTab had internal `if (activeTab !== 'security') return null;`, React still attempted to mount/render children
+- This caused data access during initial render before API data was loaded
+
+#### Comprehensive Fixes Applied
+1. **SuperAdminDashboard.tsx (Line 2368)**:
+   - Wrapped SecurityTab with proper conditional: `{activeTab === 'security' && <SecurityTab />}`
+   - Added optional chaining guards to `stats.donationBreakdown?.total`, `?.thisMonth`, `?.lastMonth`
+   - Fixed `allNonprofitApplications.filter()` → `(allNonprofitApplications || []).filter()`
+
+2. **AdminAnalyticsDashboard.tsx (Line 302)**:
+   - Changed `eventAnalytics.length === 0` to `(!eventAnalytics || eventAnalytics.length === 0)`
+   - Changed `eventAnalytics.map()` to `(eventAnalytics || []).map()`
+
+3. **AnalyticsCharts.tsx (Line 143 - ScanMethodsChart)**:
+   - Added guard: `if (!data) { return <Card>No scan method data available</Card>; }`
+   - Changed `data.camera` to `data.camera || 0` with fallbacks
+
+#### Verification
+- ✅ Testing agent (iteration_37): 100% frontend success rate
+- ✅ All admin tabs can be navigated without JavaScript errors
+- ✅ Security Tab properly mounts/unmounts with conditional rendering
+
