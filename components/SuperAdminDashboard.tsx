@@ -1053,7 +1053,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredUsers.map(u => (
+                                    {(filteredUsers || []).map(u => (
                                         <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                             <td className="p-4">
                                                 <div className="font-bold text-white">{u.name || 'No Name'}</div>
@@ -1109,7 +1109,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredEvents.map(e => (
+                                {(filteredEvents || []).map(e => (
                                     <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                         <td className="p-4">
                                             <div className="font-bold text-white">{e.title}</div>
@@ -1209,7 +1209,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </tr>
                             </thead>
                             <tbody>
-                                {registrations.map(r => {
+                                {(registrations || []).map(r => {
                                     const event = events.find(e => e.id === r.eventId);
                                     const ticketCount = r.tickets?.length || 0;
                                     return (
@@ -1745,7 +1745,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {stats.organizerBreakdown.map((org, idx) => (
+                                        {(stats.organizerBreakdown || []).map((org, idx) => (
                                             <tr key={idx} className="border-t border-zinc-800">
                                                 <td className="p-4">
                                                     <div className="font-bold text-white">{org.organizerName}</div>
@@ -1780,7 +1780,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {stats.recentTransactions.map((tx: any) => (
+                                    {(stats.recentTransactions || []).map((tx: any) => (
                                         <tr key={tx.id} className="border-t border-zinc-800">
                                             <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
                                             <td className="p-4 text-white">{tx.event?.title || '-'}</td>
@@ -2094,7 +2094,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {affiliates.map(aff => (
+                                    {(affiliates || []).map(aff => (
                                         <tr key={aff.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
                                             <td className="p-4">
                                                 <div className="font-bold text-white">{aff.name}</div>
@@ -2337,7 +2337,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {affiliatePayouts.map(payout => (
+                                    {(affiliatePayouts || []).map(payout => (
                                         <tr key={payout.id} className="border-t border-zinc-800">
                                             <td className="p-4 text-xs">{new Date(payout.createdAt).toLocaleString()}</td>
                                             <td className="p-4 text-white">{payout.affiliateName}</td>
@@ -2854,7 +2854,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         <p className="text-zinc-400">No onboarding responses yet</p>
                                     </div>
                                 ) : (
-                                    onboardingResponses.map(response => (
+                                    {(onboardingResponses || []).map(response => (
                                         <div
                                             key={response.id}
                                             onClick={() => setSelectedOnboarding(response)}
