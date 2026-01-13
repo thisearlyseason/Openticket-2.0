@@ -2686,19 +2686,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <Users size={24} className="text-[#E0FF20]" /> Onboarding Responses
                             </h2>
-                            <span className="text-zinc-400">{onboardingResponses.length} responses</span>
+                            <span className="text-zinc-400">{safeOnboardingResponses.length} responses</span>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Responses List */}
                             <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                                {onboardingResponses.length === 0 ? (
+                                {safeOnboardingResponses.length === 0 ? (
                                     <div className="bg-zinc-800/50 rounded-xl p-8 text-center">
                                         <Users size={48} className="mx-auto mb-4 text-zinc-600" />
                                         <p className="text-zinc-400">No onboarding responses yet</p>
                                     </div>
                                 ) : (
-                                    (onboardingResponses || []).map(response => (
+                                    safeOnboardingResponses.map(response => (
                                         <div
                                             key={response.id}
                                             onClick={() => setSelectedOnboarding(response)}
