@@ -1956,7 +1956,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="flex-1 text-center">
                                     <div className="bg-purple-500/20 rounded-xl p-4 mx-2">
                                         <div className="text-3xl font-black text-purple-400">
-                                            {affiliates.reduce((sum, a) => sum + a.clicks, 0).toLocaleString()}
+                                            {safeAffiliates.reduce((sum, a) => sum + a.clicks, 0).toLocaleString()}
                                         </div>
                                         <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Total Clicks</div>
                                     </div>
@@ -1966,7 +1966,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="flex-1 text-center">
                                     <div className="bg-blue-500/20 rounded-xl p-4 mx-2">
                                         <div className="text-3xl font-black text-blue-400">
-                                            {affiliates.reduce((sum, a) => sum + a.conversions, 0).toLocaleString()}
+                                            {safeAffiliates.reduce((sum, a) => sum + a.conversions, 0).toLocaleString()}
                                         </div>
                                         <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Conversions</div>
                                     </div>
@@ -1976,7 +1976,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="flex-1 text-center">
                                     <div className="bg-green-500/20 rounded-xl p-4 mx-2">
                                         <div className="text-3xl font-black text-green-400">
-                                            ${affiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(0)}
+                                            ${safeAffiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(0)}
                                         </div>
                                         <div className="text-xs text-zinc-400 uppercase font-bold mt-1">Commission Earned</div>
                                     </div>
@@ -1988,8 +1988,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     <span>Overall Conversion Rate</span>
                                     <span className="font-mono">
                                         {(() => {
-                                            const totalClicks = affiliates.reduce((sum, a) => sum + a.clicks, 0);
-                                            const totalConversions = affiliates.reduce((sum, a) => sum + a.conversions, 0);
+                                            const totalClicks = safeAffiliates.reduce((sum, a) => sum + a.clicks, 0);
+                                            const totalConversions = safeAffiliates.reduce((sum, a) => sum + a.conversions, 0);
                                             return totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(2) : '0.00';
                                         })()}%
                                     </span>
@@ -1999,8 +1999,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         className="h-full bg-gradient-to-r from-purple-500 to-green-500 rounded-full transition-all duration-500"
                                         style={{ 
                                             width: `${Math.min(100, (() => {
-                                                const totalClicks = affiliates.reduce((sum, a) => sum + a.clicks, 0);
-                                                const totalConversions = affiliates.reduce((sum, a) => sum + a.conversions, 0);
+                                                const totalClicks = safeAffiliates.reduce((sum, a) => sum + a.clicks, 0);
+                                                const totalConversions = safeAffiliates.reduce((sum, a) => sum + a.conversions, 0);
                                                 return totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
                                             })())}%` 
                                         }}
@@ -2013,30 +2013,30 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                             <Card className="p-4 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase">Total Affiliates</div>
-                                <div className="text-2xl font-black text-white">{affiliates.length}</div>
+                                <div className="text-2xl font-black text-white">{safeAffiliates.length}</div>
                             </Card>
                             <Card className="p-4 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase">Total Commissions</div>
                                 <div className="text-2xl font-black text-purple-400">
-                                    ${affiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(2)}
+                                    ${safeAffiliates.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(2)}
                                 </div>
                             </Card>
                             <Card className="p-4 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase">Pending Payouts</div>
                                 <div className="text-2xl font-black text-yellow-400">
-                                    ${affiliates.reduce((sum, a) => sum + a.pendingPayout, 0).toFixed(2)}
+                                    ${safeAffiliates.reduce((sum, a) => sum + a.pendingPayout, 0).toFixed(2)}
                                 </div>
                             </Card>
                             <Card className="p-4 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase">Total Paid Out</div>
                                 <div className="text-2xl font-black text-green-400">
-                                    ${affiliates.reduce((sum, a) => sum + a.paidOut, 0).toFixed(2)}
+                                    ${safeAffiliates.reduce((sum, a) => sum + a.paidOut, 0).toFixed(2)}
                                 </div>
                             </Card>
                         </div>
 
                         {/* Top Performers Section */}
-                        {affiliates.length > 0 && (
+                        {safeAffiliates.length > 0 && (
                             <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* Top by Clicks */}
                                 <Card className="p-4 border-zinc-700 bg-zinc-800/30">
