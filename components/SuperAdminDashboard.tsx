@@ -193,6 +193,16 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const currentUser = StorageService.getCurrentUser();
 
+    // Memoized safe arrays to prevent render-time crashes
+    const safeAffiliates = useMemo(() => ensureArray(affiliates), [affiliates]);
+    const safeUsers = useMemo(() => ensureArray(users), [users]);
+    const safeEvents = useMemo(() => ensureArray(events), [events]);
+    const safeRegistrations = useMemo(() => ensureArray(registrations), [registrations]);
+    const safeNonprofitApplications = useMemo(() => ensureArray(allNonprofitApplications), [allNonprofitApplications]);
+    const safePlatformPayouts = useMemo(() => ensureArray(platformPayouts), [platformPayouts]);
+    const safeAffiliatePayouts = useMemo(() => ensureArray(affiliatePayouts), [affiliatePayouts]);
+    const safeOnboardingResponses = useMemo(() => ensureArray(onboardingResponses), [onboardingResponses]);
+
     // Check Resend status from backend API
     const checkResendStatus = async () => {
         console.log('[SuperAdmin] checkResendStatus called');
