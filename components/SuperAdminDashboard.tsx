@@ -941,7 +941,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         );
     }
 
-    const filteredUsers = (users || []).filter(u =>
+    const filteredUsers = safeUsers.filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.businessName || '').toLowerCase().includes(searchTerm.toLowerCase())
