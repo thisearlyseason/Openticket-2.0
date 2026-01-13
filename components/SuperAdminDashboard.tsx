@@ -890,7 +890,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const exportUsersCSV = () => {
         const headers = ['Name', 'Email', 'Role', 'Business Name', 'Business Type', 'Account Type', 'Created At'];
-        const rows = (users || []).map(u => [
+        const rows = safeUsers.map(u => [
             u.name || '',
             u.email || '',
             u.role || '',
