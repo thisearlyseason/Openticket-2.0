@@ -53,7 +53,9 @@ export default defineConfig(({ mode }) => {
       ]
     },
     optimizeDeps: {
-      include: ['socket.io-client']
+      include: ['socket.io-client'],
+      // Exclude socket.io-client from pre-bundling to allow dynamic import
+      exclude: []
     },
     build: {
       chunkSizeWarningLimit: 1000,
@@ -68,7 +70,9 @@ export default defineConfig(({ mode }) => {
             vendor: ['react', 'react-dom', 'react-router-dom', '@stripe/stripe-js'],
             firebase: ['firebase/app', 'firebase/auth', 'firebase/storage'],
           }
-        }
+        },
+        // Ensure socket.io-client is handled as external chunk
+        external: []
       }
     }
   };
