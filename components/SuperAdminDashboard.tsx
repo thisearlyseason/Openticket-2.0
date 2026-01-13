@@ -1434,10 +1434,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-3xl font-black text-pink-400">
-                                                    ${donationDateRange === 'all' ? stats.donationBreakdown.total.toFixed(2) : filteredTotal.toFixed(2)}
+                                                    ${donationDateRange === 'all' ? (stats.donationBreakdown?.total || 0).toFixed(2) : filteredTotal.toFixed(2)}
                                                 </div>
                                                 <div className="text-xs text-zinc-500">
-                                                    {donationDateRange === 'all' ? stats.donationBreakdown.count : filteredCount} donations
+                                                    {donationDateRange === 'all' ? (stats.donationBreakdown?.count || 0) : filteredCount} donations
                                                 </div>
                                             </div>
                                         </div>
@@ -1447,11 +1447,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                                                 <Card className="p-4 bg-zinc-800/50 border-zinc-700">
                                                     <div className="text-xs text-zinc-500 uppercase font-bold mb-1">This Month</div>
-                                                    <div className="text-2xl font-black text-pink-400">${stats.donationBreakdown.thisMonth.toFixed(2)}</div>
+                                                    <div className="text-2xl font-black text-pink-400">${(stats.donationBreakdown?.thisMonth || 0).toFixed(2)}</div>
                                                 </Card>
                                                 <Card className="p-4 bg-zinc-800/50 border-zinc-700">
                                                     <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Last Month</div>
-                                                    <div className="text-2xl font-black text-zinc-400">${stats.donationBreakdown.lastMonth.toFixed(2)}</div>
+                                                    <div className="text-2xl font-black text-zinc-400">${(stats.donationBreakdown?.lastMonth || 0).toFixed(2)}</div>
                                                 </Card>
                                                 <Card className="p-4 bg-zinc-800/50 border-zinc-700">
                                                     <div className="text-xs text-zinc-500 uppercase font-bold mb-1">Avg Donation</div>
