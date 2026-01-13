@@ -1048,3 +1048,39 @@ Following frontend reliability engineering principles, applied source-level hard
 - ✅ No ErrorBoundary triggers during testing
 - ✅ Code review confirms all .map() calls are guarded
 
+
+
+### ✅ FINAL RENDER-PATH HARDENING + SOCKET.IO FIX (January 13, 2026 - Session 4)
+
+#### Additional Issues Found & Fixed
+Found remaining unguarded property accesses that were causing crashes:
+1. `stats.organizerBreakdown.length` - Line 1749 (no guard)
+2. `stats.recentTransactions.length === 0` - Line 1810 (no guard)
+3. `stats.donationBreakdown.count/.total/.thisMonth/.lastMonth` - Lines 1473, 1480-1483 (no optional chaining)
+
+#### Additional Memoized Safe Arrays Added (Lines 207-209)
+```typescript
+const safeRecentTransactions = useMemo(() => ensureArray(stats.recentTransactions), [stats.recentTransactions]);
+const safeOrganizerBreakdown = useMemo(() => ensureArray(stats.organizerBreakdown), [stats.organizerBreakdown]);
+const safeDonationRecent = useMemo(() => ensureArray(stats.donationBreakdown?.recent), [stats.donationBreakdown?.recent]);
+```
+
+#### Socket.IO-Client Fix for Vercel Build
+Refactored `/app/hooks/useWebSocket.ts` to use dynamic import:
+```typescript
+// Before (causes Vercel build issues):
+import { io } from 'socket.io-client';
+
+// After (works with Vercel):
+const initSocket = async () => {
+    const { io } = await import('socket.io-client');
+    // ... socket initialization
+};
+```
+
+#### Verification
+- ✅ Testing Agent Iteration 39: 100% frontend success rate
+- ✅ All .map() calls verified through code review
+- ✅ No ErrorBoundary triggers
+- ✅ Public pages load without errors
+
