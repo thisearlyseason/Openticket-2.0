@@ -82,10 +82,36 @@ router.post('/create-checkout', async (req, res) => {
         const baseUrl = process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000';
         
         try {
+            // For test mode with Accounts V2, we need to create or get a customer first
+            let customerId;
+            
+            // Check if customer already exists
+            const existingCustomers = await stripe.customers.list({
+                email: userEmail,
+                limit: 1
+            });
+            
+            if (existingCustomers.data.length > 0) {
+                customerId = existingCustomers.data[0].id;
+                console.log('[Subscription] Using existing customer:', customerId);
+            } else {
+                // Create a new customer if doesn't exist
+                const customer = await stripe.customers.create({
+                    email: userEmail,
+                    metadata: {
+                        userId,
+                        source: 'subscription_upgrade'
+                    }
+                });
+                customerId = customer.id;
+                console.log('[Subscription] Created new customer:', customerId);
+            }
+            
+            // Create checkout session with customer ID
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 mode: 'subscription',
-                customer_email: userEmail,
+                customer: customerId, // Use customer ID instead of email
                 line_items: [{
                     price_data: {
                         currency: 'usd',
@@ -117,8 +143,8 @@ router.post('/create-checkout', async (req, res) => {
             // Handle specific Stripe error for test mode
             if (stripeError.message && stripeError.message.includes('testmode without an existing customer')) {
                 return res.status(500).json({ 
-                    error: 'Stripe test mode configuration issue. Please contact support or switch to live mode.',
-                    details: 'The Stripe account is in test mode with Accounts V2, which requires a Sandbox for testing.'
+                    error: 'Stripe test mode configuration issue. Please contact support.',
+                    details: 'The Stripe account requires additional configuration for test mode.'
                 });
             }
             
