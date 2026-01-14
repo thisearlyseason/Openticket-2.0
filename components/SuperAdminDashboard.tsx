@@ -118,7 +118,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     });
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'security' | 'analytics' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'events' | 'registrations' | 'finance' | 'affiliates' | 'security' | 'analytics' | 'broadcast' | 'promo' | 'nonprofit' | 'onboarding' | 'settings' | 'smm'>('users');
     const [unauthorized, setUnauthorized] = useState(false);
 
     // Affiliate State
