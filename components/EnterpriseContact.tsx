@@ -108,12 +108,9 @@ export const EnterpriseContact: React.FC<EnterpriseContactProps> = ({
                             'Custom Pricing & Fee Structure',
                             'Dedicated Account Manager',
                             'Priority 24/7 Support',
-                            'Custom Integrations & API Access',
                             'White Label Solutions',
-                            'Custom Domain',
                             'SLA Guarantees',
-                            'Flexible Payout Options',
-                            'Advanced Security & Compliance'
+                            'Flexible Payout Options'
                         ].map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-3">
                                 <CheckCircle size={20} className="text-primary shrink-0 mt-0.5" />
