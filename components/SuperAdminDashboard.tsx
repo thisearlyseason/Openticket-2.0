@@ -1099,7 +1099,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             </div>
 
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                {['users', 'events', 'registrations', 'finance', 'affiliates', 'security', 'analytics', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'].map(tab => (
+                {['users', 'events', 'registrations', 'finance', 'affiliates', 'smm', 'security', 'analytics', 'broadcast', 'promo', 'nonprofit', 'onboarding', 'settings'].map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
