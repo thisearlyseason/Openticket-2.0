@@ -35,6 +35,7 @@ import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
 import settingsRoutes from '../backend/routes/settingsRoutes.js';
+import smmRoutes from '../backend/routes/smmRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
@@ -208,6 +209,9 @@ app.use('/api/upload', uploadRoutes);
 
 // Settings routes (global admin settings)
 app.use('/api/settings', settingsRoutes);
+
+// SMM (Social Media Management) routes
+app.use('/api/smm', smmRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
