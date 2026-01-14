@@ -66,7 +66,7 @@ export const GeminiService = {
     },
 
     suggestQuestions: async (context: string): Promise<Question[]> => {
-        const ai = getAIClient();
+        const ai = await getAIClient();
         if (!ai) return [];
 
         try {
@@ -111,8 +111,8 @@ export const GeminiService = {
     },
 
     generateMarketingContent: async (eventTitle: string, eventDesc: string, eventDetails: string, platform: 'instagram' | 'email' | 'twitter' | 'facebook' | 'tiktok' | 'facebook_ad'): Promise<string> => {
-        const ai = getAIClient();
-        if (!ai) return "AI unavailable.";
+        const ai = await getAIClient();
+        if (!ai) return "AI unavailable. Please add a Gemini API key in Settings.";
 
         try {
             // FIX: Use recommended gemini-3-flash-preview for text tasks
@@ -150,7 +150,7 @@ export const GeminiService = {
     },
 
     generateEventImage: async (eventTitle: string, eventDesc: string): Promise<string | null> => {
-        const ai = getAIClient();
+        const ai = await getAIClient();
         if (!ai) return null;
 
         try {
@@ -186,7 +186,7 @@ export const GeminiService = {
     },
 
     generateBroadcastDraft: async (eventTitle: string, purpose: string): Promise<{ subject: string, body: string }> => {
-        const ai = getAIClient();
+        const ai = await getAIClient();
         if (!ai) return { subject: '', body: '' };
 
         try {
@@ -226,7 +226,7 @@ export const GeminiService = {
     },
 
     generateAffiliateContent: async (referralCode: string, platform: 'linkedin' | 'twitter' | 'instagram' | 'facebook' | 'tiktok' | 'google_business'): Promise<string> => {
-        const ai = getAIClient();
+        const ai = await getAIClient();
         if (!ai) return "AI Unavailable";
 
         try {
@@ -280,7 +280,7 @@ export const GeminiService = {
     },
 
     checkContentSafety: async (title: string, description: string): Promise<{ safe: boolean, reason?: string }> => {
-        const ai = getAIClient();
+        const ai = await getAIClient();
         if (!ai) return { safe: true };
 
         try {
