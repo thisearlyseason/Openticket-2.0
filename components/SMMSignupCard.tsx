@@ -140,15 +140,24 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                             {signupStatus.status === 'sent' ? '✅ Magic Link Sent!' : '⏳ Request Pending'}
                         </h3>
                         {signupStatus.status === 'sent' ? (
-                            <p className="text-green-800 dark:text-green-200 text-sm">
-                                Your Magic Login link was sent to <strong>{signupStatus.user_email}</strong> on{' '}
-                                {new Date(signupStatus.magic_link_sent_date).toLocaleDateString()}.
-                                <br />
-                                <span className="flex items-center gap-1 mt-2">
-                                    <Mail size={14} />
-                                    Don't see it? Check your spam folder!
-                                </span>
-                            </p>
+                            <>
+                                <p className="text-green-800 dark:text-green-200 text-sm mb-4">
+                                    Your Magic Login link was sent to <strong>{signupStatus.user_email}</strong> on{' '}
+                                    {new Date(signupStatus.magic_link_sent_date).toLocaleDateString()}.
+                                    <br />
+                                    <span className="flex items-center gap-1 mt-2">
+                                        <Mail size={14} />
+                                        Don't see it? Check your spam folder!
+                                    </span>
+                                </p>
+                                <Button
+                                    onClick={() => window.open('https://viralsparkmedia.socialmediapostmanager.com', '_blank')}
+                                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-none"
+                                >
+                                    <ExternalLink size={16} className="mr-2" />
+                                    Open Social Media Manager
+                                </Button>
+                            </>
                         ) : (
                             <p className="text-green-800 dark:text-green-200 text-sm">
                                 Your request was submitted on {new Date(signupStatus.signup_date).toLocaleDateString()}.
