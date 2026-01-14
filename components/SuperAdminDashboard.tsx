@@ -3001,6 +3001,93 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </div>
                             </div>
 
+                            {/* Global Gemini API Key */}
+                            <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
+                                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                                    <Smartphone size={20} className="text-purple-400" /> Global AI Features - Gemini API Key
+                                </h3>
+                                <p className="text-sm text-zinc-400 mb-6">
+                                    Set a global Gemini API key that all users can use if they don't have their own personal key. 
+                                    <span className="block mt-2 text-purple-400">This enables AI features (Magic Write, Marketing Lab, Image Generation) for all users platform-wide.</span>
+                                </p>
+
+                                <div className="space-y-4">
+                                    {/* Info Box */}
+                                    <div className="bg-purple-900/20 border border-purple-700 rounded-xl p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-purple-900 rounded-lg">
+                                                <AlertCircle size={18} className="text-purple-400" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-purple-400 text-sm mb-2">How It Works</h4>
+                                                <ul className="text-xs text-zinc-400 space-y-1.5 list-disc list-inside">
+                                                    <li>Users with personal keys: Their key takes priority</li>
+                                                    <li>Users without personal keys: Will use this global key</li>
+                                                    <li>No key set: AI features will be unavailable</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Global Gemini Key Input */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
+                                            Platform's Shared Gemini API Key
+                                        </label>
+                                        <Input
+                                            value={globalGeminiKey}
+                                            onChange={e => setGlobalGeminiKey(e.target.value)}
+                                            placeholder="AIzaSy... (Leave empty to disable shared AI features)"
+                                            className="bg-black border-zinc-700 text-white font-mono"
+                                            type="password"
+                                        />
+                                        <div className="flex items-center justify-between mt-2">
+                                            <p className="text-xs text-zinc-500">
+                                                {globalGeminiKey ? (
+                                                    <span className="flex items-center gap-1 text-green-400">
+                                                        <CheckCircle size={12} />
+                                                        Global key is set - users can use AI features
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1 text-amber-400">
+                                                        <AlertCircle size={12} />
+                                                        No global key - users must add their own
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <a 
+                                                href="https://aistudio.google.com/app/apikey" 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-purple-400 hover:underline font-medium"
+                                            >
+                                                Get a free key →
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Features List */}
+                                    <div className="bg-black/50 p-4 rounded-xl">
+                                        <h4 className="font-bold text-white text-sm mb-3">Enabled AI Features</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="text-xs text-zinc-400">✨ Magic Write (Event Descriptions)</div>
+                                            <div className="text-xs text-zinc-400">🎨 Image Generation</div>
+                                            <div className="text-xs text-zinc-400">📱 Marketing Lab (Social Posts)</div>
+                                            <div className="text-xs text-zinc-400">🛡️ Content Safety Checks</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex justify-end">
+                                    <Button 
+                                        onClick={handleSaveGlobalGeminiKey} 
+                                        className="bg-purple-600 hover:bg-purple-700 text-white border-none"
+                                    >
+                                        <Save size={16} className="mr-2" /> Save Global AI Key
+                                    </Button>
+                                </div>
+                            </div>
+
                             {/* Database Migrations */}
                             <div className="bg-zinc-800/50 p-6 rounded-2xl border border-zinc-700">
                                 <h3 className="font-bold text-white mb-4 flex items-center gap-2">
