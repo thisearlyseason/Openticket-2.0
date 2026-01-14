@@ -7,6 +7,7 @@ import { Card, Button, Input, CodeBlock, Badge } from './UI';
 import { DollarSign, Users, Link2, Copy, Sparkles, Twitter, Linkedin, Instagram, ExternalLink, Download, Gift, Zap, ShieldCheck, ArrowLeft, Loader2, CheckCircle2, ChevronRight, Star, Crown, Facebook, MapPin, Music, CreditCard, Save, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AffiliatePayouts } from './AffiliatePayouts';
+import SMMSignupCard from './SMMSignupCard';
 
 export const AffiliateDashboard = () => {
     const navigate = useNavigate();
