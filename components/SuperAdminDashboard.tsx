@@ -100,6 +100,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [stats, setStats] = useState({
         platformFees: 0,         // What platform earns from ticket sales
         subscriptionRevenue: 0,  // What platform earns from Pro/Premium subscriptions
+        smmRevenue: 0,           // What platform earns from SMM subscriptions
         totalVolume: 0,          // Total gross transaction volume
         organizerNet: 0,         // Total paid out to organizers
         pendingPayouts: 0,       // Pending organizer payouts
