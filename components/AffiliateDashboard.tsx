@@ -319,6 +319,11 @@ export const AffiliateDashboard = () => {
                 </Card>
             </div>
 
+            {/* SMM Signup Card */}
+            <div className="mb-8 animate-in fade-in slide-in-from-bottom-6">
+                <SMMSignupCard userType="affiliate" affiliateCode={user?.affiliateCode} />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-6">
                 {/* LEFT: Tools & Earnings */}
                 <div className="lg:col-span-2 space-y-8">
