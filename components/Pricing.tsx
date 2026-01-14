@@ -12,6 +12,7 @@ export const Pricing = () => {
     const { confirm } = useConfirm();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [currency, setCurrency] = useState('USD');
+    const [isProcessing, setIsProcessing] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{
         show: boolean;
         plan: PlanType | null;
@@ -93,14 +94,15 @@ export const Pricing = () => {
         const plan = confirmModal.plan;
         const price = confirmModal.priceUSD; // Stripe always charges in USD
         
+        setIsProcessing(true);
         try {
-            // Show loading state by keeping modal open with a processing message
             // --- STRIPE_INTEGRATION: Process Subscription Fee ---
             // This now redirects to Stripe. The Webhook handles the profile update and invoice creation.
             await StorageService.Stripe.processSubscriptionPayment(price, user.id, PLANS[plan].name, billingCycle);
             // No code after this, as we expect redirect.
         } catch (error: any) {
             console.error('[Pricing] Subscription payment failed:', error);
+            setIsProcessing(false);
             setConfirmModal({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' });
             // Show error to user
             window.alert(`Failed to initiate checkout: ${error.message}. Please try again or contact support.`);
