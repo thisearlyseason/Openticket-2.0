@@ -81,35 +81,52 @@ router.post('/create-checkout', async (req, res) => {
         // Create Stripe Checkout Session for paid plans
         const baseUrl = process.env.FRONTEND_URL || req.headers.origin || 'http://localhost:3000';
         
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            mode: 'subscription',
-            customer_email: userEmail,
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `OpenTicket ${planName} Plan`,
-                        description: `${cycle === 'yearly' ? 'Annual' : 'Monthly'} subscription`
+        try {
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                mode: 'subscription',
+                customer_email: userEmail,
+                line_items: [{
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `OpenTicket ${planName} Plan`,
+                            description: `${cycle === 'yearly' ? 'Annual' : 'Monthly'} subscription`
+                        },
+                        unit_amount: Math.round(amount * 100), // Convert to cents
+                        recurring: {
+                            interval: cycle === 'yearly' ? 'year' : 'month'
+                        }
                     },
-                    unit_amount: Math.round(amount * 100), // Convert to cents
-                    recurring: {
-                        interval: cycle === 'yearly' ? 'year' : 'month'
-                    }
+                    quantity: 1
+                }],
+                metadata: {
+                    userId,
+                    planName: planName.toLowerCase(),
+                    cycle,
+                    affiliateCode: validAffiliateCode || ''
                 },
-                quantity: 1
-            }],
-            metadata: {
-                userId,
-                planName: planName.toLowerCase(),
-                cycle,
-                affiliateCode: validAffiliateCode || ''
-            },
-            success_url: `${baseUrl}/#/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${baseUrl}/#/pricing`
-        });
+                success_url: `${baseUrl}/#/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${baseUrl}/#/pricing`
+            });
 
-        res.json({ url: session.url });
+            res.json({ url: session.url });
+        } catch (stripeError) {
+            console.error('[Subscription] Stripe error:', stripeError);
+            
+            // Handle specific Stripe error for test mode
+            if (stripeError.message && stripeError.message.includes('testmode without an existing customer')) {
+                return res.status(500).json({ 
+                    error: 'Stripe test mode configuration issue. Please contact support or switch to live mode.',
+                    details: 'The Stripe account is in test mode with Accounts V2, which requires a Sandbox for testing.'
+                });
+            }
+            
+            return res.status(500).json({ 
+                error: 'Failed to create checkout session',
+                details: stripeError.message 
+            });
+        }
     } catch (error) {
         console.error('Subscription checkout error:', error);
         res.status(500).json({ error: error.message });
