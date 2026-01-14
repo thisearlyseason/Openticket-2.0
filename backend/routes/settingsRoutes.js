@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import supabase from '../services/supabase.js';
-import { verifyAuth } from '../middlewares/authMiddleware.js';
+import { verifyAuthToken } from '../middlewares/authMiddleware.js';
 
 /**
  * Get global admin Gemini API key
@@ -37,7 +37,7 @@ router.get('/admin-gemini-key', async (req, res) => {
  * POST /api/settings/admin-gemini-key
  * Sets a global Gemini key that all users can use if they don't have their own
  */
-router.post('/admin-gemini-key', verifyAuth, async (req, res) => {
+router.post('/admin-gemini-key', verifyAuthToken, async (req, res) => {
     try {
         const { globalGeminiKey } = req.body;
         const userId = req.user.uid;
