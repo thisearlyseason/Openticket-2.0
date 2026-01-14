@@ -308,6 +308,49 @@ router.post('/verify', async (req, res) => {
             created_at: new Date().toISOString()
         }).catch(e => console.warn('Invoice creation failed:', e));
 
+        // If this is an SMM subscription, update the SMM signup record and track in financials
+        if (planName.toLowerCase().includes('social media management') || planName.toLowerCase().includes('smm')) {
+            const { data: smmSignup } = await supabase
+                .from('smm_signups')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('user_type', 'organizer')
+                .single();
+
+            if (smmSignup) {
+                await supabase
+                    .from('smm_signups')
+                    .update({
+                        subscription_id: session.subscription,
+                        stripe_session_id: sessionId,
+                        subscription_status: 'active',
+                        stripe_customer_id: session.customer,
+                        last_payment_date: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', smmSignup.id);
+                
+                console.log('[SMM] Subscription activated for user', userId);
+            } else {
+                // Create SMM signup record if it doesn't exist
+                console.log('[SMM] Creating signup record for user', userId);
+                await supabase.from('smm_signups').insert({
+                    id: uuidv4(),
+                    user_id: userId,
+                    user_email: session.customer_details?.email || '',
+                    user_name: '',
+                    user_type: 'organizer',
+                    subscription_id: session.subscription,
+                    stripe_session_id: sessionId,
+                    stripe_customer_id: session.customer,
+                    subscription_status: 'active',
+                    status: 'pending',
+                    last_payment_date: new Date().toISOString(),
+                    signup_date: new Date().toISOString()
+                });
+            }
+        }
+
         // Record affiliate commission transaction if applicable
         if (affiliateCommission > 0 && affiliateId) {
             await supabase.from('affiliate_commissions').insert({
