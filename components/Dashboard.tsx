@@ -8,6 +8,7 @@ import { isPaidStatus, isRefundedStatus, calculatePaidRevenue, calculatePaidTick
 import type { Event, Registration, User, SystemNotification, Broadcast } from '../types';
 import { Card, Button, Badge, formatTime, Input, Select } from './UI';
 import { NonprofitPendingBanner, NonprofitRejectedBanner, NonprofitResubmitForm } from './Onboarding';
+import SMMSignupCard from './SMMSignupCard';
 import {
     Search, Calendar, Grid, List as ListIcon, MoreVertical,
     Copy, Trash2, Edit, ExternalLink, QrCode, Download,
