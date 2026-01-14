@@ -2,12 +2,42 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Question } from '../types';
 import { StorageService } from './storageService';
 
-const getAIClient = () => {
+const getAIClient = async () => {
     const user = StorageService.getCurrentUser();
-    const apiKey = user?.geminiApiKey; // Use user key primarily
+    
+    // Priority: User's personal key → Admin's global key → Provided key
+    let apiKey = user?.geminiApiKey;
+    
+    // If user doesn't have a personal key, try to get the global admin key
+    if (!apiKey) {
+        try {
+            // Fetch global admin Gemini key from backend if available
+            const adminKeyResponse = await fetch('/api/settings/admin-gemini-key', {
+                headers: {
+                    'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                }
+            });
+            
+            if (adminKeyResponse.ok) {
+                const data = await adminKeyResponse.json();
+                apiKey = data.globalGeminiKey;
+            }
+        } catch (e) {
+            console.warn("Could not fetch global admin Gemini key");
+        }
+    }
+    
+    // If still no key, check if the user's key is provided by the user during runtime
+    if (!apiKey) {
+        // Fallback to checking if there's a provided key (from user's Settings)
+        const providedKey = user?.geminiApiKey;
+        if (providedKey) {
+            apiKey = providedKey;
+        }
+    }
 
     if (!apiKey) {
-        // console.warn("Gemini API Key not found in user settings.");
+        // console.warn("Gemini API Key not found. Please add a key in Settings.");
         return null;
     }
     return new GoogleGenAI({ apiKey });
@@ -15,8 +45,8 @@ const getAIClient = () => {
 
 export const GeminiService = {
     generateDescription: async (title: string, basicInfo: string): Promise<string> => {
-        const ai = getAIClient();
-        if (!ai) return "AI is currently unavailable. Please write a description manually.";
+        const ai = await getAIClient();
+        if (!ai) return "AI is currently unavailable. Please add a Gemini API key in Settings to use AI features.";
 
         try {
             // FIX: Use recommended gemini-3-flash-preview for text tasks
