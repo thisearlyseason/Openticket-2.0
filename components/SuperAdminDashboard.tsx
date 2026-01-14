@@ -1407,6 +1407,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 <div className="text-3xl font-black text-purple-400">${stats.subscriptionRevenue.toFixed(2)}</div>
                                 <div className="text-xs text-zinc-500 mt-1">Pro & Premium plans</div>
                             </Card>
+                            <Card className="p-6 border-zinc-700 bg-gradient-to-br from-pink-900/20 to-purple-900/20 border-pink-500/30">
+                                <div className="text-xs font-bold text-pink-400 uppercase mb-2 flex items-center gap-1">
+                                    <Sparkles size={12} /> SMM Revenue
+                                </div>
+                                <div className="text-3xl font-black text-pink-400">${stats.smmRevenue.toFixed(2)}</div>
+                                <div className="text-xs text-pink-300 mt-1">Social Media Management</div>
+                            </Card>
                         </div>
 
                         {/* Platform Donations Detail Section */}
