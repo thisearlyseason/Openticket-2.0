@@ -1315,21 +1315,80 @@ export const Settings = () => {
                                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white">
                                             <Smartphone size={16} />
                                         </div>
-                                        Gemini AI
+                                        AI Features - Gemini API Key
                                     </h2>
-                                    <div className="p-6 bg-zinc-900 rounded-2xl border border-zinc-800">
+                                    <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800">
+                                        
+                                        {/* Info Box */}
+                                        <div className="mb-6 p-4 bg-white dark:bg-zinc-900 rounded-xl border border-blue-200 dark:border-blue-800">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                                    <AlertCircle size={20} className="text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-sm text-blue-900 dark:text-blue-100 mb-2">How AI Features Work</h3>
+                                                    <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5 list-disc list-inside">
+                                                        <li><strong>Personal Key:</strong> Add your own Gemini API key below for full AI access</li>
+                                                        <li><strong>Global Admin Key:</strong> If you don't add your own key, you'll use the platform's shared key (if available)</li>
+                                                        <li><strong>AI Features:</strong> Magic Write, Marketing Lab, Event Image Generation, Content Safety Checks</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Gemini API Key Input */}
                                         <div className="mb-4">
-                                            <label className="block text-xs font-bold text-zinc-400 uppercase mb-2">Google Gemini API Key</label>
+                                            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase mb-2">
+                                                Your Personal Google Gemini API Key (Optional)
+                                            </label>
                                             <Input
                                                 value={geminiApiKey}
                                                 onChange={e => setGeminiApiKey(e.target.value)}
-                                                placeholder="AIzaSy..."
-                                                className="bg-black border-zinc-800 text-white font-mono"
+                                                placeholder="AIzaSy... (Leave empty to use platform's shared key)"
+                                                className="bg-white dark:bg-black border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white font-mono"
                                                 type="password"
                                             />
-                                            <p className="text-xs text-zinc-500 mt-2">
-                                                Required for Magic Write and Marketing Lab features. <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-primary underline">Get a key here</a>.
-                                            </p>
+                                            <div className="flex items-center justify-between mt-2">
+                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                    {geminiApiKey ? (
+                                                        <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                                                            <CheckCircle size={12} />
+                                                            Using your personal key
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                                            <AlertCircle size={12} />
+                                                            Using platform's shared key (if available)
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                <a 
+                                                    href="https://aistudio.google.com/app/apikey" 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-xs text-primary hover:underline font-medium"
+                                                >
+                                                    Get your free key →
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        {/* Key Benefits */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-green-500">✓</span>
+                                                    <span className="text-xs font-bold text-zinc-900 dark:text-white">Your Own Key</span>
+                                                </div>
+                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Full control, unlimited usage (Gemini free tier: 1500 requests/day)</p>
+                                            </div>
+                                            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-blue-500">✓</span>
+                                                    <span className="text-xs font-bold text-zinc-900 dark:text-white">Shared Key</span>
+                                                </div>
+                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Convenient, no setup required, shared across all users</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
