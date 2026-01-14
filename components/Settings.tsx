@@ -1380,16 +1380,32 @@ export const Settings = () => {
                                                     <span className="text-green-500">✓</span>
                                                     <span className="text-xs font-bold text-zinc-900 dark:text-white">Your Own Key</span>
                                                 </div>
-                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Full control, unlimited usage (Gemini free tier: 1500 requests/day)</p>
+                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Full control, unlimited usage (Gemini free tier: 1,500 requests/day)</p>
                                             </div>
                                             <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="text-blue-500">✓</span>
                                                     <span className="text-xs font-bold text-zinc-900 dark:text-white">Shared Key</span>
                                                 </div>
-                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Convenient, no setup required, shared across all users</p>
+                                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Convenient, no setup required. <span className="font-bold text-amber-600 dark:text-amber-400">Shared limit: ~100 requests/day per user</span></p>
                                             </div>
                                         </div>
+                                        
+                                        {/* Rate Limit Warning */}
+                                        {!geminiApiKey && (
+                                            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                                <div className="flex items-start gap-2">
+                                                    <AlertCircle size={16} className="text-amber-600 dark:text-amber-400 mt-0.5" />
+                                                    <div className="flex-1">
+                                                        <p className="text-xs text-amber-800 dark:text-amber-200 font-bold mb-1">Using Shared Key Limits</p>
+                                                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                                                            When using the platform's shared key, you're limited to approximately 100 AI requests per day. 
+                                                            For unlimited access, add your own free Gemini API key above.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
