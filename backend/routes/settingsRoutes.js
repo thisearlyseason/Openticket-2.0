@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 import supabase from '../services/supabase.js';
-import { verifyAuth } from '../middleware/auth.js';
+import { verifyAuth } from '../middlewares/authMiddleware.js';
 
 /**
  * Get global admin Gemini API key
