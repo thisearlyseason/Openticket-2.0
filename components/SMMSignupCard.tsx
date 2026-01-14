@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from './UI';
-import { Sparkles, Loader2, CheckCircle, Clock, Mail } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle, Clock, Mail, ExternalLink } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 
 interface SMMSignupCardProps {
