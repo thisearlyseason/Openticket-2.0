@@ -299,19 +299,13 @@
   <div id="root"></div>
   <script type="module" src="./index.tsx"></script>
   
-  <!-- Service Worker Registration DISABLED -->
+  <!-- Service Worker Registration -->
   <script>
-    // SERVICE WORKER COMPLETELY DISABLED - Causing infinite reload
-    console.log('[PWA] Service Worker DISABLED to fix cache issues');
-    
-    // Unregister ALL existing service workers
+    // Service Worker enabled for PWA and push notifications
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => {
-          console.log('[PWA] Unregistering SW:', reg.scope);
-          reg.unregister();
-        });
-      });
+      console.log('[PWA] Service Worker supported, will register via pwaService');
+    } else {
+      console.log('[PWA] Service Worker not supported in this browser');
     }
   </script>
 </body>
