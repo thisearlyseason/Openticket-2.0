@@ -231,7 +231,7 @@ export const PLAN_VERSIONS = {
         analytics: 'Custom',
         brandingRequired: false,
         contactSales: true,
-        features: ['No Limits', 'Custom Pricing', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'White Label', 'Custom Domain', 'Flexible Payouts']
+        features: ['No Limits', 'Custom Pricing', 'Dedicated Account Manager', 'SLA Guarantee', 'White Label', 'Flexible Payouts']
     }
 };
 
