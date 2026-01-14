@@ -66,7 +66,12 @@ router.post('/signup', verifyFirebaseToken, async (req, res) => {
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error('[SMM] Signup insert error:', error);
+            throw error;
+        }
+
+        console.log('[SMM] Signup created:', data.id, 'for user:', uid, 'type:', userType);
 
         res.json({ 
             success: true,
