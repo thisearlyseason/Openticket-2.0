@@ -3072,6 +3072,37 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </div>
                                     </div>
 
+                                    {/* Rate Limit Warning */}
+                                    <div className="bg-amber-900/20 border border-amber-700 rounded-xl p-4">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-amber-900 rounded-lg">
+                                                <AlertCircle size={18} className="text-amber-400" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-amber-400 text-sm mb-2">⚠️ Rate Limits & Recommendations</h4>
+                                                <div className="text-xs text-zinc-400 space-y-2">
+                                                    <div>
+                                                        <span className="font-bold text-white">Gemini Free Tier:</span> 1,500 requests/day total
+                                                    </div>
+                                                    <div className="pl-4 border-l-2 border-amber-600">
+                                                        <p className="font-bold text-amber-300 mb-1">For Small Platforms (1-50 users):</p>
+                                                        <p>Allocate ~30 requests/user/day = supports ~50 users</p>
+                                                    </div>
+                                                    <div className="pl-4 border-l-2 border-orange-600">
+                                                        <p className="font-bold text-orange-300 mb-1">For Medium Platforms (50-150 users):</p>
+                                                        <p>Allocate ~10 requests/user/day = supports ~150 users</p>
+                                                        <p className="text-amber-500 mt-1">⚠️ Consider upgrading to Gemini Pro ($0.50/1M requests)</p>
+                                                    </div>
+                                                    <div className="pl-4 border-l-2 border-red-600">
+                                                        <p className="font-bold text-red-300 mb-1">For Large Platforms (150+ users):</p>
+                                                        <p>❌ Free tier insufficient - requires Gemini Pro API</p>
+                                                        <p className="text-red-400 mt-1">Recommended: Upgrade to paid tier or require users to add personal keys</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {/* Global Gemini Key Input */}
                                     <div>
                                         <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">
