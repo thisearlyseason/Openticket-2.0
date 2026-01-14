@@ -10,6 +10,7 @@ import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
+import SMMManagement from './admin/SMMManagement';
 
 // Safe array utility - ensures we never call array methods on undefined/null
 const ensureArray = <T,>(value: T[] | undefined | null): T[] => 
