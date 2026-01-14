@@ -1108,7 +1108,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                             }`}
                     >
-                        {tab === 'promo' ? 'Promo Codes' : tab === 'nonprofit' ? (
+                        {tab === 'smm' ? 'SMM' : tab === 'promo' ? 'Promo Codes' : tab === 'nonprofit' ? (
                             <>Non-Profit {nonprofitApplications.length > 0 && <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">{nonprofitApplications.length}</span>}</>
                         ) : tab}
                     </button>
