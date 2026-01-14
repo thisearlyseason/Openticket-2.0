@@ -368,6 +368,11 @@ export const Dashboard = () => {
                 </div>
             </div>
 
+            {/* SMM Signup Card */}
+            <div className="my-6">
+                <SMMSignupCard userType="organizer" />
+            </div>
+
             {/* Tools Row - Analytics */}
             <div 
                 className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-purple-500/50 transition-colors group"
