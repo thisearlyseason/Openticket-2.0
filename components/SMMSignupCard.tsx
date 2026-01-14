@@ -39,7 +39,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
     const handleSignup = async () => {
         setLoading(true);
         try {
-            // For organizer, check if they want to proceed with payment
+            // For organizer, first submit signup request, then redirect to payment
             if (userType === 'organizer') {
                 const confirmed = window.confirm(
                     'Social Media Management is $49/month. You\'ll be redirected to Stripe to set up your subscription. Continue?'
@@ -49,23 +49,43 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                     return;
                 }
 
-                // Create Stripe checkout for SMM subscription
+                // First, create the signup record
+                const token = await StorageService.getAuthToken();
+                const signupResponse = await fetch('/api/smm/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userType })
+                });
+
+                const signupData = await signupResponse.json();
+
+                if (!signupResponse.ok) {
+                    throw new Error(signupData.error || 'Failed to submit signup');
+                }
+
+                // Now redirect to Stripe payment
                 const amount = 49;
                 const planName = 'Social Media Management';
                 
-                await StorageService.Stripe.processSubscriptionPayment(
+                const success = await StorageService.Stripe.processSubscriptionPayment(
                     amount,
                     user!.id,
                     planName,
                     'monthly'
                 );
+
+                if (success) {
+                    // Payment will redirect to Stripe, and webhook will handle the rest
+                    console.log('[SMM] Redirecting to Stripe checkout...');
+                }
                 
-                // After payment, submit signup
-                // This will be called again after successful payment via webhook
                 return;
             }
 
-            // For affiliate, directly submit signup
+            // For affiliate, directly submit signup (no payment required)
             const token = await StorageService.getAuthToken();
             const response = await fetch('/api/smm/signup', {
                 method: 'POST',
