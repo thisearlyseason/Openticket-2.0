@@ -878,6 +878,34 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         window.alert("Platform settings saved successfully.");
     };
 
+    const handleSaveGlobalGeminiKey = async () => {
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/settings/admin-gemini-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ globalGeminiKey })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to save global Gemini key');
+            }
+
+            window.alert(globalGeminiKey 
+                ? '✅ Global Gemini API Key saved! All users without personal keys can now use AI features.'
+                : '✅ Global Gemini API Key removed. Users must now provide their own keys for AI features.'
+            );
+        } catch (error: any) {
+            console.error('Failed to save global Gemini key:', error);
+            window.alert(`❌ Error: ${error.message}`);
+        }
+    };
+
     const exportFinancialsCSV = () => {
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
         const rows = ensureArray(stats.recentTransactions).map(tx => {
