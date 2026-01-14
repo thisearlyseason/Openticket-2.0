@@ -61,10 +61,10 @@
       }
     })();
   </script>
-  <!-- Tailwind CSS is built into the bundle via PostCSS (see tailwind.config.js) -->
+  <!-- Tailwind CSS - Using CDN for now, will be bundled in production build -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Tailwind config moved to tailwind.config.js for production builds
-    window.tailwindConfig = {
+    tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
