@@ -371,11 +371,24 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 return acc + userTotal;
             }, 0);
 
+            // Calculate SMM Revenue from invoices
+            const smmRevenue = ensureArray(allUsers).reduce((acc: number, user: User) => {
+                const smmInvoices = ensureArray(user?.invoices).filter(inv => 
+                    inv.type === 'subscription' && 
+                    inv.status === 'paid' &&
+                    (inv.description?.toLowerCase().includes('social media management') || 
+                     inv.description?.toLowerCase().includes('smm'))
+                );
+                const smmTotal = smmInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+                return acc + smmTotal;
+            }, 0);
+
             const pending = ensureArray(allUsers).reduce((acc: number, u: User) => acc + (u?.availablePayout || 0), 0);
 
             setStats({
                 platformFees,
                 subscriptionRevenue,
+                smmRevenue,
                 totalVolume,
                 organizerNet,
                 pendingPayouts: pending,
