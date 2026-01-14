@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { User, Event, Registration } from '../types';
 import { Card, Button, Badge, Input, RichTextarea, Select } from './UI';
-import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, AlertCircle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save, Download, Tag, Percent, Calendar, Mail, Building2, UserCheck, FileText, Gift, Wallet, Clock, Eye, Heart, X, Check, Zap, Database, Smartphone } from 'lucide-react';
+import { Users, Ticket, DollarSign, Search, Shield, Lock, Trash2, Megaphone, Send, Ban, CheckCircle, ExternalLink, RefreshCw, XCircle, AlertTriangle, AlertCircle, EyeOff, CheckCircle2, Settings, CreditCard, Crown, TrendingUp, Save, Download, Tag, Percent, Calendar, Mail, Building2, UserCheck, FileText, Gift, Wallet, Clock, Eye, Heart, X, Check, Zap, Database, Smartphone, Sparkles } from 'lucide-react';
 import { useConfirm } from './ConfirmContext';
 import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
