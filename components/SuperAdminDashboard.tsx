@@ -179,6 +179,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [platformSecretKey, setPlatformSecretKey] = useState('');
     const [resendApiKeyConfigured, setResendApiKeyConfigured] = useState(false);
     const [backendDefaultCurrency, setBackendDefaultCurrency] = useState('USD');
+    const [globalGeminiKey, setGlobalGeminiKey] = useState('');
 
     // Donation analytics date range filter
     const [donationDateRange, setDonationDateRange] = useState<'all' | '7d' | '30d' | '90d' | 'custom'>('all');
