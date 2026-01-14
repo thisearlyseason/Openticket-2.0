@@ -8,12 +8,12 @@ const router = express.Router();
 /**
  * Submit SMM signup request (Affiliate or Organizer)
  * POST /api/smm/signup
- * Body: { userType: 'affiliate' | 'organizer', subscriptionId?: string }
+ * Body: { userType: 'affiliate' | 'organizer', subscriptionId?: string, stripeSessionId?: string }
  */
 router.post('/signup', verifyFirebaseToken, async (req, res) => {
     try {
         const { uid, email, name } = req.user;
-        const { userType, subscriptionId } = req.body;
+        const { userType, subscriptionId, stripeSessionId } = req.body;
 
         // Validate user type
         if (!['affiliate', 'organizer'].includes(userType)) {
@@ -54,6 +54,8 @@ router.post('/signup', verifyFirebaseToken, async (req, res) => {
             user_type: userType,
             affiliate_code: affiliateCode,
             subscription_id: subscriptionId || null,
+            stripe_session_id: stripeSessionId || null,
+            subscription_status: userType === 'organizer' ? 'pending_payment' : 'free',
             status: 'pending',
             signup_date: new Date().toISOString()
         };
