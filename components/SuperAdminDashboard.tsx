@@ -300,11 +300,25 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         refreshData();
     }, [navigate, embedded]);
 
-    // Re-check Resend status when switching to settings tab
+    // Fetch global Gemini key
+    const fetchGlobalGeminiKey = async () => {
+        try {
+            const response = await fetch('/api/settings/admin-gemini-key');
+            const data = await response.json();
+            if (data.globalGeminiKey) {
+                setGlobalGeminiKey(data.globalGeminiKey);
+            }
+        } catch (error) {
+            console.error('Failed to fetch global Gemini key:', error);
+        }
+    };
+
+    // Re-check Resend status and load Gemini key when switching to settings tab
     useEffect(() => {
         if (activeTab === 'settings') {
             console.log('[SuperAdmin] Settings tab active, checking Resend status...');
             checkResendStatus().catch(console.error);
+            fetchGlobalGeminiKey().catch(console.error);
         }
         if (activeTab === 'security') {
             console.log('[SuperAdmin] Security tab active, loading suspicious activities...');
