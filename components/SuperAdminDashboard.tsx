@@ -2844,6 +2844,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                     </div>
                 )}
 
+                {/* SMM Tab */}
+                {activeTab === 'smm' && (
+                    <SMMManagement />
+                )}
+
                 {/* SETTINGS TAB */}
                 {activeTab === 'settings' && (
                     <div className="p-8">
