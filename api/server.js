@@ -34,6 +34,7 @@ import enterpriseRoutes from '../backend/routes/enterpriseRoutes.js';
 import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
+import settingsRoutes from '../backend/routes/settingsRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
@@ -204,6 +205,9 @@ app.use('/api/onboarding', onboardingRoutes);
 
 // Upload routes (document storage)
 app.use('/api/upload', uploadRoutes);
+
+// Settings routes (global admin settings)
+app.use('/api/settings', settingsRoutes);
 
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
