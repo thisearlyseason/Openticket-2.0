@@ -437,14 +437,16 @@ export const Pricing = () => {
                             <button
                                 onClick={() => setConfirmModal({ show: false, plan: null, priceUSD: 0, priceLocal: 0, currencySymbol: '$', currencyCode: 'USD' })}
                                 className="flex-1 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-white font-bold py-3 px-4 rounded-xl"
+                                disabled={isProcessing}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmPlanSelection}
-                                className="flex-1 bg-[#E0FF20] hover:bg-[#c8e01c] text-black font-bold py-3 px-4 rounded-xl"
+                                disabled={isProcessing}
+                                className="flex-1 bg-[#E0FF20] hover:bg-[#c8e01c] text-black font-bold py-3 px-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Continue to Payment
+                                {isProcessing ? 'Processing...' : 'Continue to Payment'}
                             </button>
                         </div>
                     </div>
