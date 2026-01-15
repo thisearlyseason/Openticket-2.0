@@ -230,7 +230,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                         ) : (
                             <>
                                 <Sparkles size={16} className="mr-2" />
-                                {userType === 'affiliate' ? 'Join Free Program' : 'Subscribe ($49/month)'}
+                                {userType === 'affiliate' ? 'Join Free Program' : 'Continue to Payment ($49/mo)'}
                             </>
                         )}
                     </Button>
