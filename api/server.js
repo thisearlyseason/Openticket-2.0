@@ -213,6 +213,10 @@ app.use('/api/settings', settingsRoutes);
 // SMM (Social Media Management) routes
 app.use('/api/smm', smmRoutes);
 
+// SMM Admin Utilities
+import smmAdminUtils from '../backend/routes/smmAdminUtils.js';
+app.use('/api/smm', smmAdminUtils);
+
 // Ticket lookup routes (Find My Tickets)
 import ticketLookupRoutes from '../backend/routes/ticketLookupRoutes.js';
 app.use('/api/tickets', ticketLookupRoutes);
