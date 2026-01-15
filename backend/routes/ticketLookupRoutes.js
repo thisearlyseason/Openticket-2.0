@@ -18,19 +18,19 @@ router.post('/find-by-email', async (req, res) => {
 
         console.log(`[TicketLookup] Finding tickets for email: ${email}`);
 
-        // Find all tickets associated with this email
-        const { data: tickets, error: ticketsError } = await supabase
-            .from('tickets')
+        // Find all registrations (tickets) associated with this email
+        const { data: registrations, error: registrationsError } = await supabase
+            .from('registrations')
             .select('*, events!inner(*)')
             .eq('attendee_email', email)
             .order('created_at', { ascending: false });
 
-        if (ticketsError) {
-            console.error('[TicketLookup] Error fetching tickets:', ticketsError);
-            throw ticketsError;
+        if (registrationsError) {
+            console.error('[TicketLookup] Error fetching registrations:', registrationsError);
+            throw registrationsError;
         }
 
-        if (!tickets || tickets.length === 0) {
+        if (!registrations || registrations.length === 0) {
             console.log(`[TicketLookup] No tickets found for ${email}`);
             // Still return success to avoid revealing whether email exists in database
             return res.json({ 
@@ -40,27 +40,27 @@ router.post('/find-by-email', async (req, res) => {
             });
         }
 
-        console.log(`[TicketLookup] Found ${tickets.length} ticket(s) for ${email}`);
+        console.log(`[TicketLookup] Found ${registrations.length} ticket(s) for ${email}`);
 
         // Extract unique events
         const events = [];
         const eventIds = new Set();
         
-        tickets.forEach(ticket => {
-            if (ticket.events && !eventIds.has(ticket.events.id)) {
-                eventIds.add(ticket.events.id);
-                events.push(ticket.events);
+        registrations.forEach(registration => {
+            if (registration.events && !eventIds.has(registration.events.id)) {
+                eventIds.add(registration.events.id);
+                events.push(registration.events);
             }
         });
 
         // Format tickets for email (remove events object, keep event_id)
-        const formattedTickets = tickets.map(t => ({
-            id: t.id,
-            event_id: t.event_id,
-            attendee_name: t.attendee_name,
-            attendee_email: t.attendee_email,
-            tier_name: t.tier_name,
-            created_at: t.created_at
+        const formattedTickets = registrations.map(r => ({
+            id: r.id,
+            event_id: r.event_id,
+            attendee_name: r.attendee_name,
+            attendee_email: r.attendee_email,
+            tier_name: r.tier_name || 'General Admission',
+            created_at: r.created_at
         }));
 
         // Send email with tickets
@@ -73,7 +73,7 @@ router.post('/find-by-email', async (req, res) => {
                 success: true, 
                 message: 'Your tickets have been sent to your email!',
                 sent: true,
-                ticketCount: tickets.length
+                ticketCount: registrations.length
             });
         } else {
             console.error(`[TicketLookup] ❌ Email failed to send:`, emailResult.error);
