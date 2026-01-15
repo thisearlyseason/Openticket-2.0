@@ -634,6 +634,41 @@ export const Billing = () => {
         <div className="max-w-4xl mx-auto py-8 px-4 space-y-8">
             <h1 className="text-3xl font-black text-gray-900 dark:text-white font-display uppercase tracking-tight">Billing & Payouts</h1>
 
+            {/* Current Subscription Plans */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Main Subscription Plan */}
+                <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+                    <div className="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Current Subscription</h2>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">Your plan and billing cycle.</p>
+                        </div>
+                        <Badge className="bg-primary text-white uppercase font-bold px-3 py-1">
+                            {user?.subscription?.plan?.toUpperCase() || 'FREE'}
+                        </Badge>
+                    </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                            <Calendar size={20} className="text-purple-500" />
+                            <span className="text-sm">
+                                Next billing: {user?.subscription?.nextBillingDate 
+                                    ? new Date(user.subscription.nextBillingDate).toLocaleDateString() 
+                                    : 'Not set'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                            <DollarSign size={20} className="text-purple-500" />
+                            <span className="text-sm font-bold">
+                                ${user?.subscription?.amount || '0.00'}/{user?.subscription?.cycle === 'yearly' ? 'yr' : 'mo'}
+                            </span>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* SMM Subscription Card */}
+                <SMMSubscriptionCard userId={user?.id} />
+            </div>
+
             {balanceDue > 0 && (
                 <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl animate-in slide-in-from-top-2">
                     <div className="flex items-start gap-3">
@@ -885,6 +920,103 @@ export const Billing = () => {
                 </div>
             )}
         </div>
+    );
+};
+
+// SMM Subscription Card Component
+const SMMSubscriptionCard: React.FC<{ userId?: string }> = ({ userId }) => {
+    const [smmSubscription, setSMMSubscription] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!userId) return;
+        
+        const loadSMMSubscription = async () => {
+            try {
+                const token = await getAuthToken();
+                const response = await fetch('/api/smm/status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    setSMMSubscription(data.signup);
+                }
+            } catch (error) {
+                console.error('Error loading SMM subscription:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadSMMSubscription();
+    }, [userId]);
+
+    if (isLoading) {
+        return (
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                <div className="flex items-center justify-center h-24">
+                    <Loader2 className="animate-spin text-green-600" size={24} />
+                </div>
+            </Card>
+        );
+    }
+
+    if (!smmSubscription || smmSubscription.subscription_status !== 'active') {
+        return (
+            <Card className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/50 border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-start justify-between mb-4">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">SMM Subscription</h2>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">Social Media Management</p>
+                    </div>
+                    <Badge className="bg-zinc-400 text-white uppercase font-bold px-3 py-1">
+                        NOT ACTIVE
+                    </Badge>
+                </div>
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                    No active SMM subscription
+                </div>
+            </Card>
+        );
+    }
+
+    return (
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+            <div className="flex items-start justify-between mb-4">
+                <div>
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">SMM Subscription</h2>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Social Media Management</p>
+                </div>
+                <Badge className="bg-green-600 text-white uppercase font-bold px-3 py-1">
+                    ACTIVE
+                </Badge>
+            </div>
+            <div className="space-y-3">
+                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                    <CheckCircle2 size={20} className="text-green-500" />
+                    <span className="text-sm">
+                        Status: {smmSubscription.status === 'sent' ? 'Magic Link Sent' : 'Pending Setup'}
+                    </span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                    <DollarSign size={20} className="text-green-500" />
+                    <span className="text-sm font-bold">
+                        {smmSubscription.user_type === 'organizer' ? '$49.00/mo' : 'FREE'}
+                    </span>
+                </div>
+                {smmSubscription.last_payment_date && (
+                    <div className="flex items-center gap-3 text-gray-900 dark:text-white">
+                        <Calendar size={20} className="text-green-500" />
+                        <span className="text-sm">
+                            Last payment: {new Date(smmSubscription.last_payment_date).toLocaleDateString()}
+                        </span>
+                    </div>
+                )}
+            </div>
+        </Card>
     );
 };
 
