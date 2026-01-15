@@ -41,14 +41,6 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
         try {
             // For organizer, first submit signup request, then redirect to payment
             if (userType === 'organizer') {
-                const confirmed = window.confirm(
-                    'Social Media Management is $49/month. You\'ll be redirected to Stripe to set up your subscription. Continue?'
-                );
-                if (!confirmed) {
-                    setLoading(false);
-                    return;
-                }
-
                 // First, create the signup record
                 const token = await StorageService.getAuthToken();
                 const signupResponse = await fetch('/api/smm/signup', {
@@ -65,6 +57,8 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                 if (!signupResponse.ok) {
                     throw new Error(signupData.error || 'Failed to submit signup');
                 }
+
+                console.log('[SMM] Signup created, redirecting to payment...');
 
                 // Now redirect to Stripe payment
                 const amount = 49;
@@ -102,11 +96,12 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                 throw new Error(data.error || 'Failed to submit signup');
             }
 
-            window.alert(`✅ ${data.message}\n\nYou'll receive your Magic Login link within ${userType === 'affiliate' ? '10 hours' : '6 hours'}.`);
+            // Use alert instead of window.alert for better mobile compatibility
+            alert(`✅ ${data.message}\n\nYou'll receive your Magic Login link within ${userType === 'affiliate' ? '10 hours' : '6 hours'}.`);
             await checkSignupStatus();
         } catch (error: any) {
             console.error('SMM signup error:', error);
-            window.alert(`❌ Error: ${error.message}`);
+            alert(`❌ Error: ${error.message}`);
         } finally {
             setLoading(false);
         }
