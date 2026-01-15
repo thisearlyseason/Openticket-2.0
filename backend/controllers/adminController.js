@@ -247,6 +247,27 @@ export const getFinancialStats = async (req, res) => {
             console.warn('Donation stats not available:', donErr.message);
         }
 
+        // 1c. Get SMM Revenue from financial_transactions
+        let smmRevenue = 0;
+        try {
+            const { data: smmTransactions } = await supabase
+                .from('financial_transactions')
+                .select('gross_amount, platform_fee')
+                .eq('transaction_type', 'smm_subscription')
+                .eq('status', 'succeeded');
+
+            if (smmTransactions) {
+                smmTransactions.forEach(tx => {
+                    smmRevenue += Number(tx.gross_amount) || 0;
+                });
+            }
+            stats.smmRevenue = smmRevenue;
+            console.log(`[AdminStats] SMM Revenue: $${smmRevenue} from ${smmTransactions?.length || 0} transactions`);
+        } catch (smmErr) {
+            console.warn('SMM revenue stats not available:', smmErr.message);
+            stats.smmRevenue = 0;
+        }
+
         // 2. Get recent transactions
         const { data: recentTransactions, error: recentError } = await supabase
             .from('financial_transactions')
