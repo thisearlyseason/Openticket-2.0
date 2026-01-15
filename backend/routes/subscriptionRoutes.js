@@ -296,7 +296,7 @@ router.post('/verify', async (req, res) => {
         if (error) throw error;
 
         // Create invoice record with affiliate commission
-        await supabase.from('invoices').insert({
+        const { error: invoiceError } = await supabase.from('invoices').insert({
             user_id: userId,
             type: 'subscription',
             amount: subscriptionAmount,
@@ -306,7 +306,11 @@ router.post('/verify', async (req, res) => {
             affiliate_code: affiliateCode || null,
             affiliate_commission: affiliateCommission,
             created_at: new Date().toISOString()
-        }).catch(e => console.warn('Invoice creation failed:', e));
+        });
+        
+        if (invoiceError) {
+            console.warn('[Subscription] Invoice creation failed:', invoiceError);
+        }
 
         // If this is an SMM subscription, update the SMM signup record and track in financials
         if (planName.toLowerCase().includes('social media management') || planName.toLowerCase().includes('smm')) {
@@ -318,7 +322,7 @@ router.post('/verify', async (req, res) => {
                 .single();
 
             if (smmSignup) {
-                await supabase
+                const { error: updateError } = await supabase
                     .from('smm_signups')
                     .update({
                         subscription_id: session.subscription,
@@ -330,11 +334,15 @@ router.post('/verify', async (req, res) => {
                     })
                     .eq('id', smmSignup.id);
                 
-                console.log('[SMM] Subscription activated for user', userId);
+                if (updateError) {
+                    console.error('[SMM] Failed to update signup:', updateError);
+                } else {
+                    console.log('[SMM] Subscription activated for user', userId);
+                }
             } else {
                 // Create SMM signup record if it doesn't exist
                 console.log('[SMM] Creating signup record for user', userId);
-                await supabase.from('smm_signups').insert({
+                const { error: createError } = await supabase.from('smm_signups').insert({
                     id: uuidv4(),
                     user_id: userId,
                     user_email: session.customer_details?.email || '',
@@ -348,6 +356,12 @@ router.post('/verify', async (req, res) => {
                     last_payment_date: new Date().toISOString(),
                     signup_date: new Date().toISOString()
                 });
+                
+                if (createError) {
+                    console.error('[SMM] Failed to create signup:', createError);
+                } else {
+                    console.log('[SMM] Signup record created for user', userId);
+                }
             }
         }
 
