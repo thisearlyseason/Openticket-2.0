@@ -132,17 +132,17 @@ export const SMMManagement: React.FC = () => {
                         </div>
                         <div>
                             <span className="text-zinc-500 dark:text-zinc-400">Status:</span>
-                            <p className="font-bold">
+                            <div className="font-bold mt-1">
                                 {signup.status === 'sent' ? (
-                                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 inline-flex items-center">
                                         <CheckCircle size={12} className="mr-1" /> Sent
                                     </Badge>
                                 ) : (
-                                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                    <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 inline-flex items-center">
                                         <Clock size={12} className="mr-1" /> Pending
                                     </Badge>
                                 )}
-                            </p>
+                            </div>
                         </div>
                         {signup.magic_link_sent_date && (
                             <div>
