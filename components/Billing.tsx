@@ -790,105 +790,20 @@ export const Billing = () => {
             )}
 
             <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <FileText className="text-primary" /> Transaction Ledger
-                    </h2>
-                    <Button size="sm" variant="outline" onClick={exportLedgerCSV} disabled={ledger.length === 0}>
-                        <Download size={16} className="mr-2" /> Export CSV
-                    </Button>
-                </div>
+            <div className="space-y-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <FileText className="text-primary" /> Transaction Ledger
+                </h2>
 
-                <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 uppercase font-bold text-xs">
-                                <tr>
-                                    <th className="p-4">Date</th>
-                                    <th className="p-4">Event / Item</th>
-                                    <th className="p-4 text-right">Gross</th>
-                                    <th className="p-4 text-right">Fee</th>
-                                    <th className="p-4 text-right">Net</th>
-                                    <th className="p-4 text-center">Status</th>
-                                    <th className="p-4"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                                {ledger.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="p-8 text-center text-zinc-500">No transactions recorded yet.</td>
-                                    </tr>
-                                ) : (
-                                    ledger.map((item, idx) => {
-                                        const r = item.reg;
-                                        const isCancelled = r.paymentStatus === 'refunded';
-                                        // Consider registration paid if it has a stripe payment intent ID OR status is paid/completed
-                                        const isPaid = r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!r.stripePaymentIntentId;
-                                        let gross = 0;
-                                        let platformFee = 0;
-                                        let stripeFee = 0;
-                                        let net = 0;
-
-                                        if (!isCancelled) {
-                                            gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
-                                                + (r.donationAmount || 0)
-                                                + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
-                                                + (r.customFeesAmount || 0);
-                                            platformFee = r.serviceFee || 0;
-                                            // Estimate Stripe fee if not available (2.9% + $0.30)
-                                            stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
-                                            net = gross - platformFee - stripeFee;
-                                        }
-
-                                        const totalFee = platformFee + stripeFee;
-
-                                        return (
-                                            <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                                                <td className="p-4 text-zinc-500">{new Date(r.timestamp).toLocaleDateString()}</td>
-                                                <td className="p-4">
-                                                    <div className="font-bold text-gray-900 dark:text-white">{item.event.title}</div>
-                                                    <div className="text-xs text-zinc-500">Order #{r.id.slice(-6).toUpperCase()} • {r.attendeeName}</div>
-                                                </td>
-                                                {isCancelled ? (
-                                                    <>
-                                                        <td className="p-4 text-right font-mono text-zinc-400 line-through">$0.00</td>
-                                                        <td className="p-4 text-right font-mono text-zinc-400">-</td>
-                                                        <td className="p-4 text-right font-mono text-zinc-400">$0.00</td>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <td className="p-4 text-right font-mono">${gross.toFixed(2)}</td>
-                                                        <td className="p-4 text-right font-mono text-red-500" title={`Platform: $${platformFee.toFixed(2)} | Stripe: $${stripeFee.toFixed(2)}`}>
-                                                            -${totalFee.toFixed(2)}
-                                                        </td>
-                                                        <td className="p-4 text-right font-mono font-bold text-green-600 dark:text-green-400">
-                                                            ${net.toFixed(2)}
-                                                        </td>
-                                                    </>
-                                                )}
-
-                                                <td className="p-4 text-center">
-                                                    {isCancelled ? (
-                                                        <Badge color="gray">CANCELLED</Badge>
-                                                    ) : isPaid ? (
-                                                        <Badge color="green">PAID</Badge>
-                                                    ) : (
-                                                        <Badge color="yellow">PENDING</Badge>
-                                                    )}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <button onClick={() => downloadTransaction(item)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-                                                        <Download size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <DataTable
+                    data={ledger}
+                    columns={ledgerColumns}
+                    loading={isLoadingLedger}
+                    searchPlaceholder="Search transactions..."
+                    emptyMessage="No transactions recorded yet."
+                    exportFilename="transaction_ledger"
+                    getRowId={(item) => item.reg.id}
+                />
             </div>
 
             {showAddCard && (
