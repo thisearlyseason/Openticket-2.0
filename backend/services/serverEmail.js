@@ -944,5 +944,95 @@ export const EmailService = {
         `;
 
         return await sendEmailViaResend(to, subject, htmlBody);
+    },
+
+    /**
+     * Send magic link email for ticket retrieval
+     * Allows users to access their tickets via email without logging in
+     */
+    sendTicketRetrievalLink: async (to, tickets, events) => {
+        if (!resendService.isResendConfigured()) {
+            console.warn("[EmailService] Resend not configured. Simulation only.");
+            console.log(`[SIMULATION] Ticket Retrieval to: ${to}, Tickets: ${tickets?.length || 0}`);
+            return { sent: false, simulated: true };
+        }
+
+        const subject = `🎟️ Your OpenTicket Orders`;
+
+        // Generate ticket groups by event
+        const ticketGroups = {};
+        tickets.forEach(ticket => {
+            const eventId = ticket.event_id;
+            if (!ticketGroups[eventId]) {
+                ticketGroups[eventId] = {
+                    event: events.find(e => e.id === eventId),
+                    tickets: []
+                };
+            }
+            ticketGroups[eventId].tickets.push(ticket);
+        });
+
+        const ticketGroupsHtml = Object.values(ticketGroups).map(group => {
+            const event = group.event || {};
+            const eventTickets = group.tickets;
+            
+            return `
+                <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 10px 0; color: #111827; font-size: 18px;">${event.title || 'Event'}</h3>
+                    <p style="margin: 0 0 15px 0; color: #6b7280; font-size: 14px;">
+                        📅 ${event.date ? new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Date TBA'}
+                    </p>
+                    ${eventTickets.map(t => `
+                        <div style="border: 1px solid #e5e7eb; padding: 12px; margin-bottom: 8px; border-radius: 8px; background: white;">
+                            <p style="margin: 0; color: #111827; font-weight: bold;">${t.attendee_name || 'Guest'}</p>
+                            <p style="margin: 4px 0 0 0; font-family: monospace; color: #9ca3af; font-size: 12px;">Ticket ID: ${t.id}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }).join('');
+
+        const htmlBody = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <!-- Header -->
+                <div style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🎟️</div>
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Your Tickets</h1>
+                </div>
+
+                <!-- Body -->
+                <div style="padding: 30px; background: #ffffff;">
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        Hi there! 👋
+                    </p>
+                    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                        You requested access to your tickets. Here are all your upcoming events:
+                    </p>
+
+                    <!-- Tickets -->
+                    ${ticketGroupsHtml}
+
+                    <!-- CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${process.env.FRONTEND_URL || 'https://openticket.events'}/#/my-tickets" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                            View All My Tickets →
+                        </a>
+                    </div>
+
+                    <p style="font-size: 14px; color: #6b7280; line-height: 1.6; margin-top: 30px;">
+                        💡 <strong>Tip:</strong> Save this email or take a screenshot of your ticket IDs. You can show them at the entrance!
+                    </p>
+                </div>
+
+                <!-- Footer -->
+                <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-radius: 0 0 12px 12px; border-top: 1px solid #e5e7eb;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                        OpenTicket · Your tickets, delivered
+                    </p>
+                </div>
+            </div>
+        `;
+
+        return await sendEmailViaResend(to, subject, htmlBody);
     }
 };
