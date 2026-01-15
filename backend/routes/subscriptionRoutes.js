@@ -314,12 +314,12 @@ router.post('/verify', async (req, res) => {
 
         // If this is an SMM subscription, update the SMM signup record and track in financials
         if (planName.toLowerCase().includes('social media management') || planName.toLowerCase().includes('smm')) {
+            // First try to find existing signup by user_id
             const { data: smmSignup } = await supabase
                 .from('smm_signups')
                 .select('*')
                 .eq('user_id', userId)
-                .eq('user_type', 'organizer')
-                .single();
+                .maybeSingle(); // Use maybeSingle instead of single to avoid error if not found
 
             if (smmSignup) {
                 const { error: updateError } = await supabase
@@ -337,7 +337,7 @@ router.post('/verify', async (req, res) => {
                 if (updateError) {
                     console.error('[SMM] Failed to update signup:', updateError);
                 } else {
-                    console.log('[SMM] Subscription activated for user', userId);
+                    console.log('[SMM] Subscription activated for user', userId, '- Updated existing signup:', smmSignup.id);
                 }
             } else {
                 // Create SMM signup record if it doesn't exist
@@ -347,7 +347,7 @@ router.post('/verify', async (req, res) => {
                     user_id: userId,
                     user_email: session.customer_details?.email || '',
                     user_name: '',
-                    user_type: 'organizer',
+                    user_type: 'organizer', // Organizers pay, affiliates are free
                     subscription_id: session.subscription,
                     stripe_session_id: sessionId,
                     stripe_customer_id: session.customer,
