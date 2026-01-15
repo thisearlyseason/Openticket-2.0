@@ -217,6 +217,10 @@ app.use('/api/smm', smmRoutes);
 import smmAdminUtils from '../backend/routes/smmAdminUtils.js';
 app.use('/api/smm', smmAdminUtils);
 
+// SMM Manual Fix Utility
+import smmManualFix from '../backend/routes/smmManualFix.js';
+app.use('/api/smm', smmManualFix);
+
 // Ticket lookup routes (Find My Tickets)
 import ticketLookupRoutes from '../backend/routes/ticketLookupRoutes.js';
 app.use('/api/tickets', ticketLookupRoutes);
