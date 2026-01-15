@@ -790,7 +790,6 @@ export const Billing = () => {
             )}
 
             <div className="space-y-4">
-            <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <FileText className="text-primary" /> Transaction Ledger
                 </h2>
