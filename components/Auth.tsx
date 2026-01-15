@@ -291,13 +291,31 @@ export const Auth = () => {
         e.preventDefault();
         if (!formData.email) return;
         setIsLoading(true);
-        // Mock success for now, or call StorageService.sendMagicLink(formData.email)
-        // Since we don't have a backend "Send Magic Link" yet, we'll simulate.
-        // TODO: Implement StorageService.sendTicketLink(formData.email)
-        setTimeout(() => {
-            setTicketMessage(`If matched, an access link has been sent to ${formData.email}`);
+        setTicketMessage('');
+        setError('');
+
+        try {
+            const response = await fetch('/api/tickets/find-by-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: formData.email })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setTicketMessage(data.message || 'If tickets are found, they have been sent to your email.');
+            } else {
+                setError(data.error || 'Unable to process request');
+            }
+        } catch (error) {
+            console.error('[FindTickets] Error:', error);
+            setError('An error occurred. Please try again.');
+        } finally {
             setIsLoading(false);
-        }, 1500);
+        }
     };
 
     // Form Data
