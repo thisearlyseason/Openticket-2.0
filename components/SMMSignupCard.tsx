@@ -119,7 +119,63 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
         );
     }
 
-    // If already signed up, show compact status with expand option
+    // If already signed up and subscription is ACTIVE (paid), show Manage SMM
+    if (signupStatus && signupStatus.subscription_status === 'active') {
+        return (
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                {/* Collapsed Header */}
+                <div 
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-green-100/50 dark:hover:bg-green-900/30 transition-colors rounded-t-xl"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                            <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-green-900 dark:text-green-100">
+                                SMM Active
+                            </h3>
+                            <p className="text-xs text-green-700 dark:text-green-300">
+                                Subscription Active
+                            </p>
+                        </div>
+                    </div>
+                    {isExpanded ? (
+                        <ChevronUp size={20} className="text-green-600 dark:text-green-400" />
+                    ) : (
+                        <ChevronDown size={20} className="text-green-600 dark:text-green-400" />
+                    )}
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                    <div className="p-4 pt-0 border-t border-green-200 dark:border-green-800/50">
+                        <p className="text-green-800 dark:text-green-200 text-sm mb-4">
+                            Your Social Media Management subscription is active!
+                            {userType === 'organizer' && (
+                                <>
+                                    <br />
+                                    <span className="font-semibold">Subscription: $49/month</span>
+                                </>
+                            )}
+                            <br /><br />
+                            Click below to access your Social Media Manager dashboard and start promoting your {userType === 'affiliate' ? 'affiliate link' : 'events'}.
+                        </p>
+                        <Button
+                            onClick={() => window.open('https://viralsparkmedia.socialmediapostmanager.com', '_blank')}
+                            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-none w-full"
+                        >
+                            <ExternalLink size={16} className="mr-2" />
+                            Open Social Media Manager
+                        </Button>
+                    </div>
+                )}
+            </Card>
+        );
+    }
+
+    // If already signed up but awaiting magic link (status: 'pending' or 'sent'), show status
     if (signupStatus) {
         return (
             <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
