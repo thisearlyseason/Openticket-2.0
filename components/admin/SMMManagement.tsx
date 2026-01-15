@@ -29,12 +29,13 @@ export const SMMManagement: React.FC = () => {
     const fetchSignups = async () => {
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/admin/smm/signups', {
+            const response = await fetch('/api/smm/admin/signups', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             const data = await response.json();
+            console.log('[SMM Management] Fetched signups:', data);
             setSignups(data.signups || []);
         } catch (error) {
             console.error('Error fetching SMM signups:', error);
