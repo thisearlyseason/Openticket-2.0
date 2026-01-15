@@ -644,22 +644,22 @@ export const Billing = () => {
                             <p className="text-sm text-zinc-600 dark:text-zinc-400">Your plan and billing cycle.</p>
                         </div>
                         <Badge className="bg-primary text-white uppercase font-bold px-3 py-1">
-                            {user?.subscription?.plan?.toUpperCase() || 'FREE'}
+                            {sub.plan?.toUpperCase() || 'FREE'}
                         </Badge>
                     </div>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3 text-gray-900 dark:text-white">
                             <Calendar size={20} className="text-purple-500" />
                             <span className="text-sm">
-                                Next billing: {user?.subscription?.nextBillingDate 
-                                    ? new Date(user.subscription.nextBillingDate).toLocaleDateString() 
-                                    : 'Not set'}
+                                Next billing: {sub.nextBillingDate && !isNaN(new Date(sub.nextBillingDate).getTime()) 
+                                    ? new Date(sub.nextBillingDate).toLocaleDateString() 
+                                    : sub.plan === 'free' ? 'N/A' : 'Not set'}
                             </span>
                         </div>
                         <div className="flex items-center gap-3 text-gray-900 dark:text-white">
                             <DollarSign size={20} className="text-purple-500" />
                             <span className="text-sm font-bold">
-                                ${user?.subscription?.amount || '0.00'}/{user?.subscription?.cycle === 'yearly' ? 'yr' : 'mo'}
+                                ${sub.plan === 'free' ? '0.00' : sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2)}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
                             </span>
                         </div>
                     </div>
@@ -686,30 +686,6 @@ export const Billing = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 space-y-6">
-                    <Card className="p-6 border-l-4 border-l-primary">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Current Subscription</h2>
-                                <p className="text-sm text-gray-500">Your plan and billing cycle.</p>
-                            </div>
-                            <Badge color={sub.plan === 'premium' ? 'purple' : sub.plan === 'pro' ? 'blue' : 'green'}>
-                                {planDetails.name} Plan
-                            </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm mb-6">
-                            <div className="flex items-center text-gray-600 dark:text-zinc-300">
-                                <Calendar size={16} className="mr-2 text-primary" />
-                                Next billing: {sub.nextBillingDate && !isNaN(new Date(sub.nextBillingDate).getTime()) 
-                                    ? new Date(sub.nextBillingDate).toLocaleDateString() 
-                                    : sub.plan === 'free' ? 'N/A' : 'Not set'}
-                            </div>
-                            <div className="flex items-center text-gray-600 dark:text-zinc-300">
-                                <DollarSign size={16} className="mr-2 text-primary" />
-                                ${sub.plan === 'free' ? '0.00' : sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2)}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
-                            </div>
-                        </div>
-                    </Card>
-
                     {/* Stripe Connect Card */}
                     {renderStripeConnect()}
                 </div>
