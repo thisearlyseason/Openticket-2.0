@@ -378,24 +378,31 @@ router.post('/verify', async (req, res) => {
 
             const { error: financialError } = await supabase.from('financial_transactions').insert({
                 id: uuidv4(),
-                user_id: userId,
-                event_id: null, // Not event-specific
-                transaction_type: 'smm_subscription',
-                description: `Social Media Management Subscription - Monthly`,
+                registration_id: null,
+                event_id: null, // NULL for SMM subscriptions (not tied to specific event)
+                stripe_payment_intent_id: null,
+                stripe_session_id: sessionId,
                 gross_amount: smmAmount,
                 platform_fee: platformFee,
+                stripe_fee: 0,
+                tax_amount: 0,
                 organizer_net: organizerNet,
+                currency: 'usd',
                 status: 'succeeded',
-                stripe_session_id: sessionId,
-                stripe_subscription_id: session.subscription,
                 payout_status: 'pending',
-                created_at: new Date().toISOString()
+                transaction_type: 'smm_subscription',
+                affiliate_code: userId, // Store user_id here for tracking
+                affiliate_commission: 0,
+                discount_amount: 0,
+                payment_method: 'card',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
 
             if (financialError) {
                 console.error('[SMM] Financial transaction creation failed:', financialError);
             } else {
-                console.log('[SMM] Financial transaction created: $49 SMM revenue tracked');
+                console.log('[SMM] Financial transaction created: $49 SMM revenue tracked for user', userId);
             }
         }
 
