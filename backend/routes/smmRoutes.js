@@ -53,12 +53,18 @@ router.post('/signup', verifyFirebaseToken, async (req, res) => {
             user_name: name || '',
             user_type: userType,
             affiliate_code: affiliateCode,
-            subscription_id: subscriptionId || null,
-            stripe_session_id: stripeSessionId || null,
-            subscription_status: userType === 'organizer' ? 'pending_payment' : 'free',
             status: 'pending',
             signup_date: new Date().toISOString()
         };
+
+        // Only add subscription fields if they exist in the table
+        try {
+            signupData.subscription_id = subscriptionId || null;
+            signupData.stripe_session_id = stripeSessionId || null;
+            signupData.subscription_status = userType === 'organizer' ? 'pending_payment' : 'free';
+        } catch (e) {
+            console.log('[SMM] Subscription fields not available, using basic signup');
+        }
 
         const { data, error } = await supabase
             .from('smm_signups')
