@@ -187,13 +187,19 @@ router.post('/verify', async (req, res) => {
             .eq('id', userId)
             .single();
 
-        // Calculate affiliate commission (15% of subscription) ONLY for Pro and Premium plans
-        // Free plan does NOT qualify for affiliate commission
+        // Determine if this is an SMM subscription
+        const isSMMSubscription = planName.toLowerCase().includes('social media management') || planName.toLowerCase().includes('smm');
+
+        // Calculate affiliate commission (15% of subscription)
+        // For regular subscriptions: Only Pro and Premium qualify
+        // For SMM subscriptions: All organizer subscriptions qualify ($49/month)
         let affiliateCommission = 0;
         let affiliateId = null;
-        const paidPlans = ['pro', 'premium']; // Only these plans qualify for affiliate commission
         
-        if (paidPlans.includes(planName.toLowerCase()) && affiliateCode && !profile?.referred_by_affiliate) {
+        const paidPlans = ['pro', 'premium']; // Regular paid plans that qualify
+        const qualifiesForCommission = isSMMSubscription || paidPlans.includes(planName.toLowerCase());
+        
+        if (qualifiesForCommission && affiliateCode && !profile?.referred_by_affiliate) {
             // Only attribute to affiliate if this is the first PAID subscription (not already referred)
             const { data: affiliate } = await supabase
                 .from('profiles')
@@ -237,8 +243,8 @@ router.post('/verify', async (req, res) => {
                     }
                 }
             }
-        } else if (paidPlans.includes(planName.toLowerCase()) && profile?.referred_by_affiliate) {
-            // User was already referred - pay recurring commission to original affiliate (only for paid plans)
+        } else if (qualifiesForCommission && profile?.referred_by_affiliate) {
+            // User was already referred - pay recurring commission to original affiliate
             const { data: affiliate } = await supabase
                 .from('profiles')
                 .select('id, name, email, commission_rate')
@@ -251,7 +257,8 @@ router.post('/verify', async (req, res) => {
                 affiliateCommission = Number((subscriptionAmount * (commissionRate / 100)).toFixed(2));
                 affiliateId = affiliate.id;
                 
-                console.log(`[Subscription] Recurring affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${profile.referred_by_affiliate}`);
+                const planType = isSMMSubscription ? 'SMM' : planName;
+                console.log(`[Subscription] Recurring affiliate commission: ${commissionRate}% of $${subscriptionAmount} = $${affiliateCommission} for ${profile.referred_by_affiliate} (${planType})`);
                 
                 // Update affiliate's available payout
                 await supabase.rpc('increment_available_payout', {
@@ -266,7 +273,7 @@ router.post('/verify', async (req, res) => {
                             affiliate.email,
                             affiliate.name,
                             profile?.name || 'A referred user',
-                            planName,
+                            planType,
                             subscriptionAmount.toFixed(2),
                             affiliateCommission
                         );
