@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from './UI';
-import { Sparkles, Loader2, CheckCircle, Clock, Mail, ExternalLink } from 'lucide-react';
+import { Sparkles, Loader2, CheckCircle, Clock, Mail, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 
 interface SMMSignupCardProps {
@@ -12,6 +12,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
     const [loading, setLoading] = useState(false);
     const [signupStatus, setSignupStatus] = useState<any>(null);
     const [checkingStatus, setCheckingStatus] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const user = StorageService.getCurrentUser();
 
