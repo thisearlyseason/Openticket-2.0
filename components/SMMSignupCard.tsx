@@ -119,22 +119,42 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
         );
     }
 
-    // If already signed up, show status
+    // If already signed up, show compact status with expand option
     if (signupStatus) {
         return (
-            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-                <div className="flex items-start gap-4">
-                    <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
-                        {signupStatus.status === 'sent' ? (
-                            <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
-                        ) : (
-                            <Clock size={24} className="text-green-600 dark:text-green-400" />
-                        )}
+            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                {/* Collapsed Header - Always Visible */}
+                <div 
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-green-100/50 dark:hover:bg-green-900/30 transition-colors rounded-t-xl"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                            {signupStatus.status === 'sent' ? (
+                                <CheckCircle size={20} className="text-green-600 dark:text-green-400" />
+                            ) : (
+                                <Clock size={20} className="text-green-600 dark:text-green-400" />
+                            )}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-green-900 dark:text-green-100">
+                                {signupStatus.status === 'sent' ? 'SMM Active' : 'SMM Pending'}
+                            </h3>
+                            <p className="text-xs text-green-700 dark:text-green-300">
+                                {signupStatus.status === 'sent' ? 'Magic link sent' : 'Awaiting magic link'}
+                            </p>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                        <h3 className="font-bold text-lg text-green-900 dark:text-green-100 mb-2">
-                            {signupStatus.status === 'sent' ? '✅ Magic Link Sent!' : '⏳ Request Pending'}
-                        </h3>
+                    {isExpanded ? (
+                        <ChevronUp size={20} className="text-green-600 dark:text-green-400" />
+                    ) : (
+                        <ChevronDown size={20} className="text-green-600 dark:text-green-400" />
+                    )}
+                </div>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                    <div className="p-4 pt-0 border-t border-green-200 dark:border-green-800/50">
                         {signupStatus.status === 'sent' ? (
                             <>
                                 <p className="text-green-800 dark:text-green-200 text-sm mb-4">
@@ -148,7 +168,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                                 </p>
                                 <Button
                                     onClick={() => window.open('https://viralsparkmedia.socialmediapostmanager.com', '_blank')}
-                                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-none"
+                                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-none w-full"
                                 >
                                     <ExternalLink size={16} className="mr-2" />
                                     Open Social Media Manager
@@ -162,25 +182,42 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                             </p>
                         )}
                     </div>
-                </div>
+                )}
             </Card>
         );
     }
 
-    // Show signup card
+    // Show signup card (collapsible)
     return (
-        <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-            <div className="flex items-start gap-4">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
-                    <Sparkles size={24} className="text-white" />
+        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+            {/* Collapsed Header - Always Visible */}
+            <div 
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-purple-100/50 dark:hover:bg-purple-900/30 transition-colors rounded-t-xl"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                        <Sparkles size={20} className="text-white" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-purple-900 dark:text-purple-100">
+                            Social Media Management
+                        </h3>
+                        <p className="text-xs text-purple-700 dark:text-purple-300">
+                            {userType === 'affiliate' ? 'Free for Affiliates' : '$49/month for Organizers'}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex-1">
-                    <h3 className="font-bold text-lg text-purple-900 dark:text-purple-100 mb-2">
-                        {userType === 'affiliate' 
-                            ? 'Join the Social Media Management Program' 
-                            : 'Add Social Media Management'}
-                    </h3>
-                    
+                {isExpanded ? (
+                    <ChevronUp size={20} className="text-purple-600 dark:text-purple-400" />
+                ) : (
+                    <ChevronDown size={20} className="text-purple-600 dark:text-purple-400" />
+                )}
+            </div>
+
+            {/* Expanded Details */}
+            {isExpanded && (
+                <div className="p-4 pt-0 border-t border-purple-200 dark:border-purple-800/50">
                     {userType === 'affiliate' ? (
                         <>
                             <p className="text-purple-800 dark:text-purple-200 text-sm mb-4">
@@ -221,7 +258,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                     <Button
                         onClick={handleSignup}
                         disabled={loading}
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-none w-full"
                     >
                         {loading ? (
                             <>
@@ -236,7 +273,7 @@ export const SMMSignupCard: React.FC<SMMSignupCardProps> = ({ userType, affiliat
                         )}
                     </Button>
                 </div>
-            </div>
+            )}
         </Card>
     );
 };
