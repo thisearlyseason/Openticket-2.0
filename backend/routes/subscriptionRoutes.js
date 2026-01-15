@@ -1,8 +1,11 @@
 import express from 'express';
-const router = express.Router();
 import Stripe from 'stripe';
 import supabase from '../services/supabase.js';
 import { EmailService } from '../services/serverEmail.js';
+import { v4 as uuidv4 } from 'uuid';
+import verifyFirebaseToken from '../middlewares/authMiddleware.js';
+
+const router = express.Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
