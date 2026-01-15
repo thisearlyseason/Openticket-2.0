@@ -363,6 +363,33 @@ router.post('/verify', async (req, res) => {
                     console.log('[SMM] Signup record created for user', userId);
                 }
             }
+
+            // Create financial transaction record for SMM revenue ($49/month)
+            const smmAmount = 49.00; // Fixed price for SMM add-on
+            const platformFee = Number((smmAmount * 0.10).toFixed(2)); // 10% platform fee
+            const organizerNet = Number((smmAmount - platformFee).toFixed(2));
+
+            const { error: financialError } = await supabase.from('financial_transactions').insert({
+                id: uuidv4(),
+                user_id: userId,
+                event_id: null, // Not event-specific
+                transaction_type: 'smm_subscription',
+                description: `Social Media Management Subscription - Monthly`,
+                gross_amount: smmAmount,
+                platform_fee: platformFee,
+                organizer_net: organizerNet,
+                status: 'succeeded',
+                stripe_session_id: sessionId,
+                stripe_subscription_id: session.subscription,
+                payout_status: 'pending',
+                created_at: new Date().toISOString()
+            });
+
+            if (financialError) {
+                console.error('[SMM] Financial transaction creation failed:', financialError);
+            } else {
+                console.log('[SMM] Financial transaction created: $49 SMM revenue tracked');
+            }
         }
 
         // Record affiliate commission transaction if applicable
