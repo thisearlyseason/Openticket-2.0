@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CreditCard, Calendar, Package, Download, Plus, Trash2, AlertCircle, DollarSign, ArrowRight, Zap, Banknote, Clock, Wallet, FileText, CheckCircle2, Edit2, ChevronRight, Settings, Save, ExternalLink, RefreshCw, XCircle, Loader2, TrendingUp, X } from 'lucide-react';
@@ -8,6 +7,7 @@ import { Registration, Event } from '../types';
 import { useGlobalUI } from './GlobalUIProvider';
 import { getAuthToken } from '../services/firebaseConfig';
 import { useConfirm } from './ConfirmContext';
+import { DataTable, Column } from './DataTable';
 
 export const Billing = () => {
     const navigate = useNavigate();
@@ -248,6 +248,178 @@ export const Billing = () => {
             setIsProcessingPayout(false);
         })();
     };
+
+    // Define table columns
+    const ledgerColumns: Column<{ reg: Registration, event: Event }>[] = [
+        {
+            key: 'timestamp',
+            header: 'Date',
+            sortable: true,
+            filterable: true,
+            filterType: 'date',
+            render: (item) => (
+                <span className="text-zinc-600 dark:text-zinc-400">
+                    {new Date(item.reg.timestamp).toLocaleDateString()}
+                </span>
+            ),
+            exportValue: (item) => new Date(item.reg.timestamp).toLocaleDateString()
+        },
+        {
+            key: 'event',
+            header: 'Event / Item',
+            sortable: true,
+            filterable: true,
+            render: (item) => (
+                <div>
+                    <div className="font-bold text-gray-900 dark:text-white">{item.event.title}</div>
+                    <div className="text-xs text-zinc-500">
+                        Order #{item.reg.id.slice(-6).toUpperCase()} • {item.reg.attendeeName}
+                    </div>
+                </div>
+            ),
+            exportValue: (item) => `${item.event.title} - Order #${item.reg.id.slice(-6).toUpperCase()}`
+        },
+        {
+            key: 'gross',
+            header: 'Gross',
+            sortable: true,
+            render: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) {
+                    return <span className="font-mono text-zinc-400 line-through">$0.00</span>;
+                }
+                const gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+                return <span className="font-mono">${gross.toFixed(2)}</span>;
+            },
+            exportValue: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) return 0;
+                return (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+            }
+        },
+        {
+            key: 'fee',
+            header: 'Fee',
+            sortable: true,
+            render: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) {
+                    return <span className="font-mono text-zinc-400">-</span>;
+                }
+                const gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+                const platformFee = r.serviceFee || 0;
+                const stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
+                const totalFee = platformFee + stripeFee;
+                return (
+                    <span className="font-mono text-red-500" title={`Platform: $${platformFee.toFixed(2)} | Stripe: $${stripeFee.toFixed(2)}`}>
+                        -${totalFee.toFixed(2)}
+                    </span>
+                );
+            },
+            exportValue: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) return 0;
+                const gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+                const platformFee = r.serviceFee || 0;
+                const stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
+                return -(platformFee + stripeFee);
+            }
+        },
+        {
+            key: 'net',
+            header: 'Net',
+            sortable: true,
+            render: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) {
+                    return <span className="font-mono text-zinc-400">$0.00</span>;
+                }
+                const gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+                const platformFee = r.serviceFee || 0;
+                const stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
+                const net = gross - platformFee - stripeFee;
+                return <span className="font-mono font-bold text-green-600 dark:text-green-400">${net.toFixed(2)}</span>;
+            },
+            exportValue: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                if (isCancelled) return 0;
+                const gross = (r.tickets?.reduce((acc, t) => acc + ((t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (r.donationAmount || 0)
+                    + (r.addOns?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0)
+                    + (r.customFeesAmount || 0);
+                const platformFee = r.serviceFee || 0;
+                const stripeFee = r.stripeFee || (gross > 0 ? (gross * 0.029 + 0.30) : 0);
+                return gross - platformFee - stripeFee;
+            }
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Paid', value: 'paid' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Cancelled', value: 'refunded' }
+            ],
+            render: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                const isPaid = r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!r.stripePaymentIntentId;
+                
+                if (isCancelled) {
+                    return <Badge color="gray">CANCELLED</Badge>;
+                } else if (isPaid) {
+                    return <Badge color="green">PAID</Badge>;
+                } else {
+                    return <Badge color="yellow">PENDING</Badge>;
+                }
+            },
+            exportValue: (item) => {
+                const r = item.reg;
+                const isCancelled = r.paymentStatus === 'refunded';
+                const isPaid = r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || !!r.stripePaymentIntentId;
+                
+                if (isCancelled) return 'CANCELLED';
+                if (isPaid) return 'PAID';
+                return 'PENDING';
+            }
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            render: (item) => (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => exportSingleTransactionCSV(item.reg)}
+                >
+                    <Download size={14} />
+                </Button>
+            )
+        }
+    ];
 
     const exportLedgerCSV = () => {
         const headers = ['Date', 'Order ID', 'Event', 'Buyer', 'Email', 'Gross Amount', 'Net (Est)', 'Status'];
