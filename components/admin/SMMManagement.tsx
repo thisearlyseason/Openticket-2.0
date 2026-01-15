@@ -62,7 +62,7 @@ export const SMMManagement: React.FC = () => {
         setSending({ ...sending, [signupId]: true });
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/admin/smm/send-magic-link', {
+            const response = await fetch('/api/smm/admin/send-magic-link', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
