@@ -213,6 +213,10 @@ app.use('/api/settings', settingsRoutes);
 // SMM (Social Media Management) routes
 app.use('/api/smm', smmRoutes);
 
+// Ticket lookup routes (Find My Tickets)
+import ticketLookupRoutes from '../backend/routes/ticketLookupRoutes.js';
+app.use('/api/tickets', ticketLookupRoutes);
+
 // ALIAS: Mount webhook at /api/webhook to match the user's current CLI command.
 // ALIAS: Webhook mounted at top.
 
