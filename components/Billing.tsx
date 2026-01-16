@@ -659,7 +659,11 @@ export const Billing = () => {
                         <div className="flex items-center gap-3 text-gray-900 dark:text-white">
                             <DollarSign size={20} className="text-purple-500" />
                             <span className="text-sm font-bold">
-                                ${sub.plan === 'free' ? '0.00' : sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2)}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
+                                ${sub.plan === 'free' ? '0.00' : (
+                                    planDetails 
+                                        ? (sub.cycle === 'monthly' ? planDetails.priceMonthly.toFixed(2) : planDetails.priceYearly.toFixed(2))
+                                        : '0.00'
+                                )}/{sub.cycle === 'monthly' ? 'mo' : 'yr'}
                             </span>
                         </div>
                     </div>
@@ -903,9 +907,13 @@ export const Billing = () => {
 const SMMSubscriptionCard: React.FC<{ userId?: string }> = ({ userId }) => {
     const [smmSubscription, setSMMSubscription] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId) {
+            setIsLoading(false);
+            return;
+        }
         
         const loadSMMSubscription = async () => {
             try {
@@ -919,9 +927,15 @@ const SMMSubscriptionCard: React.FC<{ userId?: string }> = ({ userId }) => {
                 if (response.ok) {
                     const data = await response.json();
                     setSMMSubscription(data.signup);
+                } else if (response.status === 401) {
+                    // Unauthorized - user not logged in or token expired
+                    setError('Authentication required');
+                } else {
+                    setError('Failed to load SMM subscription');
                 }
             } catch (error) {
                 console.error('Error loading SMM subscription:', error);
+                setError('Failed to load SMM subscription');
             } finally {
                 setIsLoading(false);
             }
@@ -940,7 +954,7 @@ const SMMSubscriptionCard: React.FC<{ userId?: string }> = ({ userId }) => {
         );
     }
 
-    if (!smmSubscription || smmSubscription.subscription_status !== 'active') {
+    if (error || !smmSubscription || smmSubscription.subscription_status !== 'active') {
         return (
             <Card className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900/50 dark:to-zinc-800/50 border-zinc-200 dark:border-zinc-700">
                 <div className="flex items-start justify-between mb-4">

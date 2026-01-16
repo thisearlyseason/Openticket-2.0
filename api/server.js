@@ -221,6 +221,10 @@ app.use('/api/smm', smmAdminUtils);
 import smmManualFix from '../backend/routes/smmManualFix.js';
 app.use('/api/smm', smmManualFix);
 
+// AI Routes (Image generation with Nano Banana)
+import aiRoutes from '../backend/routes/aiRoutes.js';
+app.use('/api/ai', aiRoutes);
+
 // Ticket lookup routes (Find My Tickets)
 import ticketLookupRoutes from '../backend/routes/ticketLookupRoutes.js';
 app.use('/api/tickets', ticketLookupRoutes);
