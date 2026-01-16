@@ -5,10 +5,10 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 564.162712411,
-      "timestamp": "2026-01-16T16:37:57.031Z"
+      "uptime": 626.105879271,
+      "timestamp": "2026-01-16T16:38:58.974Z"
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:58"
   },
   {
     "test": "Backend Routes Availability",
@@ -20,7 +20,7 @@
         "status": 401
       }
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:58"
   },
   {
     "test": "Upcoming Payouts Endpoint - Authentication",
@@ -30,7 +30,7 @@
       "status": 401,
       "message": "Authentication required"
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
     "test": "Payout Balance Calculation - Authentication Required",
@@ -39,7 +39,7 @@
     "response_data": {
       "status": 401
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
     "test": "Payout Status Filtering - Authentication Required",
@@ -48,17 +48,29 @@
     "response_data": {
       "status": 401
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
-    "test": "UpcomingPayoutsCard Component",
-    "success": false,
-    "details": "\u274c UpcomingPayoutsCard.tsx component file not found",
+    "test": "Billing Component - Payout Balance Fix",
+    "success": true,
+    "details": "\u2705 Payout balance fix implemented: availablePayout state and payouts load handler found",
     "response_data": {
-      "path": "/app/components/UpcomingPayoutsCard.tsx",
-      "exists": false
+      "availablePayout_state": true,
+      "payouts_load_handler": true,
+      "ready_status_filter": true
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
+  },
+  {
+    "test": "UpcomingPayoutsCard Component - Callback Implementation",
+    "success": true,
+    "details": "\u2705 UpcomingPayoutsCard component with onPayoutsLoad callback properly implemented",
+    "response_data": {
+      "component_exists": true,
+      "callback_prop": true,
+      "callback_usage": true
+    },
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
     "test": "Test Organizer Authentication - Endpoint Protection",
@@ -68,7 +80,7 @@
       "status": 401,
       "endpoint": "/api/admin/upcoming-payouts"
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
     "test": "Test Organizer Authentication - Error Message",
@@ -77,7 +89,7 @@
     "response_data": {
       "error": "Missing Authorization header"
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   },
   {
     "test": "Billing Page Route - Frontend Routing",
@@ -87,6 +99,6 @@
       "status": 200,
       "route": "/#/billing"
     },
-    "timestamp": "2026-01-16 16:37:57"
+    "timestamp": "2026-01-16 16:38:59"
   }
 ]
