@@ -13,7 +13,7 @@ import os
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://ticket-fix-audit.preview.emergentagent.com"
+BACKEND_URL = "https://bugsmash-central-1.preview.emergentagent.com"
 
 class AffiliatePayoutTester:
     def __init__(self):
