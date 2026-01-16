@@ -1,8 +1,13 @@
 import express from 'express';
 const router = express.Router();
 import * as profileController from '../controllers/profileController.js';
+import * as authController from '../controllers/authController.js';
 import verifyToken from '../middlewares/authMiddleware.js';
 import admin from 'firebase-admin';
+
+// Authentication routes
+router.post('/login', authController.login);
+router.post('/signup', authController.signup);
 
 // Special setup route (no auth required, but needs setup key)
 router.post('/setup-admin', profileController.setupSuperAdmin);
