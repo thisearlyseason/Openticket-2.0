@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Affiliate Payout System Testing
-Tests the newly integrated Affiliate Payout System as requested in review
+Backend API Testing for OpenTicket Platform - Payout Balance Discrepancy Bug Fix
+Tests the payout balance calculation fix as requested in review
 """
 
 import requests
@@ -15,7 +15,7 @@ from typing import Dict, Any
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://bugsmash-central-1.preview.emergentagent.com"
 
-class AffiliatePayoutTester:
+class PayoutBalanceTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
