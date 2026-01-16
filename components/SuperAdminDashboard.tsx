@@ -1207,61 +1207,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden min-h-[500px]">
                 {/* USERS TAB */}
                 {activeTab === 'users' && (
-                    <div>
-                        <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
-                            <span className="font-bold text-white">All Users ({filteredUsers.length})</span>
-                            <Button size="sm" variant="outline" onClick={exportUsersCSV}>
-                                <Download size={14} className="mr-2" /> Export CSV
-                            </Button>
+                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="font-bold text-white">All Users ({safeUsers.length})</span>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-zinc-400">
-                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                    <tr>
-                                        <th className="p-4">User</th>
-                                        <th className="p-4">Organization</th>
-                                        <th className="p-4">Account Type</th>
-                                        <th className="p-4">Business Type</th>
-                                        <th className="p-4">Role</th>
-                                        <th className="p-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(filteredUsers || []).map(u => (
-                                        <tr key={u.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                            <td className="p-4">
-                                                <div className="font-bold text-white">{u.name || 'No Name'}</div>
-                                                <div className="text-xs">{u.email}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-medium text-white">{u.businessName || '-'}</div>
-                                            </td>
-                                            <td className="p-4">
-                                                <Badge color={u.role === 'organizer' ? 'green' : u.role === 'affiliate' ? 'purple' : 'gray'}>
-                                                    {u.role === 'organizer' ? 'Organizer' : u.role === 'affiliate' ? 'Affiliate' : 'User'}
-                                                </Badge>
-                                            </td>
-                                            <td className="p-4 text-xs">{u.businessType || '-'}</td>
-                                            <td className="p-4">
-                                                <Badge color={u.isAdmin ? 'yellow' : 'gray'}>
-                                                    {u.isAdmin ? 'Admin' : u.role || 'User'}
-                                                </Badge>
-                                            </td>
-                                            <td className="p-4">
-                                                {!u.isAdmin && (
-                                                    <Button size="sm" variant={u.isBanned ? 'primary' : 'outline'} onClick={() => handleToggleBan(u)}>
-                                                        {u.isBanned ? 'Unban' : 'Ban'}
-                                                    </Button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {filteredUsers.length === 0 && (
-                                        <tr><td colSpan={6} className="p-8 text-center">No users found.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                        
+                        <DataTable
+                            data={safeUsers}
+                            columns={userColumns}
+                            searchPlaceholder="Search users by name, email, or organization..."
+                            emptyMessage="No users found."
+                            exportFilename="openticket_users"
+                            getRowId={(user) => user.id}
+                        />
                     </div>
                 )}
 
