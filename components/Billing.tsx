@@ -1011,7 +1011,7 @@ const SMMSubscriptionCard: React.FC<{ userId?: string }> = ({ userId }) => {
 };
 
 // Upcoming Payouts Component
-const UpcomingPayoutsCard: React.FC<{ userId: string }> = ({ userId }) => {
+const UpcomingPayoutsCard: React.FC<{ userId: string, onPayoutsLoad?: (payouts: any[]) => void }> = ({ userId, onPayoutsLoad }) => {
     const [upcomingPayouts, setUpcomingPayouts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const { showToast } = useGlobalUI();
@@ -1032,7 +1032,11 @@ const UpcomingPayoutsCard: React.FC<{ userId: string }> = ({ userId }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                setUpcomingPayouts(data.payouts || []);
+                const payouts = data.payouts || [];
+                setUpcomingPayouts(payouts);
+                if (onPayoutsLoad) {
+                    onPayoutsLoad(payouts);
+                }
             }
         } catch (error) {
             console.error('Failed to load upcoming payouts:', error);
