@@ -1318,6 +1318,99 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     ];
 
+    // Define DataTable columns for Affiliates
+    const affiliateColumns: Column<any>[] = [
+        {
+            key: 'name',
+            header: 'Affiliate',
+            sortable: true,
+            filterable: true,
+            render: (aff) => (
+                <div>
+                    <div className="font-bold text-white">{aff.name}</div>
+                    <div className="text-xs text-zinc-400">{aff.email}</div>
+                </div>
+            ),
+            exportValue: (aff) => `${aff.name} (${aff.email})`
+        },
+        {
+            key: 'code',
+            header: 'Code',
+            sortable: true,
+            render: (aff) => <span className="font-mono text-purple-400">{aff.affiliateCode}</span>,
+            exportValue: (aff) => aff.affiliateCode
+        },
+        {
+            key: 'clicks',
+            header: 'Clicks',
+            sortable: true,
+            render: (aff) => <span className="font-mono text-white">{aff.clicks}</span>,
+            exportValue: (aff) => aff.clicks
+        },
+        {
+            key: 'conversions',
+            header: 'Conversions',
+            sortable: true,
+            render: (aff) => <span className="font-mono text-white">{aff.conversions}</span>,
+            exportValue: (aff) => aff.conversions
+        },
+        {
+            key: 'rate',
+            header: 'Rate',
+            sortable: true,
+            render: (aff) => <span className="font-mono text-white">{aff.conversionRate.toFixed(1)}%</span>,
+            exportValue: (aff) => `${aff.conversionRate.toFixed(1)}%`
+        },
+        {
+            key: 'earnings',
+            header: 'Earnings',
+            sortable: true,
+            render: (aff) => <span className="font-mono text-green-400">${aff.totalEarnings.toFixed(2)}</span>,
+            exportValue: (aff) => `$${aff.totalEarnings.toFixed(2)}`
+        },
+        {
+            key: 'pending',
+            header: 'Pending',
+            sortable: true,
+            render: (aff) => (
+                aff.pendingPayout > 0 ? (
+                    <span className="font-mono text-yellow-400">${aff.pendingPayout.toFixed(2)}</span>
+                ) : (
+                    <span className="text-zinc-500">$0.00</span>
+                )
+            ),
+            exportValue: (aff) => `$${aff.pendingPayout.toFixed(2)}`
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            render: (aff) => (
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => setSelectedAffiliate(aff)}
+                        className="p-2 hover:bg-zinc-700 rounded text-blue-400"
+                        title="View Details"
+                        data-testid={`view-affiliate-${aff.id}`}
+                    >
+                        <Eye size={14} />
+                    </button>
+                    {aff.pendingPayout > 0 && (
+                        <Button 
+                            size="sm" 
+                            onClick={() => {
+                                setSelectedAffiliate(aff);
+                                setPayoutAmount(aff.pendingPayout.toFixed(2));
+                            }}
+                            data-testid={`pay-affiliate-${aff.id}`}
+                        >
+                            <Wallet size={12} className="mr-1" /> Pay
+                        </Button>
+                    )}
+                </div>
+            )
+        }
+    ];
+
     const filteredUsers = safeUsers.filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
