@@ -294,31 +294,40 @@ class PayoutBalanceTester:
                     }
                 )
             
-            # Check UpcomingPayoutsCard for callback implementation
-            with open(upcoming_payouts_path, 'r') as f:
-                upcoming_content = f.read()
+            # Check UpcomingPayoutsCard component (defined within Billing.tsx)
+            has_upcoming_payouts_card = "UpcomingPayoutsCard" in billing_content
+            has_on_payouts_load_prop = "onPayoutsLoad" in billing_content
+            has_callback_usage = "onPayoutsLoad(" in billing_content or "props.onPayoutsLoad" in billing_content
             
-            has_on_payouts_load_prop = "onPayoutsLoad" in upcoming_content
-            has_callback_usage = "onPayoutsLoad(" in upcoming_content or "props.onPayoutsLoad" in upcoming_content
-            
-            if has_on_payouts_load_prop and has_callback_usage:
+            if has_upcoming_payouts_card and has_on_payouts_load_prop and has_callback_usage:
                 self.log_result(
                     "UpcomingPayoutsCard Component - Callback Implementation",
                     True,
-                    "✅ onPayoutsLoad callback properly implemented in UpcomingPayoutsCard",
+                    "✅ UpcomingPayoutsCard component with onPayoutsLoad callback properly implemented",
                     {
+                        "component_exists": has_upcoming_payouts_card,
                         "callback_prop": has_on_payouts_load_prop,
                         "callback_usage": has_callback_usage
                     }
                 )
             else:
+                missing_features = []
+                if not has_upcoming_payouts_card:
+                    missing_features.append("UpcomingPayoutsCard component")
+                if not has_on_payouts_load_prop:
+                    missing_features.append("onPayoutsLoad prop")
+                if not has_callback_usage:
+                    missing_features.append("callback usage")
+                
                 self.log_result(
                     "UpcomingPayoutsCard Component - Callback Implementation",
                     False,
-                    "❌ onPayoutsLoad callback not properly implemented",
+                    f"❌ UpcomingPayoutsCard implementation incomplete - Missing: {', '.join(missing_features)}",
                     {
+                        "component_exists": has_upcoming_payouts_card,
                         "callback_prop": has_on_payouts_load_prop,
-                        "callback_usage": has_callback_usage
+                        "callback_usage": has_callback_usage,
+                        "missing": missing_features
                     }
                 )
                 
