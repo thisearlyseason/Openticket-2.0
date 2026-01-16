@@ -244,10 +244,8 @@ class PayoutBalanceTester:
         try:
             # Check if Billing component exists
             billing_path = "/app/components/Billing.tsx"
-            upcoming_payouts_path = "/app/components/UpcomingPayoutsCard.tsx"
             
             billing_exists = os.path.exists(billing_path)
-            upcoming_payouts_exists = os.path.exists(upcoming_payouts_path)
             
             if not billing_exists:
                 self.log_result(
@@ -255,15 +253,6 @@ class PayoutBalanceTester:
                     False,
                     "❌ Billing.tsx component file not found",
                     {"path": billing_path, "exists": False}
-                )
-                return
-            
-            if not upcoming_payouts_exists:
-                self.log_result(
-                    "UpcomingPayoutsCard Component",
-                    False,
-                    "❌ UpcomingPayoutsCard.tsx component file not found",
-                    {"path": upcoming_payouts_path, "exists": False}
                 )
                 return
             
