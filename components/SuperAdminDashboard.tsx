@@ -1015,6 +1015,89 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         );
     }
 
+    // Define DataTable columns for Users
+    const userColumns: Column<User>[] = [
+        {
+            key: 'name',
+            header: 'User',
+            sortable: true,
+            filterable: true,
+            render: (user) => (
+                <div>
+                    <div className="font-bold text-white">{user.name || 'No Name'}</div>
+                    <div className="text-xs text-zinc-400">{user.email}</div>
+                </div>
+            ),
+            exportValue: (user) => `${user.name || 'No Name'} (${user.email})`
+        },
+        {
+            key: 'businessName',
+            header: 'Organization',
+            sortable: true,
+            filterable: true,
+            render: (user) => (
+                <div className="font-medium text-white">{user.businessName || '-'}</div>
+            ),
+            exportValue: (user) => user.businessName || '-'
+        },
+        {
+            key: 'role',
+            header: 'Account Type',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Organizer', value: 'organizer' },
+                { label: 'Affiliate', value: 'affiliate' },
+                { label: 'Attendee', value: 'attendee' }
+            ],
+            render: (user) => (
+                <Badge color={user.role === 'organizer' ? 'green' : user.role === 'affiliate' ? 'purple' : 'gray'}>
+                    {user.role === 'organizer' ? 'Organizer' : user.role === 'affiliate' ? 'Affiliate' : 'User'}
+                </Badge>
+            ),
+            exportValue: (user) => user.role || 'attendee'
+        },
+        {
+            key: 'businessType',
+            header: 'Business Type',
+            sortable: true,
+            filterable: true,
+            render: (user) => (
+                <span className="text-xs text-zinc-400">{user.businessType || '-'}</span>
+            ),
+            exportValue: (user) => user.businessType || '-'
+        },
+        {
+            key: 'isAdmin',
+            header: 'Role',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Admin', value: 'true' },
+                { label: 'User', value: 'false' }
+            ],
+            render: (user) => (
+                <Badge color={user.isAdmin ? 'yellow' : 'gray'}>
+                    {user.isAdmin ? 'Admin' : user.role || 'User'}
+                </Badge>
+            ),
+            exportValue: (user) => user.isAdmin ? 'Admin' : (user.role || 'User')
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            render: (user) => (
+                !user.isAdmin ? (
+                    <Button size="sm" variant={user.isBanned ? 'primary' : 'outline'} onClick={() => handleToggleBan(user)}>
+                        {user.isBanned ? 'Unban' : 'Ban'}
+                    </Button>
+                ) : null
+            )
+        }
+    ];
+
     const filteredUsers = safeUsers.filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
