@@ -47,6 +47,9 @@ export const Billing = () => {
         transactionCount: number;
     }>({ grossRevenue: 0, stripeFees: 0, platformFees: 0, organizerNet: 0, transactionCount: 0 });
 
+    // Payout Balance (from ready payouts)
+    const [availablePayout, setAvailablePayout] = useState(0);
+
     const user = StorageService.getCurrentUser();
 
     // Handle Stripe redirect parameters
