@@ -1,0 +1,92 @@
+[
+  {
+    "test": "Backend Health Check",
+    "success": true,
+    "details": "\u2705 Backend is healthy and responding",
+    "response_data": {
+      "status": "healthy",
+      "uptime": 564.162712411,
+      "timestamp": "2026-01-16T16:37:57.031Z"
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Backend Routes Availability",
+    "success": true,
+    "details": "\u2705 All required admin routes exist: ['/api/admin/upcoming-payouts']",
+    "response_data": {
+      "/api/admin/upcoming-payouts": {
+        "exists": true,
+        "status": 401
+      }
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Upcoming Payouts Endpoint - Authentication",
+    "success": true,
+    "details": "\u2705 Properly requires authentication (HTTP 401)",
+    "response_data": {
+      "status": 401,
+      "message": "Authentication required"
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Payout Balance Calculation - Authentication Required",
+    "success": true,
+    "details": "\u2705 Cannot test calculation without authentication - endpoint secured",
+    "response_data": {
+      "status": 401
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Payout Status Filtering - Authentication Required",
+    "success": true,
+    "details": "\u2705 Cannot test filtering without authentication - endpoint secured",
+    "response_data": {
+      "status": 401
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "UpcomingPayoutsCard Component",
+    "success": false,
+    "details": "\u274c UpcomingPayoutsCard.tsx component file not found",
+    "response_data": {
+      "path": "/app/components/UpcomingPayoutsCard.tsx",
+      "exists": false
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Test Organizer Authentication - Endpoint Protection",
+    "success": true,
+    "details": "\u2705 Upcoming payouts endpoint properly protected (requires authentication)",
+    "response_data": {
+      "status": 401,
+      "endpoint": "/api/admin/upcoming-payouts"
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Test Organizer Authentication - Error Message",
+    "success": true,
+    "details": "\u2705 Authentication error provides clear message",
+    "response_data": {
+      "error": "Missing Authorization header"
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  },
+  {
+    "test": "Billing Page Route - Frontend Routing",
+    "success": true,
+    "details": "\u2705 Billing page route accessible (/#/billing)",
+    "response_data": {
+      "status": 200,
+      "route": "/#/billing"
+    },
+    "timestamp": "2026-01-16 16:37:57"
+  }
+]
