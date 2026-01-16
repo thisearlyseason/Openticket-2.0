@@ -1321,74 +1321,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
                 {/* EVENTS TAB */}
                 {activeTab === 'events' && (
-                    <div className="overflow-x-auto">
-                        <div className="p-4 border-b border-zinc-800">
-                            <span className="font-bold text-white">All Events ({filteredEvents.length})</span>
+                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="font-bold text-white">All Events ({safeEvents.length})</span>
                         </div>
-                        <table className="w-full text-left text-sm text-zinc-400">
-                            <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                <tr>
-                                    <th className="p-4">Event</th>
-                                    <th className="p-4">Organizer</th>
-                                    <th className="p-4">Date</th>
-                                    <th className="p-4">Registrations</th>
-                                    <th className="p-4">Status</th>
-                                    <th className="p-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(filteredEvents || []).map(e => (
-                                    <tr key={e.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                        <td className="p-4">
-                                            <div className="font-bold text-white">{e.title}</div>
-                                            <div className="text-xs text-zinc-500">{e.location}</div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="text-white">{getOrganizerName(e.ownerId)}</div>
-                                        </td>
-                                        <td className="p-4 text-xs">{new Date(e.date).toLocaleDateString()}</td>
-                                        <td className="p-4">
-                                            <span className="font-mono">{e.registeredCount || 0}/{e.capacity || '∞'}</span>
-                                        </td>
-                                        <td className="p-4">
-                                            {e.moderationStatus === 'rejected' ? (
-                                                <Badge color="red">Rejected</Badge>
-                                            ) : e.isDraft ? (
-                                                <Badge color="gray">Draft</Badge>
-                                            ) : (
-                                                <Badge color="green">Active</Badge>
-                                            )}
-                                        </td>
-                                        <td className="p-4 flex gap-2">
-                                            <button 
-                                                onClick={() => navigate(`/event/${e.id}`)} 
-                                                className="p-2 hover:bg-zinc-700 rounded text-blue-400"
-                                                title="View Event"
-                                            >
-                                                <ExternalLink size={14} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleRejectEvent(e)} 
-                                                className="p-2 hover:bg-red-900/30 text-red-500 rounded"
-                                                title="Reject Event"
-                                            >
-                                                <Ban size={14} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteEvent(e)} 
-                                                className="p-2 hover:bg-red-900/30 text-red-500 rounded"
-                                                title="Delete Event"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {filteredEvents.length === 0 && (
-                                    <tr><td colSpan={6} className="p-8 text-center">No events found.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
+                        
+                        <DataTable
+                            data={safeEvents}
+                            columns={eventColumns}
+                            searchPlaceholder="Search events by title, location, or organizer..."
+                            emptyMessage="No events found."
+                            exportFilename="openticket_events"
+                            getRowId={(event) => event.id}
+                        />
                     </div>
                 )}
 
