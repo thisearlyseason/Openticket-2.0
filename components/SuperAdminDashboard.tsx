@@ -11,6 +11,7 @@ import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
 import SMMManagement from './admin/SMMManagement';
+import { DataTable, Column } from './DataTable';
 
 // Safe array utility - ensures we never call array methods on undefined/null
 const ensureArray = <T,>(value: T[] | undefined | null): T[] => 
