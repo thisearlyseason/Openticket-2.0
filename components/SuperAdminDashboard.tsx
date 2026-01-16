@@ -2377,71 +2377,16 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             <div className="p-4 border-b border-zinc-800 font-bold">
                                 All Affiliates ({safeAffiliates.length})
                             </div>
-                            <table className="w-full text-left text-sm text-zinc-400">
-                                <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
-                                    <tr>
-                                        <th className="p-4">Affiliate</th>
-                                        <th className="p-4">Code</th>
-                                        <th className="p-4 text-right">Clicks</th>
-                                        <th className="p-4 text-right">Conversions</th>
-                                        <th className="p-4 text-right">Rate</th>
-                                        <th className="p-4 text-right">Earnings</th>
-                                        <th className="p-4 text-right">Pending</th>
-                                        <th className="p-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {safeAffiliates.map(aff => (
-                                        <tr key={aff.id} className="border-t border-zinc-800 hover:bg-zinc-800/50">
-                                            <td className="p-4">
-                                                <div className="font-bold text-white">{aff.name}</div>
-                                                <div className="text-xs">{aff.email}</div>
-                                            </td>
-                                            <td className="p-4 font-mono text-purple-400">{aff.affiliateCode}</td>
-                                            <td className="p-4 text-right font-mono">{aff.clicks}</td>
-                                            <td className="p-4 text-right font-mono">{aff.conversions}</td>
-                                            <td className="p-4 text-right font-mono">{aff.conversionRate.toFixed(1)}%</td>
-                                            <td className="p-4 text-right font-mono text-white">${aff.totalEarnings.toFixed(2)}</td>
-                                            <td className="p-4 text-right">
-                                                {aff.pendingPayout > 0 ? (
-                                                    <span className="font-mono text-yellow-400">${aff.pendingPayout.toFixed(2)}</span>
-                                                ) : (
-                                                    <span className="text-zinc-500">$0.00</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex gap-2">
-                                                    <button 
-                                                        onClick={() => setSelectedAffiliate(aff)}
-                                                        className="p-2 hover:bg-zinc-700 rounded text-blue-400"
-                                                        title="View Details"
-                                                        data-testid={`view-affiliate-${aff.id}`}
-                                                    >
-                                                        <Eye size={14} />
-                                                    </button>
-                                                    {aff.pendingPayout > 0 && (
-                                                        <Button 
-                                                            size="sm" 
-                                                            onClick={() => {
-                                                                setSelectedAffiliate(aff);
-                                                                setPayoutAmount(aff.pendingPayout.toFixed(2));
-                                                            }}
-                                                            data-testid={`pay-affiliate-${aff.id}`}
-                                                        >
-                                                            <Wallet size={12} className="mr-1" /> Pay
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {safeAffiliates.length === 0 && (
-                                        <tr><td colSpan={8} className="p-8 text-center text-zinc-500">
-                                            No affiliates found. Affiliates will appear here once they join your program.
-                                        </td></tr>
-                                    )}
-                                </tbody>
-                            </table>
+                            <div className="p-6">
+                                <DataTable
+                                    data={safeAffiliates}
+                                    columns={affiliateColumns}
+                                    searchPlaceholder="Search affiliates by name, email, or code..."
+                                    emptyMessage="No affiliates found. Affiliates will appear here once they join your program."
+                                    exportFilename="openticket_affiliates"
+                                    getRowId={(aff) => aff.id}
+                                />
+                            </div>
                         </div>
 
                         {/* Payout Modal */}
