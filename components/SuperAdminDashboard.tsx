@@ -1194,6 +1194,130 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     ];
 
+    // Define DataTable columns for Registrations
+    const registrationColumns: Column<Registration>[] = [
+        {
+            key: 'timestamp',
+            header: 'Date',
+            sortable: true,
+            render: (reg) => (
+                <div className="text-xs">
+                    <div className="text-white">{new Date(reg.timestamp).toLocaleDateString()}</div>
+                    <div className="text-zinc-600">{new Date(reg.timestamp).toLocaleTimeString()}</div>
+                </div>
+            ),
+            exportValue: (reg) => new Date(reg.timestamp).toLocaleString()
+        },
+        {
+            key: 'event',
+            header: 'Event',
+            sortable: true,
+            filterable: true,
+            render: (reg) => {
+                const event = safeEvents.find(e => e.id === reg.eventId);
+                return <div className="font-bold text-white max-w-[200px] truncate">{event?.title || reg.eventTitle || 'Unknown Event'}</div>;
+            },
+            exportValue: (reg) => {
+                const event = safeEvents.find(e => e.id === reg.eventId);
+                return event?.title || reg.eventTitle || 'Unknown Event';
+            }
+        },
+        {
+            key: 'organizer',
+            header: 'Organizer',
+            sortable: true,
+            render: (reg) => {
+                const event = safeEvents.find(e => e.id === reg.eventId);
+                return <div className="text-white">{event ? (event.ownerName || getOrganizerName(event.ownerId)) : '-'}</div>;
+            },
+            exportValue: (reg) => {
+                const event = safeEvents.find(e => e.id === reg.eventId);
+                return event ? (event.ownerName || getOrganizerName(event.ownerId)) : '-';
+            }
+        },
+        {
+            key: 'attendee',
+            header: 'Attendee',
+            sortable: true,
+            filterable: true,
+            render: (reg) => (
+                <div>
+                    <div className="text-white font-medium">{reg.attendeeName || 'N/A'}</div>
+                    <div className="text-xs opacity-60">{reg.attendeeEmail || 'No email'}</div>
+                    {reg.phoneNumber && <div className="text-xs opacity-40">{reg.phoneNumber}</div>}
+                </div>
+            ),
+            exportValue: (reg) => `${reg.attendeeName || 'N/A'} (${reg.attendeeEmail || 'No email'})`
+        },
+        {
+            key: 'tickets',
+            header: 'Tickets',
+            sortable: true,
+            render: (reg) => {
+                const ticketCount = reg.tickets?.length || 0;
+                return (
+                    <span className="bg-zinc-800 px-2 py-1 rounded text-xs font-mono text-white">
+                        {ticketCount} ticket{ticketCount !== 1 ? 's' : ''}
+                    </span>
+                );
+            },
+            exportValue: (reg) => String(reg.tickets?.length || 0)
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Paid', value: 'paid' },
+                { label: 'Completed', value: 'completed' },
+                { label: 'Refunded', value: 'refunded' },
+                { label: 'Pending', value: 'pending' }
+            ],
+            render: (reg) => (
+                <div className="flex gap-1 flex-wrap">
+                    <Badge color={
+                        reg.paymentStatus === 'paid' || reg.paymentStatus === 'completed' ? 'green' : 
+                        reg.paymentStatus === 'refunded' ? 'red' : 'yellow'
+                    }>
+                        {reg.paymentStatus || 'unknown'}
+                    </Badge>
+                    {reg.checkedIn && <Badge color="blue">Checked In</Badge>}
+                </div>
+            ),
+            exportValue: (reg) => `${reg.paymentStatus || 'unknown'}${reg.checkedIn ? ' (Checked In)' : ''}`
+        },
+        {
+            key: 'affiliate',
+            header: 'Affiliate/Promo',
+            sortable: true,
+            render: (reg) => (
+                reg.affiliateCode ? (
+                    <span className="font-mono text-purple-400 text-xs bg-purple-500/10 px-2 py-1 rounded">
+                        {reg.affiliateCode}
+                    </span>
+                ) : reg.promoCodeUsed ? (
+                    <span className="font-mono text-yellow-400 text-xs bg-yellow-500/10 px-2 py-1 rounded">
+                        {reg.promoCodeUsed}
+                    </span>
+                ) : <span className="text-zinc-600">-</span>
+            ),
+            exportValue: (reg) => reg.affiliateCode || reg.promoCodeUsed || '-'
+        },
+        {
+            key: 'amount',
+            header: 'Amount',
+            sortable: true,
+            render: (reg) => (
+                <div className="text-right font-mono text-green-400">
+                    ${((reg.totalAmount || 0) + (reg.taxAmount || 0)).toFixed(2)}
+                </div>
+            ),
+            exportValue: (reg) => `$${((reg.totalAmount || 0) + (reg.taxAmount || 0)).toFixed(2)}`
+        }
+    ];
+
     const filteredUsers = safeUsers.filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
