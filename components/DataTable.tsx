@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Filter, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button, Input, Select, Badge } from './UI';
 
-export interface Column<T> {
+export type Column<T> = {
     key: string;
     header: string;
     render: (item: T, index: number) => React.ReactNode;
@@ -11,16 +11,16 @@ export interface Column<T> {
     filterType?: 'text' | 'select' | 'date' | 'number';
     filterOptions?: { label: string; value: string }[];
     exportValue?: (item: T) => string | number; // For CSV export
-}
+};
 
-export interface BulkAction {
+export type BulkAction = {
     label: string;
     icon?: React.ReactNode;
     onClick: (selectedIds: string[]) => void;
     variant?: 'default' | 'destructive' | 'outline';
-}
+};
 
-export interface DataTableProps<T> {
+export type DataTableProps<T> = {
     data: T[];
     columns: Column<T>[];
     defaultRowsPerPage?: number;
