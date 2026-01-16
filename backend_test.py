@@ -701,17 +701,17 @@ class PayoutBalanceTester:
         return passed == total
 
 if __name__ == "__main__":
-    tester = AffiliatePayoutTester()
+    tester = PayoutBalanceTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/affiliate_payout_test_results.json', 'w') as f:
+    with open('/app/payout_balance_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/affiliate_payout_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/payout_balance_test_results.json")
     
     if success:
-        print("\n🎉 All Affiliate Payout System tests PASSED!")
+        print("\n🎉 All Payout Balance Discrepancy tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
