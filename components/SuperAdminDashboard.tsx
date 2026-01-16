@@ -1098,6 +1098,102 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     ];
 
+    // Define DataTable columns for Events
+    const eventColumns: Column<Event>[] = [
+        {
+            key: 'title',
+            header: 'Event',
+            sortable: true,
+            filterable: true,
+            render: (event) => (
+                <div>
+                    <div className="font-bold text-white">{event.title}</div>
+                    <div className="text-xs text-zinc-500">{event.location}</div>
+                </div>
+            ),
+            exportValue: (event) => `${event.title} - ${event.location}`
+        },
+        {
+            key: 'organizer',
+            header: 'Organizer',
+            sortable: true,
+            filterable: true,
+            render: (event) => (
+                <div className="text-white">{getOrganizerName(event.ownerId)}</div>
+            ),
+            exportValue: (event) => getOrganizerName(event.ownerId)
+        },
+        {
+            key: 'date',
+            header: 'Date',
+            sortable: true,
+            render: (event) => (
+                <span className="text-xs text-zinc-400">{new Date(event.date).toLocaleDateString()}</span>
+            ),
+            exportValue: (event) => new Date(event.date).toLocaleDateString()
+        },
+        {
+            key: 'registrations',
+            header: 'Registrations',
+            sortable: true,
+            render: (event) => (
+                <span className="font-mono text-white">{event.registeredCount || 0}/{event.capacity || '∞'}</span>
+            ),
+            exportValue: (event) => `${event.registeredCount || 0}/${event.capacity || '∞'}`
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Active', value: 'active' },
+                { label: 'Draft', value: 'draft' },
+                { label: 'Rejected', value: 'rejected' }
+            ],
+            render: (event) => (
+                event.moderationStatus === 'rejected' ? (
+                    <Badge color="red">Rejected</Badge>
+                ) : event.isDraft ? (
+                    <Badge color="gray">Draft</Badge>
+                ) : (
+                    <Badge color="green">Active</Badge>
+                )
+            ),
+            exportValue: (event) => event.moderationStatus === 'rejected' ? 'Rejected' : event.isDraft ? 'Draft' : 'Active'
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            render: (event) => (
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => navigate(`/event/${event.id}`)} 
+                        className="p-2 hover:bg-zinc-700 rounded text-blue-400"
+                        title="View Event"
+                    >
+                        <ExternalLink size={14} />
+                    </button>
+                    <button 
+                        onClick={() => handleRejectEvent(event)} 
+                        className="p-2 hover:bg-red-900/30 text-red-500 rounded"
+                        title="Reject Event"
+                    >
+                        <Ban size={14} />
+                    </button>
+                    <button 
+                        onClick={() => handleDeleteEvent(event)} 
+                        className="p-2 hover:bg-red-900/30 text-red-500 rounded"
+                        title="Delete Event"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
+            )
+        }
+    ];
+
     const filteredUsers = safeUsers.filter(u =>
         (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
