@@ -759,7 +759,7 @@ export const Billing = () => {
             </div>
 
             {/* Upcoming Payouts Section - Full Width */}
-            <UpcomingPayoutsCard userId={user.id} />
+            <UpcomingPayoutsCard userId={user.id} onPayoutsLoad={handlePayoutsLoad} />
 
             {balanceDue > 0 && (
                 <Card className="p-6 border-red-200 dark:border-red-900">
