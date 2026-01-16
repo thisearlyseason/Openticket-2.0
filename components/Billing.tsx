@@ -140,12 +140,19 @@ export const Billing = () => {
     const sub = user.subscription || { plan: 'free', cycle: 'monthly', status: 'active', nextBillingDate: Date.now() };
     const planDetails = PLANS[sub.plan as keyof typeof PLANS];
     const balanceDue = user.balanceDue || 0;
-    const availablePayout = user.availablePayout || 0;
 
     const netPayoutAvailable = Math.max(0, availablePayout - balanceDue);
 
     const instantFee = netPayoutAvailable * 0.015;
     const instantNet = netPayoutAvailable - instantFee;
+
+    // Callback to handle ready payouts calculation
+    const handlePayoutsLoad = (payouts: any[]) => {
+        // Calculate total amount from READY payouts
+        const readyPayouts = payouts.filter(p => p.status === 'ready');
+        const totalReady = readyPayouts.reduce((sum, p) => sum + (p.amount || 0), 0);
+        setAvailablePayout(totalReady);
+    };
 
     const handleConnectStripe = async () => {
         setIsConnecting(true);
