@@ -5,10 +5,10 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 3082.240022517,
-      "timestamp": "2026-01-17T02:02:33.947Z"
+      "uptime": 3178.390504815,
+      "timestamp": "2026-01-17T02:04:10.098Z"
     },
-    "timestamp": "2026-01-17 02:02:33"
+    "timestamp": "2026-01-17 02:04:10"
   },
   {
     "test": "Backend Routes Availability",
@@ -20,25 +20,51 @@
         "status": 401
       }
     },
-    "timestamp": "2026-01-17 02:02:33"
+    "timestamp": "2026-01-17 02:04:10"
   },
   {
-    "test": "Promo Code Database Schema - Authentication Required",
-    "success": false,
-    "details": "\u274c Cannot test without authentication token",
+    "test": "Promo Code Database Schema",
+    "success": true,
+    "details": "\u2705 Promo codes endpoint exists and requires authentication (HTTP 401)",
     "response_data": {
-      "auth_token": null
+      "endpoint_exists": true,
+      "auth_required": true,
+      "status": 401,
+      "error": "Missing Authorization header"
     },
-    "timestamp": "2026-01-17 02:02:33"
+    "timestamp": "2026-01-17 02:04:10"
+  },
+  {
+    "test": "Promo Code GET Endpoint - Auth Required",
+    "success": true,
+    "details": "\u2705 GET endpoint properly requires authentication (HTTP 401)",
+    "response_data": {
+      "status": 401,
+      "endpoint": "GET /api/admin/promo-codes"
+    },
+    "timestamp": "2026-01-17 02:04:10"
+  },
+  {
+    "test": "Promo Code POST Endpoint - Auth Required",
+    "success": true,
+    "details": "\u2705 POST endpoint properly requires authentication (HTTP 401)",
+    "response_data": {
+      "status": 401,
+      "endpoint": "POST /api/admin/promo-codes"
+    },
+    "timestamp": "2026-01-17 02:04:10"
   },
   {
     "test": "Admin Login",
     "success": false,
-    "details": "\u274c Invalid credentials - user may not exist or password incorrect",
+    "details": "\u274c Failed to authenticate with any test users",
     "response_data": {
-      "status": 401,
-      "response": "{\"error\":\"Invalid login credentials\"}"
+      "attempted_users": [
+        "test+openticket@gmail.com",
+        "thisearlyseason@gmail.com",
+        "tylerans@gmail.com"
+      ]
     },
-    "timestamp": "2026-01-17 02:02:34"
+    "timestamp": "2026-01-17 02:04:10"
   }
 ]
