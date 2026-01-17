@@ -396,13 +396,14 @@ class PayoutBalanceTester:
                     health_response.text
                 )
             
-            # Test if the admin routes exist
-            admin_routes = [
-                "/api/admin/promo-codes"
+            # Test if the payout routes exist
+            payout_routes = [
+                "/api/admin/upcoming-payouts",
+                "/api/auth/profile"
             ]
             
             route_results = {}
-            for route in admin_routes:
+            for route in payout_routes:
                 try:
                     route_response = self.session.get(f"{BACKEND_URL}{route}", timeout=5)
                     # 401/403 = auth required (good), 404 = route doesn't exist (bad)
@@ -417,14 +418,14 @@ class PayoutBalanceTester:
             
             if not missing_routes:
                 self.log_result(
-                    "Backend Routes Availability",
+                    "Backend Payout Routes Availability",
                     True,
-                    f"✅ All required admin routes exist: {list(route_results.keys())}",
+                    f"✅ All required payout routes exist: {list(route_results.keys())}",
                     route_results
                 )
             else:
                 self.log_result(
-                    "Backend Routes Availability",
+                    "Backend Payout Routes Availability",
                     False,
                     f"❌ Missing routes: {missing_routes}",
                     route_results
@@ -433,8 +434,8 @@ class PayoutBalanceTester:
         except Exception as e:
             self.log_result("Backend Health and Connectivity", False, f"Exception: {str(e)}")
 
-    def test_promo_code_database_schema(self):
-        """Test Case 6: Verify promo codes table exists and has correct structure"""
+    def test_payout_endpoints_without_auth(self):
+        """Test Case 6: Test payout endpoints without authentication to verify security"""
         try:
             # Try to fetch promo codes without authentication to test endpoint existence
             response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
