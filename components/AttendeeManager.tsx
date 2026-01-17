@@ -257,7 +257,64 @@ export const AttendeeManager = () => {
         }
     };
 
-    const handleBulkRefund = async () => {
+    const handleBulkDelete = async () => {
+        if (selectedIds.size === 0) return;
+
+        showConfirm({
+            title: "Delete Selected Attendees?",
+            message: `Are you sure you want to delete ${selectedIds.size} selected attendee(s)? This cannot be undone.`,
+            confirmText: "Delete All",
+            variant: "danger",
+            onConfirm: async () => {
+                let successCount = 0;
+                let failCount = 0;
+                let errors: string[] = [];
+
+                try {
+                    for (const id of Array.from(selectedIds)) {
+                        try {
+                            const item = attendees.find(a => a.id === id);
+                            if (!item) continue;
+
+                            // Check if paid - don't allow delete of paid tickets
+                            if (item.status === 'paid') {
+                                failCount++;
+                                errors.push(`${item.name}: Cannot delete paid ticket. Please refund first.`);
+                                continue;
+                            }
+
+                            // Delete based on type
+                            if (item.itemType === 'addon') {
+                                await StorageService.deleteAddOn(item.regId, item.ticketIndex);
+                            } else {
+                                await StorageService.deleteTicket(item.regId, item.ticketIndex);
+                            }
+                            
+                            successCount++;
+                        } catch (e: any) {
+                            failCount++;
+                            errors.push(`Error: ${e.message}`);
+                        }
+                    }
+
+                    await loadData();
+                    setSelectedIds(new Set());
+
+                    if (failCount === 0) {
+                        showToast(`✅ Successfully deleted ${successCount} attendee(s)!`, "success");
+                    } else if (successCount === 0) {
+                        showToast(`❌ Failed to delete all ${failCount} attendee(s). Check console for details.`, "error");
+                        console.error('Bulk delete errors:', errors);
+                    } else {
+                        showToast(`⚠️ Partial success: ${successCount} deleted, ${failCount} failed. Check console for details.`, "warning");
+                        console.error('Bulk delete errors:', errors);
+                    }
+                } catch (e: any) {
+                    showToast("❌ Bulk delete operation failed: " + e.message, "error");
+                }
+            }
+        });
+    };
         if (selectedIds.size === 0) return;
 
         showConfirm({
