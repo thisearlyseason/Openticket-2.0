@@ -66,7 +66,7 @@ class PayoutBalanceTester:
                             self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
                             
                             self.log_result(
-                                "Admin Login",
+                                "Organizer Login",
                                 True,
                                 f"✅ Successfully logged in as {user_data['email']}",
                                 {"email": user_data['email'], "token_received": True, "session_data": data}
@@ -74,14 +74,14 @@ class PayoutBalanceTester:
                             return True
                         else:
                             self.log_result(
-                                "Admin Login - Token Missing",
+                                "Organizer Login - Token Missing",
                                 False,
                                 f"❌ Login successful for {user_data['email']} but no token found",
                                 data
                             )
                     except json.JSONDecodeError:
                         self.log_result(
-                            "Admin Login - JSON Error",
+                            "Organizer Login - JSON Error",
                             False,
                             f"❌ Invalid JSON response for {user_data['email']}",
                             response.text
@@ -91,26 +91,26 @@ class PayoutBalanceTester:
                     continue
                 else:
                     self.log_result(
-                        "Admin Login - Unexpected Response",
+                        "Organizer Login - Unexpected Response",
                         False,
                         f"❌ Unexpected response for {user_data['email']}: HTTP {response.status_code}",
                         response.text
                     )
                     
             except Exception as e:
-                self.log_result("Admin Login - Exception", False, f"Exception for {user_data['email']}: {str(e)}")
+                self.log_result("Organizer Login - Exception", False, f"Exception for {user_data['email']}: {str(e)}")
         
         # If we get here, none of the users worked
         self.log_result(
-            "Admin Login",
+            "Organizer Login",
             False,
             "❌ Failed to authenticate with any test users",
             {"attempted_users": [u['email'] for u in test_users]}
         )
         return False
 
-    def test_promo_codes_get_endpoint(self):
-        """Test Case 2: GET /api/admin/promo-codes - Fetch existing promo codes"""
+    def test_organizer_upcoming_payouts_endpoint(self):
+        """Test Case 2: GET /api/admin/organizer/upcoming-payouts - Fetch organizer payouts"""
         try:
             if not self.auth_token:
                 self.log_result(
