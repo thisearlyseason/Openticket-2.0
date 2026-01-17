@@ -43,6 +43,18 @@ export const EventRefunds = () => {
             r.tickets?.some(t => t.status !== 'refunded')
         );
         setRegistrations(refundableRegs);
+
+        // Check for pre-selected registration from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedRegId = urlParams.get('selectedReg');
+        
+        if (selectedRegId) {
+            const preSelectedReg = refundableRegs.find(r => r.id === selectedRegId);
+            if (preSelectedReg) {
+                // Auto-select this order for refund
+                handleSelectOrder(preSelectedReg);
+            }
+        }
     };
 
     const calculateRefundAmount = (reg: Registration, ticketIndices: number[]) => {
