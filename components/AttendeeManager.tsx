@@ -317,13 +317,6 @@ export const AttendeeManager = () => {
     };
 
     const handleBulkRefund = async () => {
-                    }
-                } catch (e: any) {
-                    showToast("❌ Bulk delete operation failed: " + e.message, "error");
-                }
-            }
-        });
-    };
         if (selectedIds.size === 0) return;
 
         showConfirm({
@@ -333,6 +326,10 @@ export const AttendeeManager = () => {
             variant: "danger",
             onConfirm: async () => {
                 let successCount = 0;
+                let failCount = 0;
+                let stripeErrors: string[] = [];
+
+                try {
                 let failCount = 0;
                 let stripeErrors: string[] = [];
 
