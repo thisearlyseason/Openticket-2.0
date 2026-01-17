@@ -545,6 +545,9 @@ export interface Registration {
 
   refundedAmount?: number;
   refundReason?: string;
+  refundStatus?: 'none' | 'refunding' | 'refunded' | 'failed';  // NEW: Track refund state
+  stripeRefundId?: string;  // NEW: Stripe refund ID
+  refundTimestamp?: number;  // NEW: When refund completed
   source?: 'online' | 'manual' | 'transfer';  // Added 'transfer' for transferred tickets
 
   hiddenForAttendee?: boolean;
