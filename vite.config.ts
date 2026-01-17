@@ -8,7 +8,6 @@ const BUILD_TIMESTAMP = Date.now();
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
-    root: '..',  // Set root to parent directory where index.html is
     publicDir: 'public',
     server: {
       port: 3000,
