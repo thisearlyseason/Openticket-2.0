@@ -18,7 +18,7 @@ import uuid
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://bugsmash-central-1.preview.emergentagent.com"
+BACKEND_URL = "https://auth-rls-repair.preview.emergentagent.com"
 
 class GeminiAPIKeyTester:
     def __init__(self):

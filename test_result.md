@@ -357,7 +357,7 @@ The ticket transfer system backend is **fully functional** and ready for product
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly on https://bugsmash-central-1.preview.emergentagent.com
+   - Application loads correctly on https://auth-rls-repair.preview.emergentagent.com
    - Authentication UI renders properly (Sign In, Sign Up, Find Tickets tabs)
    - My Tickets page structure is accessible
    - Navigation system functional
@@ -813,7 +813,7 @@ The specific issue mentioned in the review request has been successfully resolve
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com/#/auth`
+   - Application loads correctly at `https://auth-rls-repair.preview.emergentagent.com/#/auth`
    - Authentication page renders properly with Sign In/Sign Up/Find Tickets tabs
    - Form fields accept input correctly (email and password fields functional)
    - Firebase initialization occurs successfully ("Firebase App Initialized (Auth & Storage Only)")
@@ -1052,7 +1052,7 @@ The Firebase Authentication system is **properly implemented and configured**, b
 **Key Findings:**
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+   - Application loads correctly at `https://auth-rls-repair.preview.emergentagent.com`
    - Authentication system functional (login forms render and work)
    - No JavaScript console errors or crashes detected
    - Security system properly prevents unauthorized access
@@ -1158,7 +1158,7 @@ Based on comprehensive code review, the DataTable implementation is correctly st
    - ❌ Authentication flow still not working
 
 4. **✅ Infrastructure Verified:**
-   - Frontend application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+   - Frontend application loads correctly at `https://auth-rls-repair.preview.emergentagent.com`
    - Backend API healthy and responding
    - No JavaScript console errors detected
    - Security system working correctly (prevents unauthorized access)
@@ -1196,7 +1196,7 @@ Based on comprehensive code review, the DataTable implementation is correctly st
 ### Key Findings:
 
 1. **✅ Backend Infrastructure Working:**
-   - Backend is healthy and responding correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+   - Backend is healthy and responding correctly at `https://auth-rls-repair.preview.emergentagent.com`
    - Promo code API endpoints exist and are properly configured:
      - `GET /api/admin/promo-codes` - Returns HTTP 401 (requires authentication)
      - `POST /api/admin/promo-codes` - Returns HTTP 401 (requires authentication)
@@ -1344,7 +1344,7 @@ The promo code creation API is **properly implemented and functional**:
 
 1. **✅ Authentication System Working:**
    - Login with `test+openticket@gmail.com` / `12345678` successful
-   - Application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+   - Application loads correctly at `https://auth-rls-repair.preview.emergentagent.com`
    - User authentication and session management functional
    - No JavaScript console errors or crashes detected
 
@@ -1499,7 +1499,7 @@ WHERE
 - **UI/UX Verification**: ❌ NOT TESTED - Admin access required
 
 **✅ INFRASTRUCTURE VERIFIED:**
-- Frontend application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+- Frontend application loads correctly at `https://auth-rls-repair.preview.emergentagent.com`
 - Authentication system functional (login forms work)
 - No JavaScript console errors detected
 - Security system working correctly (prevents unauthorized access)
@@ -1541,9 +1541,9 @@ WHERE
 **Message:** Super Admin Dashboard Testing completed with critical authentication issue confirmed. Key findings:
 
 **✅ FRONTEND INFRASTRUCTURE WORKING:**
-- Application loads correctly at `https://bugsmash-central-1.preview.emergentagent.com`
+- Application loads correctly at `https://auth-rls-repair.preview.emergentagent.com`
 - Authentication system functional (Sign In/Sign Up interface)
-- Backend API healthy and responding (`https://bugsmash-central-1.preview.emergentagent.com/api/health`)
+- Backend API healthy and responding (`https://auth-rls-repair.preview.emergentagent.com/api/health`)
 - No JavaScript console errors or crashes detected
 - All UI components render without "Cannot read properties of undefined" errors
 - User `tylerans@gmail.com` is recognized by the system (shows "WELCOME BACK")
@@ -1591,7 +1591,7 @@ WHERE
 **Message:** Google Authentication Flow Re-Testing completed after backend error handler fix. Key findings:
 
 **✅ GOOGLE LOGIN UI VERIFICATION:**
-- Auth page loads correctly at `https://bugsmash-central-1.preview.emergentagent.com/#/auth`
+- Auth page loads correctly at `https://auth-rls-repair.preview.emergentagent.com/#/auth`
 - "Continue with Google" button is visible and properly positioned
 - Authentication form structure is correct with Sign In/Sign Up/Find Tickets tabs
 - UI components render without errors
@@ -2087,7 +2087,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://bugsmash-central-1.preview.emergentagent.com  
+**Backend URL:** https://auth-rls-repair.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
@@ -2326,7 +2326,7 @@ The unique ticket system refactor has been successfully implemented and verified
 ### Test User Setup:
 - Need affiliate user with `affiliateCode` set
 - Test URL: `http://localhost:3000/#/affiliate`
-- External API URL for backend: `https://bugsmash-central-1.preview.emergentagent.com/api`
+- External API URL for backend: `https://auth-rls-repair.preview.emergentagent.com/api`
 
 ---
 
