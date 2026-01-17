@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Promo Code Creation Issue
-Tests the promo code creation API endpoint as requested in review
+Backend API Testing for OpenTicket Platform - Payout Balance Calculation Fixes
+Tests the payout balance calculation fixes for both Organizer and Affiliate dashboards
 """
 
 import requests
@@ -15,7 +15,7 @@ from typing import Dict, Any
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://auth-rls-repair.preview.emergentagent.com"
 
-class PromoCodeTester:
+class PayoutBalanceTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
