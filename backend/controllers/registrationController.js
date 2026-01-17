@@ -442,11 +442,15 @@ export const refundRegistration = async (req, res) => {
         }
 
         // 4. Update registration in DB (only reached if Stripe succeeded or not needed)
-        updates.refunded_amount = (reg.refunded_amount || 0) + (amountToRefundCents / 100);
-        updates.refund_reason = reason;
+        updates.refund_status = stripeRefundId ? 'refunded' : (stripeAttempted ? 'failed' : 'refunded');
+        updates.payment_status = stripeRefundId || !stripeAttempted ? 'refunded' : reg.payment_status;
         if (stripeRefundId) {
             updates.stripe_refund_id = stripeRefundId;
         }
+        updates.refund_timestamp = Date.now();
+
+        updates.refunded_amount = (reg.refunded_amount || 0) + (amountToRefundCents / 100);
+        updates.refund_reason = reason;
 
         const { data, error } = await supabase
             .from('registrations')
