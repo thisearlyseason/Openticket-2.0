@@ -315,6 +315,15 @@ export const AttendeeManager = () => {
             }
         });
     };
+
+    const handleBulkRefund = async () => {
+                    }
+                } catch (e: any) {
+                    showToast("❌ Bulk delete operation failed: " + e.message, "error");
+                }
+            }
+        });
+    };
         if (selectedIds.size === 0) return;
 
         showConfirm({
