@@ -41,10 +41,6 @@ export const AdvancedAnalytics = () => {
     const [compareMode, setCompareMode] = useState(false);
     const [previousPeriodData, setPreviousPeriodData] = useState<AnalyticsData | null>(null);
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    };
-
     // Define columns for top events DataTable
     const topEventsColumns: Column<{ event: Event; revenue: number; tickets: number }>[] = [
         {
