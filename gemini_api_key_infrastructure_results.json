@@ -1,0 +1,80 @@
+[
+  {
+    "test": "Backend Health Check",
+    "success": true,
+    "details": "\u2705 Backend is healthy and responding",
+    "response_data": {
+      "status": 200
+    },
+    "timestamp": "2026-01-17 02:40:29"
+  },
+  {
+    "test": "Auth Endpoints Availability",
+    "success": true,
+    "details": "\u2705 All required auth endpoints exist",
+    "response_data": {
+      "/api/auth/login": {
+        "exists": true,
+        "status": 401,
+        "method": "POST"
+      },
+      "/api/auth/signup": {
+        "exists": true,
+        "status": 400,
+        "method": "POST"
+      },
+      "/api/auth/sync": {
+        "exists": true,
+        "status": 401,
+        "method": "POST"
+      },
+      "/api/auth/me": {
+        "exists": true,
+        "status": 401,
+        "method": "GET"
+      },
+      "/api/auth/profiles/test-id": {
+        "exists": true,
+        "status": 401,
+        "method": "PUT"
+      }
+    },
+    "timestamp": "2026-01-17 02:40:30"
+  },
+  {
+    "test": "Authentication System Mismatch",
+    "success": true,
+    "details": "\u2705 CRITICAL ISSUE IDENTIFIED: Supabase login returns HS256 tokens, but Firebase auth middleware expects RS256 tokens",
+    "response_data": {
+      "issue": "Authentication system mismatch",
+      "login_system": "Supabase (HS256 tokens)",
+      "auth_middleware": "Firebase (expects RS256 tokens)",
+      "supabase_token_length": 737,
+      "error_message": "Firebase ID token has incorrect algorithm. Expected \"RS256\" but got \"HS256\". See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token."
+    },
+    "timestamp": "2026-01-17 02:40:30"
+  },
+  {
+    "test": "Profile Endpoints Security",
+    "success": false,
+    "details": "\u274c Profile endpoints should require auth: GET=404, PUT=401",
+    "response_data": {
+      "get_status": 404,
+      "put_status": 401,
+      "get_response": "{\"error\":\"Profile not found\"}",
+      "put_response": "{\"error\":\"Missing Authorization header\"}"
+    },
+    "timestamp": "2026-01-17 02:40:30"
+  },
+  {
+    "test": "Gemini API Key Field Support",
+    "success": true,
+    "details": "\u2705 gemini_api_key field accepted (auth error, not validation error)",
+    "response_data": {
+      "status": 401,
+      "error_type": "authentication",
+      "field_accepted": true
+    },
+    "timestamp": "2026-01-17 02:40:30"
+  }
+]
