@@ -233,6 +233,15 @@ export const refundRegistration = async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
+        // Set to "refunding" state immediately
+        await supabase
+            .from('registrations')
+            .update({ 
+                refund_status: 'refunding',
+                payment_status: 'refunding'  // Visual indicator in UI
+            })
+            .eq('id', id);
+
         let updates = {};
         let amountToRefundCents = 0;
         let isFullRefund = false;
