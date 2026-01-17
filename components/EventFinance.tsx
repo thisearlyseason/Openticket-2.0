@@ -51,6 +51,143 @@ export const EventFinance = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
+    // DataTable columns for transactions
+    const transactionColumns: Column<FinancialTransaction>[] = [
+        {
+            key: 'date',
+            header: 'Date',
+            sortable: true,
+            render: (tx) => (
+                <span className="text-zinc-500">{new Date(tx.created_at).toLocaleDateString()}</span>
+            ),
+            exportValue: (tx) => new Date(tx.created_at).toLocaleDateString()
+        },
+        {
+            key: 'attendee',
+            header: 'Attendee',
+            sortable: true,
+            filterable: true,
+            render: (tx) => (
+                <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                        {tx.registration?.attendee_name || 'N/A'}
+                    </div>
+                    <div className="text-xs text-zinc-500">
+                        {tx.registration?.attendee_email || ''}
+                    </div>
+                </div>
+            ),
+            exportValue: (tx) => `${tx.registration?.attendee_name || 'N/A'} (${tx.registration?.attendee_email || ''})`
+        },
+        {
+            key: 'type',
+            header: 'Type',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Sale', value: 'sale' },
+                { label: 'Refund', value: 'refund' }
+            ],
+            render: (tx) => {
+                const isRefund = tx.gross_amount < 0;
+                return (
+                    <Badge color={isRefund ? 'red' : 'blue'}>
+                        {tx.transaction_type === 'refund' ? 'Refund' : 'Sale'}
+                    </Badge>
+                );
+            },
+            exportValue: (tx) => tx.transaction_type === 'refund' ? 'Refund' : 'Sale'
+        },
+        {
+            key: 'gross',
+            header: 'Gross',
+            sortable: true,
+            render: (tx) => {
+                const isRefund = tx.gross_amount < 0;
+                return (
+                    <span className={`font-mono ${isRefund ? 'text-red-500' : ''}`}>
+                        {isRefund ? '-' : ''}${Math.abs(tx.gross_amount).toFixed(2)}
+                    </span>
+                );
+            },
+            exportValue: (tx) => `$${tx.gross_amount.toFixed(2)}`
+        },
+        {
+            key: 'fees',
+            header: 'Fees',
+            sortable: true,
+            render: (tx) => {
+                const isRefund = tx.gross_amount < 0;
+                const totalFees = tx.platform_fee + tx.stripe_fee;
+                return (
+                    <span className="font-mono text-zinc-500">
+                        {isRefund ? '-' : `-$${totalFees.toFixed(2)}`}
+                    </span>
+                );
+            },
+            exportValue: (tx) => `-$${(tx.platform_fee + tx.stripe_fee).toFixed(2)}`
+        },
+        {
+            key: 'net',
+            header: 'Net',
+            sortable: true,
+            render: (tx) => {
+                const isRefund = tx.gross_amount < 0;
+                return (
+                    <span className={`font-mono font-bold ${isRefund ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                        {isRefund ? '-' : ''}${Math.abs(tx.organizer_net).toFixed(2)}
+                    </span>
+                );
+            },
+            exportValue: (tx) => `$${tx.organizer_net.toFixed(2)}`
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Succeeded', value: 'succeeded' },
+                { label: 'Refunded', value: 'refunded' },
+                { label: 'Pending', value: 'pending' }
+            ],
+            render: (tx) => (
+                <Badge color={
+                    tx.status === 'succeeded' ? 'green' :
+                    tx.status === 'refunded' ? 'red' :
+                    'yellow'
+                }>
+                    {tx.status}
+                </Badge>
+            ),
+            exportValue: (tx) => tx.status
+        },
+        {
+            key: 'payout',
+            header: 'Payout',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Paid', value: 'paid' },
+                { label: 'Pending', value: 'pending' },
+                { label: 'Ready', value: 'ready' }
+            ],
+            render: (tx) => (
+                <Badge color={
+                    tx.payout_status === 'paid' ? 'green' :
+                    tx.payout_status === 'pending' ? 'yellow' :
+                    'gray'
+                }>
+                    {tx.payout_status}
+                </Badge>
+            ),
+            exportValue: (tx) => tx.payout_status
+        }
+    ];
+
     const user = StorageService.getCurrentUser();
 
     // Check if payout can be requested
