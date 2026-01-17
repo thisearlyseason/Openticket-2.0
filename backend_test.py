@@ -573,24 +573,33 @@ class PromoCodeTester:
             return False
 
     def run_all_tests(self):
-        """Run all payout balance discrepancy tests as specified in review request"""
-        print("💰 Starting Payout Balance Discrepancy Bug Fix Testing")
+        """Run all promo code creation tests as specified in review request"""
+        print("🎟️ Starting Promo Code Creation Issue Testing")
         print("=" * 70)
-        print("🎯 TESTING FOCUS: Payout Balance = SUM of Ready Payouts (not user.availablePayout)")
+        print("🎯 TESTING FOCUS: Promo Code Creation API - Save & Persistence")
         print("=" * 70)
         
-        # Core Payout Balance Tests from Review Request
+        # Core Promo Code Tests from Review Request
         print("\n🔧 BACKEND API TESTS")
         print("-" * 40)
         self.test_backend_health_and_connectivity()
-        self.test_upcoming_payouts_endpoint()
-        self.test_payout_balance_calculation_logic()
-        self.test_payout_status_filtering()
+        self.test_promo_code_database_schema()
         
-        print("\n🎨 FRONTEND COMPONENT TESTS")
+        # Authentication Test
+        print("\n🔐 AUTHENTICATION TESTS")
         print("-" * 40)
-        self.test_billing_page_components()
-        self.test_authentication_with_test_organizer()
+        login_success = self.test_admin_login()
+        
+        if login_success:
+            print("\n🎫 PROMO CODE FUNCTIONALITY TESTS")
+            print("-" * 40)
+            self.test_promo_codes_get_endpoint()
+            created_promo = self.test_promo_code_creation()
+            if created_promo:
+                self.test_promo_code_persistence(created_promo)
+        else:
+            print("\n⚠️ SKIPPING PROMO CODE TESTS - Authentication Failed")
+            print("Cannot test promo code creation without admin authentication")
         
         print("\n" + "=" * 70)
         print("📊 TEST SUMMARY")
@@ -611,41 +620,41 @@ class PromoCodeTester:
         
         # Check each test result
         backend_health = next((r for r in self.results if 'Backend Health' in r['test']), None)
-        upcoming_payouts = next((r for r in self.results if 'Upcoming Payouts Endpoint' in r['test']), None)
-        balance_calc = next((r for r in self.results if 'Payout Balance Calculation' in r['test']), None)
-        status_filter = next((r for r in self.results if 'Payout Status Filtering' in r['test']), None)
-        billing_components = next((r for r in self.results if 'Billing Component' in r['test']), None)
-        auth_test = next((r for r in self.results if 'Test Organizer Authentication' in r['test']), None)
+        admin_login = next((r for r in self.results if 'Admin Login' in r['test']), None)
+        get_promo_codes = next((r for r in self.results if 'Get Promo Codes' in r['test']), None)
+        create_promo_code = next((r for r in self.results if 'Create Promo Code' in r['test'] and 'Authentication' not in r['test'] and 'Authorization' not in r['test']), None)
+        verify_persistence = next((r for r in self.results if 'Verify Promo Code Persistence' in r['test']), None)
+        database_schema = next((r for r in self.results if 'Database Schema' in r['test']), None)
         
         if backend_health and backend_health['success']:
-            criteria_results.append("✅ Backend is healthy and admin routes exist")
+            criteria_results.append("✅ Backend is healthy and promo code routes exist")
         else:
             criteria_results.append("❌ Backend health check failed")
             
-        if upcoming_payouts and upcoming_payouts['success']:
-            criteria_results.append("✅ GET /api/admin/upcoming-payouts endpoint working")
+        if database_schema and database_schema['success']:
+            criteria_results.append("✅ Promo codes database table exists and is accessible")
         else:
-            criteria_results.append("❌ Upcoming payouts endpoint failed")
+            criteria_results.append("❌ Promo codes database table verification failed")
             
-        if balance_calc and balance_calc['success']:
-            criteria_results.append("✅ Payout balance calculation logic verified (sum of ready payouts)")
+        if admin_login and admin_login['success']:
+            criteria_results.append("✅ Admin authentication working (test+openticket@gmail.com)")
         else:
-            criteria_results.append("❌ Payout balance calculation verification failed")
+            criteria_results.append("❌ Admin authentication failed - user may not exist or lack admin privileges")
             
-        if status_filter and status_filter['success']:
-            criteria_results.append("✅ Payout status filtering works (ready vs pending)")
+        if get_promo_codes and get_promo_codes['success']:
+            criteria_results.append("✅ GET /api/admin/promo-codes endpoint working")
         else:
-            criteria_results.append("❌ Payout status filtering verification failed")
+            criteria_results.append("❌ GET promo codes endpoint failed")
             
-        if billing_components and billing_components['success']:
-            criteria_results.append("✅ Billing page components have payout balance fix implemented")
+        if create_promo_code and create_promo_code['success']:
+            criteria_results.append("✅ POST /api/admin/promo-codes endpoint working (promo code created)")
         else:
-            criteria_results.append("❌ Billing page component fix verification failed")
+            criteria_results.append("❌ POST promo codes endpoint failed (promo code creation failed)")
             
-        if auth_test and auth_test['success']:
-            criteria_results.append("✅ Authentication system working for test organizer access")
+        if verify_persistence and verify_persistence['success']:
+            criteria_results.append("✅ Promo code persists in database after creation")
         else:
-            criteria_results.append("❌ Authentication system verification failed")
+            criteria_results.append("❌ Promo code persistence verification failed")
         
         for criterion in criteria_results:
             print(f"  {criterion}")
@@ -657,32 +666,32 @@ class PromoCodeTester:
                     print(f"  - {result['test']}: {result['details']}")
         
         print("\n📋 TESTING NOTES:")
-        print("  - Full end-to-end testing requires login as thisearlyseason@gmail.com")
-        print("  - Navigate to /#/billing to verify UI changes")
-        print("  - Payout Balance card should show sum of ready payouts, not user.availablePayout")
-        print("  - If no ready payouts exist, balance should show $0.00")
-        print("  - If ready payouts exist (e.g., $100, $200), balance should show sum ($300)")
+        print("  - Test user: test+openticket@gmail.com / 12345678")
+        print("  - Test promo code: TESTCODE (20% percentage discount)")
+        print("  - Target: all plans, Usage limit: 100, Expires: 2025-12-31")
+        print("  - Expected: 200 status code, promo code created and persisted")
         
         print("\n🔍 EXPECTED BEHAVIOR:")
-        print("  - Payout Balance = SUM(amount WHERE status = 'ready')")
-        print("  - UpcomingPayoutsCard calls onPayoutsLoad callback with payout data")
-        print("  - Billing component filters ready payouts and calculates total")
-        print("  - Balance updates automatically when payouts data loads")
+        print("  - Admin login should succeed and return authentication token")
+        print("  - GET /api/admin/promo-codes should return existing promo codes array")
+        print("  - POST /api/admin/promo-codes should create new promo code and return it")
+        print("  - Created promo code should persist and be retrievable via GET endpoint")
+        print("  - All operations should require admin authentication")
         
         return passed == total
 
 if __name__ == "__main__":
-    tester = PayoutBalanceTester()
+    tester = PromoCodeTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/payout_balance_test_results.json', 'w') as f:
+    with open('/app/promo_code_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/payout_balance_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/promo_code_test_results.json")
     
     if success:
-        print("\n🎉 All Payout Balance Discrepancy tests PASSED!")
+        print("\n🎉 All Promo Code Creation tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
