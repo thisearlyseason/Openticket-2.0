@@ -26,6 +26,7 @@ import { EventAnalytics } from './components/EventAnalytics';
 import { EventSettings } from './components/EventSettings';
 import { AddOnManager } from './components/AddOnManager';
 import { EventFinance } from './components/EventFinance';
+import { EventRefunds } from './components/EventRefunds';
 import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { SubscriptionSuccess } from './components/SubscriptionSuccess';
 import { Terms } from './components/Terms';
