@@ -348,118 +348,16 @@ export const AddOnManager = () => {
             </div>
 
             <Card className="overflow-hidden border-zinc-200 dark:border-zinc-800">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200 dark:border-zinc-800">
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Guest</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Add-On Type</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Details</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Qty</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase">Total</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-center">Received</th>
-                                <th className="p-4 text-xs font-bold text-zinc-500 uppercase text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                            {filteredItems.map((item, idx) => (
-                                <tr key={`${item.id}-${idx}`} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 font-bold text-sm">
-                                                {item.attendeeName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'G'}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-sm text-zinc-900 dark:text-white">{item.attendeeName}</div>
-                                                <div className="text-xs text-zinc-500">{item.attendeeEmail}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                                                <ShoppingBag size={14} className="text-emerald-600 dark:text-emerald-400" />
-                                            </div>
-                                            <div className="font-bold text-sm text-zinc-900 dark:text-white">{item.addOn.name}</div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                                            <div className="flex items-center gap-1">
-                                                <DollarSign size={12} className="text-zinc-400" />
-                                                <span>${item.addOn.price.toFixed(2)} each</span>
-                                            </div>
-                                            {item.addOn.answer && (
-                                                <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md inline-block">
-                                                    Note: {item.addOn.answer}
-                                                </div>
-                                            )}
-                                            <div className="text-[10px] text-zinc-400 mt-1">
-                                                Purchased: {new Date(item.timestamp).toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <Badge color="zinc" className="font-mono font-bold">×{item.addOn.quantity}</Badge>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="font-black text-sm text-emerald-600 dark:text-emerald-400">${(item.addOn.price * item.addOn.quantity).toFixed(2)}</div>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <button 
-                                            onClick={() => toggleFulfillment(item)} 
-                                            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl transition-all font-bold text-xs uppercase tracking-wide ${
-                                                item.fulfilled 
-                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 ring-2 ring-emerald-500/20' 
-                                                    : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400'
-                                            }`}
-                                        >
-                                            {item.fulfilled ? (
-                                                <>
-                                                    <Check size={14} /> Received
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="w-3.5 h-3.5 border-2 border-current rounded" /> Pending
-                                                </>
-                                            )}
-                                        </button>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex justify-end gap-2 items-center">
-                                            <Button size="sm" variant="outline" className="h-8 text-[10px] uppercase font-bold" onClick={() => navigate(`/manage/${id}/attendees?search=${encodeURIComponent(item.attendeeEmail)}`)}>
-                                                <Ticket size={12} className="mr-1" /> View Ticket
-                                            </Button>
-
-                                            <button
-                                                onClick={() => handleRefund(item)}
-                                                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
-                                                title="Refund Add-On"
-                                            >
-                                                <DollarSign size={16} />
-                                            </button>
-
-                                            <button
-                                                onClick={() => handleDelete(item)}
-                                                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
-                                                title="Delete Add-On"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="p-6">
+                    <DataTable
+                        data={filteredItems}
+                        columns={addOnColumns}
+                        searchPlaceholder="Search add-ons by guest name or type..."
+                        emptyMessage="No add-ons found. Add-ons purchased by guests will appear here."
+                        exportFilename={`${event?.title?.replace(/\s+/g, '_')}_addons`}
+                        getRowId={(item) => `${item.id}-${item.index}`}
+                    />
                 </div>
-                {filteredItems.length === 0 && (
-                    <div className="p-20 text-center">
-                        <ShoppingBag className="mx-auto text-zinc-300 mb-4" size={48} />
-                        <h3 className="text-lg font-bold text-zinc-400">No add-on purchases found</h3>
-                        <p className="text-sm text-zinc-500">When attendees buy extras, they will appear here.</p>
-                    </div>
-                )}
             </Card>
 
             <div className="mt-8 text-center text-xs text-zinc-500">
