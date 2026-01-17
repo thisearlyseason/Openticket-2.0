@@ -1046,68 +1046,7 @@ export const AttendeeManager = () => {
                 )
             }
 
-            {/* Refund Modal */}
-            {
-                showRefundModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-                        <Card className="w-full max-w-md p-6">
-                            <div className="flex items-center gap-3 mb-4 text-red-500">
-                                <AlertTriangle size={24} />
-                                <h3 className="text-xl font-bold text-black dark:text-white">Issue Refund</h3>
-                            </div>
-                            <p className="text-zinc-500 mb-6 text-sm">
-                                This will process a refund via Stripe Connect (if configured) and invalidate the ticket(s).
-                            </p>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Refund Scope</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            onClick={() => setRefundMode('ticket')}
-                                            className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'ticket' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
-                                        >
-                                            This Ticket Only
-                                        </button>
-                                        <button
-                                            onClick={() => setRefundMode('order')}
-                                            className={`p-3 rounded-lg border text-sm font-bold transition-all ${refundMode === 'order' ? 'bg-zinc-900 text-white border-primary ring-2 ring-primary shadow-[0_0_15px_rgba(255,77,140,0.5)]' : 'bg-white text-zinc-500 border-zinc-200'}`}
-                                        >
-                                            Full Order
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <Input
-                                    label="Refund Amount ($)"
-                                    type="number"
-                                    value={refundAmount}
-                                    onChange={e => setRefundAmount(parseFloat(e.target.value))}
-                                    disabled={refundMode === 'order'} // Auto-calc full amount if order
-                                />
-
-                                <Input
-                                    label="Reason (Required)"
-                                    value={refundReason}
-                                    onChange={e => setRefundReason(e.target.value)}
-                                    placeholder="e.g. Duplicate order, Customer request"
-                                />
-
-                                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-xs text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50">
-                                    <strong>Note:</strong> Platform fees are generally non-refundable. The customer will receive this amount back to their card.
-                                </div>
-
-                                <div className="flex gap-2 justify-end mt-6">
-                                    <Button variant="ghost" onClick={() => setShowRefundModal(null)}>Cancel</Button>
-                                    <Button onClick={processRefund} className="bg-red-500 text-white hover:bg-red-600 border-none">
-                                        Confirm Refund
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                )
-            }
+            {/* Refund Modal removed - now redirects to refunds page */}
         </div >
     );
 };
