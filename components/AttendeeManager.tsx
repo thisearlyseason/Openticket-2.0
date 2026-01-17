@@ -319,106 +319,22 @@ export const AttendeeManager = () => {
     const handleBulkRefund = async () => {
         if (selectedIds.size === 0) return;
 
-        showConfirm({
-            title: "Refund Selected Items?",
-            message: `Are you sure you want to refund ${selectedIds.size} selected items? This cannot be undone.`,
-            confirmText: "Refund All",
-            variant: "danger",
-            onConfirm: async () => {
-                let successCount = 0;
-                let failCount = 0;
-                let stripeErrors: string[] = [];
+        // Instead of processing here, redirect to refunds page with selected items
+        const selectedItems = Array.from(selectedIds).map(id => {
+            const item = attendees.find(a => a.id === id);
+            return item;
+        }).filter(Boolean);
 
-                try {
-                    // Group by Registration to minimize API calls
-                    const groups: Record<string, AttendeeItem[]> = {};
-                    selectedIds.forEach(id => {
-                        const item = attendees.find(a => a.id === id);
-                        if (item) {
-                            if (!groups[item.regId]) groups[item.regId] = [];
-                            groups[item.regId].push(item);
-                        }
-                    });
+        // Group by registration ID
+        const regIds = [...new Set(selectedItems.map(item => item!.regId))];
 
-                    for (const regId of Object.keys(groups)) {
-                        const items = groups[regId];
-                        // Separate Addons vs Tickets
-                        const addons = items.filter(i => i.itemType === 'addon');
-                        const tickets = items.filter(i => i.itemType !== 'addon');
+        if (regIds.length > 1) {
+            showToast("⚠️ Cannot refund tickets from multiple orders. Please select from one order at a time.", "warning");
+            return;
+        }
 
-                        try {
-                            // 1. Process Addons (One API call per addon)
-                            for (const addon of addons) {
-                                try {
-                                    const response = await StorageService.refundAddon(regId, addon.ticketIndex, "Bulk Refund");
-                                    if (response && response.stripeError) {
-                                        failCount++;
-                                        stripeErrors.push(`Addon ${addon.name}: ${response.stripeError}`);
-                                    } else {
-                                        successCount++;
-                                    }
-                                } catch (e: any) {
-                                    failCount++;
-                                    stripeErrors.push(`Addon ${addon.name}: ${e.message}`);
-                                }
-                            }
-
-                            // 2. Process Tickets (Batch)
-                            if (tickets.length > 0) {
-                                const regList = await StorageService.getRegistrations(event!.id);
-                                const reg = regList.find(r => r.id === regId);
-                                if (reg && reg.tickets) {
-                                    const updatedTickets = [...reg.tickets];
-                                    tickets.forEach(t => {
-                                        if (updatedTickets[t.ticketIndex]) {
-                                            if (updatedTickets[t.ticketIndex].quantity > 1) {
-                                                // Reduce qty logic
-                                                updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], quantity: updatedTickets[t.ticketIndex].quantity - 1 };
-                                                updatedTickets.push({ ...updatedTickets[t.ticketIndex], quantity: 1, status: 'refunded' });
-                                            } else {
-                                                updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], status: 'refunded' };
-                                            }
-                                        }
-                                    });
-
-                                    try {
-                                        const response = await StorageService.refundRegistration(reg.id, updatedTickets, "Bulk Refund");
-                                        if (response && response.stripeError) {
-                                            failCount += tickets.length;
-                                            stripeErrors.push(`Registration ${regId}: ${response.stripeError}`);
-                                        } else {
-                                            successCount += tickets.length;
-                                        }
-                                    } catch (e: any) {
-                                        failCount += tickets.length;
-                                        stripeErrors.push(`Registration ${regId}: ${e.message}`);
-                                    }
-                                }
-                            }
-                        } catch (e: any) {
-                            failCount += items.length;
-                            stripeErrors.push(`Registration ${regId}: ${e.message}`);
-                        }
-                    }
-
-                    await loadData();
-                    setSelectedIds(new Set());
-
-                    // Show appropriate message based on results
-                    if (failCount === 0) {
-                        showToast(`✅ Successfully refunded ${successCount} item(s)!`, "success");
-                    } else if (successCount === 0) {
-                        showToast(`❌ All ${failCount} refund(s) failed. Check console for details.`, "error");
-                        console.error('Bulk refund errors:', stripeErrors);
-                    } else {
-                        showToast(`⚠️ Partial success: ${successCount} refunded, ${failCount} failed. Check console for details.`, "warning");
-                        console.error('Bulk refund errors:', stripeErrors);
-                    }
-                } catch (e: any) {
-                    showToast("❌ Bulk refund operation failed: " + e.message, "error");
-                }
-            }
-        });
+        // Navigate to refunds page with pre-selected registration
+        navigate(`/manage/${event!.id}/refunds?selectedReg=${regIds[0]}`);
     };
 
     const handleCheckInToggle = async (item: AttendeeItem) => {
