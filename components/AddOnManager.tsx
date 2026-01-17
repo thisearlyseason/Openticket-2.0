@@ -224,6 +224,30 @@ export const AddOnManager = () => {
         } catch (e) { console.error(e); }
     };
 
+    const handleDeleteAddOn = (item: AddOnItem) => {
+        setConfirmationModal({
+            title: "Delete Add-On?",
+            message: `Are you sure you want to remove "${item.addOn.name}" for ${item.attendeeName}? This cannot be undone.`,
+            confirmText: "Delete",
+            isDestructive: true,
+            onConfirm: async () => {
+                try {
+                    const regList = await StorageService.getRegistrations(id!);
+                    const reg = regList.find(r => r.id === item.id);
+                    if (!reg || !reg.addOns) return;
+
+                    const updatedAddOns = [...reg.addOns];
+                    updatedAddOns.splice(item.index, 1); // Remove it
+
+                    await StorageService.updateRegistration(reg.id, { addOns: updatedAddOns });
+                    loadData();
+                } catch (e: any) {
+                    window.alert("Failed to delete: " + e.message);
+                }
+            }
+        });
+    };
+
     const handleDelete = (item: AddOnItem) => {
         setConfirmationModal({
             title: "Delete Add-On?",
