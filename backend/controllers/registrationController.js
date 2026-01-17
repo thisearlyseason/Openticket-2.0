@@ -277,6 +277,7 @@ export const refundRegistration = async (req, res) => {
                     const oldT = reg.tickets[idx];
                     if (t.status === 'refunded' && oldT && oldT.status !== 'refunded') {
                         amountToRefundCents += Math.round((t.pricePerTicket || 0) * (t.quantity || 1) * 100);
+                        ticketsBeingRefunded += (t.quantity || 1);
                     }
                 });
             }
