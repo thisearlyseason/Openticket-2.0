@@ -1,12 +1,48 @@
 [
   {
     "test": "Login and Authentication",
-    "success": false,
-    "details": "\u274c Invalid login credentials for test+openticket@gmail.com",
+    "success": true,
+    "details": "\u2705 Successfully logged in as test+openticket@gmail.com",
     "response_data": {
-      "status": 401,
-      "response": "{\"error\":\"Invalid login credentials\"}"
+      "email": "test+openticket@gmail.com",
+      "user_id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+      "token_received": true
     },
-    "timestamp": "2026-01-17 02:38:36"
+    "timestamp": "2026-01-17 02:38:59"
+  },
+  {
+    "test": "Get Initial Profile",
+    "success": false,
+    "details": "\u274c Failed to get profile: HTTP 404",
+    "response_data": "{\"error\":\"Profile not found\"}",
+    "timestamp": "2026-01-17 02:39:00"
+  },
+  {
+    "test": "Update Profile with Gemini Key",
+    "success": false,
+    "details": "\u274c Failed to update profile: HTTP 401",
+    "response_data": "{\"error\":\"Token verification failed\",\"code\":\"auth/argument-error\",\"message\":\"Firebase ID token has incorrect algorithm. Expected \\\"RS256\\\" but got \\\"HS256\\\". See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.\"}",
+    "timestamp": "2026-01-17 02:39:00"
+  },
+  {
+    "test": "Verify Key Saved",
+    "success": false,
+    "details": "\u274c Failed to get profile: HTTP 404",
+    "response_data": "{\"error\":\"Profile not found\"}",
+    "timestamp": "2026-01-17 02:39:00"
+  },
+  {
+    "test": "Simulate Logout/Reload",
+    "success": false,
+    "details": "\u274c Failed to get profile after reload: HTTP 404",
+    "response_data": "{\"error\":\"Profile not found\"}",
+    "timestamp": "2026-01-17 02:39:00"
+  },
+  {
+    "test": "Database Persistence Check",
+    "success": false,
+    "details": "\u274c Failed to get profile for database check: HTTP 404",
+    "response_data": "{\"error\":\"Profile not found\"}",
+    "timestamp": "2026-01-17 02:39:01"
   }
 ]
