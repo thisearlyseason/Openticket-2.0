@@ -290,11 +290,18 @@ export const refundRegistration = async (req, res) => {
 
         // 3. Process Stripe Refund
         let stripeRefundId = null;
+        let stripeError = null;
         if (reg.stripe_checkout_session_id && amountToRefundCents > 0) {
             try {
                 const session = await stripe.checkout.sessions.retrieve(reg.stripe_checkout_session_id);
                 
-                if (session && session.payment_intent) {
+                if (!session) {
+                    stripeError = 'Stripe session not found';
+                    console.error('[Refund] Session not found:', reg.stripe_checkout_session_id);
+                } else if (!session.payment_intent) {
+                    stripeError = 'No payment intent found for this session';
+                    console.error('[Refund] No payment intent:', reg.stripe_checkout_session_id);
+                } else {
                     const refundParams = {
                         payment_intent: session.payment_intent,
                         reason: 'requested_by_customer',
@@ -312,10 +319,11 @@ export const refundRegistration = async (req, res) => {
                     const refund = await stripe.refunds.create(refundParams);
                     stripeRefundId = refund.id;
                     
-                    console.log(`[Refund] Created Stripe refund: ${refund.id}, amount: $${amountToRefundCents / 100}`);
+                    console.log(`[Refund] Created Stripe refund: ${refund.id}, amount: $${amountToRefundCents / 100}, status: ${refund.status}`);
                 }
-            } catch (stripeError) {
-                console.error('[Refund] Stripe error:', stripeError.message);
+            } catch (err) {
+                stripeError = err.message;
+                console.error('[Refund] Stripe API error:', err.message);
                 // Continue with DB update even if Stripe fails
             }
         }
