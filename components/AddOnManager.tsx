@@ -33,6 +33,123 @@ export const AddOnManager = () => {
         isDestructive?: boolean;
     } | null>(null);
 
+    // DataTable columns for add-ons
+    const addOnColumns: Column<AddOnItem>[] = [
+        {
+            key: 'attendee',
+            header: 'Guest',
+            sortable: true,
+            filterable: true,
+            render: (item) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 font-bold text-sm">
+                        {item.attendeeName?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'G'}
+                    </div>
+                    <div>
+                        <div className="font-bold text-sm text-zinc-900 dark:text-white">{item.attendeeName}</div>
+                        <div className="text-xs text-zinc-500">{item.attendeeEmail}</div>
+                    </div>
+                </div>
+            ),
+            exportValue: (item) => `${item.attendeeName} (${item.attendeeEmail})`
+        },
+        {
+            key: 'type',
+            header: 'Add-On Type',
+            sortable: true,
+            filterable: true,
+            render: (item) => (
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                        <ShoppingBag size={14} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="font-bold text-sm text-zinc-900 dark:text-white">{item.addOn.name}</div>
+                </div>
+            ),
+            exportValue: (item) => item.addOn.name
+        },
+        {
+            key: 'details',
+            header: 'Details',
+            sortable: true,
+            render: (item) => (
+                <div className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center gap-1">
+                        <DollarSign size={12} className="text-zinc-400" />
+                        <span>${item.addOn.price.toFixed(2)} each</span>
+                    </div>
+                    {item.addOn.answer && (
+                        <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-md inline-block">
+                            Note: {item.addOn.answer}
+                        </div>
+                    )}
+                    <div className="text-[10px] text-zinc-400 mt-1">
+                        Purchased: {new Date(item.timestamp).toLocaleDateString()}
+                    </div>
+                </div>
+            ),
+            exportValue: (item) => `$${item.addOn.price.toFixed(2)} - ${item.addOn.answer || 'No note'} - ${new Date(item.timestamp).toLocaleDateString()}`
+        },
+        {
+            key: 'quantity',
+            header: 'Qty',
+            sortable: true,
+            render: (item) => <Badge color="zinc" className="font-mono font-bold">×{item.addOn.quantity}</Badge>,
+            exportValue: (item) => String(item.addOn.quantity)
+        },
+        {
+            key: 'total',
+            header: 'Total',
+            sortable: true,
+            render: (item) => (
+                <div className="font-black text-sm text-emerald-600 dark:text-emerald-400">
+                    ${(item.addOn.price * item.addOn.quantity).toFixed(2)}
+                </div>
+            ),
+            exportValue: (item) => `$${(item.addOn.price * item.addOn.quantity).toFixed(2)}`
+        },
+        {
+            key: 'fulfilled',
+            header: 'Received',
+            sortable: true,
+            filterable: true,
+            filterType: 'select',
+            filterOptions: [
+                { label: 'Received', value: 'true' },
+                { label: 'Pending', value: 'false' }
+            ],
+            render: (item) => (
+                <button 
+                    onClick={() => toggleFulfillment(item)} 
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl transition-all font-bold text-xs uppercase tracking-wide ${
+                        item.fulfilled 
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 ring-2 ring-emerald-500/20' 
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 hover:bg-amber-100 hover:text-amber-700 dark:hover:bg-amber-900/30 dark:hover:text-amber-400'
+                    }`}
+                >
+                    {item.fulfilled ? <><Check size={14} /> Received</> : <>Pending</>}
+                </button>
+            ),
+            exportValue: (item) => item.fulfilled ? 'Received' : 'Pending'
+        },
+        {
+            key: 'actions',
+            header: 'Actions',
+            render: (item) => (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteAddOn(item)}
+                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                    <Trash2 size={14} />
+                </Button>
+            )
+        }
+    ];
+
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         loadData();
     }, [id]);
