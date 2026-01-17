@@ -475,6 +475,9 @@ class PayoutBalanceTester:
                     {"status": profile_response.status_code, "response": profile_response.text[:200]}
                 )
                 
+        except Exception as e:
+            self.log_result("Payout Endpoints Without Auth", False, f"Exception: {str(e)}")
+
     def test_payout_endpoint_structure(self):
         """Test Case 7: Verify payout endpoint structure and response format"""
         try:
