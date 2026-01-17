@@ -266,6 +266,10 @@ export const AttendeeManager = () => {
             confirmText: "Refund All",
             variant: "danger",
             onConfirm: async () => {
+                let successCount = 0;
+                let failCount = 0;
+                let stripeErrors: string[] = [];
+
                 try {
                     // Group by Registration to minimize API calls
                     const groups: Record<string, AttendeeItem[]> = {};
@@ -283,38 +287,76 @@ export const AttendeeManager = () => {
                         const addons = items.filter(i => i.itemType === 'addon');
                         const tickets = items.filter(i => i.itemType !== 'addon');
 
-                        // 1. Process Addons (One API call per addon)
-                        for (const addon of addons) {
-                            await StorageService.refundAddon(regId, addon.ticketIndex, "Bulk Refund");
-                        }
-
-                        // 2. Process Tickets (Batch)
-                        if (tickets.length > 0) {
-                            const regList = await StorageService.getRegistrations(event!.id);
-                            const reg = regList.find(r => r.id === regId);
-                            if (reg && reg.tickets) {
-                                const updatedTickets = [...reg.tickets];
-                                tickets.forEach(t => {
-                                    if (updatedTickets[t.ticketIndex]) {
-                                        if (updatedTickets[t.ticketIndex].quantity > 1) {
-                                            // Reduce qty logic
-                                            updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], quantity: updatedTickets[t.ticketIndex].quantity - 1 };
-                                            updatedTickets.push({ ...updatedTickets[t.ticketIndex], quantity: 1, status: 'refunded' });
-                                        } else {
-                                            updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], status: 'refunded' };
-                                        }
+                        try {
+                            // 1. Process Addons (One API call per addon)
+                            for (const addon of addons) {
+                                try {
+                                    const response = await StorageService.refundAddon(regId, addon.ticketIndex, "Bulk Refund");
+                                    if (response && response.stripeError) {
+                                        failCount++;
+                                        stripeErrors.push(`Addon ${addon.name}: ${response.stripeError}`);
+                                    } else {
+                                        successCount++;
                                     }
-                                });
-                                await StorageService.refundRegistration(reg.id, updatedTickets, "Bulk Refund");
+                                } catch (e: any) {
+                                    failCount++;
+                                    stripeErrors.push(`Addon ${addon.name}: ${e.message}`);
+                                }
                             }
+
+                            // 2. Process Tickets (Batch)
+                            if (tickets.length > 0) {
+                                const regList = await StorageService.getRegistrations(event!.id);
+                                const reg = regList.find(r => r.id === regId);
+                                if (reg && reg.tickets) {
+                                    const updatedTickets = [...reg.tickets];
+                                    tickets.forEach(t => {
+                                        if (updatedTickets[t.ticketIndex]) {
+                                            if (updatedTickets[t.ticketIndex].quantity > 1) {
+                                                // Reduce qty logic
+                                                updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], quantity: updatedTickets[t.ticketIndex].quantity - 1 };
+                                                updatedTickets.push({ ...updatedTickets[t.ticketIndex], quantity: 1, status: 'refunded' });
+                                            } else {
+                                                updatedTickets[t.ticketIndex] = { ...updatedTickets[t.ticketIndex], status: 'refunded' };
+                                            }
+                                        }
+                                    });
+
+                                    try {
+                                        const response = await StorageService.refundRegistration(reg.id, updatedTickets, "Bulk Refund");
+                                        if (response && response.stripeError) {
+                                            failCount += tickets.length;
+                                            stripeErrors.push(`Registration ${regId}: ${response.stripeError}`);
+                                        } else {
+                                            successCount += tickets.length;
+                                        }
+                                    } catch (e: any) {
+                                        failCount += tickets.length;
+                                        stripeErrors.push(`Registration ${regId}: ${e.message}`);
+                                    }
+                                }
+                            }
+                        } catch (e: any) {
+                            failCount += items.length;
+                            stripeErrors.push(`Registration ${regId}: ${e.message}`);
                         }
                     }
 
                     await loadData();
                     setSelectedIds(new Set());
-                    showToast("Bulk refund processed.", "success");
+
+                    // Show appropriate message based on results
+                    if (failCount === 0) {
+                        showToast(`✅ Successfully refunded ${successCount} item(s)!`, "success");
+                    } else if (successCount === 0) {
+                        showToast(`❌ All ${failCount} refund(s) failed. Check console for details.`, "error");
+                        console.error('Bulk refund errors:', stripeErrors);
+                    } else {
+                        showToast(`⚠️ Partial success: ${successCount} refunded, ${failCount} failed. Check console for details.`, "warning");
+                        console.error('Bulk refund errors:', stripeErrors);
+                    }
                 } catch (e: any) {
-                    showToast("Bulk refund failed: " + e.message, "error");
+                    showToast("❌ Bulk refund operation failed: " + e.message, "error");
                 }
             }
         });
