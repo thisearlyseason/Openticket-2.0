@@ -550,6 +550,7 @@ class PayoutBalanceTester:
         print("-" * 40)
         self.test_backend_health_and_connectivity()
         self.test_payout_endpoints_without_auth()
+        self.test_payout_endpoint_structure()
         
         # Authentication Test
         print("\n🔐 AUTHENTICATION TESTS")
@@ -559,6 +560,8 @@ class PayoutBalanceTester:
         if login_success:
             print("\n💰 PAYOUT BALANCE FUNCTIONALITY TESTS")
             print("-" * 40)
+            print("⚠️  NOTE: Authentication system mismatch detected (Supabase login + Firebase middleware)")
+            print("    Testing with known incompatible token - expect authentication failures")
             
             # Test 1: Organizer Payout Balance
             payouts_data = self.test_organizer_upcoming_payouts_endpoint()
