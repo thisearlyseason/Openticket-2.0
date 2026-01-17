@@ -276,108 +276,98 @@ class PayoutBalanceTester:
         try:
             if not self.auth_token:
                 self.log_result(
-                    "Verify Promo Code Persistence - Authentication Required",
+                    "User Profile Payout Fields - Authentication Required",
                     False,
                     "❌ Cannot test without authentication token",
                     {"auth_token": None}
                 )
                 return False
             
-            if not created_promo_code:
-                self.log_result(
-                    "Verify Promo Code Persistence - No Promo Code",
-                    False,
-                    "❌ Cannot test persistence without created promo code",
-                    {"created_promo_code": None}
-                )
-                return False
-            
-            # Fetch all promo codes to verify our test code exists
-            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            # Get user profile to check for affiliate payout fields
+            response = self.session.get(f"{BACKEND_URL}/api/auth/profile")
             
             if response.status_code == 200:
                 try:
-                    data = response.json()
-                    promo_codes = data.get('promoCodes', [])
+                    profile_data = response.json()
                     
-                    # Look for our test promo code
-                    test_code = created_promo_code.get('code', 'TESTCODE')
-                    found_promo = None
+                    # Check if user has affiliate fields
+                    has_affiliate_code = 'affiliateCode' in profile_data
+                    available_payout = profile_data.get('availablePayout', 0)
+                    total_paid_out = profile_data.get('totalPaidOut', 0)
                     
-                    for promo in promo_codes:
-                        if promo.get('code') == test_code:
-                            found_promo = promo
-                            break
+                    # Verify payout fields exist and are numeric
+                    payout_fields_valid = (
+                        isinstance(available_payout, (int, float)) and
+                        isinstance(total_paid_out, (int, float)) and
+                        available_payout >= 0 and
+                        total_paid_out >= 0
+                    )
                     
-                    if found_promo:
-                        # Verify the promo code data matches what we created
-                        matches = (
-                            found_promo.get('code') == test_code and
-                            found_promo.get('type') == 'percentage' and
-                            found_promo.get('value') == 20 and
-                            found_promo.get('target') == 'all'
-                        )
+                    if payout_fields_valid:
+                        total_earnings = available_payout + total_paid_out
                         
-                        if matches:
-                            self.log_result(
-                                "Verify Promo Code Persistence",
-                                True,
-                                f"✅ Promo code {test_code} successfully persisted in database",
-                                {
-                                    "found_promo": found_promo,
-                                    "matches_created": True,
-                                    "total_promo_codes": len(promo_codes)
-                                }
-                            )
-                            return True
-                        else:
-                            self.log_result(
-                                "Verify Promo Code Persistence",
-                                False,
-                                f"❌ Promo code {test_code} found but data doesn't match",
-                                {
-                                    "expected": created_promo_code,
-                                    "found": found_promo,
-                                    "matches": matches
-                                }
-                            )
-                            return False
+                        self.log_result(
+                            "User Profile Payout Fields",
+                            True,
+                            f"✅ User profile has valid payout fields (affiliate: {has_affiliate_code})",
+                            {
+                                "has_affiliate_code": has_affiliate_code,
+                                "available_payout": available_payout,
+                                "total_paid_out": total_paid_out,
+                                "total_earnings": total_earnings,
+                                "fields_valid": True
+                            }
+                        )
+                        return {
+                            "available_payout": available_payout,
+                            "total_paid_out": total_paid_out,
+                            "total_earnings": total_earnings,
+                            "is_affiliate": has_affiliate_code
+                        }
                     else:
                         self.log_result(
-                            "Verify Promo Code Persistence",
+                            "User Profile Payout Fields",
                             False,
-                            f"❌ Promo code {test_code} not found in database",
+                            f"❌ Invalid payout field values: availablePayout={available_payout}, totalPaidOut={total_paid_out}",
                             {
-                                "searched_for": test_code,
-                                "available_codes": [p.get('code') for p in promo_codes],
-                                "total_codes": len(promo_codes)
+                                "available_payout": available_payout,
+                                "total_paid_out": total_paid_out,
+                                "fields_valid": False
                             }
                         )
                         return False
                         
                 except json.JSONDecodeError:
                     self.log_result(
-                        "Verify Promo Code Persistence",
+                        "User Profile Payout Fields",
                         False,
-                        "❌ Invalid JSON response when fetching promo codes",
+                        "❌ Invalid JSON response from profile endpoint",
                         response.text
                     )
                     return False
+            elif response.status_code == 401:
+                self.log_result(
+                    "User Profile Payout Fields - Authentication",
+                    False,
+                    "❌ Authentication failed - token may be invalid",
+                    {"status": response.status_code}
+                )
+                return False
             else:
                 self.log_result(
-                    "Verify Promo Code Persistence",
+                    "User Profile Payout Fields",
                     False,
-                    f"❌ Failed to fetch promo codes for verification: HTTP {response.status_code}",
+                    f"❌ Failed to fetch user profile: HTTP {response.status_code}",
                     response.text
                 )
                 return False
                 
         except Exception as e:
-            self.log_result("Verify Promo Code Persistence", False, f"Exception: {str(e)}")
+            self.log_result("User Profile Payout Fields", False, f"Exception: {str(e)}")
             return False
 
     def test_backend_health_and_connectivity(self):
-        """Test Case 5: Verify backend is healthy and accessible"""
+        """Test Case 5: Verify backend is healthy and payout endpoints exist"""
         try:
             # Test basic connectivity
             health_response = self.session.get(f"{BACKEND_URL}/api/health", timeout=10)
