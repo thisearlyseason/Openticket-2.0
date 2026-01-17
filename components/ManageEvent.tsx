@@ -251,10 +251,23 @@ export const ManageEvent = () => {
                                 <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-colors">
                                     <List size={24} />
                                 </div>
-                                <span className="text-2xl font-black">{event.registeredCount}</span>
+                                <span className="text-2xl font-black">{event.registeredCount || 0}</span>
                             </div>
                             <h3 className="font-bold text-lg">Attendee List</h3>
                             <p className="text-xs text-zinc-500">Manage guests & orders</p>
+                        </Card>
+                    </Link>
+
+                    <Link to={`/manage/${event.id}/refunds`} className="block group">
+                        <Card className="p-6 cursor-pointer hover:border-red-500 transition-all hover:-translate-y-1 h-full">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-red-500/10 text-red-500 rounded-xl group-hover:bg-red-500 group-hover:text-white transition-colors">
+                                    <DollarSign size={24} />
+                                </div>
+                                <span className="text-2xl font-black text-red-500">NEW</span>
+                            </div>
+                            <h3 className="font-bold text-lg">Refunds</h3>
+                            <p className="text-xs text-zinc-500">Process & track refunds</p>
                         </Card>
                     </Link>
 
