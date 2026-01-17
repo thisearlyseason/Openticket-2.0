@@ -291,16 +291,71 @@ export const refundRegistration = async (req, res) => {
         // 3. Process Stripe Refund
         let stripeRefundId = null;
         let stripeError = null;
+        let stripeAttempted = false;
+        
+        // Log refund request details
+        console.log('[Refund] Request Details:', {
+            registrationId: id,
+            eventId: reg.event_id,
+            ticketsToRefund: ticketsBeingRefunded,
+            amountCents: amountToRefundCents,
+            amountDollars: (amountToRefundCents / 100).toFixed(2),
+            isFullRefund,
+            hasStripeSession: !!reg.stripe_checkout_session_id,
+            paymentStatus: reg.payment_status
+        });
+
+        // Validate payment status before refund
+        if (reg.payment_status !== 'paid' && reg.payment_status !== 'completed') {
+            console.error('[Refund] Cannot refund - payment not complete:', reg.payment_status);
+            return res.status(400).json({ 
+                error: 'Cannot refund: Payment is not complete',
+                paymentStatus: reg.payment_status,
+                canRefund: false
+            });
+        }
+        
         if (reg.stripe_checkout_session_id && amountToRefundCents > 0) {
+            stripeAttempted = true;
+            
             try {
+                console.log('[Refund] Retrieving Stripe session:', reg.stripe_checkout_session_id);
                 const session = await stripe.checkout.sessions.retrieve(reg.stripe_checkout_session_id);
                 
                 if (!session) {
                     stripeError = 'Stripe session not found';
                     console.error('[Refund] Session not found:', reg.stripe_checkout_session_id);
+                    
+                    // CRITICAL: Block refund if Stripe session not found
+                    return res.status(400).json({
+                        error: 'Cannot refund: Stripe session not found',
+                        stripeError,
+                        canRefund: false,
+                        diagnostics: {
+                            sessionId: reg.stripe_checkout_session_id,
+                            registrationId: id
+                        }
+                    });
+                    
                 } else if (!session.payment_intent) {
                     stripeError = 'No payment intent found for this session';
-                    console.error('[Refund] No payment intent:', reg.stripe_checkout_session_id);
+                    console.error('[Refund] No payment intent:', {
+                        sessionId: reg.stripe_checkout_session_id,
+                        sessionStatus: session.status
+                    });
+                    
+                    // CRITICAL: Block refund if no payment intent
+                    return res.status(400).json({
+                        error: 'Cannot refund: No payment intent found',
+                        stripeError,
+                        canRefund: false,
+                        diagnostics: {
+                            sessionId: reg.stripe_checkout_session_id,
+                            sessionStatus: session.status,
+                            registrationId: id
+                        }
+                    });
+                    
                 } else {
                     const refundParams = {
                         payment_intent: session.payment_intent,
@@ -309,6 +364,7 @@ export const refundRegistration = async (req, res) => {
                             registrationId: id,
                             eventId: reg.event_id,
                             reason: reason || 'Organizer initiated refund',
+                            ticketsRefunded: ticketsBeingRefunded.toString()
                         },
                     };
 
@@ -316,19 +372,67 @@ export const refundRegistration = async (req, res) => {
                         refundParams.amount = amountToRefundCents;
                     }
 
+                    console.log('[Refund] Calling Stripe API:', {
+                        paymentIntent: session.payment_intent,
+                        amount: refundParams.amount ? `$${refundParams.amount / 100}` : 'FULL',
+                        isPartialRefund: !!refundParams.amount
+                    });
+
                     const refund = await stripe.refunds.create(refundParams);
                     stripeRefundId = refund.id;
                     
-                    console.log(`[Refund] Created Stripe refund: ${refund.id}, amount: $${amountToRefundCents / 100}, status: ${refund.status}`);
+                    console.log('[Refund] ✅ Stripe refund created:', {
+                        refundId: refund.id,
+                        amount: `$${amountToRefundCents / 100}`,
+                        status: refund.status,
+                        currency: refund.currency
+                    });
                 }
             } catch (err) {
                 stripeError = err.message;
-                console.error('[Refund] Stripe API error:', err.message);
-                // Continue with DB update even if Stripe fails
+                console.error('[Refund] ❌ Stripe API error:', {
+                    error: err.message,
+                    code: err.code,
+                    type: err.type
+                });
+                
+                // CRITICAL: Block refund if Stripe API fails
+                return res.status(400).json({
+                    error: 'Stripe refund failed',
+                    stripeError: err.message,
+                    canRefund: false,
+                    diagnostics: {
+                        errorCode: err.code,
+                        errorType: err.type,
+                        registrationId: id,
+                        sessionId: reg.stripe_checkout_session_id
+                    }
+                });
             }
+        } else if (!reg.stripe_checkout_session_id && amountToRefundCents > 0) {
+            // Manual/offline payment - no Stripe refund needed
+            console.log('[Refund] Manual/offline registration - no Stripe session');
+            stripeAttempted = false;
         }
 
-        // 4. Update registration in DB
+        // CRITICAL: Only proceed with DB update if:
+        // 1. Stripe refund succeeded (stripeRefundId exists), OR
+        // 2. No Stripe payment exists (manual/offline registration)
+        if (!stripeAttempted || stripeRefundId) {
+            console.log('[Refund] Proceeding with DB update:', {
+                stripeRefundId: stripeRefundId || 'N/A (manual)',
+                reason: stripeRefundId ? 'Stripe confirmed' : 'No Stripe payment'
+            });
+        } else {
+            // This should never be reached due to early returns above
+            console.error('[Refund] ❌ CRITICAL: Reached DB update without Stripe confirmation');
+            return res.status(500).json({
+                error: 'Internal error: Refund validation failed',
+                canRefund: false
+            });
+        }
+
+        // 4. Update registration in DB (only reached if Stripe succeeded or not needed)
         updates.refunded_amount = (reg.refunded_amount || 0) + (amountToRefundCents / 100);
         updates.refund_reason = reason;
         if (stripeRefundId) {
