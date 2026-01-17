@@ -41,6 +41,80 @@ export const AdvancedAnalytics = () => {
     const [compareMode, setCompareMode] = useState(false);
     const [previousPeriodData, setPreviousPeriodData] = useState<AnalyticsData | null>(null);
 
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    };
+
+    // Define columns for top events DataTable
+    const topEventsColumns: Column<{ event: Event; revenue: number; tickets: number }>[] = [
+        {
+            key: 'rank',
+            header: '#',
+            sortable: false,
+            render: (item, index) => (
+                <div className="w-8 h-8 bg-gradient-to-br from-[#ec4899] to-[#f472b6] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    {index + 1}
+                </div>
+            ),
+            exportValue: (item, index) => String(index + 1)
+        },
+        {
+            key: 'event',
+            header: 'Event',
+            sortable: true,
+            filterable: true,
+            render: (item) => (
+                <div>
+                    <p className="font-bold text-zinc-900 dark:text-white">{item.event.title}</p>
+                    <p className="text-xs text-zinc-500">{new Date(item.event.date).toLocaleDateString()}</p>
+                </div>
+            ),
+            exportValue: (item) => `${item.event.title} - ${new Date(item.event.date).toLocaleDateString()}`
+        },
+        {
+            key: 'revenue',
+            header: 'Revenue',
+            sortable: true,
+            render: (item) => (
+                <span className="font-bold text-green-600">{formatCurrency(item.revenue)}</span>
+            ),
+            exportValue: (item) => item.revenue
+        },
+        {
+            key: 'tickets',
+            header: 'Tickets Sold',
+            sortable: true,
+            render: (item) => (
+                <span className="font-medium text-zinc-900 dark:text-white">{item.tickets}</span>
+            ),
+            exportValue: (item) => item.tickets
+        },
+        {
+            key: 'avgPrice',
+            header: 'Avg Price',
+            sortable: true,
+            render: (item) => (
+                <span className="text-zinc-500">{formatCurrency(item.tickets > 0 ? item.revenue / item.tickets : 0)}</span>
+            ),
+            exportValue: (item) => item.tickets > 0 ? item.revenue / item.tickets : 0
+        },
+        {
+            key: 'actions',
+            header: '',
+            sortable: false,
+            render: (item) => (
+                <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/manage/${item.event.id}/analytics`)}
+                    className="text-xs"
+                >
+                    Details <ArrowUpRight size={14} className="ml-1" />
+                </Button>
+            )
+        }
+    ];
+
     useEffect(() => {
         loadAnalytics();
     }, [dateRange]);
