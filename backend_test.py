@@ -36,13 +36,13 @@ class PayoutBalanceTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_admin_login(self):
-        """Test Case 1: Login as admin user - try multiple potential admin accounts"""
-        # Try different potential admin users based on test_result.md mentions
+    def test_organizer_login(self):
+        """Test Case 1: Login as organizer user - test with tylerans@gmail.com"""
+        # Test with the specific organizer user mentioned in review request
         test_users = [
+            {"email": "tylerans@gmail.com", "password": "password123"},
             {"email": "test+openticket@gmail.com", "password": "12345678"},
             {"email": "thisearlyseason@gmail.com", "password": "password123"},
-            {"email": "tylerans@gmail.com", "password": "password123"},
         ]
         
         for user_data in test_users:
