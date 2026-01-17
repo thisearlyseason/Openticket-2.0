@@ -399,7 +399,7 @@ class PayoutBalanceTester:
             # Test if the payout routes exist
             payout_routes = [
                 "/api/admin/upcoming-payouts",
-                "/api/auth/profile"
+                "/api/auth/me"
             ]
             
             route_results = {}
