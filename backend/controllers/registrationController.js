@@ -236,6 +236,7 @@ export const refundRegistration = async (req, res) => {
         let updates = {};
         let amountToRefundCents = 0;
         let isFullRefund = false;
+        let ticketsBeingRefunded = 0; // Track how many tickets to decrement from registered_count
 
         // 2. Calculate refund amount
         if (Array.isArray(tickets) && tickets.length === 0) {
@@ -249,10 +250,11 @@ export const refundRegistration = async (req, res) => {
             if (reg.tickets) {
                 updates.tickets = reg.tickets.map(t => ({ ...t, status: 'refunded' }));
                 
-                // Calculate full refund amount
+                // Calculate full refund amount and count tickets
                 reg.tickets.forEach(t => {
                     if (t.status !== 'refunded') {
                         amountToRefundCents += Math.round((t.pricePerTicket || 0) * (t.quantity || 1) * 100);
+                        ticketsBeingRefunded += (t.quantity || 1);
                     }
                 });
             }
