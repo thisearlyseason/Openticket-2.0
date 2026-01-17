@@ -196,146 +196,83 @@ class PayoutBalanceTester:
     def test_payout_balance_calculation(self, payouts_data):
         """Test Case 3: Verify payout balance calculation logic"""
         try:
-            if not self.auth_token:
+            if not payouts_data:
                 self.log_result(
-                    "Create Promo Code - Authentication Required",
+                    "Payout Balance Calculation - No Data",
                     False,
-                    "❌ Cannot test without authentication token",
-                    {"auth_token": None}
+                    "❌ Cannot test calculation without payouts data",
+                    {"payouts_data": None}
                 )
                 return False
             
-            # Create test promo code as specified in review request
-            test_promo_code = {
-                "id": "promo-test123",
-                "code": "TESTCODE",
-                "type": "percentage",
-                "value": 20,
-                "target": "all",
-                "targetPlans": [],
-                "usageLimit": 100,
-                "usageCount": 0,
-                "expiresAt": "2025-12-31",
-                "isActive": True,
-                "createdAt": "2025-01-17T00:00:00Z"
-            }
+            payouts = payouts_data.get('payouts', [])
+            ready_payouts = payouts_data.get('ready_payouts', [])
+            expected_total = payouts_data.get('total_ready', 0)
             
-            response = self.session.post(f"{BACKEND_URL}/api/admin/promo-codes", json=test_promo_code)
+            # Verify each payout has required fields
+            required_fields = ['eventId', 'eventTitle', 'amount', 'status']
+            valid_payouts = []
             
-            if response.status_code == 200:
-                try:
-                    data = response.json()
+            for payout in payouts:
+                missing_fields = [f for f in required_fields if f not in payout]
+                if not missing_fields:
+                    valid_payouts.append(payout)
                     
-                    if 'promoCode' in data:
-                        created_promo = data['promoCode']
-                        
-                        # Verify the created promo code has expected fields
-                        expected_fields = ['id', 'code', 'type', 'value', 'target']
-                        missing_fields = [f for f in expected_fields if f not in created_promo]
-                        
-                        if not missing_fields:
-                            self.log_result(
-                                "Create Promo Code",
-                                True,
-                                f"✅ Successfully created promo code: {created_promo.get('code')}",
-                                {
-                                    "promo_code": created_promo,
-                                    "id": created_promo.get('id'),
-                                    "code": created_promo.get('code'),
-                                    "type": created_promo.get('type'),
-                                    "value": created_promo.get('value')
-                                }
-                            )
-                            return created_promo
-                        else:
-                            self.log_result(
-                                "Create Promo Code",
-                                False,
-                                f"❌ Created promo code missing fields: {missing_fields}",
-                                created_promo
-                            )
-                            return False
-                    else:
+                    # Verify amount is numeric and >= 0
+                    amount = payout.get('amount', 0)
+                    if not isinstance(amount, (int, float)) or amount < 0:
                         self.log_result(
-                            "Create Promo Code",
+                            "Payout Balance Calculation - Invalid Amount",
                             False,
-                            "❌ Response missing 'promoCode' field",
-                            data
+                            f"❌ Payout {payout.get('eventId')} has invalid amount: {amount}",
+                            payout
                         )
                         return False
-                except json.JSONDecodeError:
+                else:
                     self.log_result(
-                        "Create Promo Code",
+                        "Payout Balance Calculation - Missing Fields",
                         False,
-                        "❌ Invalid JSON response",
-                        response.text
+                        f"❌ Payout missing required fields: {missing_fields}",
+                        payout
                     )
                     return False
-            elif response.status_code == 401:
+            
+            # Verify ready payouts calculation
+            calculated_total = sum(p.get('amount', 0) for p in ready_payouts)
+            
+            if abs(calculated_total - expected_total) < 0.01:  # Allow for floating point precision
                 self.log_result(
-                    "Create Promo Code - Authentication",
-                    False,
-                    "❌ Authentication failed - token may be invalid",
-                    {"status": response.status_code}
+                    "Payout Balance Calculation",
+                    True,
+                    f"✅ Payout balance calculation correct: ${calculated_total:.2f} from {len(ready_payouts)} ready payouts",
+                    {
+                        "total_payouts": len(payouts),
+                        "ready_payouts": len(ready_payouts),
+                        "calculated_total": calculated_total,
+                        "expected_total": expected_total,
+                        "calculation_correct": True
+                    }
                 )
-                return False
-            elif response.status_code == 403:
-                self.log_result(
-                    "Create Promo Code - Authorization",
-                    False,
-                    "❌ Access denied - user may not have admin privileges",
-                    {"status": response.status_code}
-                )
-                return False
-            elif response.status_code == 400:
-                try:
-                    error_data = response.json()
-                    self.log_result(
-                        "Create Promo Code - Validation Error",
-                        False,
-                        f"❌ Bad request - validation failed: {error_data.get('error', 'Unknown error')}",
-                        error_data
-                    )
-                except:
-                    self.log_result(
-                        "Create Promo Code - Validation Error",
-                        False,
-                        f"❌ Bad request: {response.text}",
-                        {"status": response.status_code}
-                    )
-                return False
-            elif response.status_code == 500:
-                try:
-                    error_data = response.json()
-                    self.log_result(
-                        "Create Promo Code - Server Error",
-                        False,
-                        f"❌ Server error: {error_data.get('error', 'Internal server error')}",
-                        error_data
-                    )
-                except:
-                    self.log_result(
-                        "Create Promo Code - Server Error",
-                        False,
-                        f"❌ Server error: {response.text}",
-                        {"status": response.status_code}
-                    )
-                return False
+                return True
             else:
                 self.log_result(
-                    "Create Promo Code",
+                    "Payout Balance Calculation",
                     False,
-                    f"❌ Unexpected status code: {response.status_code}",
-                    response.text
+                    f"❌ Payout balance calculation mismatch: calculated ${calculated_total:.2f}, expected ${expected_total:.2f}",
+                    {
+                        "calculated_total": calculated_total,
+                        "expected_total": expected_total,
+                        "ready_payouts": ready_payouts
+                    }
                 )
                 return False
                 
         except Exception as e:
-            self.log_result("Create Promo Code", False, f"Exception: {str(e)}")
+            self.log_result("Payout Balance Calculation", False, f"Exception: {str(e)}")
             return False
 
-    def test_promo_code_persistence(self, created_promo_code):
-        """Test Case 4: Verify promo code persists in database"""
+    def test_user_profile_payout_fields(self):
+        """Test Case 4: Verify user profile has availablePayout and totalPaidOut fields"""
         try:
             if not self.auth_token:
                 self.log_result(
