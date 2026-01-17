@@ -521,49 +521,16 @@ export const AdvancedAnalytics = () => {
                         Top Performing Events
                     </h3>
                     {topEvents.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                                        <th className="text-left py-3 px-4 text-xs font-bold text-zinc-500 uppercase">Event</th>
-                                        <th className="text-right py-3 px-4 text-xs font-bold text-zinc-500 uppercase">Revenue</th>
-                                        <th className="text-right py-3 px-4 text-xs font-bold text-zinc-500 uppercase">Tickets</th>
-                                        <th className="text-right py-3 px-4 text-xs font-bold text-zinc-500 uppercase">Avg Price</th>
-                                        <th className="text-right py-3 px-4 text-xs font-bold text-zinc-500 uppercase"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {topEvents.map((item, i) => (
-                                        <tr key={item.event.id} className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
-                                            <td className="py-4 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-gradient-to-br from-[#ec4899] to-[#f472b6] rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                                                        {i + 1}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-zinc-900 dark:text-white">{item.event.title}</p>
-                                                        <p className="text-xs text-zinc-500">{new Date(item.event.date).toLocaleDateString()}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4 text-right font-bold text-green-600">{formatCurrency(item.revenue)}</td>
-                                            <td className="py-4 px-4 text-right font-medium text-zinc-900 dark:text-white">{item.tickets}</td>
-                                            <td className="py-4 px-4 text-right text-zinc-500">{formatCurrency(item.tickets > 0 ? item.revenue / item.tickets : 0)}</td>
-                                            <td className="py-4 px-4 text-right">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="sm"
-                                                    onClick={() => navigate(`/manage/${item.event.id}/analytics`)}
-                                                    className="text-xs"
-                                                >
-                                                    Details <ArrowUpRight size={14} className="ml-1" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable
+                            data={topEvents}
+                            columns={topEventsColumns}
+                            searchable={true}
+                            searchPlaceholder="Search events..."
+                            defaultRowsPerPage={10}
+                            exportable={true}
+                            exportFilename="top-events"
+                            emptyMessage="No event data for this period"
+                        />
                     ) : (
                         <div className="text-center py-12 text-zinc-400">
                             <BarChart3 size={48} className="mx-auto mb-4 opacity-50" />
