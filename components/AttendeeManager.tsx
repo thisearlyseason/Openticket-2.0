@@ -1039,6 +1039,9 @@ export const AttendeeManager = () => {
                     <button onClick={handleBulkRefund} className="font-bold text-sm text-red-500 hover:text-red-400 dark:text-red-600 dark:hover:text-red-700 flex items-center gap-2">
                         <DollarSign size={16} /> Refund Selected
                     </button>
+                    <button onClick={handleBulkDelete} className="font-bold text-sm text-red-500 hover:text-red-400 dark:text-red-600 dark:hover:text-red-700 flex items-center gap-2">
+                        <Trash2 size={16} /> Delete Selected
+                    </button>
                     <button onClick={() => setSelectedIds(new Set())} className="ml-2 hover:opacity-70">
                         <X size={16} />
                     </button>
