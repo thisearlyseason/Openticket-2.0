@@ -5,100 +5,161 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 626.105879271,
-      "timestamp": "2026-01-16T16:38:58.974Z"
+      "uptime": 1621.073063977,
+      "timestamp": "2026-01-17T04:52:39.668Z"
     },
-    "timestamp": "2026-01-16 16:38:58"
+    "timestamp": "2026-01-17 04:52:39"
   },
   {
-    "test": "Backend Routes Availability",
-    "success": true,
-    "details": "\u2705 All required admin routes exist: ['/api/admin/upcoming-payouts']",
+    "test": "Backend Payout Routes Availability",
+    "success": false,
+    "details": "\u274c Missing routes: ['/api/auth/profile']",
     "response_data": {
       "/api/admin/upcoming-payouts": {
         "exists": true,
         "status": 401
+      },
+      "/api/auth/profile": {
+        "exists": false,
+        "status": 404
       }
     },
-    "timestamp": "2026-01-16 16:38:58"
+    "timestamp": "2026-01-17 04:52:39"
   },
   {
-    "test": "Upcoming Payouts Endpoint - Authentication",
+    "test": "Upcoming Payouts Endpoint - Auth Required",
     "success": true,
-    "details": "\u2705 Properly requires authentication (HTTP 401)",
+    "details": "\u2705 Upcoming payouts endpoint properly requires authentication (HTTP 401)",
     "response_data": {
       "status": 401,
-      "message": "Authentication required"
+      "endpoint": "GET /api/admin/upcoming-payouts"
     },
-    "timestamp": "2026-01-16 16:38:59"
+    "timestamp": "2026-01-17 04:52:39"
   },
   {
-    "test": "Payout Balance Calculation - Authentication Required",
+    "test": "Profile Endpoint - Auth Required",
+    "success": false,
+    "details": "\u274c Profile endpoint should require auth but returned HTTP 404",
+    "response_data": {
+      "status": 404,
+      "response": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/auth/profile</pre>\n</body>\n</html>\n"
+    },
+    "timestamp": "2026-01-17 04:52:39"
+  },
+  {
+    "test": "Organizer Login",
     "success": true,
-    "details": "\u2705 Cannot test calculation without authentication - endpoint secured",
+    "details": "\u2705 Successfully logged in as test+openticket@gmail.com",
+    "response_data": {
+      "email": "test+openticket@gmail.com",
+      "token_received": true,
+      "session_data": {
+        "session": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6IlFPUm9PNWlZSThRRml0UlkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2RjamR1cnZna3ZlYmx2dGlub21zLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNjFiYjMwMy0zMmE2LTRmZTgtOTMzNC0zYzRmMzNlNDVlNDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY4NjI5MTYwLCJpYXQiOjE3Njg2MjU1NjAsImVtYWlsIjoidGVzdCtvcGVudGlja2V0QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzY4NjI1NTYwfV0sInNlc3Npb25faWQiOiJmZDQ2YWYxOS1hODlkLTQ4ZjEtODQ0ZS0xMzQ4N2EwNjgyMjEiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.tCEpWrDRerjKY4eHOFaSTnu2pifo-vYam7zA5oIgWWs",
+          "token_type": "bearer",
+          "expires_in": 3600,
+          "expires_at": 1768629160,
+          "refresh_token": "r5gt2hgyyg3r",
+          "user": {
+            "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+            "aud": "authenticated",
+            "role": "authenticated",
+            "email": "test+openticket@gmail.com",
+            "email_confirmed_at": "2026-01-17T02:38:54.114948Z",
+            "phone": "",
+            "confirmed_at": "2026-01-17T02:38:54.114948Z",
+            "last_sign_in_at": "2026-01-17T04:52:40.567674107Z",
+            "app_metadata": {
+              "provider": "email",
+              "providers": [
+                "email"
+              ]
+            },
+            "user_metadata": {
+              "email_verified": true
+            },
+            "identities": [
+              {
+                "identity_id": "795b3f30-4451-4995-a1c4-d718a313f593",
+                "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+                "user_id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+                "identity_data": {
+                  "email": "test+openticket@gmail.com",
+                  "email_verified": false,
+                  "phone_verified": false,
+                  "sub": "a61bb303-32a6-4fe8-9334-3c4f33e45e40"
+                },
+                "provider": "email",
+                "last_sign_in_at": "2026-01-17T02:38:54.107877Z",
+                "created_at": "2026-01-17T02:38:54.107941Z",
+                "updated_at": "2026-01-17T02:38:54.107941Z",
+                "email": "test+openticket@gmail.com"
+              }
+            ],
+            "created_at": "2026-01-17T02:38:54.091957Z",
+            "updated_at": "2026-01-17T04:52:40.629311Z",
+            "is_anonymous": false
+          },
+          "weak_password": null
+        },
+        "user": {
+          "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+          "aud": "authenticated",
+          "role": "authenticated",
+          "email": "test+openticket@gmail.com",
+          "email_confirmed_at": "2026-01-17T02:38:54.114948Z",
+          "phone": "",
+          "confirmed_at": "2026-01-17T02:38:54.114948Z",
+          "last_sign_in_at": "2026-01-17T04:52:40.567674107Z",
+          "app_metadata": {
+            "provider": "email",
+            "providers": [
+              "email"
+            ]
+          },
+          "user_metadata": {
+            "email_verified": true
+          },
+          "identities": [
+            {
+              "identity_id": "795b3f30-4451-4995-a1c4-d718a313f593",
+              "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+              "user_id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
+              "identity_data": {
+                "email": "test+openticket@gmail.com",
+                "email_verified": false,
+                "phone_verified": false,
+                "sub": "a61bb303-32a6-4fe8-9334-3c4f33e45e40"
+              },
+              "provider": "email",
+              "last_sign_in_at": "2026-01-17T02:38:54.107877Z",
+              "created_at": "2026-01-17T02:38:54.107941Z",
+              "updated_at": "2026-01-17T02:38:54.107941Z",
+              "email": "test+openticket@gmail.com"
+            }
+          ],
+          "created_at": "2026-01-17T02:38:54.091957Z",
+          "updated_at": "2026-01-17T04:52:40.629311Z",
+          "is_anonymous": false
+        }
+      }
+    },
+    "timestamp": "2026-01-17 04:52:40"
+  },
+  {
+    "test": "Get Organizer Payouts Endpoint - Authentication",
+    "success": false,
+    "details": "\u274c Authentication failed - token may be invalid",
     "response_data": {
       "status": 401
     },
-    "timestamp": "2026-01-16 16:38:59"
+    "timestamp": "2026-01-17 04:52:40"
   },
   {
-    "test": "Payout Status Filtering - Authentication Required",
-    "success": true,
-    "details": "\u2705 Cannot test filtering without authentication - endpoint secured",
-    "response_data": {
-      "status": 401
-    },
-    "timestamp": "2026-01-16 16:38:59"
-  },
-  {
-    "test": "Billing Component - Payout Balance Fix",
-    "success": true,
-    "details": "\u2705 Payout balance fix implemented: availablePayout state and payouts load handler found",
-    "response_data": {
-      "availablePayout_state": true,
-      "payouts_load_handler": true,
-      "ready_status_filter": true
-    },
-    "timestamp": "2026-01-16 16:38:59"
-  },
-  {
-    "test": "UpcomingPayoutsCard Component - Callback Implementation",
-    "success": true,
-    "details": "\u2705 UpcomingPayoutsCard component with onPayoutsLoad callback properly implemented",
-    "response_data": {
-      "component_exists": true,
-      "callback_prop": true,
-      "callback_usage": true
-    },
-    "timestamp": "2026-01-16 16:38:59"
-  },
-  {
-    "test": "Test Organizer Authentication - Endpoint Protection",
-    "success": true,
-    "details": "\u2705 Upcoming payouts endpoint properly protected (requires authentication)",
-    "response_data": {
-      "status": 401,
-      "endpoint": "/api/admin/upcoming-payouts"
-    },
-    "timestamp": "2026-01-16 16:38:59"
-  },
-  {
-    "test": "Test Organizer Authentication - Error Message",
-    "success": true,
-    "details": "\u2705 Authentication error provides clear message",
-    "response_data": {
-      "error": "Missing Authorization header"
-    },
-    "timestamp": "2026-01-16 16:38:59"
-  },
-  {
-    "test": "Billing Page Route - Frontend Routing",
-    "success": true,
-    "details": "\u2705 Billing page route accessible (/#/billing)",
-    "response_data": {
-      "status": 200,
-      "route": "/#/billing"
-    },
-    "timestamp": "2026-01-16 16:38:59"
+    "test": "User Profile Payout Fields",
+    "success": false,
+    "details": "\u274c Failed to fetch user profile: HTTP 404",
+    "response_data": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/auth/profile</pre>\n</body>\n</html>\n",
+    "timestamp": "2026-01-17 04:52:40"
   }
 ]
