@@ -131,49 +131,80 @@ const sendEventReminders = async () => {
             });
             const formattedTime = event.time || 'TBA';
             
-            for (const reg of registrations) {
-                try {
-                    const html = generateEventReminderHtml(
-                        event.title,
-                        formattedDate,
-                        formattedTime,
-                        event.location || 'TBA',
-                        reg.attendee_name,
-                        `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`
-                    );
-                    
-                    const result = await sendEmailWithProvider(
-                        reg.attendee_email,
-                        `🎟️ Reminder: ${event.title} is Tomorrow!`,
-                        html,
-                        event.owner_id
-                    );
-                    
-                    if (result.sent) {
-                        sent++;
-                        // Also send push notification if subscribed
-                        try {
-                            // Get user ID from email
-                            const { data: user } = await supabase
-                                .from('profiles')
-                                .select('id')
-                                .eq('email', reg.attendee_email.toLowerCase())
-                                .single();
-                            
-                            if (user?.id) {
-                                await PushService.sendNotification(user.id, 
-                                    PushService.NotificationTemplates.eventReminder(event.title, formattedDate, event.id)
-                                );
+            console.log(`[CRON] Processing ${registrations.length} reminder(s) for event: ${event.title}`);
+            
+            // Process registrations in batches to avoid rate limits
+            const BATCH_SIZE = 5;
+            const DELAY_BETWEEN_BATCHES = 3000; // 3 seconds
+            
+            for (let i = 0; i < registrations.length; i += BATCH_SIZE) {
+                const batch = registrations.slice(i, i + BATCH_SIZE);
+                const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+                const totalBatches = Math.ceil(registrations.length / BATCH_SIZE);
+                
+                console.log(`[CRON]   Batch ${batchNumber}/${totalBatches} (${batch.length} emails)`);
+                
+                const promises = batch.map(async (reg) => {
+                    try {
+                        const html = generateEventReminderHtml(
+                            event.title,
+                            formattedDate,
+                            formattedTime,
+                            event.location || 'TBA',
+                            reg.attendee_name,
+                            `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`
+                        );
+                        
+                        const result = await sendEmailWithProvider(
+                            reg.attendee_email,
+                            `🎟️ Reminder: ${event.title} is Tomorrow!`,
+                            html,
+                            event.owner_id
+                        );
+                        
+                        if (result.sent) {
+                            // Also send push notification if subscribed
+                            try {
+                                const { data: user } = await supabase
+                                    .from('profiles')
+                                    .select('id')
+                                    .eq('email', reg.attendee_email.toLowerCase())
+                                    .single();
+                                
+                                if (user?.id) {
+                                    await PushService.sendNotification(user.id, 
+                                        PushService.NotificationTemplates.eventReminder(event.title, formattedDate, event.id)
+                                    );
+                                }
+                            } catch (pushErr) {
+                                // Push is optional, don't fail on error
                             }
-                        } catch (pushErr) {
-                            // Push is optional, don't fail on error
+                            return { success: true, email: reg.attendee_email };
+                        } else {
+                            return { success: false, email: reg.attendee_email, error: result.error };
                         }
+                    } catch (e) {
+                        console.error(`[CRON] Reminder failed for ${reg.attendee_email}:`, e.message);
+                        return { success: false, email: reg.attendee_email, error: e.message };
+                    }
+                });
+                
+                const results = await Promise.all(promises);
+                
+                // Count successes and failures
+                results.forEach(result => {
+                    if (result.success) {
+                        sent++;
+                        console.log(`[CRON]   ✓ ${result.email}`);
                     } else {
                         failed++;
+                        console.warn(`[CRON]   ✗ ${result.email}: ${result.error || 'failed'}`);
                     }
-                } catch (e) {
-                    console.error(`[CRON] Reminder failed for ${reg.attendee_email}:`, e);
-                    failed++;
+                });
+                
+                // Add delay between batches
+                if (i + BATCH_SIZE < registrations.length) {
+                    await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
                 }
             }
         }
