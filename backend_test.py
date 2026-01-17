@@ -437,183 +437,78 @@ class PayoutBalanceTester:
     def test_payout_endpoints_without_auth(self):
         """Test Case 6: Test payout endpoints without authentication to verify security"""
         try:
-            # Try to fetch promo codes without authentication to test endpoint existence
-            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            # Test upcoming-payouts endpoint without auth
+            payouts_response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
             
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    if 'promoCodes' in data:
-                        self.log_result(
-                            "Promo Code Database Schema",
-                            True,
-                            "✅ Promo codes table exists and is accessible (no auth required)",
-                            {"table_exists": True, "endpoint_working": True, "promo_count": len(data.get('promoCodes', []))}
-                        )
-                        return True
-                    else:
-                        self.log_result(
-                            "Promo Code Database Schema",
-                            False,
-                            "❌ Unexpected response structure from promo codes endpoint",
-                            data
-                        )
-                        return False
-                except json.JSONDecodeError:
-                    self.log_result(
-                        "Promo Code Database Schema",
-                        False,
-                        "❌ Invalid JSON response from promo codes endpoint",
-                        response.text
-                    )
-                    return False
-            elif response.status_code in [401, 403]:
-                # This is actually good - means the endpoint exists but requires auth
-                try:
-                    error_data = response.json()
-                    error_message = error_data.get('error', '')
-                    
-                    self.log_result(
-                        "Promo Code Database Schema",
-                        True,
-                        f"✅ Promo codes endpoint exists and requires authentication (HTTP {response.status_code})",
-                        {"endpoint_exists": True, "auth_required": True, "status": response.status_code, "error": error_message}
-                    )
-                    return True
-                except:
-                    self.log_result(
-                        "Promo Code Database Schema",
-                        True,
-                        f"✅ Promo codes endpoint exists and requires authentication (HTTP {response.status_code})",
-                        {"endpoint_exists": True, "auth_required": True, "status": response.status_code}
-                    )
-                    return True
-            elif response.status_code == 500:
-                try:
-                    error_data = response.json()
-                    error_message = error_data.get('error', '')
-                    
-                    if 'does not exist' in error_message.lower() or 'table' in error_message.lower():
-                        self.log_result(
-                            "Promo Code Database Schema",
-                            False,
-                            "❌ Promo codes table does not exist in database",
-                            {"table_exists": False, "error": error_message}
-                        )
-                    else:
-                        self.log_result(
-                            "Promo Code Database Schema",
-                            False,
-                            f"❌ Database error: {error_message}",
-                            error_data
-                        )
-                except:
-                    self.log_result(
-                        "Promo Code Database Schema",
-                        False,
-                        f"❌ Server error when accessing promo codes: {response.text}",
-                        {"status": response.status_code}
-                    )
-                return False
-            elif response.status_code == 404:
+            if payouts_response.status_code in [401, 403]:
                 self.log_result(
-                    "Promo Code Database Schema",
-                    False,
-                    "❌ Promo codes endpoint does not exist (HTTP 404)",
-                    {"endpoint_exists": False, "status": response.status_code}
-                )
-                return False
-            else:
-                self.log_result(
-                    "Promo Code Database Schema",
-                    False,
-                    f"❌ Unexpected response from promo codes endpoint: HTTP {response.status_code}",
-                    response.text
-                )
-                return False
-                
-        except Exception as e:
-            self.log_result("Promo Code Database Schema", False, f"Exception: {str(e)}")
-            return False
-
-    def test_promo_code_endpoints_without_auth(self):
-        """Test Case 7: Test promo code endpoints without authentication to verify error handling"""
-        try:
-            # Test GET endpoint without auth
-            get_response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
-            
-            if get_response.status_code in [401, 403]:
-                self.log_result(
-                    "Promo Code GET Endpoint - Auth Required",
+                    "Upcoming Payouts Endpoint - Auth Required",
                     True,
-                    f"✅ GET endpoint properly requires authentication (HTTP {get_response.status_code})",
-                    {"status": get_response.status_code, "endpoint": "GET /api/admin/promo-codes"}
+                    f"✅ Upcoming payouts endpoint properly requires authentication (HTTP {payouts_response.status_code})",
+                    {"status": payouts_response.status_code, "endpoint": "GET /api/admin/upcoming-payouts"}
                 )
             else:
                 self.log_result(
-                    "Promo Code GET Endpoint - Auth Required",
+                    "Upcoming Payouts Endpoint - Auth Required",
                     False,
-                    f"❌ GET endpoint should require auth but returned HTTP {get_response.status_code}",
-                    {"status": get_response.status_code, "response": get_response.text[:200]}
+                    f"❌ Upcoming payouts endpoint should require auth but returned HTTP {payouts_response.status_code}",
+                    {"status": payouts_response.status_code, "response": payouts_response.text[:200]}
                 )
             
-            # Test POST endpoint without auth
-            test_promo = {
-                "id": "test-no-auth",
-                "code": "NOAUTH",
-                "type": "percentage",
-                "value": 10
-            }
+            # Test profile endpoint without auth
+            profile_response = self.session.get(f"{BACKEND_URL}/api/auth/profile")
             
-            post_response = self.session.post(f"{BACKEND_URL}/api/admin/promo-codes", json=test_promo)
-            
-            if post_response.status_code in [401, 403]:
+            if profile_response.status_code in [401, 403]:
                 self.log_result(
-                    "Promo Code POST Endpoint - Auth Required",
+                    "Profile Endpoint - Auth Required",
                     True,
-                    f"✅ POST endpoint properly requires authentication (HTTP {post_response.status_code})",
-                    {"status": post_response.status_code, "endpoint": "POST /api/admin/promo-codes"}
+                    f"✅ Profile endpoint properly requires authentication (HTTP {profile_response.status_code})",
+                    {"status": profile_response.status_code, "endpoint": "GET /api/auth/profile"}
                 )
             else:
                 self.log_result(
-                    "Promo Code POST Endpoint - Auth Required",
+                    "Profile Endpoint - Auth Required",
                     False,
-                    f"❌ POST endpoint should require auth but returned HTTP {post_response.status_code}",
-                    {"status": post_response.status_code, "response": post_response.text[:200]}
+                    f"❌ Profile endpoint should require auth but returned HTTP {profile_response.status_code}",
+                    {"status": profile_response.status_code, "response": profile_response.text[:200]}
                 )
                 
         except Exception as e:
-            self.log_result("Promo Code Endpoints Without Auth", False, f"Exception: {str(e)}")
+            self.log_result("Payout Endpoints Without Auth", False, f"Exception: {str(e)}")
 
     def run_all_tests(self):
-        """Run all promo code creation tests as specified in review request"""
-        print("🎟️ Starting Promo Code Creation Issue Testing")
+        """Run all payout balance calculation tests as specified in review request"""
+        print("💰 Starting Payout Balance Calculation Testing")
         print("=" * 70)
-        print("🎯 TESTING FOCUS: Promo Code Creation API - Save & Persistence")
+        print("🎯 TESTING FOCUS: Organizer & Affiliate Payout Balance Fixes")
         print("=" * 70)
         
-        # Core Promo Code Tests from Review Request
+        # Core Payout Balance Tests from Review Request
         print("\n🔧 BACKEND API TESTS")
         print("-" * 40)
         self.test_backend_health_and_connectivity()
-        self.test_promo_code_database_schema()
-        self.test_promo_code_endpoints_without_auth()
+        self.test_payout_endpoints_without_auth()
         
         # Authentication Test
         print("\n🔐 AUTHENTICATION TESTS")
         print("-" * 40)
-        login_success = self.test_admin_login()
+        login_success = self.test_organizer_login()
         
         if login_success:
-            print("\n🎫 PROMO CODE FUNCTIONALITY TESTS")
+            print("\n💰 PAYOUT BALANCE FUNCTIONALITY TESTS")
             print("-" * 40)
-            self.test_promo_codes_get_endpoint()
-            created_promo = self.test_promo_code_creation()
-            if created_promo:
-                self.test_promo_code_persistence(created_promo)
+            
+            # Test 1: Organizer Payout Balance
+            payouts_data = self.test_organizer_upcoming_payouts_endpoint()
+            if payouts_data:
+                self.test_payout_balance_calculation(payouts_data)
+            
+            # Test 2: Affiliate Payout Balance (if applicable)
+            profile_data = self.test_user_profile_payout_fields()
+            
         else:
-            print("\n⚠️ SKIPPING PROMO CODE TESTS - Authentication Failed")
-            print("Cannot test promo code creation without admin authentication")
+            print("\n⚠️ SKIPPING PAYOUT TESTS - Authentication Failed")
+            print("Cannot test payout balance calculation without organizer authentication")
         
         print("\n" + "=" * 70)
         print("📊 TEST SUMMARY")
@@ -634,47 +529,41 @@ class PayoutBalanceTester:
         
         # Check each test result
         backend_health = next((r for r in self.results if 'Backend Health' in r['test']), None)
-        admin_login = next((r for r in self.results if 'Admin Login' in r['test'] and 'Exception' not in r['test']), None)
-        get_promo_codes = next((r for r in self.results if 'Get Promo Codes' in r['test']), None)
-        create_promo_code = next((r for r in self.results if 'Create Promo Code' in r['test'] and 'Authentication' not in r['test'] and 'Authorization' not in r['test']), None)
-        verify_persistence = next((r for r in self.results if 'Verify Promo Code Persistence' in r['test']), None)
-        database_schema = next((r for r in self.results if 'Database Schema' in r['test']), None)
+        organizer_login = next((r for r in self.results if 'Organizer Login' in r['test'] and 'Exception' not in r['test']), None)
+        upcoming_payouts = next((r for r in self.results if 'Organizer Payouts' in r['test']), None)
+        payout_calculation = next((r for r in self.results if 'Payout Balance Calculation' in r['test']), None)
+        profile_fields = next((r for r in self.results if 'Profile Payout Fields' in r['test']), None)
         auth_required = next((r for r in self.results if 'Auth Required' in r['test']), None)
         
         if backend_health and backend_health['success']:
-            criteria_results.append("✅ Backend is healthy and promo code routes exist")
+            criteria_results.append("✅ Backend is healthy and payout routes exist")
         else:
             criteria_results.append("❌ Backend health check failed")
             
-        if database_schema and database_schema['success']:
-            criteria_results.append("✅ Promo codes database table exists and is accessible")
-        else:
-            criteria_results.append("❌ Promo codes database table verification failed")
-            
         if auth_required and auth_required['success']:
-            criteria_results.append("✅ Promo code endpoints properly require authentication")
+            criteria_results.append("✅ Payout endpoints properly require authentication")
         else:
-            criteria_results.append("❌ Promo code endpoints authentication verification failed")
+            criteria_results.append("❌ Payout endpoints authentication verification failed")
             
-        if admin_login and admin_login['success']:
-            criteria_results.append("✅ Admin authentication working")
+        if organizer_login and organizer_login['success']:
+            criteria_results.append("✅ Organizer authentication working")
         else:
-            criteria_results.append("❌ Admin authentication failed - no valid admin user found")
+            criteria_results.append("❌ Organizer authentication failed - no valid organizer user found")
             
-        if get_promo_codes and get_promo_codes['success']:
-            criteria_results.append("✅ GET /api/admin/promo-codes endpoint working")
+        if upcoming_payouts and upcoming_payouts['success']:
+            criteria_results.append("✅ GET /api/admin/upcoming-payouts endpoint working")
         else:
-            criteria_results.append("❌ GET promo codes endpoint failed")
+            criteria_results.append("❌ Upcoming payouts endpoint failed")
             
-        if create_promo_code and create_promo_code['success']:
-            criteria_results.append("✅ POST /api/admin/promo-codes endpoint working (promo code created)")
+        if payout_calculation and payout_calculation['success']:
+            criteria_results.append("✅ Payout balance calculation logic verified (ready payouts sum)")
         else:
-            criteria_results.append("❌ POST promo codes endpoint failed (promo code creation failed)")
+            criteria_results.append("❌ Payout balance calculation verification failed")
             
-        if verify_persistence and verify_persistence['success']:
-            criteria_results.append("✅ Promo code persists in database after creation")
+        if profile_fields and profile_fields['success']:
+            criteria_results.append("✅ User profile has availablePayout and totalPaidOut fields")
         else:
-            criteria_results.append("❌ Promo code persistence verification failed")
+            criteria_results.append("❌ User profile payout fields verification failed")
         
         for criterion in criteria_results:
             print(f"  {criterion}")
@@ -686,32 +575,33 @@ class PayoutBalanceTester:
                     print(f"  - {result['test']}: {result['details']}")
         
         print("\n📋 TESTING NOTES:")
-        print("  - Attempted admin users: test+openticket@gmail.com, thisearlyseason@gmail.com, tylerans@gmail.com")
-        print("  - Test promo code: TESTCODE (20% percentage discount)")
-        print("  - Target: all plans, Usage limit: 100, Expires: 2025-12-31")
-        print("  - Expected: 200 status code, promo code created and persisted")
+        print("  - Test organizer: tylerans@gmail.com (Super Admin/Organizer)")
+        print("  - Organizer endpoint: GET /api/admin/upcoming-payouts")
+        print("  - Expected: Payouts with status='ready' for balance calculation")
+        print("  - Affiliate fields: availablePayout + totalPaidOut from user profile")
         
         print("\n🔍 EXPECTED BEHAVIOR:")
-        print("  - Admin login should succeed and return authentication token")
-        print("  - GET /api/admin/promo-codes should return existing promo codes array")
-        print("  - POST /api/admin/promo-codes should create new promo code and return it")
-        print("  - Created promo code should persist and be retrievable via GET endpoint")
-        print("  - All operations should require admin authentication")
+        print("  - Organizer login should succeed and return authentication token")
+        print("  - GET /api/admin/upcoming-payouts should return payouts array with status field")
+        print("  - Ready payouts (status='ready') should be summed for payout balance")
+        print("  - User profile should contain availablePayout and totalPaidOut fields")
+        print("  - Affiliate total earnings = availablePayout + totalPaidOut")
+        print("  - All payout operations should require authentication")
         
         return passed == total
 
 if __name__ == "__main__":
-    tester = PromoCodeTester()
+    tester = PayoutBalanceTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/promo_code_test_results.json', 'w') as f:
+    with open('/app/payout_balance_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/promo_code_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/payout_balance_test_results.json")
     
     if success:
-        print("\n🎉 All Promo Code Creation tests PASSED!")
+        print("\n🎉 All Payout Balance Calculation tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
