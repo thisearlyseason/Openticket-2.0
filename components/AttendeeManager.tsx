@@ -545,21 +545,15 @@ export const AttendeeManager = () => {
             const reg = regList.find(r => r.id === item.regId);
             if (!reg) return;
 
+            let response: any;
+
             // Scenario 0: Addon Refund
             if (item.itemType === 'addon') {
-                const updatedAddOns = [...(reg.addOns || [])];
-                const addon = updatedAddOns[item.ticketIndex];
-                if (addon) {
-                    addon.status = 'refunded';
-                    // We need a specific endpoint to process the MONEY refund for this addon
-                    // Passing the index or ID to backend to find price and refund.
-                    await StorageService.refundAddon(reg.id, item.ticketIndex, refundReason);
-                }
+                response = await StorageService.refundAddon(reg.id, item.ticketIndex, refundReason);
             }
             // Scenario 1: Full Order Refund
             else if (refundMode === 'order') {
-                // Confirmation is handled by the modal UI itself now (Red Button).
-                await StorageService.refundRegistration(reg.id, [], refundReason); // Empty array = full refund signal
+                response = await StorageService.refundRegistration(reg.id, [], refundReason); // Empty array = full refund signal
             }
             // Scenario 2: Single Ticket Refund
             else {
@@ -576,16 +570,31 @@ export const AttendeeManager = () => {
                         updatedTickets[item.ticketIndex] = { ...targetTicket, status: 'refunded' };
                     }
 
-                    // Call backend with the NEW state desired. Backend calculates diff and refunds.
-                    await StorageService.refundRegistration(reg.id, updatedTickets, refundReason);
+                    response = await StorageService.refundRegistration(reg.id, updatedTickets, refundReason);
                 }
             }
 
-            showToast("Refund processed successfully!", "success");
+            // Handle response - check Stripe status
+            if (response && response.stripeError) {
+                // Stripe refund failed but DB was updated
+                showToast(`⚠️ Warning: ${response.warning || response.stripeError}`, "warning");
+                console.error('Stripe refund error:', response.stripeError);
+            } else if (response && response.stripeRefundId) {
+                // Success - Stripe refund processed
+                showToast(`✅ Refund processed successfully! Stripe ID: ${response.stripeRefundId.substring(0, 12)}...`, "success");
+            } else if (response && response.message) {
+                // Success - manual/offline refund
+                showToast(`✅ ${response.message}`, "success");
+            } else {
+                // Generic success
+                showToast("✅ Refund processed successfully!", "success");
+            }
+
             setShowRefundModal(null);
-            loadData();
+            await loadData();
         } catch (e: any) {
-            showToast("Refund failed: " + e.message, "error");
+            console.error('Refund error:', e);
+            showToast("❌ Refund failed: " + e.message, "error");
         }
     };
 
