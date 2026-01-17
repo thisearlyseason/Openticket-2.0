@@ -243,38 +243,77 @@ const sendAbandonedCartEmails = async () => {
             return;
         }
         
+        console.log(`[CRON] Found ${abandonedRegs.length} abandoned cart(s) to process`);
+        
         let sent = 0, failed = 0;
         
-        for (const reg of abandonedRegs) {
-            if (!reg.event?.title || !reg.attendee_email) continue;
+        // Process in batches to avoid Resend rate limits (2 req/sec)
+        const BATCH_SIZE = 5;
+        const DELAY_BETWEEN_BATCHES = 3000; // 3 seconds
+        
+        for (let i = 0; i < abandonedRegs.length; i += BATCH_SIZE) {
+            const batch = abandonedRegs.slice(i, i + BATCH_SIZE);
+            const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+            const totalBatches = Math.ceil(abandonedRegs.length / BATCH_SIZE);
             
-            // Don't send for past events
-            if (new Date(reg.event.date) < new Date()) continue;
+            console.log(`[CRON] Processing batch ${batchNumber}/${totalBatches} (${batch.length} emails)`);
             
-            try {
-                const checkoutUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/event/${reg.event_id}`;
-                const html = generateAbandonedCartHtml(reg.event.title, reg.attendee_name, checkoutUrl);
+            const promises = batch.map(async (reg) => {
+                if (!reg.event?.title || !reg.attendee_email) {
+                    return { success: false, reason: 'missing_data' };
+                }
                 
-                const result = await sendEmailWithProvider(
-                    reg.attendee_email,
-                    `🎟️ You left something behind - ${reg.event.title}`,
-                    html,
-                    reg.event.owner_id
-                );
+                // Don't send for past events
+                if (new Date(reg.event.date) < new Date()) {
+                    return { success: false, reason: 'past_event' };
+                }
                 
-                if (result.sent || result.simulated) {
+                try {
+                    const checkoutUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/event/${reg.event_id}`;
+                    const html = generateAbandonedCartHtml(reg.event.title, reg.attendee_name, checkoutUrl);
+                    
+                    const result = await sendEmailWithProvider(
+                        reg.attendee_email,
+                        `🎟️ You left something behind - ${reg.event.title}`,
+                        html,
+                        reg.event.owner_id
+                    );
+                    
+                    if (result.sent || result.simulated) {
+                        // Mark as sent to avoid duplicate emails
+                        await supabase
+                            .from('registrations')
+                            .update({ abandoned_email_sent: new Date().toISOString() })
+                            .eq('id', reg.id);
+                        return { success: true, email: reg.attendee_email };
+                    } else {
+                        return { success: false, email: reg.attendee_email, error: result.error };
+                    }
+                } catch (e) {
+                    console.error(`[CRON] Abandoned cart email failed for ${reg.attendee_email}:`, e.message);
+                    return { success: false, email: reg.attendee_email, error: e.message };
+                }
+            });
+            
+            const results = await Promise.all(promises);
+            
+            // Count successes and failures
+            results.forEach(result => {
+                if (result.success) {
                     sent++;
-                    // Mark as sent to avoid duplicate emails
-                    await supabase
-                        .from('registrations')
-                        .update({ abandoned_email_sent: new Date().toISOString() })
-                        .eq('id', reg.id);
+                    console.log(`[CRON] ✓ Sent to ${result.email}`);
                 } else {
                     failed++;
+                    if (result.error) {
+                        console.warn(`[CRON] ✗ Failed: ${result.email} - ${result.error}`);
+                    }
                 }
-            } catch (e) {
-                console.error(`[CRON] Abandoned cart email failed for ${reg.attendee_email}:`, e);
-                failed++;
+            });
+            
+            // Add delay between batches to respect rate limits
+            if (i + BATCH_SIZE < abandonedRegs.length) {
+                console.log(`[CRON] Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`);
+                await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
             }
         }
         
