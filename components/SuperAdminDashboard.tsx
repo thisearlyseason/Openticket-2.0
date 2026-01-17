@@ -917,6 +917,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 throw new Error(data.error || 'Failed to save global Gemini key');
             }
 
+            // Refresh the key from backend to confirm it was saved
+            await fetchGlobalGeminiKey();
+
             window.alert(globalGeminiKey 
                 ? '✅ Global Gemini API Key saved! All users without personal keys can now use AI features.'
                 : '✅ Global Gemini API Key removed. Users must now provide their own keys for AI features.'
