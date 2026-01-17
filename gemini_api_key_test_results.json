@@ -1,0 +1,12 @@
+[
+  {
+    "test": "Login and Authentication",
+    "success": false,
+    "details": "\u274c Invalid login credentials for test+openticket@gmail.com",
+    "response_data": {
+      "status": 401,
+      "response": "{\"error\":\"Invalid login credentials\"}"
+    },
+    "timestamp": "2026-01-17 02:38:36"
+  }
+]
