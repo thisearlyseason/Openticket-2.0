@@ -79,12 +79,16 @@ export const AffiliateDashboard = () => {
                     const clicks = userData.affiliateClicks || 0;
                     const conversions = commissions.length;
                     const conversionRate = clicks > 0 ? (conversions / clicks) * 100 : 0;
+                    
+                    // Use availablePayout from profile (this is the actual pending/available amount)
+                    const pending = userData.availablePayout || 0;
+                    const paidOut = userData.totalPaidOut || 0;
 
                     setStats({
                         referrals: Math.max(commissions.length, Math.floor(total / 5)),
                         activeSubs: commissions.length,
-                        totalEarnings: total,
-                        pending: 0,
+                        totalEarnings: pending + paidOut, // Total = pending + paid out
+                        pending: pending,
                         proCount,
                         premiumCount,
                         clicks,
