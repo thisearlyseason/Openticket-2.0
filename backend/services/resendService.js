@@ -121,12 +121,19 @@ export const sendBulkEmail = async ({ recipients, subject, html, text }) => {
     const errors = [];
     const senderEmail = getSenderEmail();
 
-    // Process in batches to avoid rate limits
-    const BATCH_SIZE = 10;
-    const DELAY_BETWEEN_BATCHES = 500; // 500ms
+    // Process in batches to avoid Resend rate limits (2 requests per second)
+    // Batch size of 5 emails with 3 second delay = ~1.6 req/sec average
+    const BATCH_SIZE = 5;
+    const DELAY_BETWEEN_BATCHES = 3000; // 3 seconds
+
+    console.log(`[ResendService] Sending ${recipients.length} emails in batches of ${BATCH_SIZE} with ${DELAY_BETWEEN_BATCHES}ms delays`);
 
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const batch = recipients.slice(i, i + BATCH_SIZE);
+        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(recipients.length / BATCH_SIZE);
+        
+        console.log(`[ResendService] Processing batch ${batchNumber}/${totalBatches} (${batch.length} emails)`);
         
         const promises = batch.map(async (recipient) => {
             try {
@@ -150,19 +157,23 @@ export const sendBulkEmail = async ({ recipients, subject, html, text }) => {
                 if (error) {
                     failed++;
                     errors.push({ email, error: error.message });
+                    console.warn(`[ResendService] Failed to send to ${email}: ${error.message}`);
                 } else {
                     sent++;
+                    console.log(`[ResendService] ✓ Sent to ${email}`);
                 }
             } catch (err) {
                 failed++;
                 errors.push({ email: recipient, error: err.message });
+                console.error(`[ResendService] Exception sending to ${recipient}: ${err.message}`);
             }
         });
 
         await Promise.all(promises);
 
-        // Add delay between batches
+        // Add delay between batches to respect rate limits
         if (i + BATCH_SIZE < recipients.length) {
+            console.log(`[ResendService] Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`);
             await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
         }
     }
