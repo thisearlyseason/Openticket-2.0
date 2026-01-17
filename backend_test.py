@@ -456,7 +456,7 @@ class PayoutBalanceTester:
                 )
             
             # Test profile endpoint without auth
-            profile_response = self.session.get(f"{BACKEND_URL}/api/auth/profile")
+            profile_response = self.session.get(f"{BACKEND_URL}/api/auth/me")
             
             if profile_response.status_code in [401, 403]:
                 self.log_result(
