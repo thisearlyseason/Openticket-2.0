@@ -423,7 +423,9 @@ export const refundRegistration = async (req, res) => {
             refundAmount: amountToRefundCents / 100,
             stripeRefundId,
             ticketsRefunded: ticketsBeingRefunded,
-            message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}`
+            message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}`,
+            stripeError: stripeError || undefined,
+            warning: stripeError ? 'Registration marked as refunded, but Stripe refund failed. You may need to process the refund manually in Stripe dashboard.' : undefined
         });
 
     } catch (error) {
