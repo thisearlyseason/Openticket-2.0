@@ -19,6 +19,7 @@ class PromoCodeTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
+        self.auth_token = None
         
     def log_result(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
         """Log test result"""
@@ -35,505 +36,387 @@ class PromoCodeTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_upcoming_payouts_endpoint(self):
-        """Test Case 1: GET /api/admin/upcoming-payouts - Fetch payouts with status 'ready' or 'pending'"""
+    def test_admin_login(self):
+        """Test Case 1: Login as admin user test+openticket@gmail.com"""
         try:
-            # Test without authentication first
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
+            # Test login endpoint
+            login_data = {
+                "email": "test+openticket@gmail.com",
+                "password": "12345678"
+            }
             
-            if response.status_code == 401:
+            response = self.session.post(f"{BACKEND_URL}/api/auth/login", json=login_data)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    if 'token' in data or 'access_token' in data:
+                        self.auth_token = data.get('token') or data.get('access_token')
+                        self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
+                        
+                        self.log_result(
+                            "Admin Login",
+                            True,
+                            "✅ Successfully logged in as admin user",
+                            {"email": "test+openticket@gmail.com", "token_received": True}
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Admin Login",
+                            False,
+                            "❌ Login response missing token",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Admin Login",
+                        False,
+                        "❌ Invalid JSON response from login",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 401:
                 self.log_result(
-                    "Upcoming Payouts Endpoint - Authentication",
-                    True,
-                    "✅ Properly requires authentication (HTTP 401)",
-                    {"status": response.status_code, "message": "Authentication required"}
+                    "Admin Login",
+                    False,
+                    "❌ Invalid credentials - user may not exist or password incorrect",
+                    {"status": response.status_code, "response": response.text}
                 )
-            elif response.status_code == 200:
-                # Check if response has expected structure
+                return False
+            else:
+                self.log_result(
+                    "Admin Login",
+                    False,
+                    f"❌ Unexpected login response: HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Admin Login", False, f"Exception: {str(e)}")
+            return False
+
+    def test_promo_codes_get_endpoint(self):
+        """Test Case 2: GET /api/admin/promo-codes - Fetch existing promo codes"""
+        try:
+            if not self.auth_token:
+                self.log_result(
+                    "Get Promo Codes - Authentication Required",
+                    False,
+                    "❌ Cannot test without authentication token",
+                    {"auth_token": None}
+                )
+                return False
+            
+            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            
+            if response.status_code == 200:
                 try:
                     data = response.json()
                     
-                    if isinstance(data, list):
+                    if 'promoCodes' in data and isinstance(data['promoCodes'], list):
                         self.log_result(
-                            "Upcoming Payouts Endpoint - Structure",
+                            "Get Promo Codes Endpoint",
                             True,
-                            f"✅ Returns payouts array with {len(data)} items",
-                            {"payouts_count": len(data), "structure": "valid"}
+                            f"✅ Successfully retrieved {len(data['promoCodes'])} promo codes",
+                            {"promo_codes_count": len(data['promoCodes']), "structure": "valid"}
                         )
-                        
-                        # If there are payouts, check their structure
-                        if data:
-                            payout = data[0]
-                            expected_fields = ['id', 'amount', 'status']
-                            
-                            if all(field in payout for field in expected_fields):
-                                # Check for ready/pending status
-                                ready_payouts = [p for p in data if p.get('status') == 'ready']
-                                pending_payouts = [p for p in data if p.get('status') == 'pending']
-                                
-                                self.log_result(
-                                    "Upcoming Payouts Endpoint - Payout Structure",
-                                    True,
-                                    f"✅ Found {len(ready_payouts)} ready payouts, {len(pending_payouts)} pending payouts",
-                                    {
-                                        "sample_payout": payout,
-                                        "ready_count": len(ready_payouts),
-                                        "pending_count": len(pending_payouts),
-                                        "total_count": len(data)
-                                    }
-                                )
-                                
-                                # Calculate total ready payout amount for balance verification
-                                if ready_payouts:
-                                    total_ready_amount = sum(float(p.get('amount', 0)) for p in ready_payouts)
-                                    self.log_result(
-                                        "Upcoming Payouts Endpoint - Ready Amount Calculation",
-                                        True,
-                                        f"✅ Total ready payout amount: ${total_ready_amount:.2f}",
-                                        {
-                                            "ready_payouts": ready_payouts,
-                                            "total_ready_amount": total_ready_amount
-                                        }
-                                    )
-                                else:
-                                    self.log_result(
-                                        "Upcoming Payouts Endpoint - Ready Amount Calculation",
-                                        True,
-                                        "✅ No ready payouts found - balance should be $0.00",
-                                        {"ready_payouts": [], "total_ready_amount": 0}
-                                    )
-                            else:
-                                missing_fields = [f for f in expected_fields if f not in payout]
-                                self.log_result(
-                                    "Upcoming Payouts Endpoint - Payout Structure",
-                                    False,
-                                    f"❌ Payout missing expected fields: {missing_fields}",
-                                    payout
-                                )
+                        return True
                     else:
                         self.log_result(
-                            "Upcoming Payouts Endpoint - Structure",
+                            "Get Promo Codes Endpoint",
                             False,
-                            "❌ Response is not an array",
+                            "❌ Response missing 'promoCodes' array",
                             data
                         )
+                        return False
                 except json.JSONDecodeError:
                     self.log_result(
-                        "Upcoming Payouts Endpoint - Structure",
+                        "Get Promo Codes Endpoint",
                         False,
-                        "❌ Response is not valid JSON",
+                        "❌ Invalid JSON response",
                         response.text
                     )
+                    return False
+            elif response.status_code == 401:
+                self.log_result(
+                    "Get Promo Codes Endpoint - Authentication",
+                    False,
+                    "❌ Authentication failed - token may be invalid",
+                    {"status": response.status_code}
+                )
+                return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Get Promo Codes Endpoint - Authorization",
+                    False,
+                    "❌ Access denied - user may not have admin privileges",
+                    {"status": response.status_code}
+                )
+                return False
             else:
                 self.log_result(
-                    "Upcoming Payouts Endpoint",
+                    "Get Promo Codes Endpoint",
                     False,
                     f"❌ Unexpected status code: {response.status_code}",
                     response.text
                 )
+                return False
+                
         except Exception as e:
-            self.log_result("Upcoming Payouts Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Get Promo Codes Endpoint", False, f"Exception: {str(e)}")
+            return False
 
-    def test_payout_balance_calculation_logic(self):
-        """Test Case 2: Verify payout balance calculation matches ready payouts sum"""
+    def test_promo_code_creation(self):
+        """Test Case 3: POST /api/admin/promo-codes - Create test promo code"""
         try:
-            # Get upcoming payouts data
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
-            
-            if response.status_code == 401:
+            if not self.auth_token:
                 self.log_result(
-                    "Payout Balance Calculation - Authentication Required",
-                    True,
-                    "✅ Cannot test calculation without authentication - endpoint secured",
+                    "Create Promo Code - Authentication Required",
+                    False,
+                    "❌ Cannot test without authentication token",
+                    {"auth_token": None}
+                )
+                return False
+            
+            # Create test promo code as specified in review request
+            test_promo_code = {
+                "id": "promo-test123",
+                "code": "TESTCODE",
+                "type": "percentage",
+                "value": 20,
+                "target": "all",
+                "targetPlans": [],
+                "usageLimit": 100,
+                "usageCount": 0,
+                "expiresAt": "2025-12-31",
+                "isActive": True,
+                "createdAt": "2025-01-17T00:00:00Z"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/admin/promo-codes", json=test_promo_code)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if 'promoCode' in data:
+                        created_promo = data['promoCode']
+                        
+                        # Verify the created promo code has expected fields
+                        expected_fields = ['id', 'code', 'type', 'value', 'target']
+                        missing_fields = [f for f in expected_fields if f not in created_promo]
+                        
+                        if not missing_fields:
+                            self.log_result(
+                                "Create Promo Code",
+                                True,
+                                f"✅ Successfully created promo code: {created_promo.get('code')}",
+                                {
+                                    "promo_code": created_promo,
+                                    "id": created_promo.get('id'),
+                                    "code": created_promo.get('code'),
+                                    "type": created_promo.get('type'),
+                                    "value": created_promo.get('value')
+                                }
+                            )
+                            return created_promo
+                        else:
+                            self.log_result(
+                                "Create Promo Code",
+                                False,
+                                f"❌ Created promo code missing fields: {missing_fields}",
+                                created_promo
+                            )
+                            return False
+                    else:
+                        self.log_result(
+                            "Create Promo Code",
+                            False,
+                            "❌ Response missing 'promoCode' field",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Create Promo Code",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 401:
+                self.log_result(
+                    "Create Promo Code - Authentication",
+                    False,
+                    "❌ Authentication failed - token may be invalid",
                     {"status": response.status_code}
                 )
-                return
-            elif response.status_code != 200:
+                return False
+            elif response.status_code == 403:
                 self.log_result(
-                    "Payout Balance Calculation - API Error",
+                    "Create Promo Code - Authorization",
                     False,
-                    f"❌ Cannot get payouts data: HTTP {response.status_code}",
-                    response.text
+                    "❌ Access denied - user may not have admin privileges",
+                    {"status": response.status_code}
                 )
-                return
-            
-            try:
-                payouts = response.json()
-                
-                if not isinstance(payouts, list):
-                    self.log_result(
-                        "Payout Balance Calculation - Data Format",
-                        False,
-                        "❌ Payouts data is not an array",
-                        payouts
-                    )
-                    return
-                
-                # Filter for ready payouts and calculate sum
-                ready_payouts = [p for p in payouts if p.get('status') == 'ready']
-                expected_balance = sum(float(p.get('amount', 0)) for p in ready_payouts)
-                
-                # Test the calculation logic
-                if len(ready_payouts) == 0:
-                    self.log_result(
-                        "Payout Balance Calculation - No Ready Payouts",
-                        True,
-                        "✅ No ready payouts found - expected balance: $0.00",
-                        {
-                            "ready_payouts": [],
-                            "expected_balance": 0.00,
-                            "calculation": "sum of ready payouts = $0.00"
-                        }
-                    )
-                else:
-                    payout_amounts = [float(p.get('amount', 0)) for p in ready_payouts]
-                    calculation_details = {
-                        "ready_payouts_count": len(ready_payouts),
-                        "individual_amounts": payout_amounts,
-                        "sum_calculation": f"{' + '.join(f'${amt:.2f}' for amt in payout_amounts)} = ${expected_balance:.2f}",
-                        "expected_balance": expected_balance
-                    }
-                    
-                    self.log_result(
-                        "Payout Balance Calculation - Ready Payouts Sum",
-                        True,
-                        f"✅ Found {len(ready_payouts)} ready payouts - expected balance: ${expected_balance:.2f}",
-                        calculation_details
-                    )
-                
-                # Verify calculation matches expected behavior from review request
-                if expected_balance >= 0:
-                    self.log_result(
-                        "Payout Balance Calculation - Logic Verification",
-                        True,
-                        f"✅ Balance calculation logic correct: sum of ready payouts = ${expected_balance:.2f}",
-                        {
-                            "logic": "Payout Balance = SUM(amount WHERE status = 'ready')",
-                            "result": expected_balance,
-                            "matches_requirement": True
-                        }
-                    )
-                else:
-                    self.log_result(
-                        "Payout Balance Calculation - Logic Verification",
-                        False,
-                        f"❌ Invalid balance calculation: ${expected_balance:.2f}",
-                        {"result": expected_balance, "error": "Negative balance"}
-                    )
-                    
-            except json.JSONDecodeError:
-                self.log_result(
-                    "Payout Balance Calculation - JSON Error",
-                    False,
-                    "❌ Invalid JSON response from payouts endpoint",
-                    response.text
-                )
-            except Exception as calc_error:
-                self.log_result(
-                    "Payout Balance Calculation - Calculation Error",
-                    False,
-                    f"❌ Error in balance calculation: {str(calc_error)}",
-                    {"error": str(calc_error)}
-                )
-                
-        except Exception as e:
-            self.log_result("Payout Balance Calculation", False, f"Exception: {str(e)}")
-
-    def test_billing_page_components(self):
-        """Test Case 3: Verify billing page components exist and are properly structured"""
-        try:
-            # Check if Billing component exists
-            billing_path = "/app/components/Billing.tsx"
-            
-            billing_exists = os.path.exists(billing_path)
-            
-            if not billing_exists:
-                self.log_result(
-                    "Billing Component",
-                    False,
-                    "❌ Billing.tsx component file not found",
-                    {"path": billing_path, "exists": False}
-                )
-                return
-            
-            # Check Billing component for payout balance implementation
-            with open(billing_path, 'r') as f:
-                billing_content = f.read()
-            
-            # Check for the fix implementation
-            has_available_payout_state = "availablePayout" in billing_content
-            has_handle_payouts_load = "handlePayoutsLoad" in billing_content or "onPayoutsLoad" in billing_content
-            has_ready_status_filter = "status === 'ready'" in billing_content or "ready" in billing_content.lower()
-            
-            if has_available_payout_state and has_handle_payouts_load:
-                self.log_result(
-                    "Billing Component - Payout Balance Fix",
-                    True,
-                    "✅ Payout balance fix implemented: availablePayout state and payouts load handler found",
-                    {
-                        "availablePayout_state": has_available_payout_state,
-                        "payouts_load_handler": has_handle_payouts_load,
-                        "ready_status_filter": has_ready_status_filter
-                    }
-                )
-            else:
-                missing_features = []
-                if not has_available_payout_state:
-                    missing_features.append("availablePayout state")
-                if not has_handle_payouts_load:
-                    missing_features.append("payouts load handler")
-                
-                self.log_result(
-                    "Billing Component - Payout Balance Fix",
-                    False,
-                    f"❌ Payout balance fix incomplete - Missing: {', '.join(missing_features)}",
-                    {
-                        "availablePayout_state": has_available_payout_state,
-                        "payouts_load_handler": has_handle_payouts_load,
-                        "missing": missing_features
-                    }
-                )
-            
-            # Check UpcomingPayoutsCard component (defined within Billing.tsx)
-            has_upcoming_payouts_card = "UpcomingPayoutsCard" in billing_content
-            has_on_payouts_load_prop = "onPayoutsLoad" in billing_content
-            has_callback_usage = "onPayoutsLoad(" in billing_content or "props.onPayoutsLoad" in billing_content
-            
-            if has_upcoming_payouts_card and has_on_payouts_load_prop and has_callback_usage:
-                self.log_result(
-                    "UpcomingPayoutsCard Component - Callback Implementation",
-                    True,
-                    "✅ UpcomingPayoutsCard component with onPayoutsLoad callback properly implemented",
-                    {
-                        "component_exists": has_upcoming_payouts_card,
-                        "callback_prop": has_on_payouts_load_prop,
-                        "callback_usage": has_callback_usage
-                    }
-                )
-            else:
-                missing_features = []
-                if not has_upcoming_payouts_card:
-                    missing_features.append("UpcomingPayoutsCard component")
-                if not has_on_payouts_load_prop:
-                    missing_features.append("onPayoutsLoad prop")
-                if not has_callback_usage:
-                    missing_features.append("callback usage")
-                
-                self.log_result(
-                    "UpcomingPayoutsCard Component - Callback Implementation",
-                    False,
-                    f"❌ UpcomingPayoutsCard implementation incomplete - Missing: {', '.join(missing_features)}",
-                    {
-                        "component_exists": has_upcoming_payouts_card,
-                        "callback_prop": has_on_payouts_load_prop,
-                        "callback_usage": has_callback_usage,
-                        "missing": missing_features
-                    }
-                )
-                
-        except Exception as e:
-            self.log_result("Billing Page Components", False, f"Exception: {str(e)}")
-
-    def test_authentication_with_test_organizer(self):
-        """Test Case 4: Verify authentication works for test organizer thisearlyseason@gmail.com"""
-        try:
-            # Test if we can access a protected endpoint that would be used by the organizer
-            # This simulates the login process without actually logging in
-            
-            # Try to access the upcoming payouts endpoint (should require auth)
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
-            
-            if response.status_code == 401:
-                self.log_result(
-                    "Test Organizer Authentication - Endpoint Protection",
-                    True,
-                    "✅ Upcoming payouts endpoint properly protected (requires authentication)",
-                    {"status": response.status_code, "endpoint": "/api/admin/upcoming-payouts"}
-                )
-                
-                # Check if the error message is informative
+                return False
+            elif response.status_code == 400:
                 try:
                     error_data = response.json()
-                    if 'error' in error_data or 'message' in error_data:
-                        self.log_result(
-                            "Test Organizer Authentication - Error Message",
-                            True,
-                            "✅ Authentication error provides clear message",
-                            error_data
-                        )
-                    else:
-                        self.log_result(
-                            "Test Organizer Authentication - Error Message",
-                            False,
-                            "❌ Authentication error lacks clear message",
-                            error_data
-                        )
+                    self.log_result(
+                        "Create Promo Code - Validation Error",
+                        False,
+                        f"❌ Bad request - validation failed: {error_data.get('error', 'Unknown error')}",
+                        error_data
+                    )
                 except:
                     self.log_result(
-                        "Test Organizer Authentication - Error Message",
-                        True,
-                        "✅ Authentication returns standard 401 response",
-                        {"status": 401, "response": "Standard HTTP 401"}
+                        "Create Promo Code - Validation Error",
+                        False,
+                        f"❌ Bad request: {response.text}",
+                        {"status": response.status_code}
                     )
+                return False
+            elif response.status_code == 500:
+                try:
+                    error_data = response.json()
+                    self.log_result(
+                        "Create Promo Code - Server Error",
+                        False,
+                        f"❌ Server error: {error_data.get('error', 'Internal server error')}",
+                        error_data
+                    )
+                except:
+                    self.log_result(
+                        "Create Promo Code - Server Error",
+                        False,
+                        f"❌ Server error: {response.text}",
+                        {"status": response.status_code}
+                    )
+                return False
             else:
                 self.log_result(
-                    "Test Organizer Authentication - Endpoint Protection",
+                    "Create Promo Code",
                     False,
-                    f"❌ Expected 401 for unauthenticated request, got {response.status_code}",
-                    {"status": response.status_code, "response": response.text[:200]}
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
                 )
-            
-            # Test if the billing page route exists (frontend routing)
-            billing_route_test = self.session.get(f"{BACKEND_URL}/#/billing")
-            
-            # For SPA, we expect the main page to load (200) and handle routing client-side
-            if billing_route_test.status_code == 200:
-                self.log_result(
-                    "Billing Page Route - Frontend Routing",
-                    True,
-                    "✅ Billing page route accessible (/#/billing)",
-                    {"status": billing_route_test.status_code, "route": "/#/billing"}
-                )
-            else:
-                self.log_result(
-                    "Billing Page Route - Frontend Routing",
-                    False,
-                    f"❌ Billing page route not accessible: HTTP {billing_route_test.status_code}",
-                    {"status": billing_route_test.status_code}
-                )
+                return False
                 
         except Exception as e:
-            self.log_result("Test Organizer Authentication", False, f"Exception: {str(e)}")
+            self.log_result("Create Promo Code", False, f"Exception: {str(e)}")
+            return False
 
-    def test_payout_status_filtering(self):
-        """Test Case 5: Verify payout status filtering logic (ready vs pending)"""
+    def test_promo_code_persistence(self, created_promo_code):
+        """Test Case 4: Verify promo code persists in database"""
         try:
-            # Test the endpoint that should return payouts with different statuses
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
-            
-            if response.status_code == 401:
+            if not self.auth_token:
                 self.log_result(
-                    "Payout Status Filtering - Authentication Required",
-                    True,
-                    "✅ Cannot test filtering without authentication - endpoint secured",
-                    {"status": response.status_code}
-                )
-                return
-            elif response.status_code != 200:
-                self.log_result(
-                    "Payout Status Filtering - API Error",
+                    "Verify Promo Code Persistence - Authentication Required",
                     False,
-                    f"❌ Cannot get payouts data: HTTP {response.status_code}",
-                    response.text
+                    "❌ Cannot test without authentication token",
+                    {"auth_token": None}
                 )
-                return
+                return False
             
-            try:
-                payouts = response.json()
-                
-                if not isinstance(payouts, list):
-                    self.log_result(
-                        "Payout Status Filtering - Data Format",
-                        False,
-                        "❌ Payouts data is not an array",
-                        payouts
-                    )
-                    return
-                
-                # Analyze payout statuses
-                status_counts = {}
-                ready_payouts = []
-                pending_payouts = []
-                other_payouts = []
-                
-                for payout in payouts:
-                    status = payout.get('status', 'unknown')
-                    status_counts[status] = status_counts.get(status, 0) + 1
+            if not created_promo_code:
+                self.log_result(
+                    "Verify Promo Code Persistence - No Promo Code",
+                    False,
+                    "❌ Cannot test persistence without created promo code",
+                    {"created_promo_code": None}
+                )
+                return False
+            
+            # Fetch all promo codes to verify our test code exists
+            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    promo_codes = data.get('promoCodes', [])
                     
-                    if status == 'ready':
-                        ready_payouts.append(payout)
-                    elif status == 'pending':
-                        pending_payouts.append(payout)
+                    # Look for our test promo code
+                    test_code = created_promo_code.get('code', 'TESTCODE')
+                    found_promo = None
+                    
+                    for promo in promo_codes:
+                        if promo.get('code') == test_code:
+                            found_promo = promo
+                            break
+                    
+                    if found_promo:
+                        # Verify the promo code data matches what we created
+                        matches = (
+                            found_promo.get('code') == test_code and
+                            found_promo.get('type') == 'percentage' and
+                            found_promo.get('value') == 20 and
+                            found_promo.get('target') == 'all'
+                        )
+                        
+                        if matches:
+                            self.log_result(
+                                "Verify Promo Code Persistence",
+                                True,
+                                f"✅ Promo code {test_code} successfully persisted in database",
+                                {
+                                    "found_promo": found_promo,
+                                    "matches_created": True,
+                                    "total_promo_codes": len(promo_codes)
+                                }
+                            )
+                            return True
+                        else:
+                            self.log_result(
+                                "Verify Promo Code Persistence",
+                                False,
+                                f"❌ Promo code {test_code} found but data doesn't match",
+                                {
+                                    "expected": created_promo_code,
+                                    "found": found_promo,
+                                    "matches": matches
+                                }
+                            )
+                            return False
                     else:
-                        other_payouts.append(payout)
-                
-                # Verify filtering logic
-                expected_statuses = ['ready', 'pending']
-                found_statuses = list(status_counts.keys())
-                
-                if all(status in expected_statuses for status in found_statuses):
+                        self.log_result(
+                            "Verify Promo Code Persistence",
+                            False,
+                            f"❌ Promo code {test_code} not found in database",
+                            {
+                                "searched_for": test_code,
+                                "available_codes": [p.get('code') for p in promo_codes],
+                                "total_codes": len(promo_codes)
+                            }
+                        )
+                        return False
+                        
+                except json.JSONDecodeError:
                     self.log_result(
-                        "Payout Status Filtering - Status Values",
-                        True,
-                        f"✅ All payouts have expected statuses: {status_counts}",
-                        {
-                            "status_distribution": status_counts,
-                            "ready_count": len(ready_payouts),
-                            "pending_count": len(pending_payouts),
-                            "other_count": len(other_payouts)
-                        }
-                    )
-                else:
-                    unexpected_statuses = [s for s in found_statuses if s not in expected_statuses]
-                    self.log_result(
-                        "Payout Status Filtering - Status Values",
+                        "Verify Promo Code Persistence",
                         False,
-                        f"❌ Found unexpected payout statuses: {unexpected_statuses}",
-                        {
-                            "expected": expected_statuses,
-                            "found": found_statuses,
-                            "unexpected": unexpected_statuses
-                        }
+                        "❌ Invalid JSON response when fetching promo codes",
+                        response.text
                     )
-                
-                # Test the core filtering logic for balance calculation
-                if ready_payouts:
-                    ready_amounts = [float(p.get('amount', 0)) for p in ready_payouts]
-                    total_ready = sum(ready_amounts)
-                    
-                    self.log_result(
-                        "Payout Status Filtering - Ready Payouts Calculation",
-                        True,
-                        f"✅ Ready payouts filtering works: {len(ready_payouts)} payouts = ${total_ready:.2f}",
-                        {
-                            "ready_payouts": ready_payouts,
-                            "amounts": ready_amounts,
-                            "total": total_ready,
-                            "filter_logic": "status === 'ready'"
-                        }
-                    )
-                else:
-                    self.log_result(
-                        "Payout Status Filtering - Ready Payouts Calculation",
-                        True,
-                        "✅ No ready payouts found - balance should be $0.00",
-                        {
-                            "ready_payouts": [],
-                            "total": 0.00,
-                            "filter_logic": "status === 'ready'"
-                        }
-                    )
-                
-            except json.JSONDecodeError:
+                    return False
+            else:
                 self.log_result(
-                    "Payout Status Filtering - JSON Error",
+                    "Verify Promo Code Persistence",
                     False,
-                    "❌ Invalid JSON response from payouts endpoint",
+                    f"❌ Failed to fetch promo codes for verification: HTTP {response.status_code}",
                     response.text
                 )
-            except Exception as filter_error:
-                self.log_result(
-                    "Payout Status Filtering - Filter Error",
-                    False,
-                    f"❌ Error in status filtering: {str(filter_error)}",
-                    {"error": str(filter_error)}
-                )
+                return False
                 
         except Exception as e:
-            self.log_result("Payout Status Filtering", False, f"Exception: {str(e)}")
+            self.log_result("Verify Promo Code Persistence", False, f"Exception: {str(e)}")
+            return False
 
     def test_backend_health_and_connectivity(self):
-        """Test Case 6: Verify backend is healthy and accessible"""
+        """Test Case 5: Verify backend is healthy and accessible"""
         try:
             # Test basic connectivity
             health_response = self.session.get(f"{BACKEND_URL}/api/health", timeout=10)
@@ -562,16 +445,16 @@ class PromoCodeTester:
                     health_response.text
                 )
             
-            # Test if the specific admin routes exist
+            # Test if the admin routes exist
             admin_routes = [
-                "/api/admin/upcoming-payouts"
+                "/api/admin/promo-codes"
             ]
             
             route_results = {}
             for route in admin_routes:
                 try:
                     route_response = self.session.get(f"{BACKEND_URL}{route}", timeout=5)
-                    # 401 = auth required (good), 404 = route doesn't exist (bad)
+                    # 401/403 = auth required (good), 404 = route doesn't exist (bad)
                     if route_response.status_code == 404:
                         route_results[route] = {"exists": False, "status": 404}
                     else:
@@ -598,6 +481,96 @@ class PromoCodeTester:
                 
         except Exception as e:
             self.log_result("Backend Health and Connectivity", False, f"Exception: {str(e)}")
+
+    def test_promo_code_database_schema(self):
+        """Test Case 6: Verify promo codes table exists and has correct structure"""
+        try:
+            if not self.auth_token:
+                self.log_result(
+                    "Promo Code Database Schema - Authentication Required",
+                    False,
+                    "❌ Cannot test without authentication token",
+                    {"auth_token": None}
+                )
+                return False
+            
+            # Try to fetch promo codes to test if table exists
+            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    if 'promoCodes' in data:
+                        self.log_result(
+                            "Promo Code Database Schema",
+                            True,
+                            "✅ Promo codes table exists and is accessible",
+                            {"table_exists": True, "endpoint_working": True}
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Promo Code Database Schema",
+                            False,
+                            "❌ Unexpected response structure from promo codes endpoint",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Promo Code Database Schema",
+                        False,
+                        "❌ Invalid JSON response from promo codes endpoint",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 500:
+                try:
+                    error_data = response.json()
+                    error_message = error_data.get('error', '')
+                    
+                    if 'does not exist' in error_message.lower():
+                        self.log_result(
+                            "Promo Code Database Schema",
+                            False,
+                            "❌ Promo codes table does not exist in database",
+                            {"table_exists": False, "error": error_message}
+                        )
+                    else:
+                        self.log_result(
+                            "Promo Code Database Schema",
+                            False,
+                            f"❌ Database error: {error_message}",
+                            error_data
+                        )
+                except:
+                    self.log_result(
+                        "Promo Code Database Schema",
+                        False,
+                        f"❌ Server error when accessing promo codes: {response.text}",
+                        {"status": response.status_code}
+                    )
+                return False
+            elif response.status_code in [401, 403]:
+                self.log_result(
+                    "Promo Code Database Schema",
+                    True,
+                    "✅ Promo codes endpoint exists (authentication/authorization required)",
+                    {"endpoint_exists": True, "auth_required": True, "status": response.status_code}
+                )
+                return True
+            else:
+                self.log_result(
+                    "Promo Code Database Schema",
+                    False,
+                    f"❌ Unexpected response from promo codes endpoint: HTTP {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Promo Code Database Schema", False, f"Exception: {str(e)}")
+            return False
 
     def run_all_tests(self):
         """Run all payout balance discrepancy tests as specified in review request"""
