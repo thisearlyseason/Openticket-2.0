@@ -116,6 +116,25 @@ export const Dashboard = () => {
             }
         });
         setUserMessages(messages.sort((a, b) => b.broadcast.sentAt - a.broadcast.sentAt));
+
+        // Fetch available payout from backend (ready payouts)
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/admin/organizer/upcoming-payouts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const readyPayouts = data.payouts?.filter((p: any) => p.status === 'ready') || [];
+                const totalReady = readyPayouts.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+                // Update current user with calculated payout
+                if (currentUser) {
+                    setCurrentUser({ ...currentUser, availablePayout: totalReady });
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch available payout:', e);
+        }
     };
 
     const checkNonprofitStatus = async (user: User) => {
