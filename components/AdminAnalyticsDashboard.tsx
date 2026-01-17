@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, Clock, AlertTriangle, RefreshCw, Download, Calen
 import { getAuthToken } from '../services/firebaseConfig';
 // import { useWebSocket } from '../hooks/useWebSocket'; // Temporarily disabled for Vercel deployment
 import { HourlyScansChart, DailyTrendsChart, ScanMethodsChart, SuccessRateTrendChart, PerformanceMetricsChart } from './AnalyticsCharts';
+import { DataTable, Column } from './DataTable';
 
 interface EventAnalytics {
     eventId: string;
