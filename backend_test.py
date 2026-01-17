@@ -284,7 +284,7 @@ class PayoutBalanceTester:
                 return False
             
             # Get user profile to check for affiliate payout fields
-            response = self.session.get(f"{BACKEND_URL}/api/auth/profile")
+            response = self.session.get(f"{BACKEND_URL}/api/auth/me")
             
             if response.status_code == 200:
                 try:
