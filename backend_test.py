@@ -114,38 +114,51 @@ class PayoutBalanceTester:
         try:
             if not self.auth_token:
                 self.log_result(
-                    "Get Promo Codes - Authentication Required",
+                    "Get Organizer Payouts - Authentication Required",
                     False,
                     "❌ Cannot test without authentication token",
                     {"auth_token": None}
                 )
                 return False
             
-            response = self.session.get(f"{BACKEND_URL}/api/admin/promo-codes")
+            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
             
             if response.status_code == 200:
                 try:
                     data = response.json()
                     
-                    if 'promoCodes' in data and isinstance(data['promoCodes'], list):
+                    if 'payouts' in data and isinstance(data['payouts'], list):
+                        payouts = data['payouts']
+                        ready_payouts = [p for p in payouts if p.get('status') == 'ready']
+                        pending_payouts = [p for p in payouts if p.get('status') == 'pending']
+                        
+                        # Calculate total ready amount
+                        total_ready = sum(p.get('amount', 0) for p in ready_payouts)
+                        
                         self.log_result(
-                            "Get Promo Codes Endpoint",
+                            "Get Organizer Payouts Endpoint",
                             True,
-                            f"✅ Successfully retrieved {len(data['promoCodes'])} promo codes",
-                            {"promo_codes_count": len(data['promoCodes']), "structure": "valid"}
+                            f"✅ Successfully retrieved {len(payouts)} payouts ({len(ready_payouts)} ready, {len(pending_payouts)} pending)",
+                            {
+                                "total_payouts": len(payouts),
+                                "ready_payouts": len(ready_payouts),
+                                "pending_payouts": len(pending_payouts),
+                                "total_ready_amount": total_ready,
+                                "payouts_structure": "valid"
+                            }
                         )
-                        return True
+                        return {"payouts": payouts, "ready_payouts": ready_payouts, "total_ready": total_ready}
                     else:
                         self.log_result(
-                            "Get Promo Codes Endpoint",
+                            "Get Organizer Payouts Endpoint",
                             False,
-                            "❌ Response missing 'promoCodes' array",
+                            "❌ Response missing 'payouts' array",
                             data
                         )
                         return False
                 except json.JSONDecodeError:
                     self.log_result(
-                        "Get Promo Codes Endpoint",
+                        "Get Organizer Payouts Endpoint",
                         False,
                         "❌ Invalid JSON response",
                         response.text
@@ -153,7 +166,7 @@ class PayoutBalanceTester:
                     return False
             elif response.status_code == 401:
                 self.log_result(
-                    "Get Promo Codes Endpoint - Authentication",
+                    "Get Organizer Payouts Endpoint - Authentication",
                     False,
                     "❌ Authentication failed - token may be invalid",
                     {"status": response.status_code}
@@ -161,15 +174,15 @@ class PayoutBalanceTester:
                 return False
             elif response.status_code == 403:
                 self.log_result(
-                    "Get Promo Codes Endpoint - Authorization",
+                    "Get Organizer Payouts Endpoint - Authorization",
                     False,
-                    "❌ Access denied - user may not have admin privileges",
+                    "❌ Access denied - user may not have organizer privileges",
                     {"status": response.status_code}
                 )
                 return False
             else:
                 self.log_result(
-                    "Get Promo Codes Endpoint",
+                    "Get Organizer Payouts Endpoint",
                     False,
                     f"❌ Unexpected status code: {response.status_code}",
                     response.text
@@ -177,11 +190,11 @@ class PayoutBalanceTester:
                 return False
                 
         except Exception as e:
-            self.log_result("Get Promo Codes Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Get Organizer Payouts Endpoint", False, f"Exception: {str(e)}")
             return False
 
-    def test_promo_code_creation(self):
-        """Test Case 3: POST /api/admin/promo-codes - Create test promo code"""
+    def test_payout_balance_calculation(self, payouts_data):
+        """Test Case 3: Verify payout balance calculation logic"""
         try:
             if not self.auth_token:
                 self.log_result(
