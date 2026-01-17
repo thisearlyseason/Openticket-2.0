@@ -1,0 +1,44 @@
+[
+  {
+    "test": "Backend Health Check",
+    "success": true,
+    "details": "\u2705 Backend is healthy and responding",
+    "response_data": {
+      "status": "healthy",
+      "uptime": 3082.240022517,
+      "timestamp": "2026-01-17T02:02:33.947Z"
+    },
+    "timestamp": "2026-01-17 02:02:33"
+  },
+  {
+    "test": "Backend Routes Availability",
+    "success": true,
+    "details": "\u2705 All required admin routes exist: ['/api/admin/promo-codes']",
+    "response_data": {
+      "/api/admin/promo-codes": {
+        "exists": true,
+        "status": 401
+      }
+    },
+    "timestamp": "2026-01-17 02:02:33"
+  },
+  {
+    "test": "Promo Code Database Schema - Authentication Required",
+    "success": false,
+    "details": "\u274c Cannot test without authentication token",
+    "response_data": {
+      "auth_token": null
+    },
+    "timestamp": "2026-01-17 02:02:33"
+  },
+  {
+    "test": "Admin Login",
+    "success": false,
+    "details": "\u274c Invalid credentials - user may not exist or password incorrect",
+    "response_data": {
+      "status": 401,
+      "response": "{\"error\":\"Invalid login credentials\"}"
+    },
+    "timestamp": "2026-01-17 02:02:34"
+  }
+]
