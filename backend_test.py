@@ -656,6 +656,7 @@ class PromoCodeTester:
         print("-" * 40)
         self.test_backend_health_and_connectivity()
         self.test_promo_code_database_schema()
+        self.test_promo_code_endpoints_without_auth()
         
         # Authentication Test
         print("\n🔐 AUTHENTICATION TESTS")
@@ -692,11 +693,12 @@ class PromoCodeTester:
         
         # Check each test result
         backend_health = next((r for r in self.results if 'Backend Health' in r['test']), None)
-        admin_login = next((r for r in self.results if 'Admin Login' in r['test']), None)
+        admin_login = next((r for r in self.results if 'Admin Login' in r['test'] and 'Exception' not in r['test']), None)
         get_promo_codes = next((r for r in self.results if 'Get Promo Codes' in r['test']), None)
         create_promo_code = next((r for r in self.results if 'Create Promo Code' in r['test'] and 'Authentication' not in r['test'] and 'Authorization' not in r['test']), None)
         verify_persistence = next((r for r in self.results if 'Verify Promo Code Persistence' in r['test']), None)
         database_schema = next((r for r in self.results if 'Database Schema' in r['test']), None)
+        auth_required = next((r for r in self.results if 'Auth Required' in r['test']), None)
         
         if backend_health and backend_health['success']:
             criteria_results.append("✅ Backend is healthy and promo code routes exist")
@@ -708,10 +710,15 @@ class PromoCodeTester:
         else:
             criteria_results.append("❌ Promo codes database table verification failed")
             
-        if admin_login and admin_login['success']:
-            criteria_results.append("✅ Admin authentication working (test+openticket@gmail.com)")
+        if auth_required and auth_required['success']:
+            criteria_results.append("✅ Promo code endpoints properly require authentication")
         else:
-            criteria_results.append("❌ Admin authentication failed - user may not exist or lack admin privileges")
+            criteria_results.append("❌ Promo code endpoints authentication verification failed")
+            
+        if admin_login and admin_login['success']:
+            criteria_results.append("✅ Admin authentication working")
+        else:
+            criteria_results.append("❌ Admin authentication failed - no valid admin user found")
             
         if get_promo_codes and get_promo_codes['success']:
             criteria_results.append("✅ GET /api/admin/promo-codes endpoint working")
@@ -738,7 +745,7 @@ class PromoCodeTester:
                     print(f"  - {result['test']}: {result['details']}")
         
         print("\n📋 TESTING NOTES:")
-        print("  - Test user: test+openticket@gmail.com / 12345678")
+        print("  - Attempted admin users: test+openticket@gmail.com, thisearlyseason@gmail.com, tylerans@gmail.com")
         print("  - Test promo code: TESTCODE (20% percentage discount)")
         print("  - Target: all plans, Usage limit: 100, Expires: 2025-12-31")
         print("  - Expected: 200 status code, promo code created and persisted")
