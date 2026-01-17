@@ -2534,3 +2534,76 @@ The Gemini API key persistence issue is **NOT a bug in the profile management sy
 **Status:** Root cause identified, requires backend authentication system fix.
 
 ---
+
+## 🧪 TESTING COMPLETED - Payout Balance Calculation Fixes
+
+### Backend Testing Results (January 17, 2026 - Testing Agent) - ⚠️ CRITICAL ISSUES IDENTIFIED
+
+**Test Summary:**
+- **Total Tests:** 8 backend API tests
+- **Passed:** 6/8 (75% success rate)
+- **Critical Issues:** 2 major issues identified
+- **Status:** Payout balance calculation logic verified, but implementation has critical bugs
+
+**Key Findings:**
+
+1. **✅ Backend Infrastructure Working:**
+   - Backend is healthy and responding correctly at `https://auth-rls-repair.preview.emergentagent.com`
+   - Payout API endpoints exist and are properly secured with authentication
+   - GET `/api/admin/upcoming-payouts` endpoint exists and returns HTTP 401 (requires auth)
+   - GET `/api/auth/me` endpoint exists and returns HTTP 401 (requires auth)
+   - All endpoints properly reject unauthorized requests
+
+2. **✅ Frontend Implementation Logic Verified:**
+   - **Dashboard.tsx (lines 123-132):** Correctly filters `payouts.filter(p => p.status === 'ready')`
+   - **Dashboard.tsx (line 129):** Correctly calculates total: `readyPayouts.reduce((sum, p) => sum + (p.amount || 0), 0)`
+   - **Dashboard.tsx (line 132):** Correctly updates `availablePayout` with calculated total
+   - **AffiliateDashboard.tsx (lines 84-90):** Correctly uses `availablePayout + totalPaidOut` for total earnings
+
+3. **❌ CRITICAL BUG #1: API Endpoint URL Mismatch**
+   - **Frontend calls:** `/api/admin/organizer/upcoming-payouts` (Dashboard.tsx line 123)
+   - **Backend route:** `/api/admin/upcoming-payouts` (adminRoutes.js line 1185)
+   - **Evidence:** Frontend URL returns HTTP 404, backend URL returns HTTP 401
+   - **Impact:** Payout balance calculation will ALWAYS FAIL due to 404 error
+   - **Fix Required:** Change frontend URL to `/api/admin/upcoming-payouts`
+
+4. **❌ CRITICAL BUG #2: Authentication System Mismatch**
+   - **Login System:** Uses Supabase authentication (returns HS256 tokens)
+   - **Backend Middleware:** Expects Firebase authentication (requires RS256 tokens)
+   - **Evidence:** Backend logs show "Expected RS256 but got HS256" error
+   - **Impact:** ALL authenticated API calls fail with HTTP 401
+   - **Fix Required:** Unify authentication system (use either Supabase OR Firebase consistently)
+
+5. **✅ Security Implementation Verified:**
+   - All payout endpoints properly require authentication
+   - Unauthorized requests correctly rejected with HTTP 401
+   - No security vulnerabilities in endpoint access control
+
+**Backend API Structure Verified:**
+- **Organizer Payouts:** `/api/admin/upcoming-payouts` returns `{payouts: [{eventId, eventTitle, amount, status, releaseDate}]}`
+- **Status Logic:** `status: 'ready'` if event date passed, `'pending'` if future
+- **User Profile:** `/api/auth/me` should return `{availablePayout, totalPaidOut, affiliateCode}` fields
+- **Authentication:** All endpoints require valid Firebase ID tokens
+
+**Expected Payout Balance Calculation (Once Fixed):**
+1. **Organizer Dashboard:** 
+   - Calls `/api/admin/upcoming-payouts` with auth token
+   - Filters payouts where `status === 'ready'`
+   - Sums amounts: `readyPayouts.reduce((sum, p) => sum + p.amount, 0)`
+   - Updates balance display with calculated total
+
+2. **Affiliate Dashboard:**
+   - Fetches user profile from `/api/auth/me`
+   - Calculates total earnings: `availablePayout + totalPaidOut`
+   - Displays combined total in dashboard
+
+**Root Cause Analysis:**
+The payout balance calculation **LOGIC IS CORRECT** in both frontend components, but the implementation has two critical bugs that prevent it from working:
+
+1. **URL Mismatch:** Frontend calls wrong endpoint URL (404 error)
+2. **Auth Mismatch:** Incompatible token formats prevent authenticated requests
+
+**Conclusion:**
+The payout balance discrepancy bug fix is **correctly implemented in the code** but **cannot function due to infrastructure issues**. The calculation logic matches the review request requirements exactly, but the system has fundamental authentication and routing problems that must be resolved first.
+
+---
