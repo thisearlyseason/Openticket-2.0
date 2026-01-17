@@ -96,45 +96,6 @@ export const EventRefunds = () => {
         }
     };
 
-    const calculateRefundAmount = (reg: Registration, ticketIndices: number[]) => {
-        if (!reg.tickets) return 0;
-        
-        return ticketIndices.reduce((sum, idx) => {
-            const ticket = reg.tickets![idx];
-            if (ticket && ticket.status !== 'refunded') {
-                return sum + ((ticket.pricePerTicket || 0) * (ticket.quantity || 1));
-            }
-            return sum;
-        }, 0);
-    };
-
-    const handleSelectOrder = (reg: Registration) => {
-        if (!reg.tickets) return;
-        
-        // Select all non-refunded tickets
-        const ticketIndices = reg.tickets
-            .map((t, idx) => t.status !== 'refunded' ? idx : -1)
-            .filter(idx => idx !== -1);
-        
-        const amount = calculateRefundAmount(reg, ticketIndices);
-        
-        setSelectedRefund({
-            registration: reg,
-            selectedTickets: ticketIndices,
-            refundAmount: amount
-        });
-    };
-
-    const handleSelectTicket = (reg: Registration, ticketIndex: number) => {
-        const amount = calculateRefundAmount(reg, [ticketIndex]);
-        
-        setSelectedRefund({
-            registration: reg,
-            selectedTickets: [ticketIndex],
-            refundAmount: amount
-        });
-    };
-
     const handleProcessRefund = async () => {
         if (!selectedRefund || !refundReason.trim()) {
             window.alert('Please provide a refund reason');
