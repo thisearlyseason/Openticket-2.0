@@ -29,6 +29,80 @@ export const AdminAnalyticsDashboard: React.FC = () => {
     });
     const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
     const [showCharts, setShowCharts] = useState(false);
+
+    // DataTable columns for event analytics
+    const analyticsColumns: Column<EventAnalytics>[] = [
+        {
+            key: 'event',
+            header: 'Event',
+            sortable: true,
+            filterable: true,
+            render: (event) => (
+                <div>
+                    <div className="font-bold text-white truncate max-w-xs">{event.eventTitle}</div>
+                    <div className="text-xs text-zinc-500 font-mono">{event.eventId.substring(0, 8)}...</div>
+                </div>
+            ),
+            exportValue: (event) => event.eventTitle
+        },
+        {
+            key: 'scans',
+            header: 'Total Scans',
+            sortable: true,
+            render: (event) => <span className="text-white font-bold">{event.totalScans.toLocaleString()}</span>,
+            exportValue: (event) => String(event.totalScans)
+        },
+        {
+            key: 'successRate',
+            header: 'Success Rate',
+            sortable: true,
+            render: (event) => (
+                <div className="flex items-center gap-2">
+                    <Badge color={event.successRate >= 95 ? 'green' : event.successRate >= 85 ? 'yellow' : 'red'}>
+                        {event.successRate.toFixed(1)}%
+                    </Badge>
+                </div>
+            ),
+            exportValue: (event) => `${event.successRate.toFixed(1)}%`
+        },
+        {
+            key: 'avgTime',
+            header: 'Avg Time',
+            sortable: true,
+            render: (event) => (
+                <span className="text-zinc-400 flex items-center gap-2">
+                    <Clock size={14} /> {event.avgDuration.toFixed(0)}ms
+                </span>
+            ),
+            exportValue: (event) => `${event.avgDuration.toFixed(0)}ms`
+        },
+        {
+            key: 'failed',
+            header: 'Failed',
+            sortable: true,
+            render: (event) => (
+                event.failedScans > 0 ? (
+                    <Badge color="red">{event.failedScans}</Badge>
+                ) : (
+                    <span className="text-zinc-600">0</span>
+                )
+            ),
+            exportValue: (event) => String(event.failedScans)
+        },
+        {
+            key: 'lastScan',
+            header: 'Last Scan',
+            sortable: true,
+            render: (event) => (
+                <span className="text-xs text-zinc-500">
+                    {event.lastScanAt ? new Date(event.lastScanAt).toLocaleString() : 'N/A'}
+                </span>
+            ),
+            exportValue: (event) => event.lastScanAt ? new Date(event.lastScanAt).toLocaleString() : 'N/A'
+        }
+    ];
+
+    const [showCharts, setShowCharts] = useState(false);
     const [chartData, setChartData] = useState<any>({
         hourly: [],
         daily: [],
