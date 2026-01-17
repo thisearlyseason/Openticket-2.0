@@ -251,7 +251,6 @@ export const ManageEvent = () => {
                                 <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-colors">
                                     <List size={24} />
                                 </div>
-                                <span className="text-2xl font-black">{event.registeredCount || 0}</span>
                             </div>
                             <h3 className="font-bold text-lg">Attendee List</h3>
                             <p className="text-xs text-zinc-500">Manage guests & orders</p>
