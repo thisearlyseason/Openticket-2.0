@@ -66,7 +66,10 @@ export const EventRefunds = () => {
     };
 
     useEffect(() => {
-        loadData();
+        const init = async () => {
+            await loadData();
+        };
+        init();
     }, [id]);
 
     const loadData = async () => {
