@@ -2,6 +2,10 @@
 -- Purpose: Safely increment/decrement event registered_count with concurrency safety
 -- Date: 2025-01-17
 
+-- Drop existing functions if they exist (with specific signatures)
+DROP FUNCTION IF EXISTS increment_registered_count(UUID, INTEGER);
+DROP FUNCTION IF EXISTS decrement_registered_count(UUID, INTEGER);
+
 -- Function to increment registered count (used when payment succeeds)
 CREATE OR REPLACE FUNCTION increment_registered_count(p_event_id UUID, p_count INTEGER)
 RETURNS VOID AS $$
@@ -25,6 +29,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Grant execute permissions to authenticated users
 GRANT EXECUTE ON FUNCTION increment_registered_count(UUID, INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION decrement_registered_count(UUID, INTEGER) TO authenticated;
+
+-- Also grant to anon role for public access if needed
+GRANT EXECUTE ON FUNCTION increment_registered_count(UUID, INTEGER) TO anon;
+GRANT EXECUTE ON FUNCTION decrement_registered_count(UUID, INTEGER) TO anon;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION increment_registered_count IS 'Safely increments event registered count when payment succeeds';
