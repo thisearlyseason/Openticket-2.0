@@ -523,13 +523,25 @@ export const refundRegistration = async (req, res) => {
         }
 
         res.json({ 
+            success: true,
             registration: data[0],
             refundAmount: amountToRefundCents / 100,
-            stripeRefundId,
+            stripeRefundId: stripeRefundId || null,
             ticketsRefunded: ticketsBeingRefunded,
             message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}`,
             stripeError: stripeError || undefined,
-            warning: stripeError ? 'Registration marked as refunded, but Stripe refund failed. You may need to process the refund manually in Stripe dashboard.' : undefined
+            warning: stripeError ? 'Registration marked as refunded, but Stripe refund failed. You may need to process the refund manually in Stripe dashboard.' : undefined,
+            diagnostics: {
+                hadStripeSession: !!reg.stripe_checkout_session_id,
+                stripeAttempted,
+                stripeRefundId: stripeRefundId || null,
+                paymentIntent: stripeAttempted ? 'Retrieved from session' : 'N/A',
+                refundStatus: stripeRefundId ? 'completed' : (stripeAttempted ? 'failed' : 'not_needed'),
+                dbUpdated: true,
+                countDecremented: ticketsBeingRefunded,
+                originalPaymentStatus: reg.payment_status,
+                refundTimestamp: new Date().toISOString()
+            }
         });
 
     } catch (error) {
