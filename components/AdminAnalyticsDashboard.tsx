@@ -361,75 +361,15 @@ export const AdminAnalyticsDashboard: React.FC = () => {
                     </h3>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-black text-left">
-                            <tr>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Event</th>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Total Scans</th>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Success Rate</th>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Avg Time</th>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Failed</th>
-                                <th className="p-4 text-xs text-zinc-500 uppercase font-bold">Last Scan</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-800">
-                            {(!eventAnalytics || eventAnalytics.length === 0) ? (
-                                <tr>
-                                    <td colSpan={6} className="p-8 text-center text-zinc-500">
-                                        No analytics data available for selected period
-                                    </td>
-                                </tr>
-                            ) : (
-                                (eventAnalytics || []).map((event) => (
-                                    <tr key={event.eventId} className="hover:bg-zinc-800/50 transition-colors">
-                                        <td className="p-4">
-                                            <div className="font-bold text-white truncate max-w-xs">
-                                                {event.eventTitle}
-                                            </div>
-                                            <div className="text-xs text-zinc-500 font-mono">
-                                                {event.eventId.substring(0, 8)}...
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="text-white font-bold">
-                                                {event.totalScans.toLocaleString()}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <Badge
-                                                className={
-                                                    event.successRate >= 95
-                                                        ? 'bg-green-600 text-white'
-                                                        : event.successRate >= 85
-                                                        ? 'bg-orange-600 text-white'
-                                                        : 'bg-red-600 text-white'
-                                                }
-                                            >
-                                                {event.successRate.toFixed(1)}%
-                                            </Badge>
-                                        </td>
-                                        <td className="p-4 text-white">
-                                            {event.avgDuration}ms
-                                        </td>
-                                        <td className="p-4">
-                                            {event.failedScans > 0 ? (
-                                                <span className="flex items-center gap-1 text-red-500">
-                                                    <AlertTriangle size={14} />
-                                                    {event.failedScans}
-                                                </span>
-                                            ) : (
-                                                <span className="text-zinc-600">0</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-zinc-400 text-sm">
-                                            {event.lastScanAt ? new Date(event.lastScanAt).toLocaleDateString() : 'N/A'}
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                <div className="p-6">
+                    <DataTable
+                        data={eventAnalytics}
+                        columns={analyticsColumns}
+                        searchPlaceholder="Search events..."
+                        emptyMessage="No analytics data available for selected period"
+                        exportFilename="event_analytics"
+                        getRowId={(event) => event.eventId}
+                    />
                 </div>
             </Card>
         </div>
