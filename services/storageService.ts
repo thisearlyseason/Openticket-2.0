@@ -1753,15 +1753,17 @@ export const StorageService = {
     },
 
     refundRegistration: async (id: string, updatedTickets: PurchasedTicket[], reason: string) => {
-        if (isOffline) return;
-        await postSupabase(`/registrations/${id}/refund`, 'POST', { tickets: updatedTickets, reason });
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        const response = await postSupabase(`/registrations/${id}/refund`, 'POST', { tickets: updatedTickets, reason });
         clearCache('regs');
+        return response; // Return full response with stripeRefundId, stripeError, warning, etc.
     },
 
     refundAddon: async (id: string, addonIndex: number, reason: string) => {
-        if (isOffline) return;
-        await postSupabase(`/registrations/${id}/refund-addon`, 'POST', { addonIndex, reason });
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        const response = await postSupabase(`/registrations/${id}/refund-addon`, 'POST', { addonIndex, reason });
         clearCache('regs');
+        return response;
     },
 
     updateRegistrationTickets: async (regId: string, updatedTickets: any[], newStatus?: 'pending' | 'completed' | 'offline_pending' | 'refunded', refundReason?: string) => {
