@@ -333,9 +333,45 @@ export const refundRegistration = async (req, res) => {
             .eq('id', id)
             .select();
 
-        if (error) throw error;
+        if (error) {
+            console.error('[Refund] Failed to update registration:', error);
+            throw new Error(`Failed to update registration: ${error.message}`);
+        }
 
-        // 5. Financial record is created by webhook (charge.refunded)
+        // 5. Decrement registered_count
+        if (ticketsBeingRefunded > 0) {
+            try {
+                // Try RPC first
+                const { error: countError } = await supabase.rpc('decrement_registered_count', {
+                    p_event_id: reg.event_id,
+                    p_count: ticketsBeingRefunded
+                });
+
+                if (countError) {
+                    console.warn('[Refund] RPC decrement failed, using direct update:', countError.message);
+                    // Fallback: manual decrement
+                    const { data: eventData } = await supabase
+                        .from('events')
+                        .select('registered_count')
+                        .eq('id', reg.event_id)
+                        .single();
+
+                    if (eventData) {
+                        await supabase
+                            .from('events')
+                            .update({ registered_count: Math.max(0, (eventData.registered_count || 0) - ticketsBeingRefunded) })
+                            .eq('id', reg.event_id);
+                    }
+                }
+
+                console.log(`[Refund] Decremented registered_count by ${ticketsBeingRefunded} for event ${reg.event_id}`);
+            } catch (countErr) {
+                console.error('[Refund] Failed to decrement count:', countErr);
+                // Don't fail the refund if count update fails
+            }
+        }
+
+        // 6. Financial record is created by webhook (charge.refunded)
         // But we can create it here as backup if webhook doesn't fire
         if (!reg.stripe_checkout_session_id && amountToRefundCents > 0) {
             // Manual/offline registration refund - create financial record
@@ -351,12 +387,35 @@ export const refundRegistration = async (req, res) => {
                 payout_status: 'settled',
                 transaction_type: 'refund',
             });
+        } else if (stripeRefundId && amountToRefundCents > 0) {
+            // Stripe refund - create backup financial record marked as pending_webhook
+            try {
+                await supabase.from('financial_transactions').insert({
+                    registration_id: id,
+                    event_id: reg.event_id,
+                    gross_amount: -(amountToRefundCents / 100),
+                    platform_fee: 0,
+                    stripe_fee: 0,
+                    organizer_net: -(amountToRefundCents / 100),
+                    currency: 'usd',
+                    status: 'refunded',
+                    payout_status: 'pending_webhook',
+                    transaction_type: 'refund',
+                    stripe_refund_id: stripeRefundId,
+                });
+                console.log(`[Refund] Created backup financial record for Stripe refund ${stripeRefundId}`);
+            } catch (finError) {
+                console.warn('[Refund] Failed to create backup financial record:', finError.message);
+                // Don't fail the refund if backup record creation fails
+            }
         }
 
         res.json({ 
             registration: data[0],
             refundAmount: amountToRefundCents / 100,
             stripeRefundId,
+            ticketsRefunded: ticketsBeingRefunded,
+            message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}`
         });
 
     } catch (error) {
