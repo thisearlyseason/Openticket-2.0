@@ -102,7 +102,6 @@ export const AdminAnalyticsDashboard: React.FC = () => {
         }
     ];
 
-    const [showCharts, setShowCharts] = useState(false);
     const [chartData, setChartData] = useState<any>({
         hourly: [],
         daily: [],
