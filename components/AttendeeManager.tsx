@@ -330,10 +330,6 @@ export const AttendeeManager = () => {
                 let stripeErrors: string[] = [];
 
                 try {
-                let failCount = 0;
-                let stripeErrors: string[] = [];
-
-                try {
                     // Group by Registration to minimize API calls
                     const groups: Record<string, AttendeeItem[]> = {};
                     selectedIds.forEach(id => {
