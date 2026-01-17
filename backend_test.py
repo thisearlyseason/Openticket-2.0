@@ -644,6 +644,10 @@ class PayoutBalanceTester:
         print("  - Organizer endpoint: GET /api/admin/upcoming-payouts")
         print("  - Expected: Payouts with status='ready' for balance calculation")
         print("  - Affiliate fields: availablePayout + totalPaidOut from user profile")
+        print("  - ⚠️  AUTHENTICATION SYSTEM MISMATCH DETECTED:")
+        print("    - Login endpoint uses Supabase (returns HS256 tokens)")
+        print("    - Backend middleware expects Firebase (requires RS256 tokens)")
+        print("    - This prevents full end-to-end testing of authenticated endpoints")
         
         print("\n🔍 EXPECTED BEHAVIOR:")
         print("  - Organizer login should succeed and return authentication token")
@@ -652,6 +656,7 @@ class PayoutBalanceTester:
         print("  - User profile should contain availablePayout and totalPaidOut fields")
         print("  - Affiliate total earnings = availablePayout + totalPaidOut")
         print("  - All payout operations should require authentication")
+        print("  - 🚨 CRITICAL: Authentication system needs to be unified (either Supabase OR Firebase)")
         
         return passed == total
 
