@@ -161,21 +161,6 @@ export const EventRefunds = () => {
             setIsProcessing(false);
         }
     };
-            await loadData();
-            
-            // Auto-close success after 5 seconds
-            setTimeout(() => {
-                setShowSuccess(false);
-                setSelectedRefund(null);
-                setRefundReason('');
-            }, 5000);
-
-        } catch (error: any) {
-            window.alert('Refund failed: ' + error.message);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
 
     const filteredRegistrations = registrations.filter(reg => {
         if (!searchQuery) return true;
