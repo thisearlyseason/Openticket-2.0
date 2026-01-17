@@ -46,6 +46,34 @@ export const ManageEvent = () => {
                         navigate('/dashboard');
                         return;
                     }
+                    
+                    // Calculate accurate guest count from registrations
+                    try {
+                        const registrations = await StorageService.getRegistrations(id);
+                        const paidRegistrations = registrations.filter(r => 
+                            r.paymentStatus === 'paid' || r.paymentStatus === 'completed'
+                        );
+                        
+                        // Count total guests (sum of all non-refunded ticket quantities)
+                        const totalGuests = paidRegistrations.reduce((sum, reg) => {
+                            if (reg.tickets && Array.isArray(reg.tickets)) {
+                                const guestCount = reg.tickets.reduce((ticketSum, ticket) => {
+                                    if (ticket.status !== 'refunded') {
+                                        return ticketSum + (ticket.quantity || 1);
+                                    }
+                                    return ticketSum;
+                                }, 0);
+                                return sum + guestCount;
+                            }
+                            return sum + 1; // Legacy registrations without ticket breakdown
+                        }, 0);
+                        
+                        // Update event with calculated count
+                        e.registeredCount = totalGuests;
+                    } catch (err) {
+                        console.error('Failed to calculate guest count:', err);
+                    }
+                    
                     setEvent(e);
                 }
             }
