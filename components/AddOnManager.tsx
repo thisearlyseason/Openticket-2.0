@@ -148,8 +148,6 @@ export const AddOnManager = () => {
         }
     ];
 
-    const [isLoading, setIsLoading] = useState(true);
-
     useEffect(() => {
         loadData();
     }, [id]);
