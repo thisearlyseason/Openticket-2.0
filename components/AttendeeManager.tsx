@@ -759,7 +759,9 @@ export const AttendeeManager = () => {
                                                             {item.name}
                                                         </h3>
                                                         {item.approvalStatus === 'pending' && <Badge color="yellow" className="text-[10px] px-1.5 py-0 h-4">Pending Approval</Badge>}
-                                                        {item.status !== 'paid' && <Badge color={item.status === 'refunded' ? 'red' : 'yellow'} className="text-[10px] px-1.5 py-0 h-4">{item.status}</Badge>}
+                                                        {item.status === 'refunding' && <Badge color="orange" className="text-[10px] px-1.5 py-0 h-4 animate-pulse">Refunding...</Badge>}
+                                                        {item.status === 'refunded' && <Badge color="red" className="text-[10px] px-1.5 py-0 h-4">Refunded</Badge>}
+                                                        {item.status !== 'paid' && item.status !== 'refunded' && item.status !== 'refunding' && <Badge color="yellow" className="text-[10px] px-1.5 py-0 h-4">{item.status}</Badge>}
                                                     </div>
                                                     <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-2 gap-y-1">
                                                         <span className="flex items-center gap-1 truncate max-w-[120px]"><Ticket size={10} /> {item.ticketType}</span>
