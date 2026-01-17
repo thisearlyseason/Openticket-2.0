@@ -120,7 +120,7 @@ export const Dashboard = () => {
         // Fetch available payout from backend (ready payouts)
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/admin/organizer/upcoming-payouts', {
+            const response = await fetch('/api/admin/upcoming-payouts', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
