@@ -136,14 +136,27 @@ export const AddOnManager = () => {
             key: 'actions',
             header: 'Actions',
             render: (item) => (
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDeleteAddOn(item)}
-                    className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                >
-                    <Trash2 size={14} />
-                </Button>
+                <div className="flex justify-end gap-2 items-center">
+                    <Button size="sm" variant="outline" className="h-8 text-[10px] uppercase font-bold" onClick={() => navigate(`/manage/${id}/attendees?search=${encodeURIComponent(item.attendeeEmail)}`)}>
+                        <Ticket size={12} className="mr-1" /> View Ticket
+                    </Button>
+
+                    <button
+                        onClick={() => handleRefund(item)}
+                        className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Refund Add-On"
+                    >
+                        <DollarSign size={16} />
+                    </button>
+
+                    <button
+                        onClick={() => handleDeleteAddOn(item)}
+                        className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Delete Add-On"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
             )
         }
     ];
