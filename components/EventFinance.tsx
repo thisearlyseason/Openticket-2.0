@@ -7,6 +7,7 @@ import { StorageService, PLANS } from '../services/storageService';
 import { Event, Registration } from '../types';
 import { useGlobalUI } from './GlobalUIProvider';
 import { getAuthToken } from '../services/firebaseConfig';
+import { DataTable, Column } from './DataTable';
 
 interface FinancialSummary {
     grossSales: number;
