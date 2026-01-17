@@ -14,6 +14,7 @@ import {
     Smartphone, Monitor, RefreshCw, Filter, ChevronDown, ArrowUpRight,
     Ticket, CreditCard, MapPin, Mail
 } from 'lucide-react';
+import { DataTable, Column } from './DataTable';
 
 interface AnalyticsData {
     events: Event[];
