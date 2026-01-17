@@ -1,5 +1,26 @@
 # Test Results
 
+## Financial & Guest Count Audit - January 17, 2025
+
+### 🎯 Testing Scope
+Event: **TYLERS MUSICAL APPEARAMCE**
+
+### Changes Made:
+1. ✅ Fixed refund flow to decrement registered_count
+2. ✅ Added ticket count tracking in refunds
+3. ✅ Improved Stripe refund error handling
+4. ✅ Created backup financial records for Stripe refunds
+5. ✅ Added RPC functions for safe count increment/decrement
+6. ✅ Created data fix script for existing events
+
+### Files Modified:
+- `/app/backend/controllers/registrationController.js` - Refund logic fixes
+- `/app/backend/migrations/create_registered_count_functions.sql` - New RPC functions
+- `/app/backend/scripts/fix_registered_counts.js` - Data fix script
+- `/app/FINANCIAL_AUDIT.md` - Complete audit documentation
+
+---
+
 ## Current Testing Session - January 11, 2026
 
 ### Test Focus: Ticket Visibility & Metadata Display Fixes
