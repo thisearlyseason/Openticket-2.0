@@ -5,6 +5,7 @@ import { StorageService } from '../services/storageService';
 import { Registration, Event, PurchasedAddOn } from '../types';
 import { Button, Input, Card, Badge } from './UI';
 import { ArrowLeft, Search, ShoppingBag, Receipt, Ticket, User, ExternalLink, Calendar, Trash2, DollarSign, AlertTriangle, Check } from 'lucide-react';
+import { DataTable, Column } from './DataTable';
 
 interface AddOnItem {
     id: string; // registration id
