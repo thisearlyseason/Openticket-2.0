@@ -539,7 +539,13 @@ export const AttendeeManager = () => {
     };
 
     const handleOpenRefundModal = (item: AttendeeItem) => {
-        if (item.status === 'refunded') return window.alert("This ticket is already refunded.");
+        if (item.status === 'refunded') {
+            return window.alert("This ticket is already refunded.");
+        }
+
+        // Navigate to refunds page with this registration pre-selected
+        navigate(`/manage/${event!.id}/refunds?selectedReg=${item.regId}`);
+    };
         // Calculate amount - find the event tier price
         const tier = event?.ticketTiers?.find(t => t.id === item.tierId);
         // Fallback or override if store in reg
