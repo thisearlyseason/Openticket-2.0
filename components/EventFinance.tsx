@@ -707,83 +707,15 @@ export const EventFinance = () => {
                 </h2>
 
                 <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 uppercase font-bold text-xs">
-                                <tr>
-                                    <th className="p-4">Date</th>
-                                    <th className="p-4">Attendee</th>
-                                    <th className="p-4">Type</th>
-                                    <th className="p-4 text-right">Gross</th>
-                                    <th className="p-4 text-right">Fees</th>
-                                    <th className="p-4 text-right">Net</th>
-                                    <th className="p-4 text-center">Status</th>
-                                    <th className="p-4 text-center">Payout</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                                {transactions.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="p-8 text-center text-zinc-500">
-                                            No transactions yet.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    transactions.map((tx) => {
-                                        const isRefund = tx.gross_amount < 0;
-                                        const totalFees = tx.platform_fee + tx.stripe_fee;
-
-                                        return (
-                                            <tr key={tx.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                                                <td className="p-4 text-zinc-500">
-                                                    {new Date(tx.created_at).toLocaleDateString()}
-                                                </td>
-                                                <td className="p-4">
-                                                    <div className="font-medium text-gray-900 dark:text-white">
-                                                        {tx.registration?.attendee_name || 'N/A'}
-                                                    </div>
-                                                    <div className="text-xs text-zinc-500">
-                                                        {tx.registration?.attendee_email || ''}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <Badge color={isRefund ? 'red' : 'blue'}>
-                                                        {tx.transaction_type === 'refund' ? 'Refund' : 'Sale'}
-                                                    </Badge>
-                                                </td>
-                                                <td className={`p-4 text-right font-mono ${isRefund ? 'text-red-500' : ''}`}>
-                                                    {isRefund ? '-' : ''}${Math.abs(tx.gross_amount).toFixed(2)}
-                                                </td>
-                                                <td className="p-4 text-right font-mono text-zinc-500">
-                                                    {isRefund ? '-' : `-$${totalFees.toFixed(2)}`}
-                                                </td>
-                                                <td className={`p-4 text-right font-mono font-bold ${isRefund ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-                                                    {isRefund ? '-' : ''}${Math.abs(tx.organizer_net).toFixed(2)}
-                                                </td>
-                                                <td className="p-4 text-center">
-                                                    <Badge color={
-                                                        tx.status === 'succeeded' ? 'green' :
-                                                        tx.status === 'refunded' ? 'red' :
-                                                        'yellow'
-                                                    }>
-                                                        {tx.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 text-center">
-                                                    <Badge color={
-                                                        tx.payout_status === 'paid' ? 'green' :
-                                                        tx.payout_status === 'pending' ? 'yellow' :
-                                                        'gray'
-                                                    }>
-                                                        {tx.payout_status}
-                                                    </Badge>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="p-6">
+                        <DataTable
+                            data={transactions}
+                            columns={transactionColumns}
+                            searchPlaceholder="Search transactions by attendee name or email..."
+                            emptyMessage="No transactions yet."
+                            exportFilename={`${event?.title?.replace(/\s+/g, '_')}_transactions`}
+                            getRowId={(tx) => tx.id}
+                        />
                     </div>
                 </div>
             </div>
