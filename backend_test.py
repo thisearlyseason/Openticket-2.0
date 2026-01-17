@@ -62,14 +62,16 @@ class PayoutBalanceTester:
                             token = data['access_token']
                         
                         if token:
+                            # Note: This is a Supabase token, but the backend expects Firebase tokens
+                            # This is a known authentication system mismatch
                             self.auth_token = token
                             self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
                             
                             self.log_result(
                                 "Organizer Login",
                                 True,
-                                f"✅ Successfully logged in as {user_data['email']}",
-                                {"email": user_data['email'], "token_received": True, "session_data": data}
+                                f"✅ Successfully logged in as {user_data['email']} (Note: Token incompatibility with Firebase middleware)",
+                                {"email": user_data['email'], "token_received": True, "auth_system_mismatch": True}
                             )
                             return True
                         else:
