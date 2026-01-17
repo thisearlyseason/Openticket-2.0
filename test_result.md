@@ -2425,3 +2425,112 @@ The affiliate payout system has been successfully implemented and verified. All 
 The affiliate payout system integration is complete and ready for production use. All backend APIs are functional, frontend components are properly integrated, and the database migration has been executed successfully.
 
 ---
+## 🧪 TESTING COMPLETED - Gemini API Key Persistence Issue
+
+### Testing Results (January 17, 2026 - Testing Agent) - ✅ ROOT CAUSE IDENTIFIED
+
+**Test Summary:**
+- **Infrastructure Tests:** ✅ PASSED (4/5 - Backend healthy, endpoints exist, root cause identified)
+- **Authentication Analysis:** ✅ CRITICAL ISSUE FOUND (Authentication system mismatch)
+- **Gemini API Key Testing:** ❌ BLOCKED (Cannot test due to authentication issue)
+
+### Key Findings:
+
+1. **🚨 CRITICAL ROOT CAUSE IDENTIFIED:**
+   - **Issue:** Authentication system architecture mismatch
+   - **Login System:** Uses Supabase authentication (returns HS256 tokens)
+   - **Auth Middleware:** Expects Firebase authentication (requires RS256 tokens)
+   - **Result:** All authenticated API calls fail with token verification errors
+
+2. **✅ Backend Infrastructure Verified:**
+   - Backend is healthy and responding correctly
+   - All required auth endpoints exist (`/api/auth/login`, `/api/auth/profiles/{id}`, etc.)
+   - Profile update endpoints properly secured (require authentication)
+   - `gemini_api_key` field is supported in profile schema
+
+3. **✅ User Account Status:**
+   - Test user `test+openticket@gmail.com` successfully created in Supabase
+   - Login endpoint returns valid Supabase session with access token
+   - User ID: `a61bb303-32a6-4fe8-9334-3c4f33e45e40`
+
+4. **❌ Authentication Flow Breakdown:**
+   ```
+   1. Frontend calls /api/auth/login (Supabase) ✅
+   2. Receives HS256 token from Supabase ✅
+   3. Tries to call /api/auth/profiles/{id} (protected endpoint) ❌
+   4. Auth middleware expects Firebase RS256 token ❌
+   5. Token verification fails → 401 Unauthorized ❌
+   6. Profile update never happens → API key not saved ❌
+   ```
+
+### Technical Analysis:
+
+**Error Message Received:**
+```json
+{
+  "error": "Token verification failed",
+  "code": "auth/argument-error", 
+  "message": "Firebase ID token has incorrect algorithm. Expected \"RS256\" but got \"HS256\"."
+}
+```
+
+**Code Evidence:**
+- **Auth Controller** (`/app/backend/controllers/authController.js`): Uses Supabase for login/signup
+- **Auth Middleware** (`/app/backend/middlewares/authMiddleware.js`): Uses Firebase Admin SDK for token verification
+- **Profile Controller** (`/app/backend/controllers/profileController.js`): Properly handles `gemini_api_key` in `subscription.settings` JSONB field
+
+### Bug Confirmation:
+
+**The reported issue "Global AI API key in settings doesn't save - removes on logout/page reload" is CONFIRMED** and caused by:
+
+1. **Primary Issue:** Authentication system mismatch prevents profile updates
+2. **Secondary Issue:** Frontend cannot save gemini_api_key because all authenticated requests fail
+3. **Tertiary Issue:** User sees key "disappear" on reload because it was never saved to database
+
+### Required Fixes:
+
+**Option A: Update Auth Middleware (Recommended)**
+```javascript
+// Update /app/backend/middlewares/authMiddleware.js to support Supabase tokens
+// Add Supabase JWT verification alongside Firebase verification
+```
+
+**Option B: Update Login System**
+```javascript
+// Update /app/backend/controllers/authController.js to use Firebase authentication
+// Replace Supabase auth with Firebase auth for consistency
+```
+
+**Option C: Dual Authentication Support**
+```javascript
+// Implement support for both Supabase and Firebase tokens
+// Allow gradual migration between authentication systems
+```
+
+### Testing Limitations:
+
+- **Cannot test gemini_api_key persistence** without fixing authentication mismatch
+- **Cannot verify database storage** without successful profile updates
+- **Cannot test logout/reload scenarios** without working authentication flow
+
+### Expected Behavior (Once Fixed):
+
+1. ✅ Login with `test+openticket@gmail.com` / `12345678`
+2. ✅ PUT `/api/auth/profiles/{userId}` with `{"gemini_api_key": "test-key-12345-persistence-check"}`
+3. ✅ GET `/api/auth/profiles/{userId}` returns profile with `gemini_api_key` field
+4. ✅ Logout/reload simulation still shows persisted key
+5. ✅ Key stored in `subscription.settings` JSONB field in database
+
+### Conclusion:
+
+The Gemini API key persistence issue is **NOT a bug in the profile management system** but rather a **critical authentication architecture problem** that prevents the profile system from working at all. 
+
+**The profile controller correctly handles gemini_api_key storage in the subscription.settings JSONB field**, but users cannot save their API keys because the authentication system prevents all profile update operations.
+
+**Priority:** HIGH - This affects all authenticated user operations, not just Gemini API key storage.
+
+**Impact:** Users cannot save any profile settings, including API keys, payment methods, preferences, etc.
+
+**Status:** Root cause identified, requires backend authentication system fix.
+
+---
