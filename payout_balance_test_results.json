@@ -5,26 +5,26 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 1621.073063977,
-      "timestamp": "2026-01-17T04:52:39.668Z"
+      "uptime": 1760.508388215,
+      "timestamp": "2026-01-17T04:54:59.103Z"
     },
-    "timestamp": "2026-01-17 04:52:39"
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
     "test": "Backend Payout Routes Availability",
-    "success": false,
-    "details": "\u274c Missing routes: ['/api/auth/profile']",
+    "success": true,
+    "details": "\u2705 All required payout routes exist: ['/api/admin/upcoming-payouts', '/api/auth/me']",
     "response_data": {
       "/api/admin/upcoming-payouts": {
         "exists": true,
         "status": 401
       },
-      "/api/auth/profile": {
-        "exists": false,
-        "status": 404
+      "/api/auth/me": {
+        "exists": true,
+        "status": 401
       }
     },
-    "timestamp": "2026-01-17 04:52:39"
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
     "test": "Upcoming Payouts Endpoint - Auth Required",
@@ -34,117 +34,41 @@
       "status": 401,
       "endpoint": "GET /api/admin/upcoming-payouts"
     },
-    "timestamp": "2026-01-17 04:52:39"
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
     "test": "Profile Endpoint - Auth Required",
-    "success": false,
-    "details": "\u274c Profile endpoint should require auth but returned HTTP 404",
+    "success": true,
+    "details": "\u2705 Profile endpoint properly requires authentication (HTTP 401)",
     "response_data": {
-      "status": 404,
-      "response": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/auth/profile</pre>\n</body>\n</html>\n"
+      "status": 401,
+      "endpoint": "GET /api/auth/profile"
     },
-    "timestamp": "2026-01-17 04:52:39"
+    "timestamp": "2026-01-17 04:54:59"
+  },
+  {
+    "test": "Payout Endpoint Structure",
+    "success": true,
+    "details": "\u2705 Upcoming payouts endpoint exists and has proper authentication (Firebase token required)",
+    "response_data": {
+      "endpoint_exists": true,
+      "auth_required": true,
+      "auth_type": "Firebase",
+      "status": 401,
+      "error": "Missing Authorization header"
+    },
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
     "test": "Organizer Login",
     "success": true,
-    "details": "\u2705 Successfully logged in as test+openticket@gmail.com",
+    "details": "\u2705 Successfully logged in as test+openticket@gmail.com (Note: Token incompatibility with Firebase middleware)",
     "response_data": {
       "email": "test+openticket@gmail.com",
       "token_received": true,
-      "session_data": {
-        "session": {
-          "access_token": "eyJhbGciOiJIUzI1NiIsImtpZCI6IlFPUm9PNWlZSThRRml0UlkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2RjamR1cnZna3ZlYmx2dGlub21zLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiJhNjFiYjMwMy0zMmE2LTRmZTgtOTMzNC0zYzRmMzNlNDVlNDAiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzY4NjI5MTYwLCJpYXQiOjE3Njg2MjU1NjAsImVtYWlsIjoidGVzdCtvcGVudGlja2V0QGdtYWlsLmNvbSIsInBob25lIjoiIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sInVzZXJfbWV0YWRhdGEiOnsiZW1haWxfdmVyaWZpZWQiOnRydWV9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzY4NjI1NTYwfV0sInNlc3Npb25faWQiOiJmZDQ2YWYxOS1hODlkLTQ4ZjEtODQ0ZS0xMzQ4N2EwNjgyMjEiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.tCEpWrDRerjKY4eHOFaSTnu2pifo-vYam7zA5oIgWWs",
-          "token_type": "bearer",
-          "expires_in": 3600,
-          "expires_at": 1768629160,
-          "refresh_token": "r5gt2hgyyg3r",
-          "user": {
-            "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-            "aud": "authenticated",
-            "role": "authenticated",
-            "email": "test+openticket@gmail.com",
-            "email_confirmed_at": "2026-01-17T02:38:54.114948Z",
-            "phone": "",
-            "confirmed_at": "2026-01-17T02:38:54.114948Z",
-            "last_sign_in_at": "2026-01-17T04:52:40.567674107Z",
-            "app_metadata": {
-              "provider": "email",
-              "providers": [
-                "email"
-              ]
-            },
-            "user_metadata": {
-              "email_verified": true
-            },
-            "identities": [
-              {
-                "identity_id": "795b3f30-4451-4995-a1c4-d718a313f593",
-                "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-                "user_id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-                "identity_data": {
-                  "email": "test+openticket@gmail.com",
-                  "email_verified": false,
-                  "phone_verified": false,
-                  "sub": "a61bb303-32a6-4fe8-9334-3c4f33e45e40"
-                },
-                "provider": "email",
-                "last_sign_in_at": "2026-01-17T02:38:54.107877Z",
-                "created_at": "2026-01-17T02:38:54.107941Z",
-                "updated_at": "2026-01-17T02:38:54.107941Z",
-                "email": "test+openticket@gmail.com"
-              }
-            ],
-            "created_at": "2026-01-17T02:38:54.091957Z",
-            "updated_at": "2026-01-17T04:52:40.629311Z",
-            "is_anonymous": false
-          },
-          "weak_password": null
-        },
-        "user": {
-          "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-          "aud": "authenticated",
-          "role": "authenticated",
-          "email": "test+openticket@gmail.com",
-          "email_confirmed_at": "2026-01-17T02:38:54.114948Z",
-          "phone": "",
-          "confirmed_at": "2026-01-17T02:38:54.114948Z",
-          "last_sign_in_at": "2026-01-17T04:52:40.567674107Z",
-          "app_metadata": {
-            "provider": "email",
-            "providers": [
-              "email"
-            ]
-          },
-          "user_metadata": {
-            "email_verified": true
-          },
-          "identities": [
-            {
-              "identity_id": "795b3f30-4451-4995-a1c4-d718a313f593",
-              "id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-              "user_id": "a61bb303-32a6-4fe8-9334-3c4f33e45e40",
-              "identity_data": {
-                "email": "test+openticket@gmail.com",
-                "email_verified": false,
-                "phone_verified": false,
-                "sub": "a61bb303-32a6-4fe8-9334-3c4f33e45e40"
-              },
-              "provider": "email",
-              "last_sign_in_at": "2026-01-17T02:38:54.107877Z",
-              "created_at": "2026-01-17T02:38:54.107941Z",
-              "updated_at": "2026-01-17T02:38:54.107941Z",
-              "email": "test+openticket@gmail.com"
-            }
-          ],
-          "created_at": "2026-01-17T02:38:54.091957Z",
-          "updated_at": "2026-01-17T04:52:40.629311Z",
-          "is_anonymous": false
-        }
-      }
+      "auth_system_mismatch": true
     },
-    "timestamp": "2026-01-17 04:52:40"
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
     "test": "Get Organizer Payouts Endpoint - Authentication",
@@ -153,13 +77,15 @@
     "response_data": {
       "status": 401
     },
-    "timestamp": "2026-01-17 04:52:40"
+    "timestamp": "2026-01-17 04:54:59"
   },
   {
-    "test": "User Profile Payout Fields",
+    "test": "User Profile Payout Fields - Authentication",
     "success": false,
-    "details": "\u274c Failed to fetch user profile: HTTP 404",
-    "response_data": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/auth/profile</pre>\n</body>\n</html>\n",
-    "timestamp": "2026-01-17 04:52:40"
+    "details": "\u274c Authentication failed - token may be invalid",
+    "response_data": {
+      "status": 401
+    },
+    "timestamp": "2026-01-17 04:54:59"
   }
 ]
