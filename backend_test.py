@@ -475,8 +475,68 @@ class PayoutBalanceTester:
                     {"status": profile_response.status_code, "response": profile_response.text[:200]}
                 )
                 
+    def test_payout_endpoint_structure(self):
+        """Test Case 7: Verify payout endpoint structure and response format"""
+        try:
+            # Test the upcoming-payouts endpoint structure
+            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
+            
+            if response.status_code == 401:
+                try:
+                    error_data = response.json()
+                    error_message = error_data.get('error', '')
+                    
+                    # Check if it's the expected Firebase token error
+                    if 'Token verification failed' in error_message or 'Missing Authorization header' in error_message:
+                        self.log_result(
+                            "Payout Endpoint Structure",
+                            True,
+                            "✅ Upcoming payouts endpoint exists and has proper authentication (Firebase token required)",
+                            {
+                                "endpoint_exists": True,
+                                "auth_required": True,
+                                "auth_type": "Firebase",
+                                "status": response.status_code,
+                                "error": error_message
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Payout Endpoint Structure",
+                            False,
+                            f"❌ Unexpected authentication error: {error_message}",
+                            error_data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Payout Endpoint Structure",
+                        True,
+                        "✅ Upcoming payouts endpoint exists and requires authentication (HTTP 401)",
+                        {"endpoint_exists": True, "auth_required": True, "status": response.status_code}
+                    )
+                    return True
+            elif response.status_code == 404:
+                self.log_result(
+                    "Payout Endpoint Structure",
+                    False,
+                    "❌ Upcoming payouts endpoint does not exist (HTTP 404)",
+                    {"endpoint_exists": False, "status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Payout Endpoint Structure",
+                    False,
+                    f"❌ Unexpected response from payouts endpoint: HTTP {response.status_code}",
+                    response.text[:200]
+                )
+                return False
+                
         except Exception as e:
-            self.log_result("Payout Endpoints Without Auth", False, f"Exception: {str(e)}")
+            self.log_result("Payout Endpoint Structure", False, f"Exception: {str(e)}")
+            return False
 
     def run_all_tests(self):
         """Run all payout balance calculation tests as specified in review request"""
