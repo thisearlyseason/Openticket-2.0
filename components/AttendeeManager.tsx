@@ -616,27 +616,63 @@ export const AttendeeManager = () => {
                 }
             }
 
-            // Handle response - check Stripe status
-            if (response && response.stripeError) {
-                // Stripe refund failed but DB was updated
-                showToast(`⚠️ Warning: ${response.warning || response.stripeError}`, "warning");
-                console.error('Stripe refund error:', response.stripeError);
+            // Handle response - check for errors and Stripe confirmation
+            if (response && response.error) {
+                // Backend blocked the refund - show error
+                showToast(`❌ Refund blocked: ${response.error}`, "error");
+                console.error('Refund blocked:', response);
+                
+                // Show diagnostics if available
+                if (response.diagnostics) {
+                    console.log('Refund diagnostics:', response.diagnostics);
+                }
+                
+                return; // Don't close modal or reload
+            } else if (response && response.canRefund === false) {
+                // Explicit canRefund flag
+                showToast(`❌ Cannot refund: ${response.error || 'Unknown reason'}`, "error");
+                console.error('Cannot refund:', response);
+                return;
+            } else if (response && response.stripeError && !response.success) {
+                // Stripe error without success
+                showToast(`❌ Stripe refund failed: ${response.stripeError}`, "error");
+                console.error('Stripe error:', response);
+                return;
+            } else if (response && response.warning) {
+                // Warning but succeeded (shouldn't happen with new validation)
+                showToast(`⚠️ Warning: ${response.warning}`, "warning");
+                console.warn('Refund warning:', response);
             } else if (response && response.stripeRefundId) {
                 // Success - Stripe refund processed
-                showToast(`✅ Refund processed successfully! Stripe ID: ${response.stripeRefundId.substring(0, 12)}...`, "success");
+                showToast(`✅ Refund successful! Stripe ID: ${response.stripeRefundId.substring(0, 20)}...`, "success");
+                console.log('Refund successful:', response);
             } else if (response && response.message) {
                 // Success - manual/offline refund
                 showToast(`✅ ${response.message}`, "success");
+                console.log('Manual refund:', response);
             } else {
                 // Generic success
                 showToast("✅ Refund processed successfully!", "success");
+            }
+
+            // Log diagnostics if available
+            if (response && response.diagnostics) {
+                console.log('Refund diagnostics:', response.diagnostics);
             }
 
             setShowRefundModal(null);
             await loadData();
         } catch (e: any) {
             console.error('Refund error:', e);
-            showToast("❌ Refund failed: " + e.message, "error");
+            
+            // Check if it's a structured error response
+            if (e.response && e.response.data) {
+                const errorData = e.response.data;
+                showToast(`❌ ${errorData.error || e.message}`, "error");
+                console.error('Structured error:', errorData);
+            } else {
+                showToast("❌ Refund failed: " + e.message, "error");
+            }
         }
     };
 
