@@ -1544,3 +1544,101 @@ export const getTransferStatus = async (req, res) => {
     }
 };
 
+/**
+ * Delete a registration (soft delete or full delete for unpaid/refunded)
+ * DELETE /api/registrations/:id
+ * Only allows deletion of pending, free, or refunded registrations
+ */
+export const deleteRegistration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.uid;
+
+        // Get the registration with event details
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(owner_id, title)')
+            .eq('id', id)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Verify ownership - must own the event
+        if (reg.event.owner_id !== owner_id) {
+            return res.status(403).json({ error: 'Unauthorized - You do not own this event' });
+        }
+
+        // Payment-aware deletion logic
+        const paymentStatus = reg.payment_status?.toLowerCase();
+        const refundStatus = reg.refund_status?.toLowerCase();
+        
+        // Block deletion of paid tickets that haven't been refunded
+        if ((paymentStatus === 'paid' || paymentStatus === 'completed' || paymentStatus === 'succeeded') 
+            && refundStatus !== 'refunded') {
+            return res.status(400).json({ 
+                error: 'Cannot delete paid registration. Please refund it first.',
+                paymentStatus: reg.payment_status,
+                refundStatus: reg.refund_status
+            });
+        }
+
+        // Block deletion of tickets being refunded
+        if (refundStatus === 'refunding' || paymentStatus === 'refunding') {
+            return res.status(400).json({ 
+                error: 'Cannot delete registration while refund is processing. Please wait for refund to complete.',
+                refundStatus: reg.refund_status
+            });
+        }
+
+        // Calculate ticket count to decrement
+        let ticketCount = 0;
+        if (reg.tickets && Array.isArray(reg.tickets)) {
+            ticketCount = reg.tickets.reduce((sum, t) => sum + (t.quantity || 1), 0);
+        } else {
+            ticketCount = 1; // Legacy single ticket
+        }
+
+        // Delete the registration
+        const { error: deleteError } = await supabase
+            .from('registrations')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
+            console.error('[Delete Registration] Error:', deleteError);
+            return res.status(500).json({ error: 'Failed to delete registration' });
+        }
+
+        // Decrement registered_count on the event
+        if (ticketCount > 0 && reg.event_id) {
+            const { error: rpcError } = await supabase.rpc('decrement_registered_count', {
+                event_id: reg.event_id,
+                decrement_by: ticketCount
+            });
+
+            if (rpcError) {
+                console.warn('[Delete Registration] Failed to decrement count:', rpcError);
+                // Non-blocking - registration is already deleted
+            }
+        }
+
+        console.log('[Delete Registration] Success:', {
+            registrationId: id,
+            eventId: reg.event_id,
+            ticketsDeleted: ticketCount,
+            wasRefunded: refundStatus === 'refunded'
+        });
+
+        res.json({ 
+            success: true, 
+            message: 'Registration deleted successfully',
+            ticketsDeleted: ticketCount
+        });
+
+    } catch (error) {
+        console.error('[Delete Registration] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
