@@ -1179,13 +1179,16 @@ export const Settings = () => {
 
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center">
-                                        <h3 className="font-bold text-lg">Email Templates</h3>
+                                        <div>
+                                            <h3 className="font-bold text-lg">Email Templates</h3>
+                                            <p className="text-xs text-zinc-500 mt-1">Customize subject lines, text content, and footers. Visual design is set per-event in Event Builder.</p>
+                                        </div>
                                         {!editingTemplate && (
                                             <div className="flex gap-2">
                                                 <Button size="sm" variant="outline" onClick={handleLoadDefaults}>
                                                     Load Defaults
                                                 </Button>
-                                                <Button size="sm" onClick={() => setEditingTemplate({ id: `tmpl-${Date.now()}`, type: 'broadcast', name: 'New Template', subject: '', body: '' })}>
+                                                <Button size="sm" onClick={() => setEditingTemplate({ id: `tmpl-${Date.now()}`, type: 'confirmation', name: 'New Template', subject: '', body: '' })}>
                                                     <Plus size={16} className="mr-2" /> New Template
                                                 </Button>
                                             </div>
@@ -1198,18 +1201,22 @@ export const Settings = () => {
                                                 <h4 className="font-bold">Edit Template</h4>
                                                 <Button variant="ghost" size="sm" onClick={() => setEditingTemplate(null)}>Cancel</Button>
                                             </div>
-                                            <Input label="Template Name" value={editingTemplate.name} onChange={e => setEditingTemplate({ ...editingTemplate, name: e.target.value })} placeholder="e.g. Monthly Newsletter" />
+                                            <Input label="Template Name" value={editingTemplate.name} onChange={e => setEditingTemplate({ ...editingTemplate, name: e.target.value })} placeholder="e.g. VIP Confirmation" />
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Type</label>
+                                                    <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Email Type</label>
                                                     <select
                                                         className="w-full bg-zinc-100 dark:bg-zinc-800 border-none rounded-xl px-4 py-3 text-sm"
                                                         value={editingTemplate.type}
                                                         onChange={(e: any) => setEditingTemplate({ ...editingTemplate, type: e.target.value })}
                                                     >
+                                                        <option value="confirmation">Purchase Confirmation</option>
+                                                        <option value="refund">Refund Confirmation</option>
+                                                        <option value="reminder">Event Reminder (24h)</option>
+                                                        <option value="reminder_secondary">Secondary Reminder</option>
+                                                        <option value="post_event">Post-Event Thank You</option>
+                                                        <option value="abandoned_cart">Abandoned Cart Recovery</option>
                                                         <option value="broadcast">Broadcast / Newsletter</option>
-                                                        <option value="confirmation">Order Confirmation (Default)</option>
-                                                        <option value="reminder">Event Reminder</option>
                                                         <option value="waitlist">Waitlist Notification</option>
                                                     </select>
                                                 </div>
