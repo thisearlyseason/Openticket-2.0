@@ -1016,8 +1016,8 @@ export const CheckInPortal = () => {
                             <ArrowLeftCircle size={16} className="mr-1" /> Change Method
                         </button>
 
-                        {paymentMethod === 'card' && (
-                            <div className="space-y-4">
+                        {paymentMethod === 'card' && paymentContext && (
+                            <div className="space-y-4" key={`card-payment-${paymentContext.reg.id}`}>
                                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-2">
                                     <p className="text-xs text-blue-700 dark:text-blue-300 flex items-center gap-2">
                                         <CreditCard size={14} />
@@ -1025,6 +1025,7 @@ export const CheckInPortal = () => {
                                     </p>
                                 </div>
                                 <StripePaymentWrapper
+                                    key={`stripe-wrapper-${paymentContext.reg.id}`}
                                     registrationId={paymentContext.reg.id}
                                     amount={totalDue}
                                     onSuccess={() => {
@@ -1047,6 +1048,7 @@ export const CheckInPortal = () => {
                                         }, 1500);
                                     }}
                                     onError={(error) => {
+                                        console.error('[Payment] Card payment error:', error);
                                         setPaymentError(error);
                                         setPaymentStatus('error');
                                         setTimeout(() => setPaymentStatus('input'), 3000);
