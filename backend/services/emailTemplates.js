@@ -547,29 +547,29 @@ export const postEventThankYou = ({ attendeeName, eventTitle, eventDate, organiz
         <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
             Thank you for attending <strong>${eventTitle}</strong>! We hope you had an amazing experience.
         </p>
         
-        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
-            <p style="color: ${BASE_STYLES.textDark}; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">🙏 Thank You!</p>
-            <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; margin: 0;">
+        <div style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
+            <p style="color: ${theme.textColor}; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">🙏 Thank You!</p>
+            <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">
                 Your attendance made the event special.
             </p>
         </div>
         
         ${feedbackUrl ? `
         <div style="text-align: center; margin: 30px 0;">
-            <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; margin: 0 0 15px 0;">
+            <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 15px 0;">
                 Have a moment? We'd love to hear your thoughts.
             </p>
-            <a href="${feedbackUrl}" style="display: inline-block; background: linear-gradient(135deg, ${BASE_STYLES.primaryPurple} 0%, #7c3aed 100%); color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            <a href="${feedbackUrl}" style="display: inline-block; background: ${theme.headerGradient}; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
                 Share Feedback
             </a>
         </div>
         ` : ''}
         
-        <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
             Stay tuned for more events from ${organizerName || 'this organizer'}!
         </p>
     `;
@@ -577,11 +577,12 @@ export const postEventThankYou = ({ attendeeName, eventTitle, eventDate, organiz
     return {
         subject: `Thank you for attending ${eventTitle}! 🎉`,
         html: baseEmailWrapper(
-            `linear-gradient(135deg, #10b981 0%, #059669 100%)`,
+            theme.headerGradient,
             "Thanks for Coming! 🙌",
             "We hope you had a great time",
             content,
-            `From ${organizerName || 'Event Organizer'} • Powered by OpenTicket`
+            `From ${organizerName || 'Event Organizer'} • Powered by OpenTicket`,
+            { logoUrl: ticketDesign?.logoUrl, theme }
         )
     };
 };
