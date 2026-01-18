@@ -425,22 +425,24 @@ const generateAbandonedCartHtml = (eventTitle, attendeeName, checkoutUrl) => `
 // ==================== POST-EVENT FOLLOW-UP EMAILS ====================
 
 /**
- * Send post-event follow-up emails (24h after event)
+ * Send post-event thank you emails
+ * Runs every morning at 9 AM UTC to send thank-yous for events that ended yesterday
+ * Only sends to non-refunded attendees
  */
 const sendPostEventFollowups = async () => {
-    console.log('[CRON] Starting post-event follow-up job...');
+    console.log('[CRON] Starting post-event thank you job...');
     
     try {
-        // Find events that ended 23-25 hours ago
+        // Find events that ended yesterday (the previous calendar day)
         const now = new Date();
-        const yesterday23h = new Date(now.getTime() - 25 * 60 * 60 * 1000);
-        const yesterday25h = new Date(now.getTime() - 23 * 60 * 60 * 1000);
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
         
         const { data: pastEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, owner_id')
-            .gte('date', yesterday23h.toISOString().split('T')[0])
-            .lte('date', yesterday25h.toISOString().split('T')[0])
+            .select('id, title, owner_id, date')
+            .eq('date', yesterdayStr)
             .eq('is_draft', false);
         
         if (eventsError) {
@@ -449,45 +451,97 @@ const sendPostEventFollowups = async () => {
         }
         
         if (!pastEvents?.length) {
-            console.log('[CRON] No recent events for follow-up');
+            console.log('[CRON] No events ended yesterday for thank you emails');
             return;
         }
         
-        let sent = 0, failed = 0;
+        const { postEventThankYou } = await import('./emailTemplates.js');
+        const emailAudit = await import('./emailAuditService.js');
+        
+        let sent = 0, failed = 0, skipped = 0;
         
         for (const event of pastEvents) {
-            // Get attendees who checked in
+            // Get organizer name
+            const { data: organizer } = await supabase
+                .from('profiles')
+                .select('name')
+                .eq('id', event.owner_id)
+                .single();
+            
+            // Get attendees - only non-refunded
             const { data: registrations } = await supabase
                 .from('registrations')
-                .select('attendee_email, attendee_name')
+                .select('id, attendee_email, attendee_name, payment_status')
                 .eq('event_id', event.id)
-                .eq('payment_status', 'paid');
+                .not('payment_status', 'eq', 'refunded');
             
             if (!registrations?.length) continue;
             
             for (const reg of registrations) {
                 try {
-                    const html = generatePostEventHtml(event.title, reg.attendee_name);
+                    // Check for duplicates
+                    const alreadySent = await emailAudit.wasEmailSent(
+                        emailAudit.TRIGGER_TYPES.CRON_POST_EVENT,
+                        emailAudit.EMAIL_TYPES.POST_EVENT_THANK_YOU,
+                        reg.id
+                    );
+                    
+                    if (alreadySent) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    const eventDate = new Date(event.date).toLocaleDateString('en-US', {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    
+                    const { subject, html } = postEventThankYou({
+                        attendeeName: reg.attendee_name || 'there',
+                        eventTitle: event.title,
+                        eventDate,
+                        organizerName: organizer?.name || 'Event Organizer',
+                        feedbackUrl: null // Could be configured per-event
+                    });
                     
                     const result = await sendEmailWithProvider(
                         reg.attendee_email,
-                        `Thank you for attending ${event.title}! 🙏`,
+                        subject,
                         html,
                         event.owner_id
                     );
                     
-                    if (result.sent) sent++;
-                    else failed++;
+                    // Log to audit
+                    await emailAudit.logEmailSend({
+                        triggerType: emailAudit.TRIGGER_TYPES.CRON_POST_EVENT,
+                        emailType: emailAudit.EMAIL_TYPES.POST_EVENT_THANK_YOU,
+                        recipient: reg.attendee_email,
+                        registrationId: reg.id,
+                        eventId: event.id,
+                        success: result.sent || result.simulated,
+                        messageId: result.messageId,
+                        error: result.error
+                    });
+                    
+                    if (result.sent || result.simulated) {
+                        emailAudit.markEmailSent(
+                            emailAudit.TRIGGER_TYPES.CRON_POST_EVENT,
+                            emailAudit.EMAIL_TYPES.POST_EVENT_THANK_YOU,
+                            reg.id
+                        );
+                        sent++;
+                    } else {
+                        failed++;
+                    }
                 } catch (e) {
-                    console.error(`[CRON] Follow-up failed for ${reg.attendee_email}:`, e);
+                    console.error(`[CRON] Thank you email failed for ${reg.attendee_email}:`, e);
                     failed++;
                 }
             }
         }
         
-        console.log(`[CRON] Post-event follow-ups complete: ${sent} sent, ${failed} failed`);
+        console.log(`[CRON] Post-event thank yous complete: ${sent} sent, ${failed} failed, ${skipped} skipped (duplicates)`);
     } catch (error) {
-        console.error('[CRON] Post-event follow-up job failed:', error);
+        console.error('[CRON] Post-event thank you job failed:', error);
     }
 };
 
