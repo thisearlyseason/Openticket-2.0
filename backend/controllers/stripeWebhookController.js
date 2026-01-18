@@ -579,24 +579,28 @@ async function handleRefund(stripe, refundData) {
         const emailAudit = await import('../services/emailAuditService.js');
         const { sendEmailWithProvider } = await import('../services/cronService.js');
 
-        // Check if email already sent (prevent duplicates)
-        const alreadySent = await emailAudit.wasEmailSent(
-            emailAudit.TRIGGER_TYPES.STRIPE_REFUND_SUCCEEDED,
-            emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
-            transaction.registration_id
-        );
+        // Get registration and event details first to check email settings
+        const { data: registration } = await supabase
+            .from('registrations')
+            .select('*, event:events(title, date, location, owner_id, email_settings)')
+            .eq('id', transaction.registration_id)
+            .single();
 
-        if (alreadySent) {
-            console.log('[Webhook] Refund email already sent, skipping');
+        // Check if refund emails are enabled for this event
+        const emailSettings = registration?.event?.email_settings || {};
+        if (emailSettings.refundEnabled === false) {
+            console.log(`[Webhook] Refund email disabled for event: ${registration?.event?.title}`);
         } else {
-            // Get registration and event details
-            const { data: registration } = await supabase
-                .from('registrations')
-                .select('*, event:events(title, date, location, owner_id)')
-                .eq('id', transaction.registration_id)
-                .single();
+            // Check if email already sent (prevent duplicates)
+            const alreadySent = await emailAudit.wasEmailSent(
+                emailAudit.TRIGGER_TYPES.STRIPE_REFUND_SUCCEEDED,
+                emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+                transaction.registration_id
+            );
 
-            if (registration && registration.attendee_email) {
+            if (alreadySent) {
+                console.log('[Webhook] Refund email already sent, skipping');
+            } else if (registration && registration.attendee_email) {
                 const eventDate = registration.event?.date 
                     ? new Date(registration.event.date).toLocaleDateString('en-US', {
                         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
