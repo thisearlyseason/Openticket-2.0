@@ -331,11 +331,11 @@ export const refundRegistration = async (req, res) => {
         });
         
         // Set to "refunding" state NOW (after all validations, before Stripe call)
+        // Only use payment_status since refund_status column may not exist in DB
         await supabase
             .from('registrations')
             .update({ 
-                refund_status: 'refunding',
-                payment_status: 'refunding'  // Visual indicator in UI
+                payment_status: 'refunding'
             })
             .eq('id', id);
         
@@ -350,12 +350,11 @@ export const refundRegistration = async (req, res) => {
                     stripeError = 'Stripe session not found';
                     console.error('[Refund] Session not found:', reg.stripe_checkout_session_id);
                     
-                    // Reset refund_status since we can't process
+                    // Reset payment_status since we can't process
                     await supabase
                         .from('registrations')
                         .update({ 
-                            refund_status: 'failed',
-                            payment_status: reg.payment_status
+                            payment_status: reg.payment_status  // Restore original
                         })
                         .eq('id', id);
                     
@@ -377,12 +376,11 @@ export const refundRegistration = async (req, res) => {
                         sessionStatus: session.status
                     });
                     
-                    // Reset refund_status since we can't process
+                    // Reset payment_status since we can't process
                     await supabase
                         .from('registrations')
                         .update({ 
-                            refund_status: 'failed',
-                            payment_status: reg.payment_status
+                            payment_status: reg.payment_status  // Restore original
                         })
                         .eq('id', id);
                     
