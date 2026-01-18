@@ -52,41 +52,92 @@ export const EmailService = {
             return false;
         }
 
-        const subject = `🎟️ Your Tickets for ${eventDetails?.title || 'OpenTicket Event'}`;
+        try {
+            // Use new template system
+            const { purchaseConfirmation } = await import('./emailTemplates.js');
+            const emailAudit = await import('./emailAuditService.js');
+            
+            const eventDate = eventDetails?.date 
+                ? new Date(eventDetails.date).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                })
+                : 'TBD';
+            
+            // Calculate total paid from tickets
+            const totalPaid = tickets.reduce((sum, t) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
+            
+            const { subject, html } = purchaseConfirmation({
+                attendeeName: tickets[0]?.attendeeName || 'Guest',
+                eventTitle: eventDetails?.title || 'Event',
+                eventDate,
+                eventTime: eventDetails?.time || 'TBD',
+                eventLocation: eventDetails?.location || eventDetails?.venue_name || 'TBD',
+                tickets: tickets.map(t => ({
+                    name: t.name || 'Ticket',
+                    quantity: t.quantity || 1,
+                    price: t.price || 0
+                })),
+                totalPaid,
+                orderId: tickets[0]?.id?.substring(0, 8).toUpperCase() || 'N/A',
+                organizerName: eventDetails?.organizer || 'Event Organizer'
+            });
 
-        const ticketRows = tickets.map(t => `
-            <div style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: #f9fafb;">
-                <h3 style="margin: 0 0 8px 0; color: #111827;">${t.name || 'Ticket'}</h3>
-                <p style="margin: 0; color: #6b7280;">Attendee: <strong style="color: #111827;">${t.attendeeName || 'Guest'}</strong></p>
-                <p style="font-family: monospace; color: #9ca3af; font-size: 12px; margin-top: 8px;">ID: ${t.id || 'N/A'}</p>
-            </div>
-        `).join('');
-
-        const htmlBody = `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-                <div style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Order Confirmed!</h1>
+            console.log(`[EmailService] Sending confirmation email to ${to}...`);
+            const result = await sendEmailViaResend(to, subject, html);
+            
+            // Log to audit (registration ID from first ticket)
+            const registrationId = tickets[0]?.registrationId || tickets[0]?.id;
+            if (registrationId) {
+                await emailAudit.logEmailSend({
+                    triggerType: emailAudit.TRIGGER_TYPES.STRIPE_CHECKOUT_COMPLETED,
+                    emailType: emailAudit.EMAIL_TYPES.PURCHASE_CONFIRMATION,
+                    recipient: to,
+                    registrationId,
+                    eventId: eventDetails?.id,
+                    success: result.sent,
+                    messageId: result.messageId,
+                    error: result.error
+                });
+            }
+            
+            console.log(`[EmailService] Confirmation email result: sent=${result.sent}, messageId=${result.messageId || 'N/A'}`);
+            return result.sent;
+        } catch (templateError) {
+            console.error('[EmailService] Template error, using fallback:', templateError.message);
+            
+            // Fallback to basic template
+            const subject = `🎟️ Your Tickets for ${eventDetails?.title || 'OpenTicket Event'}`;
+            const ticketRows = tickets.map(t => `
+                <div style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: #f9fafb;">
+                    <h3 style="margin: 0 0 8px 0; color: #111827;">${t.name || 'Ticket'}</h3>
+                    <p style="margin: 0; color: #6b7280;">Attendee: <strong style="color: #111827;">${t.attendeeName || 'Guest'}</strong></p>
+                    <p style="font-family: monospace; color: #9ca3af; font-size: 12px; margin-top: 8px;">ID: ${t.id || 'N/A'}</p>
                 </div>
-                <div style="padding: 30px;">
-                    <p style="color: #374151; font-size: 16px;">Thank you for your purchase!</p>
-                    <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 24px 0;">
-                        <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Event:</strong> ${eventDetails?.title || 'N/A'}</p>
-                        <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Date:</strong> ${eventDetails?.date ? new Date(eventDetails.date).toLocaleString() : 'N/A'}</p>
-                        <p style="margin: 0; color: #6b7280;"><strong style="color: #111827;">Location:</strong> ${eventDetails?.location || 'Online'}</p>
+            `).join('');
+
+            const htmlBody = `
+                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0 0;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Order Confirmed!</h1>
                     </div>
-                    <h2 style="color: #111827; font-size: 18px; margin-top: 24px;">Your Tickets</h2>
-                    ${ticketRows}
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-                    <p style="color: #6b7280; font-size: 14px;">Please present these tickets at the entrance.</p>
-                    <p style="font-size: 12px; color: #9ca3af;">Order ID: ${tickets[0]?.id || 'N/A'}</p>
+                    <div style="padding: 30px;">
+                        <p style="color: #374151; font-size: 16px;">Thank you for your purchase!</p>
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin: 24px 0;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Event:</strong> ${eventDetails?.title || 'N/A'}</p>
+                            <p style="margin: 0 0 8px 0; color: #6b7280;"><strong style="color: #111827;">Date:</strong> ${eventDetails?.date ? new Date(eventDetails.date).toLocaleString() : 'N/A'}</p>
+                            <p style="margin: 0; color: #6b7280;"><strong style="color: #111827;">Location:</strong> ${eventDetails?.location || 'Online'}</p>
+                        </div>
+                        <h2 style="color: #111827; font-size: 18px; margin-top: 24px;">Your Tickets</h2>
+                        ${ticketRows}
+                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+                        <p style="color: #6b7280; font-size: 14px;">Please present these tickets at the entrance.</p>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        console.log(`[EmailService] Sending confirmation email to ${to}...`);
-        const result = await sendEmailViaResend(to, subject, htmlBody);
-        console.log(`[EmailService] Confirmation email result: sent=${result.sent}, messageId=${result.messageId || 'N/A'}`);
-        return result.sent;
+            const result = await sendEmailViaResend(to, subject, htmlBody);
+            return result.sent;
+        }
     },
 
     /**
