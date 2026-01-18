@@ -250,29 +250,27 @@ const sendEventReminders = async () => {
 };
 
 /**
- * Send secondary event reminder emails (1 hour before)
+ * Send secondary event reminder emails (configurable time before)
  * Runs every 15 minutes to check for events starting soon
  * Only sends if organizer has enabled secondary reminders
  */
 const sendSecondaryEventReminders = async () => {
-    console.log('[CRON] Starting event reminder job (secondary - 1h before)...');
+    console.log('[CRON] Starting event reminder job (secondary - configurable time)...');
     
     try {
         const { eventReminderSecondary } = await import('./emailTemplates.js');
         const emailAudit = await import('./emailAuditService.js');
         
-        // Find events starting in 45-75 minutes (to catch within the 15-minute window)
         const now = new Date();
-        const in45Minutes = new Date(now.getTime() + 45 * 60 * 1000);
-        const in75Minutes = new Date(now.getTime() + 75 * 60 * 1000);
         
-        // Format for date comparison
-        const today = now.toISOString().split('T')[0];
+        // Get all events with secondary reminders enabled happening within the next week
+        const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
         
         const { data: upcomingEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, owner_id, reminder_settings')
-            .eq('date', today)
+            .select('id, title, date, time, location, owner_id, reminder_settings, email_settings')
+            .gte('date', now.toISOString().split('T')[0])
+            .lte('date', oneWeekFromNow.toISOString().split('T')[0])
             .eq('is_draft', false);
         
         if (eventsError) {
@@ -281,33 +279,51 @@ const sendSecondaryEventReminders = async () => {
         }
         
         if (!upcomingEvents?.length) {
-            console.log('[CRON] No events today for secondary reminders');
-            return;
-        }
-        
-        // Filter events that are starting in ~1 hour
-        const eventsStartingSoon = upcomingEvents.filter(event => {
-            if (!event.time) return false;
-            
-            // Parse event time (format: "HH:MM" or "HH:MM AM/PM")
-            const eventDateTime = new Date(`${event.date}T${convertTo24Hour(event.time)}:00`);
-            return eventDateTime >= in45Minutes && eventDateTime <= in75Minutes;
-        });
-        
-        if (!eventsStartingSoon.length) {
-            console.log('[CRON] No events starting in ~1 hour');
+            console.log('[CRON] No upcoming events for secondary reminders');
             return;
         }
         
         let sent = 0, failed = 0, skipped = 0;
         
-        for (const event of eventsStartingSoon) {
+        // Time offset mapping (in milliseconds)
+        const timeOffsets = {
+            '1h': 60 * 60 * 1000,
+            '2h': 2 * 60 * 60 * 1000,
+            '3h': 3 * 60 * 60 * 1000,
+            '6h': 6 * 60 * 60 * 1000,
+            '12h': 12 * 60 * 60 * 1000,
+            '48h': 48 * 60 * 60 * 1000,
+            '72h': 72 * 60 * 60 * 1000,
+            '168h': 168 * 60 * 60 * 1000,
+        };
+        
+        for (const event of upcomingEvents) {
             // Check if secondary reminders are enabled for this event
             const reminderSettings = event.reminder_settings || {};
             if (!reminderSettings.secondaryEnabled) {
-                console.log(`[CRON] Secondary reminders disabled for: ${event.title}`);
                 continue;
             }
+            
+            // Get the configured time offset (default to 1h)
+            const timeKey = reminderSettings.secondaryTime || '1h';
+            const offsetMs = timeOffsets[timeKey] || timeOffsets['1h'];
+            
+            // Parse event datetime
+            if (!event.time || !event.date) continue;
+            const eventDateTime = new Date(`${event.date}T${convertTo24Hour(event.time)}:00`);
+            
+            // Calculate when the reminder should be sent
+            const reminderTime = new Date(eventDateTime.getTime() - offsetMs);
+            
+            // Check if we're within the 15-minute window for this reminder
+            const windowStart = new Date(reminderTime.getTime() - 7.5 * 60 * 1000);
+            const windowEnd = new Date(reminderTime.getTime() + 7.5 * 60 * 1000);
+            
+            if (now < windowStart || now > windowEnd) {
+                continue; // Not in the reminder window
+            }
+            
+            console.log(`[CRON] Processing secondary reminder for: ${event.title} (${timeKey} before)`);
             
             // Get registrations - only non-refunded
             const { data: registrations } = await supabase
