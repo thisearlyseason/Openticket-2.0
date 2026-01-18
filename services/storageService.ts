@@ -1850,5 +1850,15 @@ export const StorageService = {
         if (isOffline) return { success: false, error: 'Offline mode' };
         const response = await postSupabase(`/registrations/${regId}/resend-email`, 'POST');
         return response;
+    },
+
+    /**
+     * Approve a registration and send approval email via backend
+     * Uses backend email templates - no frontend email sending
+     */
+    approveRegistration: async (regId: string) => {
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        const response = await postSupabase(`/registrations/${regId}/approve`, 'POST');
+        return response;
     }
 };
