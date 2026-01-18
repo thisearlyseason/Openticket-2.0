@@ -405,6 +405,15 @@ export const refundRegistration = async (req, res) => {
                     type: err.type
                 });
                 
+                // CRITICAL: Reset refund_status since Stripe failed
+                await supabase
+                    .from('registrations')
+                    .update({ 
+                        refund_status: 'failed',
+                        payment_status: reg.payment_status  // Restore original payment status
+                    })
+                    .eq('id', id);
+                
                 // CRITICAL: Block refund if Stripe API fails
                 return res.status(400).json({
                     error: 'Stripe refund failed',
