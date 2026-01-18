@@ -1210,12 +1210,76 @@ When API calls return 401 Unauthorized:
   - Cancellation logic exists in `subscriptionController.js` but no refund flow
   - Needs: Add subscription refund capability to SuperAdmin panel
 
+### ✅ EMAIL SYSTEM OVERHAUL - Phase 1 & 2 Started (January 18, 2026)
+
+#### Backend Email Infrastructure Created
+- [x] **Email Templates Service:** `/app/backend/services/emailTemplates.js`
+  - Centralized HTML template generation for all email types
+  - Templates: `purchaseConfirmation`, `refundConfirmation`, `eventReminder`, `eventReminderSecondary`, `postEventThankYou`, `abandonedCart`
+  - Modern, mobile-first design with consistent branding
+  
+- [x] **Email Audit Service:** `/app/backend/services/emailAuditService.js`
+  - Tracks all email sends to prevent duplicates
+  - Logs trigger type, email type, recipient, success/failure
+  - Constants: `TRIGGER_TYPES` (webhook, cron) and `EMAIL_TYPES`
+  - `wasEmailSent()` and `markEmailSent()` for deduplication
+
+#### Email Trigger Policy Enforced
+- [x] **Backend-Only Triggers:**
+  - Purchase confirmation: `checkout.session.completed` webhook only
+  - Refund confirmation: `refund.succeeded` webhook only
+  - Event reminders: Cron job (hourly for 24h, every 15min for secondary)
+  - Post-event thank you: Cron job (daily at 9 AM UTC)
+  - Abandoned cart: Cron job (every 6 hours, 24h threshold)
+
+#### Event Email Settings (Frontend)
+- [x] **EventBuilder.tsx Updated:**
+  - Renamed "Ticket Design" to "Email Ticket Templates"
+  - Added description linking visual design to email templates
+  - Added toggle switches for ALL email types (default: ON):
+    - Purchase Confirmation
+    - Refund Confirmation
+    - Event Reminder (24h)
+    - Secondary Reminder (configurable time)
+    - Post-Event Thank You
+    - Abandoned Cart Recovery
+  - Secondary reminder time selector: 1h, 2h, 3h, 6h, 12h, 2 days, 3 days, 1 week
+  - Info note explaining backend-only email system
+
+- [x] **Types Updated:** `/app/frontend/types.ts`
+  - `emailSettings` expanded: `confirmationEnabled`, `refundEnabled`, `reminderEnabled`, `postEventEnabled`, `abandonedCartEnabled`
+  - New `reminderSettings` type: `secondaryEnabled`, `secondaryTime`
+
+#### Settings Email Templates Enhanced
+- [x] **Settings.tsx Updated:**
+  - Email template types expanded: confirmation, refund, reminder, reminder_secondary, post_event, abandoned_cart, broadcast, waitlist
+  - Type-specific badge colors and labels
+  - Variables display improved with code chips layout
+  - Added `{{event_time}}`, `{{ticket_url}}`, `{{refund_amount}}`, `{{organizer_name}}` variables
+
+#### Backend Cron Jobs Updated
+- [x] **cronService.js:**
+  - Primary reminder checks `email_settings.reminderEnabled`
+  - Secondary reminder reads `reminder_settings.secondaryTime` for configurable timing
+  - Post-event thank you checks `email_settings.postEventEnabled`
+  - Abandoned cart checks `email_settings.abandonedCartEnabled`
+  
+- [x] **stripeWebhookController.js:**
+  - Purchase confirmation checks `email_settings.confirmationEnabled`
+  - Refund confirmation checks `email_settings.refundEnabled`
+
+#### Testing Status
+- [x] Frontend builds successfully
+- [x] Backend runs with all cron jobs initialized
+- [ ] Full end-to-end email testing pending
+
 ---
 
 ## Backlog & Future Tasks
 
 ### P0 (Critical)
-- All P0 items completed ✅
+- [ ] Complete Email System Overhaul - Remove remaining frontend email triggers
+- [ ] Integrate organizer's visual template (`ticketDesign`) with backend email HTML
 
 ### P1 (High Priority)
 - [ ] SuperAdmin subscription refund audit and implementation
