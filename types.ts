@@ -405,13 +405,25 @@ export interface Event {
   // Design
   ticketDesign?: TicketDesign;
 
-  // Email Configuration (New)
+  // Email Configuration - All emails are backend-triggered only
   emailSettings?: {
-    enabled: boolean;
+    // Enable/disable toggles for each email type (default: true)
+    confirmationEnabled?: boolean;  // Purchase confirmation (Stripe webhook)
+    refundEnabled?: boolean;        // Refund confirmation (Stripe webhook)
+    reminderEnabled?: boolean;      // 24h reminder (cron job)
+    postEventEnabled?: boolean;     // Thank you email (cron job)
+    abandonedCartEnabled?: boolean; // 24h after checkout started (cron job)
+    // Legacy fields for backwards compatibility
+    enabled?: boolean;
     confirmationTemplateId?: string;
-    reminderEnabled?: boolean;
     reminderTemplateId?: string;
     reminderHoursBefore?: number;
+  };
+
+  // Secondary reminder configuration
+  reminderSettings?: {
+    secondaryEnabled?: boolean;
+    secondaryTime?: '1h' | '2h' | '3h' | '6h' | '12h' | '48h' | '72h' | '168h';
   };
 
   notifications?: { reminder: boolean; newOrder: boolean };
