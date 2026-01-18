@@ -248,20 +248,21 @@ const generateEventReminderHtml = (eventTitle, date, time, location, attendeeNam
 
 /**
  * Send abandoned cart emails
- * Targets: Unpaid registrations > 12h old OR failed checkout sessions
+ * Targets: Unpaid registrations > 24h old (changed from 12h per requirements)
  */
 const sendAbandonedCartEmails = async () => {
     console.log('[CRON] Starting abandoned cart job...');
     
     try {
-        const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+        // 24 hour threshold as per requirements
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
         
-        // Find unpaid/pending registrations older than 12 hours
+        // Find unpaid/pending registrations older than 24 hours
         const { data: abandonedRegs, error: regError } = await supabase
             .from('registrations')
-            .select('id, attendee_email, attendee_name, event_id, created_at, event:events(title, owner_id, date)')
+            .select('id, attendee_email, attendee_name, event_id, created_at, event:events(title, owner_id, date, location)')
             .in('payment_status', ['pending', 'incomplete', 'failed'])
-            .lt('created_at', twelveHoursAgo.toISOString())
+            .lt('created_at', twentyFourHoursAgo.toISOString())
             .is('abandoned_email_sent', null); // Only send once
         
         if (regError) {
