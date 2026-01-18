@@ -1224,13 +1224,24 @@ When API calls return 401 Unauthorized:
   - Constants: `TRIGGER_TYPES` (webhook, cron) and `EMAIL_TYPES`
   - `wasEmailSent()` and `markEmailSent()` for deduplication
 
-#### Email Trigger Policy Enforced
+#### Email Trigger Policy Enforced (Backend-Only)
 - [x] **Backend-Only Triggers:**
   - Purchase confirmation: `checkout.session.completed` webhook only
   - Refund confirmation: `refund.succeeded` webhook only
   - Event reminders: Cron job (hourly for 24h, every 15min for secondary)
   - Post-event thank you: Cron job (daily at 9 AM UTC)
   - Abandoned cart: Cron job (every 6 hours, 24h threshold)
+
+- [x] **Frontend Email Triggers REMOVED:**
+  - `AttendeeManager.tsx`: Removed `EmailService` import
+  - `handleResendEmail()`: Now calls backend API `/api/registrations/:id/resend-email`
+  - `handleApproveAttendee()`: Now calls backend API `/api/registrations/:id/approve`
+  - `EventRefunds.tsx`: Removed unused `EmailService` import
+
+- [x] **New Backend Email APIs:**
+  - `POST /api/registrations/:id/resend-email` - Resend confirmation email
+  - `POST /api/registrations/:id/approve` - Approve registration with email
+  - Both use backend templates and audit logging
 
 #### Event Email Settings (Frontend)
 - [x] **EventBuilder.tsx Updated:**
@@ -1257,16 +1268,20 @@ When API calls return 401 Unauthorized:
   - Variables display improved with code chips layout
   - Added `{{event_time}}`, `{{ticket_url}}`, `{{refund_amount}}`, `{{organizer_name}}` variables
 
-#### Backend Cron Jobs Updated
+#### Backend Email Respects Event Settings
+- [x] **stripeWebhookController.js:**
+  - Purchase confirmation checks `email_settings.confirmationEnabled`
+  - Refund confirmation checks `email_settings.refundEnabled`
+  
 - [x] **cronService.js:**
   - Primary reminder checks `email_settings.reminderEnabled`
   - Secondary reminder reads `reminder_settings.secondaryTime` for configurable timing
   - Post-event thank you checks `email_settings.postEventEnabled`
   - Abandoned cart checks `email_settings.abandonedCartEnabled`
-  
-- [x] **stripeWebhookController.js:**
-  - Purchase confirmation checks `email_settings.confirmationEnabled`
-  - Refund confirmation checks `email_settings.refundEnabled`
+
+#### StorageService Methods Added
+- [x] `resendConfirmationEmail(regId)` - Calls backend resend API
+- [x] `approveRegistration(regId)` - Calls backend approve API
 
 #### Testing Status
 - [x] Frontend builds successfully
@@ -1278,7 +1293,6 @@ When API calls return 401 Unauthorized:
 ## Backlog & Future Tasks
 
 ### P0 (Critical)
-- [ ] Complete Email System Overhaul - Remove remaining frontend email triggers
 - [ ] Integrate organizer's visual template (`ticketDesign`) with backend email HTML
 
 ### P1 (High Priority)
