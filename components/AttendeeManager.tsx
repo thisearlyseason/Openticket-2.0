@@ -809,11 +809,12 @@ export const AttendeeManager = () => {
                                                     {selectedIds.has(item.id) && <Check size={12} strokeWidth={4} />}
                                                 </div>
                                             </div>
-                                            <div onClick={() => handleCheckInToggle(item)} className="cursor-pointer shrink-0">
+                                            {/* Check-in status indicator (read-only - check-in only via Check-In Portal) */}
+                                            <div className="shrink-0">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${item.checkedIn
                                                     ? 'bg-green-500 text-white shadow-md shadow-green-500/30'
-                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300 group-hover:border-2 group-hover:border-zinc-300'
-                                                    }`}>
+                                                    : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-300'
+                                                    }`} title={item.checkedIn ? 'Checked In' : 'Not Checked In'}>
                                                     {item.checkedIn ? <Check size={18} strokeWidth={3} /> : <User size={18} />}
                                                 </div>
                                             </div>
