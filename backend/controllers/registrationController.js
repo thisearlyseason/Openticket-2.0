@@ -1896,18 +1896,3 @@ export const approveRegistration = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-            res.json({ 
-                success: true, 
-                message: `Confirmation email sent to ${reg.attendee_email}`,
-                simulated: emailResult.simulated || false
-            });
-        } else {
-            throw new Error(emailResult.error || 'Failed to send email');
-        }
-
-    } catch (error) {
-        console.error('[Resend Email] Error:', error);
-        res.status(500).json({ error: error.message });
-    }
-};
-};
