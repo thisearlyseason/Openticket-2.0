@@ -243,14 +243,181 @@ const sendEventReminders = async () => {
             }
         }
         
-        console.log(`[CRON] Event reminders complete: ${sent} sent, ${failed} failed`);
+        console.log(`[CRON] Event reminders (primary) complete: ${sent} sent, ${failed} failed, ${skipped} skipped`);
     } catch (error) {
         console.error('[CRON] Event reminder job failed:', error);
     }
 };
 
 /**
- * Generate event reminder email HTML
+ * Send secondary event reminder emails (1 hour before)
+ * Runs every 15 minutes to check for events starting soon
+ * Only sends if organizer has enabled secondary reminders
+ */
+const sendSecondaryEventReminders = async () => {
+    console.log('[CRON] Starting event reminder job (secondary - 1h before)...');
+    
+    try {
+        const { eventReminderSecondary } = await import('./emailTemplates.js');
+        const emailAudit = await import('./emailAuditService.js');
+        
+        // Find events starting in 45-75 minutes (to catch within the 15-minute window)
+        const now = new Date();
+        const in45Minutes = new Date(now.getTime() + 45 * 60 * 1000);
+        const in75Minutes = new Date(now.getTime() + 75 * 60 * 1000);
+        
+        // Format for date comparison
+        const today = now.toISOString().split('T')[0];
+        
+        const { data: upcomingEvents, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title, date, time, location, owner_id, reminder_settings')
+            .eq('date', today)
+            .eq('is_draft', false);
+        
+        if (eventsError) {
+            console.error('[CRON] Error fetching upcoming events:', eventsError);
+            return;
+        }
+        
+        if (!upcomingEvents?.length) {
+            console.log('[CRON] No events today for secondary reminders');
+            return;
+        }
+        
+        // Filter events that are starting in ~1 hour
+        const eventsStartingSoon = upcomingEvents.filter(event => {
+            if (!event.time) return false;
+            
+            // Parse event time (format: "HH:MM" or "HH:MM AM/PM")
+            const eventDateTime = new Date(`${event.date}T${convertTo24Hour(event.time)}:00`);
+            return eventDateTime >= in45Minutes && eventDateTime <= in75Minutes;
+        });
+        
+        if (!eventsStartingSoon.length) {
+            console.log('[CRON] No events starting in ~1 hour');
+            return;
+        }
+        
+        let sent = 0, failed = 0, skipped = 0;
+        
+        for (const event of eventsStartingSoon) {
+            // Check if secondary reminders are enabled for this event
+            const reminderSettings = event.reminder_settings || {};
+            if (!reminderSettings.secondaryEnabled) {
+                console.log(`[CRON] Secondary reminders disabled for: ${event.title}`);
+                continue;
+            }
+            
+            // Get registrations - only non-refunded
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('attendee_email, attendee_name, id')
+                .eq('event_id', event.id)
+                .not('payment_status', 'eq', 'refunded');
+            
+            if (!registrations?.length) continue;
+            
+            const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            
+            console.log(`[CRON] Processing ${registrations.length} secondary reminder(s) for: ${event.title}`);
+            
+            for (const reg of registrations) {
+                try {
+                    // Check for duplicates
+                    const alreadySent = await emailAudit.wasEmailSent(
+                        emailAudit.TRIGGER_TYPES.CRON_REMINDER_SECONDARY,
+                        emailAudit.EMAIL_TYPES.EVENT_REMINDER_SECONDARY,
+                        reg.id
+                    );
+                    
+                    if (alreadySent) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    const ticketUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`;
+                    
+                    const { subject, html } = eventReminderSecondary({
+                        attendeeName: reg.attendee_name || 'there',
+                        eventTitle: event.title,
+                        eventDate: formattedDate,
+                        eventTime: event.time,
+                        eventLocation: event.location || 'TBA',
+                        ticketUrl,
+                        timeUntilEvent: '1 hour'
+                    });
+                    
+                    const result = await sendEmailWithProvider(
+                        reg.attendee_email,
+                        subject,
+                        html,
+                        event.owner_id
+                    );
+                    
+                    // Log to audit
+                    await emailAudit.logEmailSend({
+                        triggerType: emailAudit.TRIGGER_TYPES.CRON_REMINDER_SECONDARY,
+                        emailType: emailAudit.EMAIL_TYPES.EVENT_REMINDER_SECONDARY,
+                        recipient: reg.attendee_email,
+                        registrationId: reg.id,
+                        eventId: event.id,
+                        success: result.sent || result.simulated,
+                        messageId: result.messageId,
+                        error: result.error
+                    });
+                    
+                    if (result.sent || result.simulated) {
+                        emailAudit.markEmailSent(
+                            emailAudit.TRIGGER_TYPES.CRON_REMINDER_SECONDARY,
+                            emailAudit.EMAIL_TYPES.EVENT_REMINDER_SECONDARY,
+                            reg.id
+                        );
+                        sent++;
+                    } else {
+                        failed++;
+                    }
+                } catch (e) {
+                    console.error(`[CRON] Secondary reminder failed for ${reg.attendee_email}:`, e);
+                    failed++;
+                }
+            }
+        }
+        
+        console.log(`[CRON] Event reminders (secondary) complete: ${sent} sent, ${failed} failed, ${skipped} skipped`);
+    } catch (error) {
+        console.error('[CRON] Secondary event reminder job failed:', error);
+    }
+};
+
+/**
+ * Helper: Convert 12-hour time to 24-hour format
+ */
+const convertTo24Hour = (time12h) => {
+    if (!time12h) return '00:00';
+    
+    // Already in 24h format
+    if (!time12h.toLowerCase().includes('am') && !time12h.toLowerCase().includes('pm')) {
+        return time12h;
+    }
+    
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
+    hours = parseInt(hours, 10);
+    
+    if (modifier?.toLowerCase() === 'pm' && hours !== 12) {
+        hours += 12;
+    } else if (modifier?.toLowerCase() === 'am' && hours === 12) {
+        hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes || '00'}`;
+};
+
+/**
+ * Generate event reminder email HTML (legacy - kept for backwards compatibility)
  */
 const generateEventReminderHtml = (eventTitle, date, time, location, attendeeName, ticketUrl) => `
 <!DOCTYPE html>
