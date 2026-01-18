@@ -233,15 +233,15 @@ export const refundRegistration = async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        // Check if already refunding or refunded
-        if (reg.refund_status === 'refunding') {
+        // Check if already refunding or refunded (use payment_status since refund_status column may not exist)
+        if (reg.payment_status === 'refunding') {
             return res.status(400).json({ 
                 error: 'A refund is already being processed for this registration',
                 canRefund: false
             });
         }
         
-        if (reg.refund_status === 'refunded' || reg.payment_status === 'refunded') {
+        if (reg.payment_status === 'refunded') {
             return res.status(400).json({ 
                 error: 'This registration has already been refunded',
                 canRefund: false
