@@ -100,7 +100,7 @@ const sendEventReminders = async () => {
         
         const { data: upcomingEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, owner_id, email_settings')
+            .select('id, title, date, time, location, owner_id, email_settings, ticket_design')
             .gte('date', in23Hours.toISOString().split('T')[0])
             .lte('date', in25Hours.toISOString().split('T')[0])
             .eq('is_draft', false)
