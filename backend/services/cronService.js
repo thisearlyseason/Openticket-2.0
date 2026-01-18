@@ -275,7 +275,7 @@ const sendSecondaryEventReminders = async () => {
         
         const { data: upcomingEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, owner_id, reminder_settings, email_settings')
+            .select('id, title, date, time, location, owner_id, email_settings')
             .gte('date', now.toISOString().split('T')[0])
             .lte('date', oneWeekFromNow.toISOString().split('T')[0])
             .eq('is_draft', false);
