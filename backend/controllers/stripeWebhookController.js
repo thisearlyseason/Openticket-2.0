@@ -485,6 +485,7 @@ async function handlePaymentIntentSucceeded(stripe, paymentIntent) {
 
 /**
  * Handle charge.refunded and refund.created events
+ * IMPORTANT: This is the ONLY place refund emails should be sent
  */
 async function handleRefund(stripe, refundData) {
     console.log(`[Webhook] Processing refund event`);
@@ -564,6 +565,89 @@ async function handleRefund(stripe, refundData) {
         });
     } catch (auditError) {
         console.error("[AuditLog] Failed to log refund:", auditError.message);
+    }
+
+    // ========== SEND REFUND CONFIRMATION EMAIL ==========
+    try {
+        const { refundConfirmation } = await import('../services/emailTemplates.js');
+        const emailAudit = await import('../services/emailAuditService.js');
+        const { sendEmailWithProvider } = await import('../services/cronService.js');
+
+        // Check if email already sent (prevent duplicates)
+        const alreadySent = await emailAudit.wasEmailSent(
+            emailAudit.TRIGGER_TYPES.STRIPE_REFUND_SUCCEEDED,
+            emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+            transaction.registration_id
+        );
+
+        if (alreadySent) {
+            console.log('[Webhook] Refund email already sent, skipping');
+        } else {
+            // Get registration and event details
+            const { data: registration } = await supabase
+                .from('registrations')
+                .select('*, event:events(title, date, location, owner_id)')
+                .eq('id', transaction.registration_id)
+                .single();
+
+            if (registration && registration.attendee_email) {
+                const eventDate = registration.event?.date 
+                    ? new Date(registration.event.date).toLocaleDateString('en-US', {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    })
+                    : 'N/A';
+
+                // Count tickets refunded
+                const ticketsRefunded = registration.tickets 
+                    ? registration.tickets.filter(t => t.status === 'refunded').length
+                    : 1;
+
+                const { subject, html } = refundConfirmation({
+                    attendeeName: registration.attendee_name || 'Guest',
+                    eventTitle: registration.event?.title || 'Event',
+                    eventDate,
+                    eventLocation: registration.event?.location || 'TBD',
+                    refundAmount: refundAmountDollars,
+                    ticketsRefunded,
+                    orderId: transaction.registration_id.substring(0, 8).toUpperCase(),
+                    refundReason: registration.refund_reason || '',
+                    refundDate: new Date().toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    })
+                });
+
+                const emailResult = await sendEmailWithProvider(
+                    registration.attendee_email,
+                    subject,
+                    html,
+                    registration.event?.owner_id
+                );
+
+                // Log the email send
+                await emailAudit.logEmailSend({
+                    triggerType: emailAudit.TRIGGER_TYPES.STRIPE_REFUND_SUCCEEDED,
+                    emailType: emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+                    recipient: registration.attendee_email,
+                    registrationId: transaction.registration_id,
+                    eventId: transaction.event_id,
+                    success: emailResult.sent || emailResult.simulated,
+                    messageId: emailResult.messageId,
+                    error: emailResult.error,
+                    metadata: { refundAmount: refundAmountDollars, stripeRefundId: refundData.id }
+                });
+
+                if (emailResult.sent || emailResult.simulated) {
+                    emailAudit.markEmailSent(
+                        emailAudit.TRIGGER_TYPES.STRIPE_REFUND_SUCCEEDED,
+                        emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+                        transaction.registration_id
+                    );
+                    console.log(`[Webhook] ✅ Refund email sent to ${registration.attendee_email}`);
+                }
+            }
+        }
+    } catch (emailError) {
+        console.error('[Webhook] Failed to send refund email:', emailError.message);
     }
 
     console.log(`[Webhook] Refund transaction recorded: $${refundAmountDollars}`);
