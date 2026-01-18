@@ -301,17 +301,61 @@ const sendAbandonedCartEmails = async () => {
                 }
                 
                 try {
+                    // Use new email template system
+                    const { abandonedCart } = await import('./emailTemplates.js');
+                    const emailAudit = await import('./emailAuditService.js');
+                    
+                    // Check for duplicates
+                    const alreadySent = await emailAudit.wasEmailSent(
+                        emailAudit.TRIGGER_TYPES.CRON_ABANDONED_CART,
+                        emailAudit.EMAIL_TYPES.ABANDONED_CART,
+                        reg.id
+                    );
+                    
+                    if (alreadySent) {
+                        return { success: false, reason: 'already_sent' };
+                    }
+                    
                     const checkoutUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/event/${reg.event_id}`;
-                    const html = generateAbandonedCartHtml(reg.event.title, reg.attendee_name, checkoutUrl);
+                    const eventDate = reg.event.date 
+                        ? new Date(reg.event.date).toLocaleDateString('en-US', {
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                        })
+                        : 'TBD';
+                    
+                    const { subject, html } = abandonedCart({
+                        attendeeName: reg.attendee_name || 'there',
+                        eventTitle: reg.event.title,
+                        eventDate,
+                        eventLocation: reg.event.location || 'See event page',
+                        checkoutUrl
+                    });
                     
                     const result = await sendEmailWithProvider(
                         reg.attendee_email,
-                        `🎟️ You left something behind - ${reg.event.title}`,
+                        subject,
                         html,
                         reg.event.owner_id
                     );
                     
+                    // Log to audit
+                    await emailAudit.logEmailSend({
+                        triggerType: emailAudit.TRIGGER_TYPES.CRON_ABANDONED_CART,
+                        emailType: emailAudit.EMAIL_TYPES.ABANDONED_CART,
+                        recipient: reg.attendee_email,
+                        registrationId: reg.id,
+                        eventId: reg.event_id,
+                        success: result.sent || result.simulated,
+                        messageId: result.messageId,
+                        error: result.error
+                    });
+                    
                     if (result.sent || result.simulated) {
+                        emailAudit.markEmailSent(
+                            emailAudit.TRIGGER_TYPES.CRON_ABANDONED_CART,
+                            emailAudit.EMAIL_TYPES.ABANDONED_CART,
+                            reg.id
+                        );
                         // Mark as sent to avoid duplicate emails
                         await supabase
                             .from('registrations')
