@@ -79,7 +79,8 @@ export const EmailService = {
                 })),
                 totalPaid,
                 orderId: tickets[0]?.id?.substring(0, 8).toUpperCase() || 'N/A',
-                organizerName: eventDetails?.organizer || 'Event Organizer'
+                organizerName: eventDetails?.organizer || 'Event Organizer',
+                ticketDesign: eventDetails?.ticket_design  // Pass event's visual design for themed emails
             });
 
             console.log(`[EmailService] Sending confirmation email to ${to}...`);
