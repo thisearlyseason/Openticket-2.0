@@ -1319,7 +1319,7 @@ export const Settings = () => {
                                                         <Button size="sm" variant="danger" onClick={() => handleDeleteTemplate(t.id)} className="w-8 h-8 p-0 flex items-center justify-center"><Trash2 size={14} /></Button>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            );})}
                                         </div>
                                     )}
                                 </div>
