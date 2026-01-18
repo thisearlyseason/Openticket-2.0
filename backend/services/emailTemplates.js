@@ -1,8 +1,120 @@
 /**
  * EMAIL TEMPLATES SERVICE
  * Centralized, modern email templates with consistent styling
- * All emails use the same base design system
+ * Supports dynamic theming from event's ticketDesign settings
  */
+
+// ============== PREDEFINED TEMPLATES ==============
+
+const TEMPLATE_THEMES = {
+    modern: {
+        headerGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        accentColor: '#10b981',
+        bgColor: '#ffffff',
+        textColor: '#111827',
+        mutedColor: '#6b7280'
+    },
+    classic: {
+        headerGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
+        accentColor: '#1e3a5f',
+        bgColor: '#ffffff',
+        textColor: '#0f172a',
+        mutedColor: '#475569'
+    },
+    minimal: {
+        headerGradient: 'linear-gradient(135deg, #18181b 0%, #27272a 100%)',
+        accentColor: '#18181b',
+        bgColor: '#ffffff',
+        textColor: '#18181b',
+        mutedColor: '#71717a'
+    },
+    festive: {
+        headerGradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+        accentColor: '#dc2626',
+        bgColor: '#ffffff',
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
+    },
+    purple: {
+        headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+        accentColor: '#8b5cf6',
+        bgColor: '#ffffff',
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
+    },
+    blue: {
+        headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+        accentColor: '#3b82f6',
+        bgColor: '#ffffff',
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
+    },
+    orange: {
+        headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+        accentColor: '#f97316',
+        bgColor: '#ffffff',
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
+    }
+};
+
+/**
+ * Get theme from ticketDesign settings
+ * Falls back to 'modern' if no design specified
+ */
+const getThemeFromDesign = (ticketDesign) => {
+    if (!ticketDesign) return TEMPLATE_THEMES.modern;
+    
+    // If using a predefined template
+    const templateId = ticketDesign.template || 'modern';
+    if (TEMPLATE_THEMES[templateId]) {
+        const baseTheme = TEMPLATE_THEMES[templateId];
+        
+        // Allow custom accent color override
+        if (ticketDesign.accentColor) {
+            return {
+                ...baseTheme,
+                headerGradient: `linear-gradient(135deg, ${ticketDesign.accentColor} 0%, ${adjustBrightness(ticketDesign.accentColor, -20)} 100%)`,
+                accentColor: ticketDesign.accentColor
+            };
+        }
+        return baseTheme;
+    }
+    
+    // Custom template with custom colors
+    const accentColor = ticketDesign.accentColor || '#10b981';
+    const bgColor = ticketDesign.backgroundColor || '#ffffff';
+    const textColor = ticketDesign.textColor || '#111827';
+    
+    return {
+        headerGradient: `linear-gradient(135deg, ${accentColor} 0%, ${adjustBrightness(accentColor, -20)} 100%)`,
+        accentColor,
+        bgColor,
+        textColor,
+        mutedColor: adjustBrightness(textColor, 40)
+    };
+};
+
+/**
+ * Adjust color brightness (simple hex color adjustment)
+ */
+const adjustBrightness = (hex, percent) => {
+    // Remove # if present
+    hex = hex.replace(/^#/, '');
+    
+    // Parse hex to RGB
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+    
+    // Adjust brightness
+    r = Math.max(0, Math.min(255, r + (r * percent / 100)));
+    g = Math.max(0, Math.min(255, g + (g * percent / 100)));
+    b = Math.max(0, Math.min(255, b + (b * percent / 100)));
+    
+    // Convert back to hex
+    return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
+};
 
 // ============== BASE TEMPLATE SYSTEM ==============
 
