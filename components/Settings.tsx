@@ -1230,8 +1230,19 @@ export const Settings = () => {
                                                     className="min-h-[200px]"
                                                     placeholder="Hi {{attendee_name}}, ..."
                                                 />
-                                                <div className="mt-2 text-xs text-zinc-500 overflow-x-auto whitespace-nowrap p-2 bg-zinc-50 dark:bg-black rounded border border-zinc-200 dark:border-zinc-800">
-                                                    <strong>Variables:</strong> {'{{event_title}}'}, {'{{attendee_name}}'}, {'{{ticket_type}}'}, {'{{event_date}}'}, {'{{event_location}}'}, {'{{qr_code_link}}'}
+                                                <div className="mt-2 text-xs text-zinc-500 p-3 bg-zinc-50 dark:bg-black rounded border border-zinc-200 dark:border-zinc-800">
+                                                    <strong>Variables:</strong>
+                                                    <div className="flex flex-wrap gap-2 mt-1">
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{event_title}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{attendee_name}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{event_date}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{event_time}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{event_location}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{ticket_type}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{ticket_url}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{refund_amount}}'}</code>
+                                                        <code className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-800 rounded">{'{{organizer_name}}'}</code>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex justify-between items-center pt-4">
