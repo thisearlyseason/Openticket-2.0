@@ -368,35 +368,46 @@ export const EventRefunds = () => {
                                 {reg.tickets && reg.tickets.length > 0 && (
                                     <div className="mt-4 space-y-2">
                                         <p className="text-xs font-bold text-zinc-400 uppercase">Tickets</p>
-                                        {reg.tickets.map((ticket, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="flex items-center justify-between bg-zinc-800/30 p-3 rounded-lg"
-                                            >
-                                                <div className="flex-1">
-                                                    <p className="text-sm text-white">
-                                                        {ticket.tierName} x {ticket.quantity}
-                                                    </p>
-                                                    <p className="text-xs text-zinc-500">
-                                                        ${(ticket.pricePerTicket * ticket.quantity).toFixed(2)}
-                                                    </p>
+                                        {reg.tickets.map((ticket, idx) => {
+                                            const ticketName = ticket.name || ticket.tierId || 'Ticket';
+                                            const ticketPrice = ticket.pricePerTicket || ticket.price || 0;
+                                            const ticketQty = ticket.quantity || 1;
+                                            
+                                            return (
+                                                <div
+                                                    key={idx}
+                                                    className="flex items-center justify-between bg-zinc-800/30 p-3 rounded-lg"
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="text-sm text-white">
+                                                            {ticketName} x {ticketQty}
+                                                        </p>
+                                                        <p className="text-xs text-zinc-500">
+                                                            ${(ticketPrice * ticketQty).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                    {ticket.status === 'refunded' ? (
+                                                        <Badge className="bg-red-500 text-white border-none">
+                                                            REFUNDED
+                                                        </Badge>
+                                                    ) : ticket.status === 'refunding' ? (
+                                                        <Badge className="bg-yellow-500 text-black border-none animate-pulse">
+                                                            REFUNDING...
+                                                        </Badge>
+                                                    ) : (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => handleSelectTicket(reg, idx)}
+                                                            className="text-red-400 hover:text-red-300"
+                                                            data-testid={`refund-ticket-${reg.id}-${idx}`}
+                                                        >
+                                                            Refund Ticket
+                                                        </Button>
+                                                    )}
                                                 </div>
-                                                {ticket.status === 'refunded' ? (
-                                                    <Badge className="bg-red-500 text-white border-none">
-                                                        REFUNDED
-                                                    </Badge>
-                                                ) : (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleSelectTicket(reg, idx)}
-                                                        className="text-red-400 hover:text-red-300"
-                                                    >
-                                                        Refund Ticket
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </Card>
