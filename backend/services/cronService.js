@@ -497,7 +497,7 @@ const sendAbandonedCartEmails = async () => {
         // Find unpaid/pending registrations older than 24 hours
         const { data: abandonedRegs, error: regError } = await supabase
             .from('registrations')
-            .select('id, attendee_email, attendee_name, event_id, created_at, event:events(title, owner_id, date, location)')
+            .select('id, attendee_email, attendee_name, event_id, created_at, event:events(title, owner_id, date, location, email_settings)')
             .in('payment_status', ['pending', 'incomplete', 'failed'])
             .lt('created_at', twentyFourHoursAgo.toISOString())
             .is('abandoned_email_sent', null); // Only send once
@@ -530,6 +530,12 @@ const sendAbandonedCartEmails = async () => {
             const promises = batch.map(async (reg) => {
                 if (!reg.event?.title || !reg.attendee_email) {
                     return { success: false, reason: 'missing_data' };
+                }
+                
+                // Check if abandoned cart emails are enabled for this event
+                const emailSettings = reg.event?.email_settings || {};
+                if (emailSettings.abandonedCartEnabled === false) {
+                    return { success: false, reason: 'disabled' };
                 }
                 
                 // Don't send for past events
