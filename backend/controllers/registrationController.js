@@ -378,20 +378,8 @@ export const refundRegistration = async (req, res) => {
                         sessionId: reg.stripe_checkout_session_id,
                         sessionStatus: session.status
                     });
-                    // Continue without Stripe refund - just mark as refunded
+                    // Continue without Stripe refund - just mark as refunded in DB
                     stripeAttempted = false;
-                    
-                    // CRITICAL: Block refund if no payment intent
-                    return res.status(400).json({
-                        error: 'Cannot refund: No payment intent found',
-                        stripeError,
-                        canRefund: false,
-                        diagnostics: {
-                            sessionId: reg.stripe_checkout_session_id,
-                            sessionStatus: session.status,
-                            registrationId: id
-                        }
-                    });
                     
                 } else {
                     const refundParams = {
