@@ -135,8 +135,34 @@ const BASE_STYLES = {
 
 /**
  * Base email wrapper - all emails use this
+ * Supports custom theming from ticketDesign
  */
-const baseEmailWrapper = (headerColor, headerTitle, headerSubtitle, content, footerText = 'OpenTicket') => `
+const baseEmailWrapper = (headerColor, headerTitle, headerSubtitle, content, footerText = 'OpenTicket', options = {}) => {
+    const { logoUrl, customMessage, theme } = options;
+    const textColor = theme?.textColor || BASE_STYLES.textDark;
+    const mutedColor = theme?.mutedColor || BASE_STYLES.textMuted;
+    
+    // Logo section if provided
+    const logoSection = logoUrl ? `
+        <tr>
+            <td style="padding: 20px 30px 0 30px; text-align: center;">
+                <img src="${logoUrl}" alt="Event Logo" style="max-width: 150px; max-height: 80px; object-fit: contain;">
+            </td>
+        </tr>
+    ` : '';
+    
+    // Custom message section if provided
+    const customMessageSection = customMessage ? `
+        <tr>
+            <td style="padding: 20px 30px; background-color: #f9fafb; border-top: 1px solid ${BASE_STYLES.borderColor};">
+                <p style="color: ${mutedColor}; font-size: 14px; font-style: italic; margin: 0; text-align: center;">
+                    "${customMessage}"
+                </p>
+            </td>
+        </tr>
+    ` : '';
+    
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -148,6 +174,7 @@ const baseEmailWrapper = (headerColor, headerTitle, headerSubtitle, content, foo
         <tr>
             <td align="center">
                 <table width="100%" style="max-width: 600px; background-color: ${BASE_STYLES.cardBg}; border-radius: ${BASE_STYLES.borderRadius}; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    ${logoSection}
                     <!-- Header -->
                     <tr>
                         <td style="background: ${headerColor}; padding: 40px 30px; text-align: center;">
@@ -163,6 +190,8 @@ const baseEmailWrapper = (headerColor, headerTitle, headerSubtitle, content, foo
                         </td>
                     </tr>
                     
+                    ${customMessageSection}
+                    
                     <!-- Footer -->
                     <tr>
                         <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid ${BASE_STYLES.borderColor};">
@@ -177,6 +206,7 @@ const baseEmailWrapper = (headerColor, headerTitle, headerSubtitle, content, foo
     </table>
 </body>
 </html>`;
+};
 
 /**
  * Helper: Event details box
