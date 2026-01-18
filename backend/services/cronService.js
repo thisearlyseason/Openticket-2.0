@@ -83,13 +83,16 @@ const sendEmailWithProvider = async (to, subject, htmlContent, organizerId) => {
 // ==================== EVENT REMINDER EMAILS ====================
 
 /**
- * Send event reminder emails (24h before)
+ * Send event reminder emails (24h before - PRIMARY reminder)
  * Runs every hour to check for events starting in ~24h
  */
 const sendEventReminders = async () => {
-    console.log('[CRON] Starting event reminder job...');
+    console.log('[CRON] Starting event reminder job (primary - 24h before)...');
     
     try {
+        const { eventReminderPrimary } = await import('./emailTemplates.js');
+        const emailAudit = await import('./emailAuditService.js');
+        
         // Find events starting in 23-25 hours (to catch within the hourly window)
         const now = new Date();
         const in23Hours = new Date(now.getTime() + 23 * 60 * 60 * 1000);
@@ -113,15 +116,15 @@ const sendEventReminders = async () => {
             return;
         }
         
-        let sent = 0, failed = 0;
+        let sent = 0, failed = 0, skipped = 0;
         
         for (const event of upcomingEvents) {
-            // Get registrations for this event
+            // Get registrations for this event - only non-refunded
             const { data: registrations } = await supabase
                 .from('registrations')
                 .select('attendee_email, attendee_name, id')
                 .eq('event_id', event.id)
-                .eq('payment_status', 'paid');
+                .not('payment_status', 'eq', 'refunded');
             
             if (!registrations?.length) continue;
             
@@ -146,23 +149,54 @@ const sendEventReminders = async () => {
                 
                 const promises = batch.map(async (reg) => {
                     try {
-                        const html = generateEventReminderHtml(
-                            event.title,
-                            formattedDate,
-                            formattedTime,
-                            event.location || 'TBA',
-                            reg.attendee_name,
-                            `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`
+                        // Check for duplicates
+                        const alreadySent = await emailAudit.wasEmailSent(
+                            emailAudit.TRIGGER_TYPES.CRON_REMINDER_PRIMARY,
+                            emailAudit.EMAIL_TYPES.EVENT_REMINDER_PRIMARY,
+                            reg.id
                         );
+                        
+                        if (alreadySent) {
+                            skipped++;
+                            return { success: false, reason: 'already_sent' };
+                        }
+                        
+                        const ticketUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`;
+                        
+                        const { subject, html } = eventReminderPrimary({
+                            attendeeName: reg.attendee_name || 'there',
+                            eventTitle: event.title,
+                            eventDate: formattedDate,
+                            eventTime: formattedTime,
+                            eventLocation: event.location || 'TBA',
+                            ticketUrl
+                        });
                         
                         const result = await sendEmailWithProvider(
                             reg.attendee_email,
-                            `🎟️ Reminder: ${event.title} is Tomorrow!`,
+                            subject,
                             html,
                             event.owner_id
                         );
                         
-                        if (result.sent) {
+                        // Log to audit
+                        await emailAudit.logEmailSend({
+                            triggerType: emailAudit.TRIGGER_TYPES.CRON_REMINDER_PRIMARY,
+                            emailType: emailAudit.EMAIL_TYPES.EVENT_REMINDER_PRIMARY,
+                            recipient: reg.attendee_email,
+                            registrationId: reg.id,
+                            eventId: event.id,
+                            success: result.sent || result.simulated,
+                            messageId: result.messageId,
+                            error: result.error
+                        });
+                        
+                        if (result.sent || result.simulated) {
+                            emailAudit.markEmailSent(
+                                emailAudit.TRIGGER_TYPES.CRON_REMINDER_PRIMARY,
+                                emailAudit.EMAIL_TYPES.EVENT_REMINDER_PRIMARY,
+                                reg.id
+                            );
                             // Also send push notification if subscribed
                             try {
                                 const { data: user } = await supabase
