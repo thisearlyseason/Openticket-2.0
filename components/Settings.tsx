@@ -1266,15 +1266,36 @@ export const Settings = () => {
                                         <div className="space-y-3">
                                             {emailTemplates.length === 0 && (
                                                 <div className="text-center p-8 text-zinc-500 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700">
-                                                    No templates found. Create one to get started.
+                                                    No templates found. Click "Load Defaults" or create a new template.
                                                 </div>
                                             )}
-                                            {emailTemplates.map(t => (
+                                            {emailTemplates.map(t => {
+                                                const typeColors: Record<string, string> = {
+                                                    confirmation: 'green',
+                                                    refund: 'red',
+                                                    reminder: 'blue',
+                                                    reminder_secondary: 'orange',
+                                                    post_event: 'purple',
+                                                    abandoned_cart: 'amber',
+                                                    broadcast: 'blue',
+                                                    waitlist: 'gray'
+                                                };
+                                                const typeLabels: Record<string, string> = {
+                                                    confirmation: 'Purchase',
+                                                    refund: 'Refund',
+                                                    reminder: 'Reminder 24h',
+                                                    reminder_secondary: '2nd Reminder',
+                                                    post_event: 'Thank You',
+                                                    abandoned_cart: 'Cart Recovery',
+                                                    broadcast: 'Broadcast',
+                                                    waitlist: 'Waitlist'
+                                                };
+                                                return (
                                                 <div key={t.id} className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
                                                     <div className="flex-1 min-w-0 mr-4">
                                                         <div className="font-bold flex items-center gap-2 flex-wrap">
                                                             <span className="truncate">{t.name}</span>
-                                                            <Badge color={t.type === 'confirmation' ? 'green' : t.type === 'broadcast' ? 'blue' : 'gray'}>{t.type}</Badge>
+                                                            <Badge color={typeColors[t.type] || 'gray'}>{typeLabels[t.type] || t.type}</Badge>
                                                         </div>
                                                         <div className="text-xs text-zinc-500 mt-1 truncate">{t.subject}</div>
                                                     </div>
