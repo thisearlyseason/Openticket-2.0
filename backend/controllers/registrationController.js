@@ -338,7 +338,11 @@ export const refundRegistration = async (req, res) => {
             })
             .eq('id', id);
         
-        if (reg.stripe_checkout_session_id && amountToRefundCents > 0) {
+        // Check if this is a Stripe payment or a manual/cash payment
+        const isStripePayment = !!reg.stripe_checkout_session_id;
+        const isManualPayment = !isStripePayment && (reg.payment_status === 'paid' || reg.payment_status === 'completed');
+        
+        if (isStripePayment && amountToRefundCents > 0) {
             stripeAttempted = true;
             
             try {
@@ -369,19 +373,13 @@ export const refundRegistration = async (req, res) => {
                     });
                     
                 } else if (!session.payment_intent) {
-                    stripeError = 'No payment intent found for this session';
-                    console.error('[Refund] No payment intent:', {
+                    // Session exists but no payment intent - might be incomplete or free
+                    console.warn('[Refund] Session has no payment intent, treating as manual refund:', {
                         sessionId: reg.stripe_checkout_session_id,
                         sessionStatus: session.status
                     });
-                    
-                    // Reset payment_status since we can't process
-                    await supabase
-                        .from('registrations')
-                        .update({ 
-                            payment_status: reg.payment_status  // Restore original
-                        })
-                        .eq('id', id);
+                    // Continue without Stripe refund - just mark as refunded
+                    stripeAttempted = false;
                     
                     // CRITICAL: Block refund if no payment intent
                     return res.status(400).json({
