@@ -1635,7 +1635,7 @@ export const deleteRegistration = async (req, res) => {
         console.error('[Delete Registration] Error:', error);
         res.status(500).json({ error: error.message });
     }
-
+};
 
 /**
  * Resend confirmation email for a registration
