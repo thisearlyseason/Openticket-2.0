@@ -341,17 +341,42 @@ export const AttendeeManager = () => {
     const handleBulkRefund = async () => {
         if (selectedIds.size === 0) return;
 
-        // Instead of processing here, redirect to refunds page with selected items
+        // Get all selected items
         const selectedItems = Array.from(selectedIds).map(id => {
             const item = attendees.find(a => a.id === id);
             return item;
-        }).filter(Boolean);
+        }).filter(Boolean) as AttendeeItem[];
+
+        // Validate: Cannot refund items that are already refunded or refunding
+        const invalidItems = selectedItems.filter(item => 
+            item.status === 'refunded' || item.status === 'refunding'
+        );
+        
+        if (invalidItems.length > 0) {
+            showToast(`❌ ${invalidItems.length} ticket(s) are already refunded or being refunded.`, "error");
+            return;
+        }
+
+        // Validate: Can only refund paid items (not pending/free)
+        const unpaidItems = selectedItems.filter(item => 
+            item.status !== 'paid' && item.status !== 'comp'
+        );
+        
+        if (unpaidItems.length === selectedItems.length) {
+            showToast(`⚠️ Selected tickets have not been paid. Nothing to refund.`, "warning");
+            return;
+        }
 
         // Group by registration ID
-        const regIds = [...new Set(selectedItems.map(item => item!.regId))];
+        const regIds = [...new Set(selectedItems.map(item => item.regId))];
 
         if (regIds.length > 1) {
-            showToast("⚠️ Cannot refund tickets from multiple orders. Please select from one order at a time.", "warning");
+            showToast("⚠️ Cannot refund tickets from multiple orders at once. Please select from one order at a time.", "warning");
+            return;
+        }
+
+        if (regIds.length === 0) {
+            showToast("❌ No valid orders found for refund.", "error");
             return;
         }
 
