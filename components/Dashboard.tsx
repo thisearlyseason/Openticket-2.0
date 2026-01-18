@@ -237,8 +237,9 @@ export const Dashboard = () => {
                         moderationStatus: 'approved'
                     };
 
-                    await StorageService.saveEvent(newEvent);
-                    setEvents(prev => [newEvent, ...prev]);
+                    const savedEvent = await StorageService.saveEvent(newEvent);
+                    // Use the returned event which has the correct database ID
+                    setEvents(prev => [savedEvent, ...prev]);
                     setActiveTab('drafts');
                     showToast("Event duplicated successfully", "success");
                 } catch (e: any) {
