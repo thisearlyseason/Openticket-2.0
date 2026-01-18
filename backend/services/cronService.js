@@ -384,7 +384,8 @@ const sendSecondaryEventReminders = async () => {
                         eventTime: event.time,
                         eventLocation: event.location || 'TBA',
                         ticketUrl,
-                        timeUntilEvent
+                        timeUntilEvent,
+                        ticketDesign: event.ticket_design  // Pass event's visual design
                     });
                     
                     const result = await sendEmailWithProvider(
