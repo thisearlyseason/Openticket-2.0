@@ -373,13 +373,27 @@ export const refundRegistration = async (req, res) => {
                     });
                     
                 } else if (!session.payment_intent) {
-                    // Session exists but no payment intent - might be incomplete or free
+                    // Session exists but no payment intent - incomplete checkout or free event
                     console.warn('[Refund] Session has no payment intent, treating as manual refund:', {
                         sessionId: reg.stripe_checkout_session_id,
-                        sessionStatus: session.status
+                        sessionStatus: session.status,
+                        paymentStatus: session.payment_status
                     });
                     // Continue without Stripe refund - just mark as refunded in DB
+                    // This happens when: checkout was abandoned, free event, or payment failed
                     stripeAttempted = false;
+                    stripeError = null; // Clear any error - this is expected for incomplete checkouts
+                    
+                } else if (session.payment_status !== 'paid') {
+                    // Session has payment intent but payment was not completed
+                    console.warn('[Refund] Session payment not completed, treating as manual refund:', {
+                        sessionId: reg.stripe_checkout_session_id,
+                        sessionStatus: session.status,
+                        paymentStatus: session.payment_status,
+                        paymentIntent: session.payment_intent
+                    });
+                    stripeAttempted = false;
+                    stripeError = null;
                     
                 } else {
                     const refundParams = {
