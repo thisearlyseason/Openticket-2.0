@@ -43,10 +43,15 @@ export const EventRefunds = () => {
     const handleSelectOrder = (reg: Registration) => {
         if (!reg.tickets) return;
         
-        // Select all non-refunded tickets
+        // Select all non-refunded and non-refunding tickets
         const ticketIndices = reg.tickets
-            .map((t, idx) => t.status !== 'refunded' ? idx : -1)
+            .map((t, idx) => (t.status !== 'refunded' && t.status !== 'refunding') ? idx : -1)
             .filter(idx => idx !== -1);
+        
+        if (ticketIndices.length === 0) {
+            window.alert('No refundable tickets in this order');
+            return;
+        }
         
         const amount = calculateRefundAmount(reg, ticketIndices);
         
