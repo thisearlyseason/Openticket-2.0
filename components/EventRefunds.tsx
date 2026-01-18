@@ -295,6 +295,21 @@ export const EventRefunds = () => {
             setSuccessDetails(response);
             setShowSuccess(true);
             
+            // Send refund confirmation email
+            try {
+                const refundAmount = response?.refundAmount || selectedRefund.refundAmount;
+                const ticketsRefunded = response?.ticketsRefunded || selectedTickets.length;
+                const { subject, body } = generateRefundEmail(registration, refundAmount, ticketsRefunded, refundReason);
+                
+                if (registration.attendeeEmail && event?.ownerId) {
+                    await EmailService.sendEmail(event.ownerId, registration.attendeeEmail, subject, body);
+                    console.log('[Refund] Confirmation email sent to:', registration.attendeeEmail);
+                }
+            } catch (emailError) {
+                console.error('[Refund] Failed to send confirmation email:', emailError);
+                // Don't fail the refund if email fails
+            }
+            
             // Reload data
             await loadData();
             
