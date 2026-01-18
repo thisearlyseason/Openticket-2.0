@@ -1025,26 +1025,33 @@ export const initCronJobs = () => {
 
     console.log('[CRON] Initializing scheduled jobs...');
 
-    // Event Reminders - Every hour at minute 0
+    // Event Reminders (Primary - 24h) - Every hour at minute 0
     cron.schedule('0 * * * *', async () => {
-        console.log('[CRON] Triggered: Event Reminders (24h check)');
+        console.log('[CRON] Triggered: Event Reminders (Primary - 24h)');
         await sendEventReminders();
     }, { timezone: 'UTC' });
-    console.log('[CRON] ✅ Event Reminders scheduled (hourly)');
+    console.log('[CRON] ✅ Event Reminders (Primary) scheduled (hourly)');
 
-    // Abandoned Cart - Every 6 hours
+    // Event Reminders (Secondary - 1h) - Every 15 minutes
+    cron.schedule('*/15 * * * *', async () => {
+        console.log('[CRON] Triggered: Event Reminders (Secondary - 1h)');
+        await sendSecondaryEventReminders();
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Event Reminders (Secondary) scheduled (every 15 min)');
+
+    // Abandoned Cart - Every 6 hours (threshold: 24h after checkout started)
     cron.schedule('0 */6 * * *', async () => {
-        console.log('[CRON] Triggered: Abandoned Cart Emails');
+        console.log('[CRON] Triggered: Abandoned Cart Emails (24h threshold)');
         await sendAbandonedCartEmails();
     }, { timezone: 'UTC' });
     console.log('[CRON] ✅ Abandoned Cart Emails scheduled (every 6 hours)');
 
-    // Post-Event Follow-ups - Every hour at minute 30
-    cron.schedule('30 * * * *', async () => {
-        console.log('[CRON] Triggered: Post-Event Follow-ups');
+    // Post-Event Thank You - Every day at 9 AM UTC (morning after event)
+    cron.schedule('0 9 * * *', async () => {
+        console.log('[CRON] Triggered: Post-Event Thank You Emails');
         await sendPostEventFollowups();
     }, { timezone: 'UTC' });
-    console.log('[CRON] ✅ Post-Event Follow-ups scheduled (hourly)');
+    console.log('[CRON] ✅ Post-Event Thank You scheduled (daily at 9 AM UTC)');
 
     // Weekly affiliate summary - Every Monday at 9:00 AM UTC
     cron.schedule('0 9 * * 1', async () => {
@@ -1082,6 +1089,7 @@ export const initCronJobs = () => {
  */
 export const triggerWeeklySummary = async () => await sendWeeklyAffiliateSummaries();
 export const triggerEventReminders = async () => await sendEventReminders();
+export const triggerSecondaryReminders = async () => await sendSecondaryEventReminders();
 export const triggerAbandonedCart = async () => await sendAbandonedCartEmails();
 export const triggerPostEventFollowups = async () => await sendPostEventFollowups();
 export const triggerScheduledPayouts = async () => await processScheduledAffiliatePayouts();
@@ -1089,8 +1097,10 @@ export const triggerScheduledPayouts = async () => await processScheduledAffilia
 export default { 
     initCronJobs, 
     triggerWeeklySummary, 
-    triggerEventReminders, 
+    triggerEventReminders,
+    triggerSecondaryReminders,
     triggerAbandonedCart, 
     triggerPostEventFollowups,
-    triggerScheduledPayouts
+    triggerScheduledPayouts,
+    sendEmailWithProvider
 };
