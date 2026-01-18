@@ -1635,4 +1635,118 @@ export const deleteRegistration = async (req, res) => {
         console.error('[Delete Registration] Error:', error);
         res.status(500).json({ error: error.message });
     }
+
+
+/**
+ * Resend confirmation email for a registration
+ * POST /api/registrations/:id/resend-email
+ * Uses backend email templates - no frontend email sending
+ */
+export const resendConfirmationEmail = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.uid;
+
+        // Get registration with event and profile details
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(id, title, date, time, location, venue_name, owner_id, ticket_design, email_settings)')
+            .eq('id', id)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Verify ownership
+        if (reg.event.owner_id !== owner_id) {
+            return res.status(403).json({ error: 'Unauthorized - You do not own this event' });
+        }
+
+        // Check if email exists
+        if (!reg.attendee_email) {
+            return res.status(400).json({ error: 'No email address found for this attendee' });
+        }
+
+        // Check if confirmation emails are enabled
+        const emailSettings = reg.event.email_settings || {};
+        if (emailSettings.confirmationEnabled === false) {
+            return res.status(400).json({ error: 'Confirmation emails are disabled for this event. Enable them in event settings.' });
+        }
+
+        // Import email services
+        const { purchaseConfirmation } = await import('../services/emailTemplates.js');
+        const emailAudit = await import('../services/emailAuditService.js');
+        const { sendEmailWithProvider } = await import('../services/cronService.js');
+
+        // Format event details
+        const eventDate = new Date(reg.event.date).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        const eventLocation = reg.event.location || reg.event.venue_name || 'TBD';
+
+        // Build ticket URL
+        const ticketUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`;
+
+        // Generate tickets display
+        const ticketsDisplay = (reg.tickets || [])
+            .filter(t => t.status !== 'refunded')
+            .map(t => `${t.quantity || 1}x ${t.name || 'Ticket'}`)
+            .join(', ') || '1x General Admission';
+
+        // Calculate order total
+        const orderTotal = (reg.tickets || [])
+            .filter(t => t.status !== 'refunded')
+            .reduce((sum, t) => sum + ((t.pricePerTicket || t.price || 0) * (t.quantity || 1)), 0);
+
+        // Generate email
+        const { subject, html } = purchaseConfirmation({
+            attendeeName: reg.attendee_name || 'Guest',
+            eventTitle: reg.event.title,
+            eventDate,
+            eventTime: reg.event.time || 'TBD',
+            eventLocation,
+            ticketUrl,
+            ticketsDisplay,
+            orderTotal: orderTotal.toFixed(2),
+            orderId: reg.id.substring(0, 8).toUpperCase()
+        });
+
+        // Send the email
+        const emailResult = await sendEmailWithProvider(
+            reg.attendee_email,
+            subject,
+            html,
+            reg.event.owner_id
+        );
+
+        // Log the resend (use different trigger type to allow multiple resends)
+        await emailAudit.logEmailSend({
+            triggerType: 'manual_resend',
+            emailType: emailAudit.EMAIL_TYPES.PURCHASE_CONFIRMATION,
+            recipient: reg.attendee_email,
+            registrationId: reg.id,
+            eventId: reg.event_id,
+            success: emailResult.sent || emailResult.simulated,
+            messageId: emailResult.messageId,
+            error: emailResult.error,
+            metadata: { resent: true, resentBy: owner_id }
+        });
+
+        if (emailResult.sent || emailResult.simulated) {
+            console.log(`[Resend] ✅ Confirmation email sent to ${reg.attendee_email}`);
+            res.json({ 
+                success: true, 
+                message: `Confirmation email sent to ${reg.attendee_email}`,
+                simulated: emailResult.simulated || false
+            });
+        } else {
+            throw new Error(emailResult.error || 'Failed to send email');
+        }
+
+    } catch (error) {
+        console.error('[Resend Email] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 };
