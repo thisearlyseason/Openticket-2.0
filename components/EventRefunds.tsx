@@ -468,7 +468,8 @@ export const EventRefunds = () => {
                                     </div>
                                 )}
                             </Card>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </div>
