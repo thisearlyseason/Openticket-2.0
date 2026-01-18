@@ -338,6 +338,19 @@ const sendSecondaryEventReminders = async () => {
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
             
+            // Human-readable time labels
+            const timeLabels = {
+                '1h': '1 hour',
+                '2h': '2 hours',
+                '3h': '3 hours',
+                '6h': '6 hours',
+                '12h': '12 hours',
+                '48h': '2 days',
+                '72h': '3 days',
+                '168h': '1 week',
+            };
+            const timeUntilEvent = timeLabels[timeKey] || '1 hour';
+            
             console.log(`[CRON] Processing ${registrations.length} secondary reminder(s) for: ${event.title}`);
             
             for (const reg of registrations) {
@@ -363,7 +376,7 @@ const sendSecondaryEventReminders = async () => {
                         eventTime: event.time,
                         eventLocation: event.location || 'TBA',
                         ticketUrl,
-                        timeUntilEvent: '1 hour'
+                        timeUntilEvent
                     });
                     
                     const result = await sendEmailWithProvider(
