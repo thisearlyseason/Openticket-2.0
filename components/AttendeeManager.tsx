@@ -119,6 +119,7 @@ export const AttendeeManager = () => {
                 // Use centralized payment status check
                 const paid = isPaidStatus(reg.paymentStatus);
                 const refunded = isRefundedStatus(reg.paymentStatus);
+                const isRefunding = reg.refundStatus === 'refunding' || reg.paymentStatus === 'refunding';
                 
                 // Get add-ons for this registration to attach to guest
                 const regAddOns = reg.addOns && Array.isArray(reg.addOns) 
@@ -133,7 +134,19 @@ export const AttendeeManager = () => {
                             const isCheckedIn = (reg.checkInStatuses && reg.checkInStatuses[ticketKey]?.checkedIn) || reg.checkedIn || false;
 
                             // Check specific ticket status or fallback to order status
-                            const status = t.status === 'refunded' ? 'refunded' : (refunded ? 'refunded' : (paid ? 'paid' : 'pending'));
+                            // Priority: ticket.status > reg.refundStatus > reg.paymentStatus
+                            let status: string;
+                            if (t.status === 'refunded') {
+                                status = 'refunded';
+                            } else if (t.status === 'refunding' || isRefunding) {
+                                status = 'refunding';
+                            } else if (refunded) {
+                                status = 'refunded';
+                            } else if (paid) {
+                                status = 'paid';
+                            } else {
+                                status = 'pending';
+                            }
 
                             list.push({
                                 id: `${reg.id}-${t.tierId}-${i}`,
@@ -146,7 +159,7 @@ export const AttendeeManager = () => {
                                 ticketType: t.name,
                                 price: t.pricePerTicket || 0,
                                 orderDate: reg.timestamp,
-                                status: status,
+                                status: status as any,
                                 approvalStatus: reg.approvalStatus || 'approved',
                                 checkedIn: isCheckedIn,
                                 // Attach add-ons to first ticket of each order for display
@@ -167,7 +180,7 @@ export const AttendeeManager = () => {
                             ticketType: evt?.ticketName || 'General Admission',
                             price: evt?.price || 0,
                             orderDate: reg.timestamp,
-                            status: paid ? 'paid' : 'pending',
+                            status: isRefunding ? 'refunding' : (paid ? 'paid' : 'pending'),
                             approvalStatus: reg.approvalStatus || 'approved',
                             checkedIn: reg.checkedIn || false,
                             addOns: regAddOns
