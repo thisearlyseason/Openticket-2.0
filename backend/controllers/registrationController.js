@@ -268,8 +268,7 @@ export const refundRegistration = async (req, res) => {
             // Full Refund
             isFullRefund = true;
             updates = {
-                payment_status: 'refunded',
-                refund_reason: reason,
+                payment_status: 'refunded'
             };
             
             if (reg.tickets) {
