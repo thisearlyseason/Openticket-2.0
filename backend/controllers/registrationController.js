@@ -481,15 +481,11 @@ export const refundRegistration = async (req, res) => {
         }
 
         // 4. Update registration in DB (only reached if Stripe succeeded or not needed)
-        // Only use payment_status since refund_status column may not exist
+        // Only use columns that are guaranteed to exist in the schema
         updates.payment_status = stripeRefundId || !stripeAttempted ? 'refunded' : reg.payment_status;
-        if (stripeRefundId) {
-            updates.stripe_refund_id = stripeRefundId;
-        }
-        updates.refund_timestamp = Date.now();
-
-        updates.refunded_amount = (reg.refunded_amount || 0) + (amountToRefundCents / 100);
-        updates.refund_reason = reason;
+        
+        // Store refund metadata in tickets array or a JSON field if available
+        // For now, just update the payment_status which is the critical field
 
         const { data, error } = await supabase
             .from('registrations')
