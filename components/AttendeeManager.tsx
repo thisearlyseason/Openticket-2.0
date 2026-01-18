@@ -238,10 +238,14 @@ export const AttendeeManager = () => {
         }
 
         if (filterStatus === 'refunded') {
+            // Show refunded and cancelled items
             res = res.filter(a => a.status === 'refunded' || a.status === 'cancelled');
+        } else if (filterStatus === 'refunding') {
+            // Show items being processed for refund
+            res = res.filter(a => a.status === 'refunding');
         } else {
-            // For all other statuses, exclude refunded/cancelled from the view unless explicitly searching?
-            // Actually, usually we hide them.
+            // For all other statuses, exclude refunded/cancelled from the view
+            // BUT keep "refunding" visible so organizers can see pending refunds
             res = res.filter(a => a.status !== 'refunded' && a.status !== 'cancelled');
 
             if (filterStatus === 'checkedIn') res = res.filter(a => a.checkedIn);
