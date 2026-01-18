@@ -852,9 +852,6 @@ export const AttendeeManager = () => {
                                             {item.approvalStatus === 'pending' && (
                                                 <Button size="sm" variant="secondary" onClick={() => handleApproveAttendee(item)} className="h-8 px-3 text-[10px] font-black uppercase">Approve</Button>
                                             )}
-                                            <button onClick={() => handleCheckInToggle(item)} className="px-3 py-1.5 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap">
-                                                {item.itemType === 'addon' ? (item.checkedIn ? 'Completed' : 'Complete') : (item.checkedIn ? 'Undo Check-in' : 'Check In')}
-                                            </button>
                                             <button onClick={() => { setEditGuestData({ name: item.name, email: item.email }); setShowEditModal(item); }} className="p-1.5 text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors" title="Edit">
                                                 <Edit size={16} />
                                             </button>
