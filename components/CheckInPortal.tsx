@@ -1290,8 +1290,19 @@ export const CheckInPortal = () => {
             )}
 
             {paymentContext && (
-                <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in">
-                    <Card className="w-full max-w-lg p-0 bg-white dark:bg-zinc-900 border-2 border-red-500 relative overflow-hidden flex flex-col max-h-[90vh]">
+                <div 
+                    className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 animate-in fade-in"
+                    onClick={(e) => {
+                        // Only close if clicking the backdrop, not the modal content
+                        if (e.target === e.currentTarget) {
+                            setPaymentContext(null);
+                        }
+                    }}
+                >
+                    <Card 
+                        className="w-full max-w-lg p-0 bg-white dark:bg-zinc-900 border-2 border-red-500 relative overflow-hidden flex flex-col max-h-[90vh]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="bg-red-600 text-white p-6 pb-8 relative">
                             <button onClick={() => setPaymentContext(null)} className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
                             <div className="flex items-center gap-3 mb-2">
