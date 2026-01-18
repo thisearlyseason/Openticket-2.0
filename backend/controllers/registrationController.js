@@ -1735,6 +1735,154 @@ export const resendConfirmationEmail = async (req, res) => {
 
         if (emailResult.sent || emailResult.simulated) {
             console.log(`[Resend] ✅ Confirmation email sent to ${reg.attendee_email}`);
+
+
+/**
+ * Approve a registration and send approval email
+ * POST /api/registrations/:id/approve
+ * Uses backend email templates - no frontend email sending
+ */
+export const approveRegistration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.uid;
+
+        // Get registration with event details
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(id, title, date, time, location, venue_name, owner_id, email_settings, organizer)')
+            .eq('id', id)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Verify ownership
+        if (reg.event.owner_id !== owner_id) {
+            return res.status(403).json({ error: 'Unauthorized - You do not own this event' });
+        }
+
+        // Update approval status
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({ approval_status: 'approved' })
+            .eq('id', id);
+
+        if (updateError) {
+            throw new Error('Failed to update approval status');
+        }
+
+        // Send approval email if attendee has email
+        if (reg.attendee_email) {
+            try {
+                const { sendEmailWithProvider } = await import('../services/cronService.js');
+                const emailAudit = await import('../services/emailAuditService.js');
+
+                // Format event details
+                const eventDate = new Date(reg.event.date).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+                const eventLocation = reg.event.location || reg.event.venue_name || 'TBD';
+                const ticketUrl = `${process.env.FRONTEND_URL || 'https://openticket.events'}/#/ticket/${reg.id}`;
+
+                // Generate approval email HTML
+                const subject = `🎉 Approved! Your Registration for ${reg.event.title}`;
+                const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">You're Approved! 🎉</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hi <strong>${reg.attendee_name || 'there'}</strong>,
+                            </p>
+                            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                                Great news! Your registration for <strong>${reg.event.title}</strong> has been approved by the organizer.
+                            </p>
+                            <table width="100%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="color: #111827; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">${reg.event.title}</p>
+                                        <p style="color: #6b7280; font-size: 14px; margin: 0;">📅 ${eventDate}</p>
+                                        <p style="color: #6b7280; font-size: 14px; margin: 5px 0 0 0;">🕐 ${reg.event.time || 'TBD'}</p>
+                                        <p style="color: #6b7280; font-size: 14px; margin: 5px 0 0 0;">📍 ${eventLocation}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <a href="${ticketUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">View Your Ticket</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                                We look forward to seeing you there!
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0;">Organized by ${reg.event.organizer || 'Event Organizer'}</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
+
+                const emailResult = await sendEmailWithProvider(
+                    reg.attendee_email,
+                    subject,
+                    html,
+                    reg.event.owner_id
+                );
+
+                // Log the email
+                await emailAudit.logEmailSend({
+                    triggerType: 'manual_approval',
+                    emailType: 'approval_confirmation',
+                    recipient: reg.attendee_email,
+                    registrationId: reg.id,
+                    eventId: reg.event_id,
+                    success: emailResult.sent || emailResult.simulated,
+                    messageId: emailResult.messageId,
+                    error: emailResult.error
+                });
+
+                console.log(`[Approve] ✅ Approval email sent to ${reg.attendee_email}`);
+            } catch (emailError) {
+                console.error('[Approve] Failed to send approval email:', emailError.message);
+                // Don't fail the approval if email fails
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            message: 'Registration approved' + (reg.attendee_email ? ' and email sent' : '')
+        });
+
+    } catch (error) {
+        console.error('[Approve Registration] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
             res.json({ 
                 success: true, 
                 message: `Confirmation email sent to ${reg.attendee_email}`,
