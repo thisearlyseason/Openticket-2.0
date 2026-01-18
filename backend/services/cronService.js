@@ -100,7 +100,7 @@ const sendEventReminders = async () => {
         
         const { data: upcomingEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, owner_id')
+            .select('id, title, date, time, location, owner_id, email_settings')
             .gte('date', in23Hours.toISOString().split('T')[0])
             .lte('date', in25Hours.toISOString().split('T')[0])
             .eq('is_draft', false)
@@ -119,6 +119,13 @@ const sendEventReminders = async () => {
         let sent = 0, failed = 0, skipped = 0;
         
         for (const event of upcomingEvents) {
+            // Check if reminder emails are enabled for this event
+            const emailSettings = event.email_settings || {};
+            if (emailSettings.reminderEnabled === false) {
+                console.log(`[CRON] Reminder emails disabled for: ${event.title}`);
+                continue;
+            }
+            
             // Get registrations for this event - only non-refunded
             const { data: registrations } = await supabase
                 .from('registrations')
