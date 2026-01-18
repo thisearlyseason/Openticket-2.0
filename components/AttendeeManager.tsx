@@ -579,9 +579,114 @@ export const AttendeeManager = () => {
 
                     const organizerUser = await StorageService.getUserById(event.ownerId);
                     const templateId = event.emailSettings?.confirmationTemplateId;
-                    let subject = `Confirmation: ${event.title}`;
-                    let body = `Hi ${item.name},<br><br>Here is your ticket for ${event.title}.<br><br>Date: ${new Date(event.date).toLocaleDateString()}<br>Location: ${event.location}<br><br>Thanks,<br>${event.organizer}`;
+                    let subject = `Your Ticket Confirmation - ${event.title}`;
+                    
+                    // Generate professional HTML email template
+                    const eventDate = new Date(event.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                    });
+                    const eventTime = event.time || 'TBD';
+                    const eventLocation = event.location || event.venueName || 'TBD';
+                    
+                    let body = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">You're In! 🎉</h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Your ticket is confirmed</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                                Hi <strong>${item.name}</strong>,
+                            </p>
+                            <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                                Great news! Your registration for <strong>${event.title}</strong> is confirmed. Here are your event details:
+                            </p>
+                            
+                            <!-- Event Details Box -->
+                            <table width="100%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${event.title}</h2>
+                                        <table width="100%">
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #6b7280; font-size: 14px;">📅 Date</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <strong style="color: #374151;">${eventDate}</strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #6b7280; font-size: 14px;">🕐 Time</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <strong style="color: #374151;">${eventTime}</strong>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0;">
+                                                    <span style="color: #6b7280; font-size: 14px;">📍 Location</span>
+                                                </td>
+                                                <td style="padding: 8px 0; text-align: right;">
+                                                    <strong style="color: #374151;">${eventLocation}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Ticket Info -->
+                            <table width="100%" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="color: #6b7280; font-size: 12px; text-transform: uppercase; margin: 0 0 10px 0;">Your Ticket</p>
+                                        <p style="color: #111827; font-size: 16px; font-weight: 600; margin: 0 0 5px 0;">🎫 ${item.ticketType || 'General Admission'}</p>
+                                        <p style="color: #6b7280; font-size: 14px; margin: 0;">Order ID: <span style="font-family: monospace;">${item.regId.substring(0, 8).toUpperCase()}</span></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0;">
+                                Please save this email for your records. You may be asked to show it at check-in.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">See you there!</p>
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                                Organized by ${event.organizer || 'Event Organizer'}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`;
 
+                    // Override with custom template if configured
                     if (organizerUser && templateId) {
                         const template = organizerUser.emailTemplates?.find((t: any) => t.id === templateId);
                         if (template) {
@@ -589,8 +694,8 @@ export const AttendeeManager = () => {
                             body = EmailService.renderTemplate(template.body, {
                                 name: item.name,
                                 event: event.title,
-                                date: new Date(event.date).toLocaleDateString(),
-                                location: event.location,
+                                date: eventDate,
+                                location: eventLocation,
                                 ticketType: item.ticketType
                             });
                         }
