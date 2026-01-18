@@ -1567,25 +1567,22 @@ export const deleteRegistration = async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized - You do not own this event' });
         }
 
-        // Payment-aware deletion logic
+        // Payment-aware deletion logic (use payment_status only - refund_status may not exist)
         const paymentStatus = reg.payment_status?.toLowerCase();
-        const refundStatus = reg.refund_status?.toLowerCase();
         
         // Block deletion of paid tickets that haven't been refunded
-        if ((paymentStatus === 'paid' || paymentStatus === 'completed' || paymentStatus === 'succeeded') 
-            && refundStatus !== 'refunded') {
+        if ((paymentStatus === 'paid' || paymentStatus === 'completed' || paymentStatus === 'succeeded')) {
             return res.status(400).json({ 
                 error: 'Cannot delete paid registration. Please refund it first.',
-                paymentStatus: reg.payment_status,
-                refundStatus: reg.refund_status
+                paymentStatus: reg.payment_status
             });
         }
 
         // Block deletion of tickets being refunded
-        if (refundStatus === 'refunding' || paymentStatus === 'refunding') {
+        if (paymentStatus === 'refunding') {
             return res.status(400).json({ 
                 error: 'Cannot delete registration while refund is processing. Please wait for refund to complete.',
-                refundStatus: reg.refund_status
+                paymentStatus: reg.payment_status
             });
         }
 
