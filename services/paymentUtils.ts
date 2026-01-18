@@ -13,11 +13,13 @@
 export const PAID_STATUSES = ['paid', 'completed', 'succeeded'] as const;
 export const UNPAID_STATUSES = ['pending', 'incomplete', 'failed', 'offline_pending'] as const;
 export const REFUNDED_STATUSES = ['refunded', 'partially_refunded'] as const;
+export const REFUNDING_STATUSES = ['refunding'] as const;
 
 export type PaidStatus = typeof PAID_STATUSES[number];
 export type UnpaidStatus = typeof UNPAID_STATUSES[number];
 export type RefundedStatus = typeof REFUNDED_STATUSES[number];
-export type PaymentStatus = PaidStatus | UnpaidStatus | RefundedStatus;
+export type RefundingStatus = typeof REFUNDING_STATUSES[number];
+export type PaymentStatus = PaidStatus | UnpaidStatus | RefundedStatus | RefundingStatus;
 
 /**
  * Check if a payment status indicates successful payment
@@ -45,6 +47,14 @@ export const isRefundedStatus = (status?: string | null): boolean => {
 };
 
 /**
+ * Check if a payment is currently being refunded
+ */
+export const isRefundingStatus = (status?: string | null): boolean => {
+    if (!status) return false;
+    return REFUNDING_STATUSES.includes(status.toLowerCase() as RefundingStatus);
+};
+
+/**
  * Get normalized display label for payment status
  * Standardizes all successful statuses to "Paid"
  */
@@ -55,6 +65,7 @@ export const getPaymentStatusLabel = (status?: string | null): string => {
     
     if (isPaidStatus(lower)) return 'Paid';
     if (isRefundedStatus(lower)) return 'Refunded';
+    if (isRefundingStatus(lower)) return 'Refunding';
     if (lower === 'offline_pending') return 'Pay at Door';
     if (lower === 'failed') return 'Failed';
     
@@ -64,9 +75,10 @@ export const getPaymentStatusLabel = (status?: string | null): string => {
 /**
  * Get color class for payment status badge
  */
-export const getPaymentStatusColor = (status?: string | null): 'green' | 'yellow' | 'red' | 'zinc' => {
+export const getPaymentStatusColor = (status?: string | null): 'green' | 'yellow' | 'red' | 'orange' | 'zinc' => {
     if (isPaidStatus(status)) return 'green';
     if (isRefundedStatus(status)) return 'red';
+    if (isRefundingStatus(status)) return 'orange';
     if (status === 'failed') return 'red';
     return 'yellow';
 };
