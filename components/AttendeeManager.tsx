@@ -273,18 +273,37 @@ export const AttendeeManager = () => {
     const handleBulkDelete = async () => {
         if (selectedIds.size === 0) return;
 
-        // Check if any paid attendees are selected
-        const selectedItems = Array.from(selectedIds).map(id => attendees.find(a => a.id === id)).filter(Boolean);
-        const paidItems = selectedItems.filter(item => item!.status === 'paid');
+        // Check if any paid or refunding attendees are selected
+        const selectedItems = Array.from(selectedIds).map(id => attendees.find(a => a.id === id)).filter(Boolean) as AttendeeItem[];
+        
+        // Items that cannot be deleted
+        const paidItems = selectedItems.filter(item => item.status === 'paid');
+        const refundingItems = selectedItems.filter(item => item.status === 'refunding');
+        const refundedItems = selectedItems.filter(item => item.status === 'refunded');
         
         if (paidItems.length > 0) {
             showToast(`❌ Cannot delete ${paidItems.length} paid ticket(s). Please refund them first.`, "error");
             return;
         }
+        
+        if (refundingItems.length > 0) {
+            showToast(`⚠️ ${refundingItems.length} ticket(s) are being refunded. Please wait for refund to complete.`, "warning");
+            return;
+        }
+
+        // Allow deletion of pending, free, and refunded tickets
+        const deletableItems = selectedItems.filter(item => 
+            item.status === 'pending' || item.status === 'comp' || item.status === 'refunded'
+        );
+        
+        if (deletableItems.length === 0) {
+            showToast("❌ No deletable tickets selected. Only pending, free, or refunded tickets can be deleted.", "error");
+            return;
+        }
 
         showConfirm({
             title: "Delete Selected Attendees?",
-            message: `Are you sure you want to delete ${selectedIds.size} selected attendee(s)? This cannot be undone. Only pending/free tickets will be deleted.`,
+            message: `Are you sure you want to delete ${deletableItems.length} selected attendee(s)? This cannot be undone.\n\n${refundedItems.length > 0 ? `• ${refundedItems.length} refunded ticket(s) will be removed from records.\n` : ''}${selectedItems.length - deletableItems.length > 0 ? `• ${selectedItems.length - deletableItems.length} ticket(s) cannot be deleted (paid or processing).` : ''}`,
             confirmText: "Delete All",
             variant: "danger",
             onConfirm: async () => {
@@ -293,15 +312,12 @@ export const AttendeeManager = () => {
                 let errors: string[] = [];
 
                 try {
-                    for (const id of Array.from(selectedIds)) {
+                    for (const item of deletableItems) {
                         try {
-                            const item = attendees.find(a => a.id === id);
-                            if (!item) continue;
-
-                            // Final check: prevent paid ticket deletion
-                            if (item.status === 'paid') {
+                            // Final safety check
+                            if (item.status === 'paid' || item.status === 'refunding') {
                                 failCount++;
-                                errors.push(`${item.name}: Cannot delete paid ticket`);
+                                errors.push(`${item.name}: Cannot delete - ticket is ${item.status}`);
                                 continue;
                             }
 
@@ -315,7 +331,7 @@ export const AttendeeManager = () => {
                             successCount++;
                         } catch (e: any) {
                             failCount++;
-                            errors.push(`Error: ${e.message}`);
+                            errors.push(`${item.name}: ${e.message}`);
                         }
                     }
 
