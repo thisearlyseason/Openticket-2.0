@@ -1840,5 +1840,15 @@ export const StorageService = {
         const response = await postSupabase(`/registrations/${regId}`, 'DELETE');
         clearCache('regs');
         return response;
+    },
+
+    /**
+     * Resend confirmation email via backend
+     * Uses backend email templates - no frontend email sending
+     */
+    resendConfirmationEmail: async (regId: string) => {
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        const response = await postSupabase(`/registrations/${regId}/resend-email`, 'POST');
+        return response;
     }
 };
