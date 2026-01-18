@@ -1775,5 +1775,63 @@ export const StorageService = {
         if (refundReason) updates.refundReason = refundReason;
 
         await StorageService.updateRegistration(regId, updates);
+    },
+
+    deleteTicket: async (regId: string, ticketIndex: number) => {
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        
+        // Get current registration
+        const reg = await StorageService.getRegistrationById(regId);
+        if (!reg || !reg.tickets) {
+            throw new Error('Registration or tickets not found');
+        }
+        
+        // Remove the ticket at the specified index
+        const updatedTickets = [...reg.tickets];
+        if (ticketIndex < 0 || ticketIndex >= updatedTickets.length) {
+            throw new Error('Invalid ticket index');
+        }
+        
+        updatedTickets.splice(ticketIndex, 1);
+        
+        // If no tickets left, delete the entire registration
+        if (updatedTickets.length === 0) {
+            return await StorageService.deleteRegistration(regId);
+        }
+        
+        // Otherwise, update the registration with remaining tickets
+        await StorageService.updateRegistration(regId, { tickets: updatedTickets });
+        clearCache('regs');
+        return { success: true };
+    },
+
+    deleteAddOn: async (regId: string, addOnIndex: number) => {
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        
+        // Get current registration
+        const reg = await StorageService.getRegistrationById(regId);
+        if (!reg || !reg.addOns) {
+            throw new Error('Registration or add-ons not found');
+        }
+        
+        // Remove the add-on at the specified index
+        const updatedAddOns = [...reg.addOns];
+        if (addOnIndex < 0 || addOnIndex >= updatedAddOns.length) {
+            throw new Error('Invalid add-on index');
+        }
+        
+        updatedAddOns.splice(addOnIndex, 1);
+        
+        // Update the registration with remaining add-ons
+        await StorageService.updateRegistration(regId, { addOns: updatedAddOns });
+        clearCache('regs');
+        return { success: true };
+    },
+
+    deleteRegistration: async (regId: string) => {
+        if (isOffline) return { success: false, error: 'Offline mode' };
+        const response = await postSupabase(`/registrations/${regId}`, 'DELETE');
+        clearCache('regs');
+        return response;
     }
 };
