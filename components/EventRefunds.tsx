@@ -116,8 +116,14 @@ export const EventRefunds = () => {
         try {
             const { registration, selectedTickets } = selectedRefund;
             
-            // Determine if full order or partial
-            const isFullOrder = selectedTickets.length === registration.tickets?.length;
+            // Validate we're not processing an already-refunding order
+            if (registration.refundStatus === 'refunding') {
+                throw new Error('A refund is already being processed for this order. Please wait.');
+            }
+            
+            // Determine if full order or partial based on active (non-refunded) tickets
+            const activeTickets = registration.tickets?.filter(t => t.status !== 'refunded' && t.status !== 'refunding') || [];
+            const isFullOrder = selectedTickets.length === activeTickets.length;
             
             let response;
             if (isFullOrder) {
@@ -143,9 +149,26 @@ export const EventRefunds = () => {
                 );
             }
 
-            // Check response
+            // Check response for errors
             if (response && response.error) {
-                throw new Error(response.error);
+                // Enhanced error handling with diagnostics
+                let errorMessage = response.error;
+                if (response.stripeError) {
+                    errorMessage += `\n\nStripe Error: ${response.stripeError}`;
+                }
+                if (response.diagnostics) {
+                    console.error('[Refund] Diagnostics:', response.diagnostics);
+                }
+                throw new Error(errorMessage);
+            }
+            
+            // Check for canRefund flag (Stripe-first enforcement)
+            if (response && response.canRefund === false) {
+                let errorMessage = response.error || 'Refund cannot be processed';
+                if (response.diagnostics) {
+                    errorMessage += `\n\nDetails: ${JSON.stringify(response.diagnostics, null, 2)}`;
+                }
+                throw new Error(errorMessage);
             }
 
             // Success!
@@ -163,6 +186,8 @@ export const EventRefunds = () => {
             }, 5000);
 
         } catch (error: any) {
+            // Show detailed error modal instead of basic alert
+            console.error('[Refund] Error:', error);
             window.alert('Refund failed: ' + error.message);
         } finally {
             setIsProcessing(false);
