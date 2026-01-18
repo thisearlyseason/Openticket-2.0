@@ -233,14 +233,30 @@ export const refundRegistration = async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        // Set to "refunding" state immediately
-        await supabase
-            .from('registrations')
-            .update({ 
-                refund_status: 'refunding',
-                payment_status: 'refunding'  // Visual indicator in UI
-            })
-            .eq('id', id);
+        // Check if already refunding or refunded
+        if (reg.refund_status === 'refunding') {
+            return res.status(400).json({ 
+                error: 'A refund is already being processed for this registration',
+                canRefund: false
+            });
+        }
+        
+        if (reg.refund_status === 'refunded' || reg.payment_status === 'refunded') {
+            return res.status(400).json({ 
+                error: 'This registration has already been refunded',
+                canRefund: false
+            });
+        }
+
+        // Validate payment status before refund - must be paid to refund
+        if (reg.payment_status !== 'paid' && reg.payment_status !== 'completed') {
+            console.error('[Refund] Cannot refund - payment not complete:', reg.payment_status);
+            return res.status(400).json({ 
+                error: 'Cannot refund: Payment is not complete',
+                paymentStatus: reg.payment_status,
+                canRefund: false
+            });
+        }
 
         let updates = {};
         let amountToRefundCents = 0;
