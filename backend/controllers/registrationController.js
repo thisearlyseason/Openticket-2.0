@@ -1735,7 +1735,20 @@ export const resendConfirmationEmail = async (req, res) => {
 
         if (emailResult.sent || emailResult.simulated) {
             console.log(`[Resend] ✅ Confirmation email sent to ${reg.attendee_email}`);
+            res.json({ 
+                success: true, 
+                message: `Confirmation email sent to ${reg.attendee_email}`,
+                simulated: emailResult.simulated || false
+            });
+        } else {
+            throw new Error(emailResult.error || 'Failed to send email');
+        }
 
+    } catch (error) {
+        console.error('[Resend Email] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 /**
  * Approve a registration and send approval email
