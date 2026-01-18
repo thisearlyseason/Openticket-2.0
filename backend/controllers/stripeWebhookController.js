@@ -369,10 +369,16 @@ async function handleCheckoutCompleted(stripe, session) {
         // Non-blocking - continue with the rest of the webhook
     }
 
-    // 10. Send confirmation email
+    // 10. Send confirmation email (check if enabled in event settings)
     try {
-        console.log(`[Webhook] Sending confirmation email to: ${reg.attendee_email}`);
-        await EmailService.sendConfirmation(reg.attendee_email, finalizedTickets, reg.event);
+        const emailSettings = reg.event?.email_settings || {};
+        // Default to enabled if not explicitly disabled
+        if (emailSettings.confirmationEnabled !== false) {
+            console.log(`[Webhook] Sending confirmation email to: ${reg.attendee_email}`);
+            await EmailService.sendConfirmation(reg.attendee_email, finalizedTickets, reg.event);
+        } else {
+            console.log(`[Webhook] Confirmation email disabled for event: ${reg.event?.title}`);
+        }
     } catch (emailError) {
         console.error("[Email] Failed to send confirmation:", emailError.message);
     }
