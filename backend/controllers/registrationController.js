@@ -661,12 +661,11 @@ export const refundAddOn = async (req, res) => {
             }
         }
 
-        // 4. Update DB
+        // 4. Update DB - only use columns that exist
         const { data, error } = await supabase
             .from('registrations')
             .update({ 
-                add_ons: updatedAddOns,
-                refunded_amount: (reg.refunded_amount || 0) + (amountToRefundCents / 100),
+                add_ons: updatedAddOns
             })
             .eq('id', id)
             .select();
