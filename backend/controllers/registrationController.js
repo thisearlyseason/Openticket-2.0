@@ -436,11 +436,10 @@ export const refundRegistration = async (req, res) => {
                     type: err.type
                 });
                 
-                // CRITICAL: Reset refund_status since Stripe failed
+                // CRITICAL: Reset payment_status since Stripe failed
                 await supabase
                     .from('registrations')
                     .update({ 
-                        refund_status: 'failed',
                         payment_status: reg.payment_status  // Restore original payment status
                     })
                     .eq('id', id);
@@ -482,7 +481,7 @@ export const refundRegistration = async (req, res) => {
         }
 
         // 4. Update registration in DB (only reached if Stripe succeeded or not needed)
-        updates.refund_status = stripeRefundId ? 'refunded' : (stripeAttempted ? 'failed' : 'refunded');
+        // Only use payment_status since refund_status column may not exist
         updates.payment_status = stripeRefundId || !stripeAttempted ? 'refunded' : reg.payment_status;
         if (stripeRefundId) {
             updates.stripe_refund_id = stripeRefundId;
