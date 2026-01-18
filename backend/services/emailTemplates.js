@@ -427,24 +427,43 @@ export const abandonedCart = ({ attendeeName, eventTitle, eventDate, eventLocati
  * EVENT REMINDER (Primary - 24 hours before)
  * Triggered by: cron job (24 hours before event)
  */
-export const eventReminderPrimary = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, ticketUrl }) => {
+/**
+ * EVENT REMINDER (Primary - 24 hours)
+ * Triggered by: cron job (24h before event)
+ * Supports custom theming from event's ticketDesign
+ */
+export const eventReminderPrimary = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, ticketUrl, ticketDesign }) => {
+    const theme = getThemeFromDesign(ticketDesign);
+    
+    const themedEventBox = `
+    <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${eventTitle}</h2>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${eventDate}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${eventTime}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+            </td>
+        </tr>
+    </table>`;
+    
     const content = `
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
             Just a friendly reminder that <strong>${eventTitle}</strong> is <strong>tomorrow</strong>! 🎉
         </p>
         
-        ${eventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        ${themedEventBox}
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="${ticketUrl}" style="display: inline-block; background: linear-gradient(135deg, ${BASE_STYLES.primaryGreen} 0%, #059669 100%); color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            <a href="${ticketUrl}" style="display: inline-block; background: ${theme.headerGradient}; color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                 View Your Ticket
             </a>
         </div>
         
-        <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
             Make sure to have your ticket ready for check-in. See you there!
         </p>
     `;
@@ -456,7 +475,8 @@ export const eventReminderPrimary = ({ attendeeName, eventTitle, eventDate, even
             "Event Tomorrow! 📅",
             "Don't forget about your event",
             content,
-            "This is an automated reminder from OpenTicket"
+            "This is an automated reminder from OpenTicket",
+            { logoUrl: ticketDesign?.logoUrl, theme }
         )
     };
 };
@@ -464,25 +484,40 @@ export const eventReminderPrimary = ({ attendeeName, eventTitle, eventDate, even
 /**
  * EVENT REMINDER (Secondary - configurable time)
  * Triggered by: cron job (organizer-configured time)
+ * Supports custom theming from event's ticketDesign
  */
-export const eventReminderSecondary = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, ticketUrl, timeUntilEvent }) => {
+export const eventReminderSecondary = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, ticketUrl, timeUntilEvent, ticketDesign }) => {
+    const theme = getThemeFromDesign(ticketDesign);
+    
+    const themedEventBox = `
+    <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${eventTitle}</h2>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${eventDate}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${eventTime}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+            </td>
+        </tr>
+    </table>`;
+    
     const content = `
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
             <strong>${eventTitle}</strong> starts in <strong>${timeUntilEvent}</strong>! Get ready! 🎉
         </p>
         
-        ${eventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        ${themedEventBox}
         
         <div style="text-align: center; margin: 30px 0;">
-            <a href="${ticketUrl}" style="display: inline-block; background: linear-gradient(135deg, ${BASE_STYLES.primaryGreen} 0%, #059669 100%); color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            <a href="${ticketUrl}" style="display: inline-block; background: ${theme.headerGradient}; color: #ffffff; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
                 View Your Ticket
             </a>
         </div>
         
-        <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
             Have your ticket ready for check-in. See you soon!
         </p>
     `;
@@ -494,7 +529,8 @@ export const eventReminderSecondary = ({ attendeeName, eventTitle, eventDate, ev
             `Starting in ${timeUntilEvent}!`,
             "Get ready for your event",
             content,
-            "This is an automated reminder from OpenTicket"
+            "This is an automated reminder from OpenTicket",
+            { logoUrl: ticketDesign?.logoUrl, theme }
         )
     };
 };
@@ -502,10 +538,13 @@ export const eventReminderSecondary = ({ attendeeName, eventTitle, eventDate, ev
 /**
  * POST-EVENT THANK YOU
  * Triggered by: cron job (morning after event ends)
+ * Supports custom theming from event's ticketDesign
  */
-export const postEventThankYou = ({ attendeeName, eventTitle, eventDate, organizerName, feedbackUrl }) => {
+export const postEventThankYou = ({ attendeeName, eventTitle, eventDate, organizerName, feedbackUrl, ticketDesign }) => {
+    const theme = getThemeFromDesign(ticketDesign);
+    
     const content = `
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
         <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
