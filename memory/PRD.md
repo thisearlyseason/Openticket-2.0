@@ -1279,6 +1279,30 @@ When API calls return 401 Unauthorized:
   - Post-event thank you checks `email_settings.postEventEnabled`
   - Abandoned cart checks `email_settings.abandonedCartEnabled`
 
+#### Email Template Theming System
+- [x] **Dynamic Theming from ticketDesign:**
+  - Added `TEMPLATE_THEMES` with 7 preset themes: modern, classic, minimal, festive, purple, blue, orange
+  - `getThemeFromDesign()` extracts colors from event's `ticketDesign` settings
+  - `adjustBrightness()` helper for generating color variations
+  - Supports custom accent colors, logo URLs, and custom messages
+
+- [x] **baseEmailWrapper Updated:**
+  - Now accepts `options` parameter with `logoUrl`, `customMessage`, and `theme`
+  - Displays event logo at top of email if provided
+  - Shows custom organizer message in footer if configured
+  - All text colors now use theme colors for consistency
+
+- [x] **Templates Updated for Theming:**
+  - `purchaseConfirmation`: Uses theme colors for headers, boxes, buttons
+  - `eventReminderPrimary`: Themed event details box and CTA button
+  - `eventReminderSecondary`: Themed with time-until-event urgency
+  - `postEventThankYou`: Themed thank you card and feedback CTA
+
+- [x] **Webhook & Cron Integration:**
+  - `stripeWebhookController.js`: Passes `ticket_design` to email templates
+  - `cronService.js`: Updated queries to select `ticket_design` column
+  - All reminder emails now use event's visual design
+
 #### StorageService Methods Added
 - [x] `resendConfirmationEmail(regId)` - Calls backend resend API
 - [x] `approveRegistration(regId)` - Calls backend approve API
@@ -1286,14 +1310,14 @@ When API calls return 401 Unauthorized:
 #### Testing Status
 - [x] Frontend builds successfully
 - [x] Backend runs with all cron jobs initialized
-- [ ] Full end-to-end email testing pending
+- [ ] Full end-to-end email testing pending (requires Stripe webhooks)
 
 ---
 
 ## Backlog & Future Tasks
 
 ### P0 (Critical)
-- [ ] Integrate organizer's visual template (`ticketDesign`) with backend email HTML
+- All P0 items completed ✅
 
 ### P1 (High Priority)
 - [ ] SuperAdmin subscription refund audit and implementation
