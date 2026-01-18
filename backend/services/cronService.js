@@ -678,7 +678,7 @@ const sendPostEventFollowups = async () => {
         
         const { data: pastEvents, error: eventsError } = await supabase
             .from('events')
-            .select('id, title, owner_id, date')
+            .select('id, title, owner_id, date, email_settings')
             .eq('date', yesterdayStr)
             .eq('is_draft', false);
         
@@ -698,6 +698,13 @@ const sendPostEventFollowups = async () => {
         let sent = 0, failed = 0, skipped = 0;
         
         for (const event of pastEvents) {
+            // Check if post-event emails are enabled for this event
+            const emailSettings = event.email_settings || {};
+            if (emailSettings.postEventEnabled === false) {
+                console.log(`[CRON] Post-event emails disabled for: ${event.title}`);
+                continue;
+            }
+            
             // Get organizer name
             const { data: organizer } = await supabase
                 .from('profiles')
