@@ -295,20 +295,10 @@ export const EventRefunds = () => {
             setSuccessDetails(response);
             setShowSuccess(true);
             
-            // Send refund confirmation email
-            try {
-                const refundAmount = response?.refundAmount || selectedRefund.refundAmount;
-                const ticketsRefunded = response?.ticketsRefunded || selectedTickets.length;
-                const { subject, body } = generateRefundEmail(registration, refundAmount, ticketsRefunded, refundReason);
-                
-                if (registration.attendeeEmail && event?.ownerId) {
-                    await EmailService.sendEmail(event.ownerId, registration.attendeeEmail, subject, body);
-                    console.log('[Refund] Confirmation email sent to:', registration.attendeeEmail);
-                }
-            } catch (emailError) {
-                console.error('[Refund] Failed to send confirmation email:', emailError);
-                // Don't fail the refund if email fails
-            }
+            // NOTE: Refund confirmation email is sent by the Stripe webhook (refund.succeeded)
+            // when the refund is actually processed by Stripe. This ensures email is only sent
+            // after confirmed Stripe refund, not just after UI action.
+            // See: backend/controllers/stripeWebhookController.js -> handleRefund()
             
             // Reload data
             await loadData();
