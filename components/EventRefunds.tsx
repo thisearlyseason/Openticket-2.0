@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
+import { EmailService } from '../services/emailService';
 import { Event, Registration } from '../types';
 import { Button, Card, Badge, Input } from './UI';
 import {
