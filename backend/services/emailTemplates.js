@@ -241,40 +241,71 @@ const infoRow = (label, value, borderBottom = true) => `
 /**
  * PURCHASE CONFIRMATION
  * Triggered by: payment_intent.succeeded (Stripe webhook)
+ * Supports custom theming from event's ticketDesign
  */
-export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, tickets, totalPaid, orderId, organizerName }) => {
-    const ticketList = tickets.map(t => `
+export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, tickets, totalPaid, orderId, organizerName, ticketDesign }) => {
+    // Get theme from ticketDesign
+    const theme = getThemeFromDesign(ticketDesign);
+    
+    const ticketList = (tickets || []).map(t => `
         <div style="border: 1px solid ${BASE_STYLES.borderColor}; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb;">
-            <h4 style="margin: 0 0 8px 0; color: ${BASE_STYLES.textDark};">🎫 ${t.name || 'Ticket'}</h4>
-            <p style="margin: 0; color: ${BASE_STYLES.textMuted}; font-size: 14px;">Qty: ${t.quantity || 1} × $${(t.price || 0).toFixed(2)}</p>
+            <h4 style="margin: 0 0 8px 0; color: ${theme.textColor};">🎫 ${t.name || 'Ticket'}</h4>
+            <p style="margin: 0; color: ${theme.mutedColor}; font-size: 14px;">Qty: ${t.quantity || 1} × $${(t.price || 0).toFixed(2)}</p>
         </div>
     `).join('');
 
+    // Themed event details box
+    const themedEventBox = `
+    <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${eventTitle}</h2>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${eventDate}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${eventTime}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+            </td>
+        </tr>
+    </table>`;
+
     const content = `
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
             Your purchase is confirmed! Here are your ticket details:
         </p>
         
-        ${eventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        ${themedEventBox}
         
-        <h3 style="color: ${BASE_STYLES.textDark}; font-size: 16px; margin: 0 0 15px 0;">Your Tickets</h3>
-        ${ticketList}
+        <h3 style="color: ${theme.textColor}; font-size: 16px; margin: 0 0 15px 0;">Your Tickets</h3>
+        ${ticketList || '<p style="color: ' + theme.mutedColor + ';">1x General Admission</p>'}
         
-        <table width="100%" style="background-color: #f0fdf4; border-radius: 8px; margin: 20px 0;">
+        <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border-radius: 8px; margin: 20px 0;">
             <tr>
                 <td style="padding: 15px;">
                     <table width="100%">
-                        ${infoRow('Total Paid', `<span style="color: ${BASE_STYLES.primaryGreen}; font-size: 18px;">$${totalPaid.toFixed(2)}</span>`)}
-                        ${infoRow('Order ID', `<span style="font-family: monospace;">${orderId}</span>`, false)}
+                        <tr>
+                            <td style="padding: 8px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                                <span style="color: ${theme.mutedColor}; font-size: 14px;">Total Paid</span>
+                            </td>
+                            <td style="padding: 8px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                                <strong style="color: ${theme.accentColor}; font-size: 18px;">$${(totalPaid || 0).toFixed(2)}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0;">
+                                <span style="color: ${theme.mutedColor}; font-size: 14px;">Order ID</span>
+                            </td>
+                            <td style="padding: 8px 0; text-align: right;">
+                                <strong style="color: ${theme.textColor}; font-family: monospace;">${orderId}</strong>
+                            </td>
+                        </tr>
                     </table>
                 </td>
             </tr>
         </table>
         
-        <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
             Save this email for your records. You may need to show it at check-in.
         </p>
     `;
@@ -282,11 +313,16 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
     return {
         subject: `🎟️ Your Tickets for ${eventTitle}`,
         html: baseEmailWrapper(
-            `linear-gradient(135deg, ${BASE_STYLES.primaryGreen} 0%, #059669 100%)`,
+            theme.headerGradient,
             "You're In! 🎉",
             "Your purchase is confirmed",
             content,
-            `Organized by ${organizerName || 'Event Organizer'} • Powered by OpenTicket`
+            `Organized by ${organizerName || 'Event Organizer'} • Powered by OpenTicket`,
+            { 
+                logoUrl: ticketDesign?.logoUrl, 
+                customMessage: ticketDesign?.customMessage,
+                theme 
+            }
         )
     };
 };
