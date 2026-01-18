@@ -937,9 +937,6 @@ export const AttendeeManager = () => {
                         style={{ top: dropdownState.y + 5, left: Math.min(window.innerWidth - 200, dropdownState.x - 180) }}
                         className="fixed w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xl rounded-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95"
                     >
-                        <button onClick={() => { handleCheckInToggle(dropdownState.item!); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 font-bold flex items-center gap-2">
-                            <Check size={16} /> {dropdownState.item.checkedIn ? 'Undo Check-in' : 'Check In'}
-                        </button>
                         <button onClick={() => { setEditGuestData({ name: dropdownState.item!.name, email: dropdownState.item!.email }); setShowEditModal(dropdownState.item); setDropdownState(prev => ({ ...prev, isOpen: false })); }} className="w-full text-left px-4 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2">
                             <Edit size={16} /> Edit Details
                         </button>
