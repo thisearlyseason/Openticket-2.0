@@ -1323,14 +1323,14 @@ export const StorageService = {
             return null;
         }
     },
-    saveEvent: async (event: Event) => {
+    saveEvent: async (event: Event): Promise<Event> => {
         const clean = sanitizeInput(event);
         if (isOffline) {
             const list = getLocal<Event>(LS_EVENTS_KEY);
             const idx = list.findIndex(e => e.id === clean.id);
             if (idx >= 0) list[idx] = clean; else list.push(clean);
             setLocal(LS_EVENTS_KEY, list);
-            return;
+            return clean;
         }
 
         // Use POST (create) or PUT (update)
@@ -1371,12 +1371,19 @@ export const StorageService = {
         const all = await StorageService.getEvents();
         const exists = all.some(e => e.id === clean.id);
 
+        let response;
         if (exists) {
-            await postSupabase(`/events/${clean.id}`, 'PUT', payload);
+            response = await postSupabase(`/events/${clean.id}`, 'PUT', payload);
         } else {
-            await postSupabase('/events', 'POST', payload);
+            response = await postSupabase('/events', 'POST', payload);
         }
         clearCache('events');
+        
+        // Return the event with the actual database ID
+        if (response?.event) {
+            return mapDbEvent(response.event);
+        }
+        return clean;
     },
 
     getRegistrations: async (eventId?: string): Promise<Registration[]> => {
