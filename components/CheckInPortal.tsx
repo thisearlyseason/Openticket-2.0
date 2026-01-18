@@ -167,15 +167,29 @@ const StripeCardPaymentForm = ({ registrationId, amount, onSuccess, onError, onP
     const stripe = useStripe();
     const elements = useElements();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isReady, setIsReady] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!stripe || !elements) return;
+        if (!stripe || !elements || !isReady) {
+            onError('Payment form is not ready. Please wait a moment and try again.');
+            return;
+        }
 
         setIsSubmitting(true);
         onProcessing(true);
 
         try {
+            // Submit the form first to validate the payment details
+            const { error: submitError } = await elements.submit();
+            if (submitError) {
+                console.error('[StripeCard] Submit error:', submitError);
+                onError(submitError.message || 'Please check your payment details');
+                setIsSubmitting(false);
+                onProcessing(false);
+                return;
+            }
+
             // Confirm the payment
             const { error, paymentIntent } = await stripe.confirmPayment({
                 elements,
@@ -229,11 +243,12 @@ const StripeCardPaymentForm = ({ registrationId, amount, onSuccess, onError, onP
                     options={{
                         layout: 'tabs',
                     }}
+                    onReady={() => setIsReady(true)}
                 />
             </div>
             <Button 
                 type="submit"
-                disabled={!stripe || !elements || isSubmitting}
+                disabled={!stripe || !elements || isSubmitting || !isReady}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none disabled:opacity-50"
             >
                 {isSubmitting ? (
