@@ -1952,65 +1952,149 @@ export const EventBuilder = () => {
 
                                         {/* Email Configuration */}
                                         <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800">
-                                            <h3 className="font-bold text-sm uppercase text-zinc-500 mb-4 flex items-center gap-2"><Mail size={16} /> Email Notifications</h3>
+                                            <h3 className="font-bold text-sm uppercase text-zinc-500 mb-2 flex items-center gap-2"><Mail size={16} /> Email Notifications</h3>
+                                            <p className="text-xs text-zinc-500 mb-4">Control which automated emails are sent to attendees. Emails use the visual template selected above. Customize content in Settings → Email Templates.</p>
 
                                             <div className="space-y-4">
-                                                {/* Confirmation Email */}
+                                                {/* Purchase Confirmation Email */}
                                                 <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                                    <div className="flex justify-between items-center mb-0">
-                                                        <div>
-                                                            <h4 className="font-bold text-sm">Order Confirmation</h4>
-                                                            <p className="text-xs text-zinc-500">Sent automatically when a customer purchases a ticket.</p>
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                                                                <CheckCircle2 size={16} className="text-green-600 dark:text-green-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Purchase Confirmation</h4>
+                                                                <p className="text-xs text-zinc-500">Sent when payment is successful (Stripe webhook).</p>
+                                                            </div>
                                                         </div>
                                                         <Switch
-                                                            checked={formData.emailSettings?.enabled !== false}
-                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || { enabled: true }), enabled: c } })}
+                                                            checked={formData.emailSettings?.confirmationEnabled !== false}
+                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || {}), confirmationEnabled: c } })}
                                                         />
                                                     </div>
-                                                    {formData.emailSettings?.enabled !== false && currentUser?.emailTemplates && (
-                                                        <div className="mt-4 animate-in fade-in">
-                                                            <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Custom Template</label>
+                                                </div>
+
+                                                {/* Refund Confirmation Email */}
+                                                <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                                                                <DollarSign size={16} className="text-red-600 dark:text-red-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Refund Confirmation</h4>
+                                                                <p className="text-xs text-zinc-500">Sent when a refund is processed (Stripe webhook).</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.emailSettings?.refundEnabled !== false}
+                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || {}), refundEnabled: c } })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Primary Reminder Email (24h) */}
+                                                <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                                                <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Event Reminder (24 hours)</h4>
+                                                                <p className="text-xs text-zinc-500">Sent 24 hours before event starts.</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.emailSettings?.reminderEnabled !== false}
+                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || {}), reminderEnabled: c } })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Secondary Reminder Email (Configurable) */}
+                                                <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
+                                                                <Clock size={16} className="text-orange-600 dark:text-orange-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Secondary Reminder</h4>
+                                                                <p className="text-xs text-zinc-500">Additional reminder at a custom time before event.</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.reminderSettings?.secondaryEnabled || false}
+                                                            onChange={c => setFormData({ ...formData, reminderSettings: { ...(formData.reminderSettings || {}), secondaryEnabled: c } })}
+                                                        />
+                                                    </div>
+                                                    {formData.reminderSettings?.secondaryEnabled && (
+                                                        <div className="mt-4 animate-in fade-in slide-in-from-top-2">
+                                                            <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Send reminder</label>
                                                             <select
                                                                 className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm"
-                                                                value={formData.emailSettings?.confirmationTemplateId || ''}
-                                                                onChange={(e: any) => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || { enabled: true }), confirmationTemplateId: e.target.value } })}
+                                                                value={formData.reminderSettings?.secondaryTime || '1h'}
+                                                                onChange={(e: any) => setFormData({ ...formData, reminderSettings: { ...(formData.reminderSettings || {}), secondaryTime: e.target.value } })}
                                                             >
-                                                                <option value="">Default System Email</option>
-                                                                {currentUser.emailTemplates.filter(t => t.type === 'confirmation').map(t => (
-                                                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                                                ))}
+                                                                <option value="1h">1 hour before</option>
+                                                                <option value="2h">2 hours before</option>
+                                                                <option value="3h">3 hours before</option>
+                                                                <option value="6h">6 hours before</option>
+                                                                <option value="12h">12 hours before</option>
+                                                                <option value="48h">2 days before</option>
+                                                                <option value="72h">3 days before</option>
+                                                                <option value="168h">1 week before</option>
                                                             </select>
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                {/* Reminder Email */}
+                                                {/* Post-Event Thank You Email */}
                                                 <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                                    <div className="flex justify-between items-center mb-0">
-                                                        <div>
-                                                            <h4 className="font-bold text-sm">Event Reminder</h4>
-                                                            <p className="text-xs text-zinc-500">Sent 24h before event starts.</p>
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center shrink-0">
+                                                                <Heart size={16} className="text-purple-600 dark:text-purple-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Post-Event Thank You</h4>
+                                                                <p className="text-xs text-zinc-500">Sent the morning after your event ends.</p>
+                                                            </div>
                                                         </div>
                                                         <Switch
-                                                            checked={formData.emailSettings?.reminderEnabled || false}
-                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || { enabled: true }), reminderEnabled: c } })}
+                                                            checked={formData.emailSettings?.postEventEnabled !== false}
+                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || {}), postEventEnabled: c } })}
                                                         />
                                                     </div>
-                                                    {formData.emailSettings?.reminderEnabled && currentUser?.emailTemplates && (
-                                                        <div className="mt-4 animate-in fade-in">
-                                                            <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Custom Template</label>
-                                                            <select
-                                                                className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm"
-                                                                value={formData.emailSettings?.reminderTemplateId || ''}
-                                                                onChange={(e: any) => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || { enabled: true }), reminderTemplateId: e.target.value } })}
-                                                            >
-                                                                <option value="">Default Reminder Email</option>
-                                                                {currentUser.emailTemplates.filter(t => t.type === 'reminder').map(t => (
-                                                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                                                ))}
-                                                            </select>
+                                                </div>
+
+                                                {/* Abandoned Cart Email */}
+                                                <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                                                                <Target size={16} className="text-amber-600 dark:text-amber-400" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">Abandoned Cart Recovery</h4>
+                                                                <p className="text-xs text-zinc-500">Sent 24 hours after checkout started but not completed.</p>
+                                                            </div>
                                                         </div>
-                                                    )}
+                                                        <Switch
+                                                            checked={formData.emailSettings?.abandonedCartEnabled !== false}
+                                                            onChange={c => setFormData({ ...formData, emailSettings: { ...(formData.emailSettings || {}), abandonedCartEnabled: c } })}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Info Note */}
+                                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                    <p className="text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
+                                                        <Info size={14} className="shrink-0 mt-0.5" />
+                                                        <span>All emails are sent from the backend based on Stripe webhooks and scheduled cron jobs. To customize email subject lines, text content, and footers, go to <strong>Settings → Email Templates</strong>.</span>
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
