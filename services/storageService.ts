@@ -1381,7 +1381,7 @@ export const StorageService = {
         
         // Return the event with the actual database ID
         if (response?.event) {
-            return mapDbEvent(response.event);
+            return normalizeEvent(response.event);
         }
         return clean;
     },
