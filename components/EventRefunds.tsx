@@ -379,22 +379,47 @@ export const EventRefunds = () => {
                             <p className="text-zinc-400">No refundable orders found</p>
                         </Card>
                     ) : (
-                        filteredRegistrations.map(reg => (
-                            <Card key={reg.id} className="p-6 hover:border-primary/50 transition-colors">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div>
-                                        <h4 className="font-bold text-white text-lg">{reg.attendeeName}</h4>
-                                        <p className="text-sm text-zinc-400">{reg.attendeeEmail}</p>
-                                        <p className="text-xs text-zinc-500 mt-1">Order ID: {reg.id.substring(0, 8)}</p>
+                        filteredRegistrations.map(reg => {
+                            const isRefunding = reg.refundStatus === 'refunding';
+                            
+                            return (
+                                <Card 
+                                    key={reg.id} 
+                                    className={`p-6 hover:border-primary/50 transition-colors ${isRefunding ? 'border-yellow-500 bg-yellow-500/5' : ''}`}
+                                    data-testid={`refund-order-card-${reg.id}`}
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="font-bold text-white text-lg">{reg.attendeeName}</h4>
+                                                {isRefunding && (
+                                                    <Badge className="bg-yellow-500 text-black border-none animate-pulse">
+                                                        Processing...
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-zinc-400">{reg.attendeeEmail}</p>
+                                            <p className="text-xs text-zinc-500 mt-1">Order ID: {reg.id.substring(0, 8)}</p>
+                                        </div>
+                                        <Button
+                                            onClick={() => handleSelectOrder(reg)}
+                                            className="bg-red-500 hover:bg-red-600 text-white border-none"
+                                            disabled={isRefunding}
+                                            data-testid={`refund-order-btn-${reg.id}`}
+                                        >
+                                            {isRefunding ? (
+                                                <>
+                                                    <Loader className="animate-spin mr-2" size={18} />
+                                                    Refunding...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <DollarSign size={18} className="mr-2" />
+                                                    Refund Order
+                                                </>
+                                            )}
+                                        </Button>
                                     </div>
-                                    <Button
-                                        onClick={() => handleSelectOrder(reg)}
-                                        className="bg-red-500 hover:bg-red-600 text-white border-none"
-                                    >
-                                        <DollarSign size={18} className="mr-2" />
-                                        Refund Order
-                                    </Button>
-                                </div>
 
                                 {/* Tickets */}
                                 {reg.tickets && reg.tickets.length > 0 && (
