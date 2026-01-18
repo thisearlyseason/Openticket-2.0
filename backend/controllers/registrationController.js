@@ -555,13 +555,19 @@ export const refundRegistration = async (req, res) => {
             }
         }
 
+        const isManualRefund = !stripeRefundId && !stripeAttempted;
+        const refundTypeMessage = isManualRefund 
+            ? 'Manual refund recorded (no Stripe payment to refund)' 
+            : (stripeRefundId ? 'Stripe refund processed successfully' : 'Refund recorded but Stripe processing failed');
+
         res.json({ 
             success: true,
             registration: data[0],
             refundAmount: amountToRefundCents / 100,
             stripeRefundId: stripeRefundId || null,
             ticketsRefunded: ticketsBeingRefunded,
-            message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}`,
+            message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}. ${refundTypeMessage}`,
+            isManualRefund,
             stripeError: stripeError || undefined,
             warning: stripeError ? 'Registration marked as refunded, but Stripe refund failed. You may need to process the refund manually in Stripe dashboard.' : undefined,
             diagnostics: {
@@ -569,7 +575,7 @@ export const refundRegistration = async (req, res) => {
                 stripeAttempted,
                 stripeRefundId: stripeRefundId || null,
                 paymentIntent: stripeAttempted ? 'Retrieved from session' : 'N/A',
-                refundStatus: stripeRefundId ? 'completed' : (stripeAttempted ? 'failed' : 'not_needed'),
+                refundStatus: stripeRefundId ? 'completed' : (stripeAttempted ? 'failed' : 'manual'),
                 dbUpdated: true,
                 countDecremented: ticketsBeingRefunded,
                 originalPaymentStatus: reg.payment_status,
