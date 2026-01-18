@@ -31,8 +31,10 @@ export const EventRefunds = () => {
         
         return ticketIndices.reduce((sum, idx) => {
             const ticket = reg.tickets![idx];
-            if (ticket && ticket.status !== 'refunded') {
-                return sum + ((ticket.pricePerTicket || 0) * (ticket.quantity || 1));
+            if (ticket && ticket.status !== 'refunded' && ticket.status !== 'refunding') {
+                const ticketPrice = ticket.pricePerTicket || ticket.price || 0;
+                const ticketQty = ticket.quantity || 1;
+                return sum + (ticketPrice * ticketQty);
             }
             return sum;
         }, 0);
