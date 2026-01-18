@@ -335,6 +335,15 @@ export const refundRegistration = async (req, res) => {
                     stripeError = 'Stripe session not found';
                     console.error('[Refund] Session not found:', reg.stripe_checkout_session_id);
                     
+                    // Reset refund_status since we can't process
+                    await supabase
+                        .from('registrations')
+                        .update({ 
+                            refund_status: 'failed',
+                            payment_status: reg.payment_status
+                        })
+                        .eq('id', id);
+                    
                     // CRITICAL: Block refund if Stripe session not found
                     return res.status(400).json({
                         error: 'Cannot refund: Stripe session not found',
@@ -352,6 +361,15 @@ export const refundRegistration = async (req, res) => {
                         sessionId: reg.stripe_checkout_session_id,
                         sessionStatus: session.status
                     });
+                    
+                    // Reset refund_status since we can't process
+                    await supabase
+                        .from('registrations')
+                        .update({ 
+                            refund_status: 'failed',
+                            payment_status: reg.payment_status
+                        })
+                        .eq('id', id);
                     
                     // CRITICAL: Block refund if no payment intent
                     return res.status(400).json({
