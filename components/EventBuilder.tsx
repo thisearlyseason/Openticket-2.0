@@ -1229,10 +1229,10 @@ export const EventBuilder = () => {
                                     </div>
                                 </div>
 
-                                {/* Ticket Design with Template Presets */}
+                                {/* Email Ticket Templates - Visual Design for Emails */}
                                 <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-                                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Sparkles className="text-purple-500" /> Ticket Design</h2>
-                                    <p className="text-sm text-zinc-500 mb-6">Choose a template and customize your printable tickets.</p>
+                                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Mail className="text-purple-500" /> Email Ticket Templates</h2>
+                                    <p className="text-sm text-zinc-500 mb-6">Choose a visual design for your confirmation emails and printable tickets. Customize content (subject lines, text) in Settings → Email Templates.</p>
                                     
                                     {/* Default Template Presets */}
                                     <div className="mb-4">
