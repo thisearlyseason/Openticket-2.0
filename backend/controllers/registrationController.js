@@ -329,16 +329,15 @@ export const refundRegistration = async (req, res) => {
             hasStripeSession: !!reg.stripe_checkout_session_id,
             paymentStatus: reg.payment_status
         });
-
-        // Validate payment status before refund
-        if (reg.payment_status !== 'paid' && reg.payment_status !== 'completed') {
-            console.error('[Refund] Cannot refund - payment not complete:', reg.payment_status);
-            return res.status(400).json({ 
-                error: 'Cannot refund: Payment is not complete',
-                paymentStatus: reg.payment_status,
-                canRefund: false
-            });
-        }
+        
+        // Set to "refunding" state NOW (after all validations, before Stripe call)
+        await supabase
+            .from('registrations')
+            .update({ 
+                refund_status: 'refunding',
+                payment_status: 'refunding'  // Visual indicator in UI
+            })
+            .eq('id', id);
         
         if (reg.stripe_checkout_session_id && amountToRefundCents > 0) {
             stripeAttempted = true;
