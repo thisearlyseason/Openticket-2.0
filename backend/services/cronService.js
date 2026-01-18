@@ -176,7 +176,8 @@ const sendEventReminders = async () => {
                             eventDate: formattedDate,
                             eventTime: formattedTime,
                             eventLocation: event.location || 'TBA',
-                            ticketUrl
+                            ticketUrl,
+                            ticketDesign: event.ticket_design  // Pass event's visual design
                         });
                         
                         const result = await sendEmailWithProvider(
