@@ -12,9 +12,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '20
  * Cron Service - Handles scheduled tasks for OpenTicket
  * 
  * Scheduled Jobs:
- * - Event Reminders: 24h and 1h before events
- * - Abandoned Cart: Unpaid registrations > 12h or failed checkouts
- * - Post-Event Follow-up: 24h after event ends
+ * - Event Reminders: 24h before (primary), configurable secondary
+ * - Abandoned Cart: Unpaid registrations > 24h old
+ * - Post-Event Follow-up: Morning after event ends
  * - Weekly Affiliate Summary: Mondays 9 AM UTC
  * - Scheduled Affiliate Payouts: Daily at midnight UTC
  */
