@@ -14,6 +14,7 @@ router.post('/checkin', verifyToken, registrationController.checkInTicket);
 
 router.get('/:eventId', verifyToken, registrationController.getRegistrationsByEvent);
 router.put('/:id', verifyToken, registrationController.updateRegistration);
+router.delete('/:id', verifyToken, registrationController.deleteRegistration);
 router.post('/:id/refund', verifyToken, registrationController.refundRegistration);
 router.post('/:id/refund-addon', verifyToken, registrationController.refundAddOn);
 
