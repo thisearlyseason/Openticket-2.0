@@ -20,7 +20,7 @@ interface AttendeeItem {
     ticketType: string; // Name of the ticket tier OR the add-on name
     price: number;
     orderDate: number;
-    status: 'paid' | 'pending' | 'refunded' | 'comp' | 'active' | 'cancelled';
+    status: 'paid' | 'pending' | 'refunded' | 'refunding' | 'comp' | 'active' | 'cancelled';
     approvalStatus: 'pending' | 'approved' | 'rejected' | 'waitlist';
     checkedIn: boolean; // For tickets: check-in. For addons: fulfilled.
     fulfilled?: boolean;
