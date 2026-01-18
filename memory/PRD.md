@@ -1152,3 +1152,80 @@ When API calls return 401 Unauthorized:
 - ✅ No crashes even when ALL API calls fail with 401
 
 
+
+
+### ✅ ATTENDEE/REFUND SYSTEM OVERHAUL - Phase 1 & 2 (January 18, 2026)
+
+#### Data & State Audit Completed
+- [x] **Payment Status Utilities Enhanced:** `/app/services/paymentUtils.ts`
+  - Added `REFUNDING_STATUSES` constant for 'refunding' state tracking
+  - Added `isRefundingStatus()` function for proper state detection
+  - Updated `getPaymentStatusColor()` to return 'orange' for refunding state
+- [x] **Types Updated:** `/app/types.ts`
+  - `PurchasedTicket.status` now includes 'refunding' in union type
+  - `Registration.refundStatus` includes 'refunding' for order-level tracking
+
+#### Refund Flow Rebuild (Stripe-First Enforcement)
+- [x] **Backend Refund API Hardened:** `/app/backend/controllers/registrationController.js`
+  - Validates payment status BEFORE setting 'refunding' state
+  - Checks for duplicate refund attempts (already refunding/refunded)
+  - Sets 'refunding' state only AFTER all validations pass
+  - Resets status to 'failed' on ANY Stripe API error
+  - Returns detailed diagnostics on failure (error code, type, session ID)
+- [x] **UI Refunding State:** `/app/components/EventRefunds.tsx`
+  - Fixed ticket name display (uses `ticket.name` not `ticket.tierName`)
+  - Added animated 'REFUNDING...' badge while processing
+  - Disabled refund buttons during processing
+  - Enhanced error messages with Stripe diagnostics
+  - Excludes 'refunding' tickets from refund calculations
+- [x] **Attendee List Updates:** `/app/components/AttendeeManager.tsx`
+  - Added 'refunding' status to `AttendeeItem` interface
+  - Filter includes 'refunding' option to see pending refunds
+  - `processAttendees()` detects both order-level and ticket-level refunding state
+
+#### Multi-Select & Action Execution
+- [x] **Bulk Refund Validation:** `/app/components/AttendeeManager.tsx`
+  - Validates selected items are not already refunded or refunding
+  - Warns if selecting only unpaid tickets (nothing to refund)
+  - Restricts to single order at a time
+  - Redirects to `/manage/:id/refunds?selectedReg=` with pre-selection
+
+#### Payment-Aware Delete Logic
+- [x] **Bulk Delete Enforcement:** `/app/components/AttendeeManager.tsx`
+  - ❌ Blocks deletion of paid tickets (shows error toast, requires refund first)
+  - ❌ Blocks deletion of refunding tickets (shows warning, must wait for completion)
+  - ✅ Allows deletion of pending, free (comp), and refunded tickets
+  - Shows breakdown of what will/won't be deleted in confirmation modal
+
+#### Testing Status
+- [x] **Test Report:** `/app/test_reports/iteration_41.json`
+  - 23/24 backend tests passed (96%)
+  - 100% frontend success rate
+  - All code implementations verified through code review
+  - 12 critical code review items verified
+
+#### Remaining Items (P1)
+- [ ] **SuperAdmin Subscription Refund Audit** - No dedicated subscription refund UI exists yet
+  - Subscription revenue is tracked in SuperAdmin dashboard
+  - Cancellation logic exists in `subscriptionController.js` but no refund flow
+  - Needs: Add subscription refund capability to SuperAdmin panel
+
+---
+
+## Backlog & Future Tasks
+
+### P0 (Critical)
+- All P0 items completed ✅
+
+### P1 (High Priority)
+- [ ] SuperAdmin subscription refund audit and implementation
+- [ ] UI formatting fixes for Super Admin page layout
+- [ ] UI formatting fixes for promo code section in EventBuilder
+
+### P2 (Medium Priority)
+- [ ] Remove Tailwind CSS CDN and fix local build styling issues
+- [ ] Refactor monolithic `SuperAdminDashboard.tsx` component
+
+### P3 (Low Priority)
+- [ ] Fix ESLint/TypeScript linter configuration for `.tsx` files
+
