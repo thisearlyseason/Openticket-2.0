@@ -275,10 +275,15 @@ const StripePaymentWrapper = ({ registrationId, amount, currency = 'usd', onSucc
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [initError, setInitError] = useState<string | null>(null);
+    const mountedRef = useRef(true);
 
     useEffect(() => {
+        mountedRef.current = true;
+        
         const createPaymentIntent = async () => {
             try {
+                console.log('[StripeWrapper] Creating payment intent for:', registrationId, 'amount:', amount);
+                
                 const response = await fetch('/api/stripe/at-door/create-payment-intent', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -289,22 +294,39 @@ const StripePaymentWrapper = ({ registrationId, amount, currency = 'usd', onSucc
                     }),
                 });
 
+                if (!mountedRef.current) {
+                    console.log('[StripeWrapper] Component unmounted, aborting');
+                    return;
+                }
+
                 if (!response.ok) {
                     const data = await response.json();
                     throw new Error(data.error || 'Failed to initialize payment');
                 }
 
                 const data = await response.json();
-                setClientSecret(data.clientSecret);
+                console.log('[StripeWrapper] Payment intent created successfully');
+                
+                if (mountedRef.current) {
+                    setClientSecret(data.clientSecret);
+                }
             } catch (err: any) {
                 console.error('[StripeWrapper] Init error:', err);
-                setInitError(err.message || 'Failed to initialize payment');
+                if (mountedRef.current) {
+                    setInitError(err.message || 'Failed to initialize payment');
+                }
             } finally {
-                setLoading(false);
+                if (mountedRef.current) {
+                    setLoading(false);
+                }
             }
         };
 
         createPaymentIntent();
+        
+        return () => {
+            mountedRef.current = false;
+        };
     }, [registrationId, amount, currency]);
 
     if (loading) {
