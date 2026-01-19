@@ -13,7 +13,7 @@ import supabase from '../services/supabase.js';
 const generateKioskToken = async (req, res) => {
     try {
         const { eventId, permissions, paymentEnabled, pinCode } = req.body;
-        const userId = req.user?.uid;
+        let userId = req.user?.uid;
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -21,6 +21,21 @@ const generateKioskToken = async (req, res) => {
 
         if (!eventId) {
             return res.status(400).json({ error: 'Event ID is required' });
+        }
+
+        // Supabase auth ID might not match Firebase ID in profiles table
+        // Try to find the profile's Firebase ID if using Supabase auth
+        if (userId && userId.length > 30 && req.user.email) { // Supabase auth IDs are longer
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', req.user.email)
+                .single();
+            
+            if (profile) {
+                console.log('[Kiosk] Mapped Supabase ID to Firebase ID:', userId, '→', profile.id);
+                userId = profile.id; // Use the Firebase ID from profiles
+            }
         }
 
         // Verify user owns this event
@@ -31,10 +46,12 @@ const generateKioskToken = async (req, res) => {
             .single();
 
         if (eventError || !event) {
+            console.error('[Kiosk] Event lookup error:', eventError?.message);
             return res.status(404).json({ error: 'Event not found' });
         }
 
         if (event.owner_id !== userId) {
+            console.log('[Kiosk] Ownership check - Event owner:', event.owner_id, 'User:', userId);
             return res.status(403).json({ error: 'Unauthorized: You do not own this event' });
         }
 
