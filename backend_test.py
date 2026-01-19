@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for OpenTicket Platform - Payout Balance Calculation Fixes
-Tests the payout balance calculation fixes for both Organizer and Affiliate dashboards
+Backend API Testing for OpenTicket Platform - Kiosk Mode Implementation
+Tests the complete Kiosk Mode backend API implementation for event organizers
 """
 
 import requests
@@ -15,7 +15,7 @@ from typing import Dict, Any
 # Configuration - Use production URL from frontend/.env
 BACKEND_URL = "https://scan-entry-3.preview.emergentagent.com"
 
-class PayoutBalanceTester:
+class KioskModeTester:
     def __init__(self):
         self.results = []
         self.session = requests.Session()
