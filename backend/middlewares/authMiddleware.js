@@ -1,6 +1,7 @@
 import admin from '../services/firebase.js';
 import supabase from '../services/supabase.js';
 
+// Module reload timestamp: 2026-01-19T19:55:00Z
 const verifyToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     
