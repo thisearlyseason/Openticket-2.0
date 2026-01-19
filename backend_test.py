@@ -767,7 +767,13 @@ class KioskModeTester:
             route_results = {}
             for route in kiosk_routes:
                 try:
-                    route_response = self.session.post(f"{BACKEND_URL}{route}", json={}, timeout=5)
+                    if route == "/api/kiosk/guest-search":
+                        # GET route - test with query parameters
+                        route_response = self.session.get(f"{BACKEND_URL}{route}?query=test&tokenId=test&eventId=test", timeout=5)
+                    else:
+                        # POST route - test with empty JSON
+                        route_response = self.session.post(f"{BACKEND_URL}{route}", json={}, timeout=5)
+                    
                     # 400/401/403 = route exists but needs proper data/auth, 404 = route doesn't exist
                     if route_response.status_code == 404:
                         route_results[route] = {"exists": False, "status": 404}
