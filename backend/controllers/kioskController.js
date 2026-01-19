@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import db from '../db/index.js';
+import supabase from '../services/supabase.js';
 
 /**
  * Generate a new kiosk token for an event
