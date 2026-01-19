@@ -39,14 +39,15 @@ const generateKioskToken = async (req, res) => {
         }
 
         // Verify user owns this event
-        const { data: event, error: eventError } = await supabase
+        const { data: events, error: eventError } = await supabase
             .from('events')
             .select('*')
-            .eq('id', eventId)
-            .single();
+            .eq('id', eventId);
+
+        const event = events && events.length > 0 ? events[0] : null;
 
         if (eventError || !event) {
-            console.error('[Kiosk] Event lookup error:', eventError?.message);
+            console.error('[Kiosk] Event lookup error:', eventError?.message || 'Event not found');
             return res.status(404).json({ error: 'Event not found' });
         }
 
