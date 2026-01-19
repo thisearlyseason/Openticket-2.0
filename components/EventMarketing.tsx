@@ -330,36 +330,64 @@ const WidgetSection: React.FC<{ event: Event }> = ({ event }) => {
 const WidgetPreview: React.FC<{
     event: Event;
     type: 'banner' | 'registration';
-    size: 'small' | 'medium' | 'large';
+    width: number;
+    height: number;
     theme: 'light' | 'dark';
-}> = ({ event, type, size, theme }) => {
+}> = ({ event, type, width, height, theme }) => {
     const isDark = theme === 'dark';
-    const padding = size === 'small' ? 'p-3' : size === 'medium' ? 'p-4' : 'p-6';
-    const fontSize = size === 'small' ? 'text-xs' : size === 'medium' ? 'text-sm' : 'text-base';
+    const isCompact = width < 400;
+    
+    // Format date nicely
+    const eventDate = new Date(event.date).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 
     if (type === 'banner') {
         return (
-            <div className={`${padding} ${isDark ? 'bg-zinc-900 text-white' : 'bg-white text-gray-900'}`}>
-                <div className="flex flex-col gap-2">
-                    <h3 className={`font-bold ${
-                        size === 'small' ? 'text-base' : size === 'medium' ? 'text-xl' : 'text-2xl'
-                    }`}>
+            <div className={`h-full p-4 ${isDark ? 'bg-zinc-900 text-white' : 'bg-white text-gray-900'}`}>
+                <div className="flex flex-col h-full">
+                    {/* Event Image (if available) */}
+                    {event.imageUrl && height > 150 && (
+                        <div className="mb-3 rounded-lg overflow-hidden" style={{ height: Math.min(height * 0.4, 150) }}>
+                            <img 
+                                src={event.imageUrl} 
+                                alt={event.title}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    )}
+                    
+                    <h3 className={`font-bold line-clamp-2 ${isCompact ? 'text-base' : 'text-xl'}`}>
                         {event.title}
                     </h3>
-                    <p className={`${fontSize} ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                        {new Date(event.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        })}
-                    </p>
-                    <p className={`${fontSize} ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                        {event.location}
-                    </p>
-                    <button className={`mt-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        size === 'small' ? 'text-xs' : 'text-sm'
-                    } bg-primary text-white hover:bg-primary/90`}>
+                    
+                    <div className={`mt-2 space-y-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                        <p className={`flex items-center gap-1 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                            <Calendar size={isCompact ? 12 : 14} />
+                            {eventDate} {event.time && `• ${event.time}`}
+                        </p>
+                        {event.location && (
+                            <p className={`flex items-center gap-1 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                                <MapPin size={isCompact ? 12 : 14} />
+                                <span className="line-clamp-1">{event.location}</span>
+                            </p>
+                        )}
+                    </div>
+                    
+                    {/* Price display */}
+                    {event.ticketTiers && event.ticketTiers.length > 0 && (
+                        <p className={`mt-2 font-bold text-primary ${isCompact ? 'text-sm' : 'text-base'}`}>
+                            {event.ticketTiers[0].price === 0 
+                                ? 'FREE' 
+                                : `From $${Math.min(...event.ticketTiers.map(t => t.price || 0)).toFixed(2)}`
+                            }
+                        </p>
+                    )}
+                    
+                    <button className={`mt-auto px-4 py-2 rounded-lg font-semibold transition-colors bg-primary text-white hover:bg-primary/90 ${isCompact ? 'text-xs' : 'text-sm'}`}>
                         Get Tickets
                     </button>
                 </div>
@@ -367,38 +395,108 @@ const WidgetPreview: React.FC<{
         );
     }
 
-    // Registration widget
+    // Registration widget - show actual ticket tiers
+    const tiers = event.ticketTiers || [];
+    
     return (
-        <div className={`${padding} ${isDark ? 'bg-zinc-900 text-white' : 'bg-white text-gray-900'}`}>
-            <div className="space-y-3">
-                <h3 className={`font-bold ${
-                    size === 'small' ? 'text-sm' : size === 'medium' ? 'text-lg' : 'text-xl'
-                }`}>
-                    Register for {event.title}
-                </h3>
-                <input
-                    type="text"
-                    placeholder="Full Name"
-                    className={`w-full p-2 rounded border ${fontSize} ${
-                        isDark
-                            ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500'
-                            : 'bg-white border-zinc-300 text-gray-900 placeholder-zinc-400'
-                    }`}
-                />
-                <input
-                    type="email"
-                    placeholder="Email Address"
-                    className={`w-full p-2 rounded border ${fontSize} ${
-                        isDark
-                            ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500'
-                            : 'bg-white border-zinc-300 text-gray-900 placeholder-zinc-400'
-                    }`}
-                />
-                <button className={`w-full px-4 py-2 rounded-lg font-semibold transition-colors ${
-                    size === 'small' ? 'text-xs' : 'text-sm'
-                } bg-primary text-white hover:bg-primary/90`}>
+        <div className={`h-full overflow-y-auto p-4 ${isDark ? 'bg-zinc-900 text-white' : 'bg-white text-gray-900'}`}>
+            <div className="space-y-4">
+                {/* Event Header */}
+                <div className="text-center pb-3 border-b border-zinc-200 dark:border-zinc-700">
+                    <h3 className={`font-bold ${isCompact ? 'text-base' : 'text-lg'}`}>
+                        {event.title}
+                    </h3>
+                    <p className={`${isDark ? 'text-zinc-400' : 'text-zinc-600'} ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                        {eventDate} {event.time && `• ${event.time}`}
+                    </p>
+                </div>
+                
+                {/* Ticket Tiers - Actual event data */}
+                <div className="space-y-2">
+                    <p className={`font-semibold ${isCompact ? 'text-xs' : 'text-sm'} ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        Select Tickets
+                    </p>
+                    
+                    {tiers.length > 0 ? (
+                        tiers.slice(0, 3).map((tier, idx) => (
+                            <div 
+                                key={tier.id || idx}
+                                className={`p-3 rounded-lg border ${isDark ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50'}`}
+                            >
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`}>
+                                            {tier.name || 'General Admission'}
+                                        </p>
+                                        {tier.description && (
+                                            <p className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} line-clamp-1 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                                                {tier.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`font-bold text-primary ${isCompact ? 'text-sm' : 'text-base'}`}>
+                                            {tier.price === 0 ? 'FREE' : `$${(tier.price || 0).toFixed(2)}`}
+                                        </p>
+                                        {tier.quantity !== undefined && tier.quantity > 0 && (
+                                            <p className={`${isDark ? 'text-zinc-500' : 'text-zinc-400'} ${isCompact ? 'text-[10px]' : 'text-xs'}`}>
+                                                {tier.soldCount || 0}/{tier.quantity} sold
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className={`p-3 rounded-lg border ${isDark ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50'}`}>
+                            <p className={`font-semibold ${isCompact ? 'text-sm' : 'text-base'}`}>General Admission</p>
+                            <p className={`font-bold text-primary ${isCompact ? 'text-sm' : 'text-base'}`}>FREE</p>
+                        </div>
+                    )}
+                    
+                    {tiers.length > 3 && (
+                        <p className={`text-center ${isDark ? 'text-zinc-500' : 'text-zinc-400'} ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                            +{tiers.length - 3} more ticket types
+                        </p>
+                    )}
+                </div>
+                
+                {/* Attendee Info Preview */}
+                <div className="space-y-2">
+                    <p className={`font-semibold ${isCompact ? 'text-xs' : 'text-sm'} ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                        Your Information
+                    </p>
+                    <input
+                        type="text"
+                        placeholder="Full Name"
+                        disabled
+                        className={`w-full p-2 rounded border ${isCompact ? 'text-xs' : 'text-sm'} ${
+                            isDark
+                                ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500'
+                                : 'bg-white border-zinc-300 text-gray-900 placeholder-zinc-400'
+                        }`}
+                    />
+                    <input
+                        type="email"
+                        placeholder="Email Address"
+                        disabled
+                        className={`w-full p-2 rounded border ${isCompact ? 'text-xs' : 'text-sm'} ${
+                            isDark
+                                ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-500'
+                                : 'bg-white border-zinc-300 text-gray-900 placeholder-zinc-400'
+                        }`}
+                    />
+                </div>
+                
+                {/* Register Button */}
+                <button className={`w-full px-4 py-3 rounded-lg font-semibold transition-colors bg-primary text-white hover:bg-primary/90 ${isCompact ? 'text-sm' : 'text-base'}`}>
                     Register Now
                 </button>
+                
+                {/* Powered By */}
+                <p className={`text-center ${isDark ? 'text-zinc-600' : 'text-zinc-400'} text-[10px]`}>
+                    Powered by OpenTicket
+                </p>
             </div>
         </div>
     );
