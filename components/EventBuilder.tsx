@@ -82,6 +82,9 @@ export const EventBuilder = () => {
     // New Question State
     const [newQuestion, setNewQuestion] = useState<Partial<Question>>({ label: '', type: 'text', required: false, options: [] });
 
+    // Email Preview Modal State
+    const [showEmailPreview, setShowEmailPreview] = useState(false);
+
     // Tag Input State
     const [tagInput, setTagInput] = useState('');
 
