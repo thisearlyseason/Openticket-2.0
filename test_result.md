@@ -67,33 +67,40 @@
 - **Kiosk Settings:** `/#/manage/:eventId/kiosk` → Loads settings page ✅
 - **Navigation:** Back buttons and route transitions work correctly ✅
 
-### Comprehensive Testing Results:
+### Authentication Issue Analysis:
 
-**✅ PASSED TESTS:**
-- Kiosk Settings page loads and renders correctly
-- All form elements present and functional
-- PIN validation working (4-digit requirement)
-- Checkbox interactions working correctly
-- Button state management working
-- Error handling for API failures
-- Kiosk device error screens working
-- Route configuration correct
-- UI styling and layout professional
+**❌ CRITICAL AUTHENTICATION BLOCKER:**
+- **Root Cause:** Row-level security policy violation in Supabase profiles table
+- **Error Message:** "new row violates row-level security policy for table 'profiles'"
+- **Impact:** Prevents user login and profile creation/access
+- **Evidence:** Backend logs show repeated RLS policy violations
+- **User Experience:** Login form shows generic "*" validation error
+- **Consequence:** Cannot complete full E2E kiosk workflow testing
 
-**❌ BLOCKED TESTS:**
-- Token generation (requires authentication)
-- QR code generation (requires valid token)
-- Kiosk device initialization (requires valid token)
-- Complete E2E flow (requires authentication fix)
+**Backend Logs Analysis:**
+- ✅ Supabase authentication system initialized correctly
+- ✅ User `test+openticket@gmail.com` exists (UID: a61bb303-32a6-4fe8-9334-3c4f33e45e40)
+- ✅ Kiosk API endpoints exist and respond appropriately
+- ❌ Profile sync fails due to row-level security policy
+- ❌ Authentication token validation blocked by RLS
 
-### Backend Integration Analysis:
+**Expected Behavior Once Authentication Fixed:**
+1. **Organizer Login Flow:**
+   - Login with super admin credentials → Access dashboard
+   - Navigate to event management → Find "Kiosk Mode" card
+   - Click Kiosk Mode → Load settings page
+   - Configure settings (door payments, PIN) → Click "Activate Kiosk Mode"
+   - System generates QR code and kiosk URL → Display success state
 
-**Backend Logs Show:**
-- Firebase authentication system initialized
-- User `test+openticket@gmail.com` exists (UID: MYcn1wVqASg62OVqXZdMDMz4bXN2)
-- Token algorithm mismatch: HS256 received, RS256 expected
-- Row-level security policy blocking profile operations
-- All kiosk API endpoints exist and respond (with auth errors)
+2. **Kiosk Device Flow:**
+   - Navigate to kiosk URL or scan QR code → Load kiosk interface
+   - Staff can scan tickets, search guests, process payments
+   - All actions logged and tracked → Professional kiosk experience
+
+3. **Token Management:**
+   - PIN protection for exiting kiosk mode
+   - Token expiration (8 hours after event)
+   - Immediate revocation capability via "Disable Kiosk" button
 
 ### Code Implementation Status:
 
