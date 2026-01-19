@@ -245,6 +245,104 @@ class KioskService {
     isKioskMode(): boolean {
         return !!(this.tokenId || localStorage.getItem('kiosk_token'));
     }
+
+    /**
+     * Get kiosk status for an event (organizer view)
+     */
+    async getKioskStatus(eventId: string): Promise<{
+        active: boolean;
+        token?: KioskToken;
+        kioskUrl?: string;
+    }> {
+        try {
+            const response = await fetch(`${API_URL}/api/kiosk/status/${eventId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get kiosk status');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('[KioskService] Get status error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Generate a new kiosk token (organizer only)
+     */
+    async generateToken(eventId: string, options?: {
+        paymentEnabled?: boolean;
+        pinCode?: string;
+    }): Promise<{
+        token: KioskToken;
+        kioskUrl: string;
+    }> {
+        try {
+            const response = await fetch(`${API_URL}/api/kiosk/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    eventId,
+                    paymentEnabled: options?.paymentEnabled !== false,
+                    pinCode: options?.pinCode
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to generate token');
+            }
+
+            const data = await response.json();
+            return {
+                token: {
+                    tokenId: data.token,
+                    permissions: ['scan_ticket', 'manual_checkin', 'door_payment'],
+                    paymentEnabled: options?.paymentEnabled !== false,
+                    expiresAt: data.expiresAt,
+                    pinCode: options?.pinCode
+                } as any,
+                kioskUrl: data.kioskUrl
+            };
+        } catch (error) {
+            console.error('[KioskService] Generate token error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Revoke kiosk token (organizer only)
+     */
+    async revokeToken(eventId: string): Promise<{ success: boolean }> {
+        try {
+            const response = await fetch(`${API_URL}/api/kiosk/revoke`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ eventId })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to revoke token');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('[KioskService] Revoke token error:', error);
+            throw error;
+        }
+    }
 }
 
 export const kioskService = new KioskService();
