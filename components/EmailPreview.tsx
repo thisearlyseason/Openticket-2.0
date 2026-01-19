@@ -71,7 +71,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
             ticketsRefunded: 1,
             refundDate: new Date().toLocaleDateString(),
             refundReason: 'Customer request',
-            timeUntilEvent: formData.reminderSettings?.secondaryTime === '1h' ? '1 hour' : '2 hours',
+            timeUntilEvent: event.reminderSettings?.secondaryTime === '1h' ? '1 hour' : '2 hours',
             checkoutUrl: `${window.location.origin}/#/event/${event.id}`,
             ticketUrl: `${window.location.origin}/#/ticket/sample`,
             feedbackUrl: event.organizerWebsite || ''
