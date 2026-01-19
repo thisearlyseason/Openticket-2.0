@@ -95,41 +95,46 @@ export const EventMarketing = () => {
 // Widget Section Component
 const WidgetSection: React.FC<{ event: Event }> = ({ event }) => {
     const [widgetType, setWidgetType] = useState<'banner' | 'registration'>('banner');
-    const [size, setSize] = useState<'small' | 'medium' | 'large'>('medium');
+    const [width, setWidth] = useState(500);
+    const [height, setHeight] = useState(250);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [embedCode, setEmbedCode] = useState('');
 
+    // Update height based on widget type
+    useEffect(() => {
+        if (widgetType === 'banner') {
+            setHeight(Math.min(height, 400)); // Banner max height
+        } else {
+            setHeight(Math.max(height, 500)); // Registration min height
+        }
+    }, [widgetType]);
+
     useEffect(() => {
         generateEmbedCode();
-    }, [widgetType, size, theme]);
+    }, [widgetType, width, height, theme]);
 
     const generateEmbedCode = () => {
         const baseUrl = `${window.location.origin}/#/event/${event.id}`;
-        const code = `<iframe src="${baseUrl}?widget=${widgetType}&size=${size}&theme=${theme}" width="${getWidth()}" height="${getHeight()}" frameborder="0"></iframe>`;
+        const code = `<iframe src="${baseUrl}?widget=${widgetType}&theme=${theme}" width="${width}" height="${height}" frameborder="0" style="border-radius: 12px; overflow: hidden;"></iframe>`;
         setEmbedCode(code);
-    };
-
-    const getWidth = () => {
-        if (size === 'small') return '300';
-        if (size === 'medium') return '500';
-        return '700';
-    };
-
-    const getHeight = () => {
-        if (widgetType === 'banner') {
-            if (size === 'small') return '150';
-            if (size === 'medium') return '250';
-            return '350';
-        } else {
-            if (size === 'small') return '400';
-            if (size === 'medium') return '550';
-            return '700';
-        }
     };
 
     const copyEmbedCode = () => {
         navigator.clipboard.writeText(embedCode);
         alert('Embed code copied to clipboard!');
+    };
+
+    // Size presets
+    const applyPreset = (preset: 'small' | 'medium' | 'large') => {
+        if (widgetType === 'banner') {
+            if (preset === 'small') { setWidth(300); setHeight(150); }
+            else if (preset === 'medium') { setWidth(500); setHeight(250); }
+            else { setWidth(700); setHeight(350); }
+        } else {
+            if (preset === 'small') { setWidth(350); setHeight(500); }
+            else if (preset === 'medium') { setWidth(450); setHeight(650); }
+            else { setWidth(600); setHeight(800); }
+        }
     };
 
     return (
@@ -170,16 +175,69 @@ const WidgetSection: React.FC<{ event: Event }> = ({ event }) => {
                         </div>
                     </div>
 
-                    {/* Size */}
+                    {/* Size Presets */}
                     <div className="space-y-2 mb-4">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Size
+                            Size Presets
                         </label>
-                        <Select value={size} onChange={(e) => setSize(e.target.value as any)}>
-                            <option value="small">Small</option>
-                            <option value="medium">Medium</option>
-                            <option value="large">Large</option>
-                        </Select>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => applyPreset('small')}
+                                className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                Small
+                            </button>
+                            <button
+                                onClick={() => applyPreset('medium')}
+                                className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                Medium
+                            </button>
+                            <button
+                                onClick={() => applyPreset('large')}
+                                className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                Large
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Width Slider */}
+                    <div className="space-y-2 mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Width: <span className="font-bold text-primary">{width}px</span>
+                        </label>
+                        <input
+                            type="range"
+                            min="250"
+                            max="900"
+                            value={width}
+                            onChange={(e) => setWidth(Number(e.target.value))}
+                            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                            <span>250px</span>
+                            <span>900px</span>
+                        </div>
+                    </div>
+
+                    {/* Height Slider */}
+                    <div className="space-y-2 mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Height: <span className="font-bold text-primary">{height}px</span>
+                        </label>
+                        <input
+                            type="range"
+                            min={widgetType === 'banner' ? '100' : '400'}
+                            max={widgetType === 'banner' ? '500' : '1000'}
+                            value={height}
+                            onChange={(e) => setHeight(Number(e.target.value))}
+                            className="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                        <div className="flex justify-between text-xs text-zinc-500">
+                            <span>{widgetType === 'banner' ? '100' : '400'}px</span>
+                            <span>{widgetType === 'banner' ? '500' : '1000'}px</span>
+                        </div>
                     </div>
 
                     {/* Theme */}
@@ -241,16 +299,28 @@ const WidgetSection: React.FC<{ event: Event }> = ({ event }) => {
             {/* Live Preview */}
             <Card className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Live Preview</h3>
-                <div className={`rounded-lg overflow-hidden border-2 ${
-                    theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
-                }`}>
+                <p className="text-sm text-zinc-500 mb-4">Preview shows how the widget will appear on your website</p>
+                <div 
+                    className={`rounded-xl overflow-hidden border-2 transition-all ${
+                        theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
+                    }`}
+                    style={{ 
+                        width: Math.min(width, 600), // Cap preview width for display
+                        height: Math.min(height, 500), // Cap preview height for display
+                        maxWidth: '100%'
+                    }}
+                >
                     <WidgetPreview
                         event={event}
                         type={widgetType}
-                        size={size}
+                        width={width}
+                        height={height}
                         theme={theme}
                     />
                 </div>
+                <p className="text-xs text-zinc-400 mt-2">
+                    Actual size: {width}px × {height}px
+                </p>
             </Card>
         </div>
     );
