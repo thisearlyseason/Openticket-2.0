@@ -1,6 +1,7 @@
 import admin from '../services/firebase.js';
+import supabase from '../services/supabase.js';
 
-const verifyFirebaseToken = async (req, res, next) => {
+const verifyToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     
     // Check if Authorization header exists
@@ -17,29 +18,48 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     const token = authHeader.split('Bearer ')[1];
     
-    // Check if token exists and has reasonable length (Firebase tokens are typically 900+ chars)
+    // Check if token exists
     if (!token || token === 'null' || token === 'undefined') {
         console.log('[Auth] Token is null or undefined');
         return res.status(401).json({ error: 'Token is missing or invalid' });
     }
     
-    if (token.length < 100) {
-        console.log('[Auth] Token too short, likely invalid');
-        return res.status(401).json({ error: 'Token verification failed - token too short' });
+    // Try Supabase authentication first (shorter tokens, JWT format)
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (user && !error) {
+            console.log('[Auth] Supabase token verified for user:', user.id);
+            // Format user object to match Firebase structure
+            req.user = {
+                uid: user.id,
+                email: user.email,
+                email_verified: user.email_confirmed_at != null,
+                ...user.user_metadata
+            };
+            return next();
+        }
+    } catch (supabaseError) {
+        console.log('[Auth] Supabase verification failed, trying Firebase...', supabaseError.message);
     }
     
-    try {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        req.user = decodedToken;
-        next();
-    } catch (error) {
-        console.error('[Auth] Token verification failed:', error.code, error.message);
-        return res.status(401).json({ 
-            error: 'Token verification failed', 
-            code: error.code,
-            message: error.message 
-        });
+    // Fallback to Firebase authentication (longer tokens)
+    if (token.length > 100) {
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(token);
+            console.log('[Auth] Firebase token verified for user:', decodedToken.uid);
+            req.user = decodedToken;
+            return next();
+        } catch (firebaseError) {
+            console.error('[Auth] Firebase token verification failed:', firebaseError.code, firebaseError.message);
+        }
     }
+    
+    // Both authentication methods failed
+    return res.status(401).json({ 
+        error: 'Token verification failed', 
+        message: 'Invalid or expired authentication token'
+    });
 };
 
-export default verifyFirebaseToken;
+export default verifyToken;
