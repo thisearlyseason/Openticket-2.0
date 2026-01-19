@@ -128,43 +128,46 @@ export const AttendeeManager = () => {
                 if (reg.tickets && Array.isArray(reg.tickets) && reg.tickets.length > 0) {
                     reg.tickets.forEach((t, tIdx) => {
                         if (!t) return;
-                        for (let i = 0; i < t.quantity; i++) {
-                            const ticketKey = `${t.tierId}-${i}`;
-                            const isCheckedIn = (reg.checkInStatuses && reg.checkInStatuses[ticketKey]?.checkedIn) || reg.checkedIn || false;
+                        
+                        // Each ticket is now individual (quantity=1), no need to loop over quantity
+                        // Use ticketId for unique identification if available, otherwise fall back to legacy key
+                        const ticketKey = t.ticketId || t.key || `${t.tierId}-${tIdx}`;
+                        const isCheckedIn = t.checkedIn || (reg.checkInStatuses && reg.checkInStatuses[ticketKey]?.checkedIn) || reg.checkedIn || false;
 
-                            // Check specific ticket status or fallback to order status
-                            // Priority: ticket.status > reg.refundStatus > reg.paymentStatus
-                            let status: string;
-                            if (t.status === 'refunded') {
-                                status = 'refunded';
-                            } else if (t.status === 'refunding' || isRefunding) {
-                                status = 'refunding';
-                            } else if (refunded) {
-                                status = 'refunded';
-                            } else if (paid) {
-                                status = 'paid';
-                            } else {
-                                status = 'pending';
-                            }
-
-                            list.push({
-                                id: `${reg.id}-${t.tierId}-${i}`,
-                                regId: reg.id,
-                                tierId: t.tierId,
-                                ticketIndex: tIdx,
-                                itemType: 'ticket',
-                                name: t.attendeeName || reg.attendeeName || 'Unknown',
-                                email: t.attendeeEmail || reg.attendeeEmail || '',
-                                ticketType: t.name || t.tierId || 'Ticket',
-                                price: t.pricePerTicket || 0,
-                                orderDate: reg.timestamp,
-                                status: status as any,
-                                approvalStatus: reg.approvalStatus || 'approved',
-                                checkedIn: isCheckedIn,
-                                // Attach add-ons to first ticket of each order for display
-                                addOns: i === 0 && tIdx === 0 ? regAddOns : []
-                            });
+                        // Check specific ticket status or fallback to order status
+                        // Priority: ticket.status > reg.refundStatus > reg.paymentStatus
+                        let status: string;
+                        if (t.status === 'refunded') {
+                            status = 'refunded';
+                        } else if (t.status === 'refunding' || isRefunding) {
+                            status = 'refunding';
+                        } else if (refunded) {
+                            status = 'refunded';
+                        } else if (paid) {
+                            status = 'paid';
+                        } else {
+                            status = 'pending';
                         }
+
+                        list.push({
+                            id: t.ticketId || `${reg.id}-${t.tierId}-${tIdx}`,
+                            regId: reg.id,
+                            tierId: t.tierId,
+                            ticketIndex: tIdx,
+                            itemType: 'ticket',
+                            name: t.attendeeName || reg.attendeeName || 'Unknown',
+                            email: t.attendeeEmail || reg.attendeeEmail || '',
+                            ticketType: t.name || t.tierId || 'Ticket',
+                            price: t.pricePerTicket || t.price || 0,
+                            orderDate: reg.timestamp,
+                            status: status as any,
+                            approvalStatus: reg.approvalStatus || 'approved',
+                            checkedIn: isCheckedIn,
+                            ticketId: t.ticketId,  // Include for reference
+                            ticketNumber: t.ticketNumber,  // Include for display
+                            // Attach add-ons to first ticket of each order for display
+                            addOns: tIdx === 0 ? regAddOns : []
+                        });
                     });
                 } else {
                     if (!refunded) {
