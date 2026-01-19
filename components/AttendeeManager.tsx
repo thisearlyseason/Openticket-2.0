@@ -155,7 +155,7 @@ export const AttendeeManager = () => {
                                 itemType: 'ticket',
                                 name: t.attendeeName || reg.attendeeName || 'Unknown',
                                 email: t.attendeeEmail || reg.attendeeEmail || '',
-                                ticketType: t.name,
+                                ticketType: t.name || t.tierId || 'Ticket',
                                 price: t.pricePerTicket || 0,
                                 orderDate: reg.timestamp,
                                 status: status as any,
