@@ -351,6 +351,18 @@ export const ManageEvent = () => {
                         </Card>
                     </Link>
 
+                    <Link to={`/manage/${event.id}/kiosk`} className="block group">
+                        <Card className="p-6 cursor-pointer hover:border-primary transition-all hover:-translate-y-1 h-full">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 bg-primary/10 text-primary rounded-xl group-hover:bg-primary group-hover:text-white transition-colors">
+                                    <Lock size={24} />
+                                </div>
+                            </div>
+                            <h3 className="font-bold text-lg">Kiosk Mode</h3>
+                            <p className="text-xs text-zinc-500">Door check-in & payments</p>
+                        </Card>
+                    </Link>
+
                     <Link to={`/manage/${event.id}/settings`} className="block group">
                         <Card className="p-6 cursor-pointer hover:border-zinc-500 transition-all hover:-translate-y-1 h-full">
                             <div className="flex justify-between items-start mb-4">
