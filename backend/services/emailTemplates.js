@@ -331,12 +331,15 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
  * REFUND CONFIRMATION
  * Triggered by: refund.succeeded (Stripe webhook)
  */
-export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventLocation, refundAmount, ticketsRefunded, orderId, refundReason, refundDate }) => {
+export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventLocation, refundAmount, ticketsRefunded, orderId, refundReason, refundDate, ticketDesign }) => {
+    // Get theme (uses red tint for refund emails regardless of event theme)
+    const theme = getThemeFromDesign(ticketDesign);
+    
     const content = `
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
             Hi <strong>${attendeeName}</strong>,
         </p>
-        <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+        <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
             We've processed a refund for your ticket(s) to <strong>${eventTitle}</strong>.
         </p>
         
@@ -344,10 +347,10 @@ export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventL
         <table width="100%" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin-bottom: 30px;">
             <tr>
                 <td style="padding: 20px;">
-                    <h3 style="color: ${BASE_STYLES.primaryRed}; font-size: 16px; margin: 0 0 15px 0;">Refund Details</h3>
+                    <h3 style="color: ${BASE_STYLES.primaryRed}; font-size: 16px; margin: 0 0 15px 0;">💸 Refund Details</h3>
                     <table width="100%">
-                        ${infoRow('Refund Amount', `<span style="color: ${BASE_STYLES.primaryRed}; font-size: 18px;">$${refundAmount.toFixed(2)}</span>`)}
-                        ${infoRow('Tickets Refunded', ticketsRefunded)}
+                        ${infoRow('Refund Amount', `<span style="color: ${BASE_STYLES.primaryRed}; font-size: 18px; font-weight: bold;">$${(refundAmount || 0).toFixed(2)}</span>`)}
+                        ${infoRow('Tickets Refunded', ticketsRefunded || 1)}
                         ${infoRow('Order ID', `<span style="font-family: monospace;">${orderId}</span>`)}
                         ${infoRow('Refund Date', refundDate, false)}
                     </table>
@@ -357,30 +360,31 @@ export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventL
         
         ${refundReason ? `
         <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin-bottom: 30px;">
-            <p style="color: ${BASE_STYLES.textMuted}; font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0;">Reason</p>
-            <p style="color: ${BASE_STYLES.textDark}; font-size: 14px; margin: 0;">${refundReason}</p>
+            <p style="color: ${theme.mutedColor}; font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0;">Reason</p>
+            <p style="color: ${theme.textColor}; font-size: 14px; margin: 0;">${refundReason}</p>
         </div>
         ` : ''}
         
-        <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-            <p style="color: ${BASE_STYLES.textMuted}; font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0;">Original Event</p>
-            <p style="color: ${BASE_STYLES.textDark}; font-size: 16px; font-weight: 600; margin: 0 0 5px 0;">${eventTitle}</p>
-            <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; margin: 0;">📅 ${eventDate} • 📍 ${eventLocation}</p>
+        <div style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <p style="color: ${theme.mutedColor}; font-size: 12px; text-transform: uppercase; margin: 0 0 5px 0;">Original Event</p>
+            <p style="color: ${theme.textColor}; font-size: 16px; font-weight: 600; margin: 0 0 5px 0;">${eventTitle}</p>
+            <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📅 ${eventDate} • 📍 ${eventLocation}</p>
         </div>
         
-        <p style="color: ${BASE_STYLES.textMuted}; font-size: 14px; line-height: 1.6; margin: 0;">
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 0;">
             Your refund should appear in your account within 5-10 business days, depending on your payment provider.
         </p>
     `;
 
     return {
-        subject: `Refund Confirmation - ${eventTitle}`,
+        subject: `💸 Refund Confirmation - ${eventTitle}`,
         html: baseEmailWrapper(
             `linear-gradient(135deg, ${BASE_STYLES.primaryRed} 0%, #b91c1c 100%)`,
-            "Refund Processed",
+            "Refund Processed 💸",
             "Your tickets have been refunded",
             content,
-            "This is an automated message from OpenTicket"
+            "This is an automated message from OpenTicket",
+            { logoUrl: ticketDesign?.logoUrl, theme }
         )
     };
 };
