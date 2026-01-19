@@ -4,7 +4,7 @@ import { StorageService } from '../services/storageService';
 import { GeminiService } from '../services/geminiService';
 import { Event } from '../types';
 import { Button, Card, Badge, Switch, Input, Select } from './UI';
-import { ArrowLeft, Sparkles, Instagram, Twitter, Linkedin, Facebook, Copy, Loader2, Download, Share2, Code, Monitor, Smartphone, Moon, Sun, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Sparkles, Instagram, Twitter, Linkedin, Facebook, Copy, Loader2, Download, Share2, Code, Monitor, Smartphone, Moon, Sun, CheckCircle, Image as ImageIcon, Calendar, MapPin } from 'lucide-react';
 import { SocialCaptionSection } from './EventMarketingSocial';
 
 export const EventMarketing = () => {
