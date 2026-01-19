@@ -220,7 +220,7 @@ export const MyTickets = () => {
                         ticketList.push({
                             reg, event,
                             ticketInfo: { 
-                                name: t.name, 
+                                name: t.name || t.tierId || 'Ticket', 
                                 quantity: 1, // Always 1 for unique tickets
                                 date: t.date 
                             },
