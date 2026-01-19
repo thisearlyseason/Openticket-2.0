@@ -1363,7 +1363,7 @@ export const EventBuilder = () => {
                                         </div>
                                     )}
                                     
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         {/* Left: Customization Options */}
                                         <div className="space-y-4">
                                             {/* A. Add Image to Ticket */}
@@ -1437,7 +1437,7 @@ export const EventBuilder = () => {
                                         </div>
                                         
                                         {/* Right: Live Preview */}
-                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
+                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 min-h-[300px]">
                                             {(() => {
                                                 const defaultTemplates: Record<string, { gradient: string; bg: string; text: string }> = {
                                                     modern: { gradient: 'from-purple-500 to-indigo-600', bg: 'bg-white dark:bg-zinc-800', text: 'text-zinc-900 dark:text-white' },
