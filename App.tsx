@@ -560,6 +560,11 @@ const MainContent = () => {
                 <Route path="/billing" element={<Billing />} />
                 <Route path="/checkin/:id" element={<CheckInPortal />} />
                 <Route path="/mobile-scanner/:id" element={<MobileCheckInScanner />} />
+                
+                {/* Kiosk Mode Routes */}
+                <Route path="/kiosk/:eventId" element={<KioskHome />} />
+                <Route path="/kiosk/:eventId/checkin" element={<KioskCheckIn />} />
+                
                 <Route path="/affiliate" element={<AffiliateDashboard />} />
                 <Route path="/affiliate-login" element={<AffiliateAuth />} />
                 <Route path="/create" element={<EventBuilder key={location.key} />} />
