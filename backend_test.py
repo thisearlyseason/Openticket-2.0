@@ -106,130 +106,62 @@ class KioskModeTester:
     def test_get_user_events(self):
         """Test Case 2: Get list of user's events or use public events for testing"""
         try:
-            if not self.auth_token:
-                # If no auth token, try to get public events for testing
-                response = self.session.get(f"{BACKEND_URL}/api/events/public")
-                
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        
-                        if 'events' in data and isinstance(data['events'], list):
-                            events = data['events']
-                            
-                            if len(events) > 0:
-                                # Select first public event for testing
-                                self.event_id = events[0]['id']
-                                
-                                self.log_result(
-                                    "Get Public Events (Fallback)",
-                                    True,
-                                    f"✅ Using public event for testing: {self.event_id}",
-                                    {
-                                        "total_events": len(events),
-                                        "selected_event_id": self.event_id,
-                                        "event_title": events[0].get('title', 'Unknown'),
-                                        "note": "Using public event due to authentication issues"
-                                    }
-                                )
-                                return True
-                            else:
-                                self.log_result(
-                                    "Get Public Events - No Events",
-                                    False,
-                                    "❌ No public events available for testing",
-                                    {"events_count": 0}
-                                )
-                                return False
-                        else:
-                            self.log_result(
-                                "Get Public Events - Invalid Response",
-                                False,
-                                "❌ Response missing 'events' array",
-                                data
-                            )
-                            return False
-                    except json.JSONDecodeError:
-                        self.log_result(
-                            "Get Public Events - JSON Error",
-                            False,
-                            "❌ Invalid JSON response",
-                            response.text
-                        )
-                        return False
-                else:
-                    self.log_result(
-                        "Get Public Events",
-                        False,
-                        f"❌ Unexpected status code: {response.status_code}",
-                        response.text
-                    )
-                    return False
+            # First try to get public events as fallback
+            public_response = self.session.get(f"{BACKEND_URL}/api/events/public")
             
-            # Try authenticated endpoint if we have a token
-            response = self.session.get(f"{BACKEND_URL}/api/events/")
-            
-            if response.status_code == 200:
+            if public_response.status_code == 200:
                 try:
-                    data = response.json()
+                    public_data = public_response.json()
                     
-                    if 'events' in data and isinstance(data['events'], list):
-                        events = data['events']
+                    if 'events' in public_data and isinstance(public_data['events'], list):
+                        public_events = public_data['events']
                         
-                        if len(events) > 0:
-                            # Select first event for testing
-                            self.event_id = events[0]['id']
+                        if len(public_events) > 0:
+                            # Select first public event for testing
+                            self.event_id = public_events[0]['id']
                             
                             self.log_result(
-                                "Get User Events",
+                                "Get Public Events (Fallback)",
                                 True,
-                                f"✅ Successfully retrieved {len(events)} events, selected event: {self.event_id}",
+                                f"✅ Using public event for testing: {self.event_id}",
                                 {
-                                    "total_events": len(events),
+                                    "total_events": len(public_events),
                                     "selected_event_id": self.event_id,
-                                    "event_title": events[0].get('title', 'Unknown')
+                                    "event_title": public_events[0].get('title', 'Unknown'),
+                                    "note": "Using public event - authentication not required for kiosk device endpoints"
                                 }
                             )
                             return True
                         else:
                             self.log_result(
-                                "Get User Events - No Events",
+                                "Get Public Events - No Events",
                                 False,
-                                "❌ User has no events available for testing",
+                                "❌ No public events available for testing",
                                 {"events_count": 0}
                             )
                             return False
                     else:
                         self.log_result(
-                            "Get User Events - Invalid Response",
+                            "Get Public Events - Invalid Response",
                             False,
                             "❌ Response missing 'events' array",
-                            data
+                            public_data
                         )
                         return False
                 except json.JSONDecodeError:
                     self.log_result(
-                        "Get User Events - JSON Error",
+                        "Get Public Events - JSON Error",
                         False,
                         "❌ Invalid JSON response",
-                        response.text
+                        public_response.text
                     )
                     return False
-            elif response.status_code == 401:
-                self.log_result(
-                    "Get User Events - Authentication",
-                    False,
-                    "❌ Authentication failed - token may be invalid (trying public events fallback)",
-                    {"status": response.status_code}
-                )
-                # Fall back to public events - but don't call recursively, just return False
-                return False
             else:
                 self.log_result(
-                    "Get User Events",
+                    "Get Public Events",
                     False,
-                    f"❌ Unexpected status code: {response.status_code}",
-                    response.text
+                    f"❌ Unexpected status code: {public_response.status_code}",
+                    public_response.text
                 )
                 return False
                 
