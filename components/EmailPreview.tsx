@@ -97,32 +97,71 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
 
             console.log('generatePreview: Generating for type:', selectedType);
 
-            switch (selectedType) {
-                case 'purchase':
-                    html = generatePurchaseEmail(sampleData, theme, ticketDesign);
-                    break;
-                case 'refund':
-                    html = generateRefundEmail(sampleData, theme, ticketDesign);
-                    break;
-                case 'reminder24h':
-                    html = generateReminderEmail(sampleData, theme, ticketDesign, '24 hours');
-                    break;
-                case 'reminderSecondary':
-                    html = generateReminderEmail(sampleData, theme, ticketDesign, sampleData.timeUntilEvent);
-                    break;
-                case 'postEvent':
-                    html = generatePostEventEmail(sampleData, theme, ticketDesign);
-                    break;
-                case 'abandonedCart':
-                    html = generateAbandonedCartEmail(sampleData);
-                    break;
+            try {
+                switch (selectedType) {
+                    case 'purchase':
+                        html = generatePurchaseEmail(sampleData, theme, ticketDesign);
+                        break;
+                    case 'refund':
+                        html = generateRefundEmail(sampleData, theme, ticketDesign);
+                        break;
+                    case 'reminder24h':
+                        html = generateReminderEmail(sampleData, theme, ticketDesign, '24 hours');
+                        break;
+                    case 'reminderSecondary':
+                        html = generateReminderEmail(sampleData, theme, ticketDesign, sampleData.timeUntilEvent);
+                        break;
+                    case 'postEvent':
+                        html = generatePostEventEmail(sampleData, theme, ticketDesign);
+                        break;
+                    case 'abandonedCart':
+                        html = generateAbandonedCartEmail(sampleData);
+                        break;
+                    default:
+                        html = generatePurchaseEmail(sampleData, theme, ticketDesign);
+                }
+            } catch (emailError) {
+                console.error('generatePreview: Error generating email HTML:', emailError);
+                // Fallback to simple HTML
+                html = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head><meta charset="utf-8"></head>
+                    <body style="font-family: Arial, sans-serif; padding: 40px; background: #f5f5f5;">
+                        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+                            <h1 style="color: #dc2626;">Preview Error</h1>
+                            <p>Unable to generate ${selectedType} email preview.</p>
+                            <p style="color: #666; font-size: 14px;">Error: ${emailError instanceof Error ? emailError.message : 'Unknown error'}</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
             }
 
             console.log('generatePreview: HTML generated, length:', html.length);
-            setPreviewHtml(html);
-            console.log('generatePreview: previewHtml state updated');
+            if (html && html.length > 0) {
+                setPreviewHtml(html);
+                console.log('generatePreview: previewHtml state updated');
+            } else {
+                console.error('generatePreview: Generated HTML is empty!');
+            }
         } catch (error) {
             console.error('generatePreview: Error occurred:', error);
+            // Set error HTML
+            const errorHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="utf-8"></head>
+                <body style="font-family: Arial, sans-serif; padding: 40px; background: #f5f5f5;">
+                    <div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+                        <h1 style="color: #dc2626;">Error</h1>
+                        <p>Failed to generate email preview</p>
+                        <p style="color: #666; font-size: 14px;">${error instanceof Error ? error.message : 'Unknown error'}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            setPreviewHtml(errorHtml);
         }
     };
 
