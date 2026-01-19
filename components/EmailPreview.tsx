@@ -31,7 +31,15 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
 
     useEffect(() => {
         if (event) {
-            generatePreview();
+            console.log('EmailPreview: Generating preview for event:', event.id, 'Type:', selectedType);
+            try {
+                generatePreview();
+                console.log('EmailPreview: Preview generated successfully');
+            } catch (error) {
+                console.error('EmailPreview: Error generating preview:', error);
+            }
+        } else {
+            console.log('EmailPreview: No event available for preview');
         }
     }, [event, selectedType]);
 
