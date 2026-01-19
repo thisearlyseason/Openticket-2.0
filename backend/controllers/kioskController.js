@@ -776,5 +776,6 @@ export {
     checkInGuest,
     processPayment,
     getKioskLogs,
-    getCurrentToken
+    getCurrentToken,
+    getKioskStatus
 };
