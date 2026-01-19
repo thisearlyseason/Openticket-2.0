@@ -42,6 +42,7 @@ import { KioskHome } from './components/KioskHome';
 import { KioskCheckIn } from './components/KioskCheckIn';
 import { KioskPayment } from './components/KioskPayment';
 import { KioskSuccess } from './components/KioskSuccess';
+import { KioskSettingsPage } from './components/KioskSettingsPage';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
