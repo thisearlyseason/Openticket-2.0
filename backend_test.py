@@ -115,7 +115,7 @@ class KioskModeTester:
                 )
                 return False
             
-            response = self.session.get(f"{BACKEND_URL}/api/events/my-events")
+            response = self.session.get(f"{BACKEND_URL}/api/events/")
             
             if response.status_code == 200:
                 try:
