@@ -1063,14 +1063,14 @@ export const EventBuilder = () => {
                                         </Button>
                                         {/* Map tiers here */}
                                         {/* Map tiers here */}
-                                        {formData.ticketTiers?.map((tier, idx) => (
-                                            <div key={tier.id} className="p-4 border rounded-xl bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 space-y-4">
+                                        {formData.ticketTiers?.map((tier, idx) => tier && (
+                                            <div key={tier.id || idx} className="p-4 border rounded-xl bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 space-y-4">
                                                 <div className="flex flex-col sm:flex-row gap-4">
                                                     <div className="flex-[2]">
                                                         <Input
                                                             label="Tier Name"
                                                             placeholder="e.g. General Admission, VIP"
-                                                            value={tier.name}
+                                                            value={tier.name || ''}
                                                             onChange={e => { const n = [...formData.ticketTiers || []]; n[idx].name = e.target.value; setFormData({ ...formData, ticketTiers: n }) }}
                                                             containerClassName="mb-0"
                                                         />
@@ -1080,7 +1080,7 @@ export const EventBuilder = () => {
                                                             label={`Price (${currentUser?.defaultCurrency || 'USD'})`}
                                                             type="number"
                                                             placeholder="0.00"
-                                                            value={tier.price}
+                                                            value={tier.price || ''}
                                                             onChange={e => { const n = [...formData.ticketTiers || []]; n[idx].price = parseFloat(e.target.value); setFormData({ ...formData, ticketTiers: n }) }}
                                                             containerClassName="mb-0"
                                                         />
