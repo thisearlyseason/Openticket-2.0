@@ -5,10 +5,10 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 685.668156139,
-      "timestamp": "2026-01-19T19:30:23.090Z"
+      "uptime": 710.58531098,
+      "timestamp": "2026-01-19T19:30:48.007Z"
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:48"
   },
   {
     "test": "Backend Kiosk Routes Availability",
@@ -36,7 +36,7 @@
         "status": 403
       }
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:48"
   },
   {
     "test": "Backend Health Check",
@@ -44,10 +44,10 @@
     "details": "\u2705 Backend is healthy and responding",
     "response_data": {
       "status": "healthy",
-      "uptime": 685.949654538,
-      "timestamp": "2026-01-19T19:30:23.372Z"
+      "uptime": 710.948675751,
+      "timestamp": "2026-01-19T19:30:48.371Z"
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:48"
   },
   {
     "test": "Backend Kiosk Routes Availability",
@@ -75,7 +75,7 @@
         "status": 403
       }
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:48"
   },
   {
     "test": "User Login",
@@ -85,15 +85,69 @@
       "email": "test+openticket@gmail.com",
       "token_received": true
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:48"
   },
   {
-    "test": "Get User Events - Authentication",
+    "test": "Get Public Events (Fallback)",
+    "success": true,
+    "details": "\u2705 Using public event for testing: 264fbc93-0b28-45cf-9a52-605d2b00d25e",
+    "response_data": {
+      "total_events": 3,
+      "selected_event_id": "264fbc93-0b28-45cf-9a52-605d2b00d25e",
+      "event_title": "sdfsfsdf",
+      "note": "Using public event - authentication not required for kiosk device endpoints"
+    },
+    "timestamp": "2026-01-19 19:30:48"
+  },
+  {
+    "test": "Kiosk Validate Endpoint (Invalid Token)",
+    "success": true,
+    "details": "\u2705 Correctly rejected invalid token: Invalid token",
+    "response_data": {
+      "status": 404,
+      "error": "Invalid token",
+      "endpoint_working": true
+    },
+    "timestamp": "2026-01-19 19:30:48"
+  },
+  {
+    "test": "Kiosk Guest Search Endpoint (Invalid Token)",
+    "success": true,
+    "details": "\u2705 Correctly rejected invalid token: Invalid or expired token",
+    "response_data": {
+      "status": 403,
+      "error": "Invalid or expired token",
+      "endpoint_working": true
+    },
+    "timestamp": "2026-01-19 19:30:49"
+  },
+  {
+    "test": "Kiosk Scan Endpoint (Invalid Token)",
+    "success": true,
+    "details": "\u2705 Correctly rejected invalid token: Invalid or expired token",
+    "response_data": {
+      "status": 403,
+      "error": "Invalid or expired token",
+      "endpoint_working": true
+    },
+    "timestamp": "2026-01-19 19:30:49"
+  },
+  {
+    "test": "Generate Kiosk Token - Authentication",
     "success": false,
-    "details": "\u274c Authentication failed - token may be invalid (trying public events fallback)",
+    "details": "\u274c Authentication failed - token may be invalid",
     "response_data": {
       "status": 401
     },
-    "timestamp": "2026-01-19 19:30:23"
+    "timestamp": "2026-01-19 19:30:49"
+  },
+  {
+    "test": "Get Kiosk Status - Authentication",
+    "success": false,
+    "details": "\u274c Authentication failed - token may be invalid",
+    "response_data": {
+      "status": 401
+    },
+    "timestamp": "2026-01-19 19:30:49"
   }
 ]
