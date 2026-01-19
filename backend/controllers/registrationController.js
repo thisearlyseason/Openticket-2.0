@@ -698,6 +698,11 @@ export const refundRegistration = async (req, res) => {
             stripeRefundId: stripeRefundId || null,
             ticketsRefunded: ticketsBeingRefunded,
             message: `Successfully refunded ${ticketsBeingRefunded} ticket(s) for $${(amountToRefundCents / 100).toFixed(2)}. ${refundTypeMessage}`,
+            emailStatus: {
+                sent: emailSent,
+                error: emailError,
+                recipient: reg.attendee_email || null
+            },
             isManualRefund,
             stripeError: stripeError || undefined,
             warning: stripeError ? 'Registration marked as refunded, but Stripe refund failed. You may need to process the refund manually in Stripe dashboard.' : undefined,
