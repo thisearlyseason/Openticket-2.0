@@ -8,7 +8,8 @@ import {
     checkInGuest,
     processPayment,
     getKioskLogs,
-    getCurrentToken
+    getCurrentToken,
+    getKioskStatus
 } from '../controllers/kioskController.js';
 import verifyToken from '../middlewares/authMiddleware.js';
 
@@ -19,6 +20,7 @@ router.post('/generate', verifyToken, generateKioskToken);
 router.post('/revoke', verifyToken, revokeKioskToken);
 router.get('/logs/:eventId', verifyToken, getKioskLogs);
 router.get('/token/:eventId', verifyToken, getCurrentToken);
+router.get('/status/:eventId', verifyToken, getKioskStatus);
 
 // Kiosk routes (token-based, no user auth required)
 router.post('/validate', validateKioskToken);
