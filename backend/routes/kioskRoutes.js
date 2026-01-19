@@ -11,7 +11,49 @@ import {
     getCurrentToken,
     getKioskStatus
 } from '../controllers/kioskController.js';
-import verifyToken from '../middlewares/authMiddleware.js';
+import supabase from '../services/supabase.js';
+import admin from '../services/firebase.js';
+
+// Inline auth middleware with Supabase support
+const verifyToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    if (!token || token === 'null' || token === 'undefined') {
+        return res.status(401).json({ error: 'Token is missing' });
+    }
+
+    // Try Supabase authentication first
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        if (user && !error) {
+            req.user = {
+                uid: user.id,
+                email: user.email,
+                email_verified: user.email_confirmed_at != null
+            };
+            return next();
+        }
+    } catch (supabaseError) {
+        console.log('[KioskAuth] Supabase failed, trying Firebase...');
+    }
+
+    // Fallback to Firebase
+    if (token.length > 100) {
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(token);
+            req.user = decodedToken;
+            return next();
+        } catch (firebaseError) {
+            // Silent fail, continue to error below
+        }
+    }
+
+    return res.status(401).json({ error: 'Token verification failed' });
+};
 
 const router = express.Router();
 
