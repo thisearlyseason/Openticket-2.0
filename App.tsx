@@ -40,6 +40,8 @@ import { NonprofitUpgrade } from './components/NonprofitUpgrade';
 import { EnterpriseContact } from './components/EnterpriseContact';
 import { KioskHome } from './components/KioskHome';
 import { KioskCheckIn } from './components/KioskCheckIn';
+import { KioskPayment } from './components/KioskPayment';
+import { KioskSuccess } from './components/KioskSuccess';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
@@ -564,6 +566,9 @@ const MainContent = () => {
                 {/* Kiosk Mode Routes */}
                 <Route path="/kiosk/:eventId" element={<KioskHome />} />
                 <Route path="/kiosk/:eventId/checkin" element={<KioskCheckIn />} />
+                <Route path="/kiosk/:eventId/payment" element={<KioskPayment />} />
+                <Route path="/kiosk/:eventId/payment/:regId" element={<KioskPayment />} />
+                <Route path="/kiosk/:eventId/success" element={<KioskSuccess />} />
                 
                 <Route path="/affiliate" element={<AffiliateDashboard />} />
                 <Route path="/affiliate-login" element={<AffiliateAuth />} />
