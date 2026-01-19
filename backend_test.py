@@ -938,6 +938,83 @@ class KioskModeTester:
         except Exception as e:
             self.log_result("Kiosk Endpoints Without Auth", False, f"Exception: {str(e)}")
             return False
+
+    def test_backend_health_and_connectivity(self):
+        """Test Case 11: Verify backend is healthy and kiosk endpoints exist"""
+        try:
+            # Test basic connectivity
+            health_response = self.session.get(f"{BACKEND_URL}/api/health", timeout=10)
+            
+            if health_response.status_code == 200:
+                try:
+                    health_data = health_response.json()
+                    self.log_result(
+                        "Backend Health Check",
+                        True,
+                        f"✅ Backend is healthy and responding",
+                        health_data
+                    )
+                except:
+                    self.log_result(
+                        "Backend Health Check",
+                        True,
+                        f"✅ Backend responding (HTTP 200)",
+                        {"status": health_response.status_code}
+                    )
+            else:
+                self.log_result(
+                    "Backend Health Check",
+                    False,
+                    f"❌ Backend health check failed: HTTP {health_response.status_code}",
+                    health_response.text
+                )
+            
+            # Test if the kiosk routes exist
+            kiosk_routes = [
+                "/api/kiosk/generate",
+                "/api/kiosk/validate",
+                "/api/kiosk/revoke",
+                "/api/kiosk/scan",
+                "/api/kiosk/guest-search"
+            ]
+            
+            route_results = {}
+            for route in kiosk_routes:
+                try:
+                    if route == "/api/kiosk/guest-search":
+                        # GET route - test with query parameters
+                        route_response = self.session.get(f"{BACKEND_URL}{route}?query=test&tokenId=test&eventId=test", timeout=5)
+                    else:
+                        # POST route - test with empty JSON
+                        route_response = self.session.post(f"{BACKEND_URL}{route}", json={}, timeout=5)
+                    
+                    # 400/401/403 = route exists but needs proper data/auth, 404 = route doesn't exist
+                    if route_response.status_code == 404:
+                        route_results[route] = {"exists": False, "status": 404}
+                    else:
+                        route_results[route] = {"exists": True, "status": route_response.status_code}
+                except Exception as route_error:
+                    route_results[route] = {"exists": False, "error": str(route_error)}
+            
+            missing_routes = [route for route, result in route_results.items() if not result.get("exists", False)]
+            
+            if not missing_routes:
+                self.log_result(
+                    "Backend Kiosk Routes Availability",
+                    True,
+                    f"✅ All required kiosk routes exist: {list(route_results.keys())}",
+                    route_results
+                )
+            else:
+                self.log_result(
+                    "Backend Kiosk Routes Availability",
+                    False,
+                    f"❌ Missing routes: {missing_routes}",
+                    route_results
+                )
+                
+        except Exception as e:
+            self.log_result("Backend Health and Connectivity", False, f"Exception: {str(e)}")
         """Test Case 10: Verify backend is healthy and kiosk endpoints exist"""
         try:
             # Test basic connectivity
