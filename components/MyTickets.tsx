@@ -168,19 +168,21 @@ export const MyTickets = () => {
             });
 
             // View Filtering Logic
+            // Note: Refunded tickets are now shown in ACTIVE view with a "Refunded" badge
+            // They still appear in archived view as well
             if (activeTab === 'archived') {
                 if (!isRegHidden && !isRefunded && !isExpired) {
                     console.log('[MyTickets] Skipping registration in archived view (not archived)');
                     continue;
                 }
             } else if (activeTab === 'past') {
-                if (isRegHidden || isRefunded || isExpired || !isPastEvent) {
+                if (isRegHidden || isExpired || !isPastEvent) {
                     console.log('[MyTickets] Skipping registration in past view (not past event)');
                     continue;
                 }
-            } else { // active
-                if (isRegHidden || isRefunded || isExpired || isPastEvent) {
-                    console.log('[MyTickets] Skipping registration in active view:', { isRegHidden, isRefunded, isExpired, isPastEvent });
+            } else { // active - show ALL tickets including refunded ones
+                if (isRegHidden || isExpired || isPastEvent) {
+                    console.log('[MyTickets] Skipping registration in active view:', { isRegHidden, isExpired, isPastEvent });
                     continue;
                 }
             }
