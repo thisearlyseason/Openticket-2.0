@@ -143,7 +143,7 @@ Event: **TYLERS MUSICAL APPEARAMCE**
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Firebase authentication system initialized properly
    - No JavaScript console errors or crashes detected
    - Tailwind CSS and Vite development server functioning correctly
@@ -499,7 +499,7 @@ The ticket transfer system backend is **fully functional** and ready for product
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly on https://event-manager-bugs.preview.emergentagent.com
+   - Application loads correctly on https://scan-entry-3.preview.emergentagent.com
    - Authentication UI renders properly (Sign In, Sign Up, Find Tickets tabs)
    - My Tickets page structure is accessible
    - Navigation system functional
@@ -955,7 +955,7 @@ The specific issue mentioned in the review request has been successfully resolve
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com/#/auth`
+   - Application loads correctly at `https://scan-entry-3.preview.emergentagent.com/#/auth`
    - Authentication page renders properly with Sign In/Sign Up/Find Tickets tabs
    - Form fields accept input correctly (email and password fields functional)
    - Firebase initialization occurs successfully ("Firebase App Initialized (Auth & Storage Only)")
@@ -1194,7 +1194,7 @@ The Firebase Authentication system is **properly implemented and configured**, b
 **Key Findings:**
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Authentication system functional (login forms render and work)
    - No JavaScript console errors or crashes detected
    - Security system properly prevents unauthorized access
@@ -1300,7 +1300,7 @@ Based on comprehensive code review, the DataTable implementation is correctly st
    - ❌ Authentication flow still not working
 
 4. **✅ Infrastructure Verified:**
-   - Frontend application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Frontend application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Backend API healthy and responding
    - No JavaScript console errors detected
    - Security system working correctly (prevents unauthorized access)
@@ -1338,7 +1338,7 @@ Based on comprehensive code review, the DataTable implementation is correctly st
 ### Key Findings:
 
 1. **✅ Backend Infrastructure Working:**
-   - Backend is healthy and responding correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Backend is healthy and responding correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Promo code API endpoints exist and are properly configured:
      - `GET /api/admin/promo-codes` - Returns HTTP 401 (requires authentication)
      - `POST /api/admin/promo-codes` - Returns HTTP 401 (requires authentication)
@@ -1486,7 +1486,7 @@ The promo code creation API is **properly implemented and functional**:
 
 1. **✅ Authentication System Working:**
    - Login with `test+openticket@gmail.com` / `12345678` successful
-   - Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
    - User authentication and session management functional
    - No JavaScript console errors or crashes detected
 
@@ -1729,7 +1729,7 @@ The EmailPreview component is properly implemented with:
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Marketing route properly configured: `/manage/:id/marketing` → `EventMarketing` component (App.tsx line 548)
    - No JavaScript console errors or crashes detected
    - Routing system functional with HashRouter implementation
@@ -2199,7 +2199,7 @@ WHERE
 **STATUS:** Testing blocked - authentication system issues prevent live functionality verification. Component implementation verified through comprehensive code analysis.
 
 **✅ INFRASTRUCTURE VERIFIED:**
-- Frontend application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+- Frontend application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
 - Authentication system functional (login forms work)
 - No JavaScript console errors detected
 - Security system working correctly (prevents unauthorized access)
@@ -2241,9 +2241,9 @@ WHERE
 **Message:** Super Admin Dashboard Testing completed with critical authentication issue confirmed. Key findings:
 
 **✅ FRONTEND INFRASTRUCTURE WORKING:**
-- Application loads correctly at `https://event-manager-bugs.preview.emergentagent.com`
+- Application loads correctly at `https://scan-entry-3.preview.emergentagent.com`
 - Authentication system functional (Sign In/Sign Up interface)
-- Backend API healthy and responding (`https://event-manager-bugs.preview.emergentagent.com/api/health`)
+- Backend API healthy and responding (`https://scan-entry-3.preview.emergentagent.com/api/health`)
 - No JavaScript console errors or crashes detected
 - All UI components render without "Cannot read properties of undefined" errors
 - User `tylerans@gmail.com` is recognized by the system (shows "WELCOME BACK")
@@ -2291,7 +2291,7 @@ WHERE
 **Message:** Google Authentication Flow Re-Testing completed after backend error handler fix. Key findings:
 
 **✅ GOOGLE LOGIN UI VERIFICATION:**
-- Auth page loads correctly at `https://event-manager-bugs.preview.emergentagent.com/#/auth`
+- Auth page loads correctly at `https://scan-entry-3.preview.emergentagent.com/#/auth`
 - "Continue with Google" button is visible and properly positioned
 - Authentication form structure is correct with Sign In/Sign Up/Find Tickets tabs
 - UI components render without errors
@@ -2787,7 +2787,7 @@ All endpoints respond correctly, Resend is properly configured as the default pr
 
 **Test Date:** January 9, 2026  
 **Feature:** Complete Email System Testing After Fixes  
-**Backend URL:** https://event-manager-bugs.preview.emergentagent.com  
+**Backend URL:** https://scan-entry-3.preview.emergentagent.com  
 **Status:** All critical functionality working correctly
 
 ### Test Results:
@@ -3026,7 +3026,7 @@ The unique ticket system refactor has been successfully implemented and verified
 ### Test User Setup:
 - Need affiliate user with `affiliateCode` set
 - Test URL: `http://localhost:3000/#/affiliate`
-- External API URL for backend: `https://event-manager-bugs.preview.emergentagent.com/api`
+- External API URL for backend: `https://scan-entry-3.preview.emergentagent.com/api`
 
 ---
 
@@ -3248,7 +3248,7 @@ The Gemini API key persistence issue is **NOT a bug in the profile management sy
 **Key Findings:**
 
 1. **✅ Backend Infrastructure Working:**
-   - Backend is healthy and responding correctly at `https://event-manager-bugs.preview.emergentagent.com`
+   - Backend is healthy and responding correctly at `https://scan-entry-3.preview.emergentagent.com`
    - Payout API endpoints exist and are properly secured with authentication
    - GET `/api/admin/upcoming-payouts` endpoint exists and returns HTTP 401 (requires auth)
    - GET `/api/auth/me` endpoint exists and returns HTTP 401 (requires auth)
@@ -3321,7 +3321,7 @@ The payout balance discrepancy bug fix is **correctly implemented in the code** 
 ### Key Findings:
 
 1. **✅ Frontend Infrastructure Working:**
-   - Application loads successfully at `https://event-manager-bugs.preview.emergentagent.com`
+   - Application loads successfully at `https://scan-entry-3.preview.emergentagent.com`
    - Authentication UI renders properly with Sign In/Sign Up/Find Tickets tabs
    - Navigation system functional, responsive design working
    - No JavaScript console errors or crashes detected during initial load
