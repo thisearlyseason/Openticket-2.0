@@ -572,6 +572,7 @@ export const EventRefunds = () => {
                                     <div className="mt-4 space-y-2">
                                         <p className="text-xs font-bold text-zinc-400 uppercase">Tickets</p>
                                         {reg.tickets.map((ticket, idx) => {
+                                            if (!ticket) return null;  // Safety check
                                             const ticketName = ticket.name || ticket.tierId || 'Ticket';
                                             const ticketPrice = ticket.pricePerTicket || ticket.price || 0;
                                             const ticketQty = ticket.quantity || 1;
