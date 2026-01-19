@@ -222,8 +222,8 @@ class KioskModeTester:
                     "❌ Authentication failed - token may be invalid (trying public events fallback)",
                     {"status": response.status_code}
                 )
-                # Fall back to public events
-                return self.test_get_user_events()
+                # Fall back to public events - but don't call recursively, just return False
+                return False
             else:
                 self.log_result(
                     "Get User Events",
