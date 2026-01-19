@@ -38,6 +38,8 @@ import { AdvancedAnalytics } from './components/AdvancedAnalytics';
 import { EmailMarketing } from './components/EmailMarketing';
 import { NonprofitUpgrade } from './components/NonprofitUpgrade';
 import { EnterpriseContact } from './components/EnterpriseContact';
+import { KioskHome } from './components/KioskHome';
+import { KioskCheckIn } from './components/KioskCheckIn';
 import { StorageService } from './services/storageService';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
