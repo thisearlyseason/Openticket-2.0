@@ -2097,6 +2097,30 @@ export const EventBuilder = () => {
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            {/* Email Preview Section */}
+                                            <div className="mt-6 p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 rounded-xl border border-purple-200 dark:border-purple-800">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        <h4 className="font-bold text-sm flex items-center gap-2">
+                                                            <Eye size={16} className="text-purple-600 dark:text-purple-400" />
+                                                            Preview Your Emails
+                                                        </h4>
+                                                        <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">
+                                                            See how emails will look with your current ticket design
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        onClick={() => navigate(`/dashboard/events/${id}/email-preview`)}
+                                                        className="flex items-center gap-2"
+                                                    >
+                                                        <Eye size={14} />
+                                                        Preview
+                                                    </Button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </Card>
