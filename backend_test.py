@@ -1038,14 +1038,19 @@ class KioskModeTester:
                 print("\n🏪 KIOSK MODE FUNCTIONALITY TESTS")
                 print("-" * 40)
                 
-                # Organizer Endpoints (Require Auth Token)
-                print("📋 Testing Organizer Endpoints...")
+                # Test kiosk endpoints without authentication first
+                print("📱 Testing Kiosk Device Endpoints (No Auth)...")
+                self.test_kiosk_endpoints_without_auth()
+                
+                # Organizer Endpoints (Require Auth Token) - these will likely fail due to auth mismatch
+                print("\n📋 Testing Organizer Endpoints (Auth Required)...")
+                print("⚠️  NOTE: These tests may fail due to Firebase/Supabase authentication mismatch")
                 generate_success = self.test_generate_kiosk_token()
                 status_success = self.test_get_kiosk_status()
                 
                 if generate_success:
-                    # Kiosk Device Endpoints (No Auth, Token-Based)
-                    print("\n📱 Testing Kiosk Device Endpoints...")
+                    # Kiosk Device Endpoints with valid token
+                    print("\n📱 Testing Kiosk Device Endpoints (With Valid Token)...")
                     validate_success = self.test_validate_kiosk_token()
                     search_success = self.test_guest_search()
                     scan_success = self.test_invalid_ticket_scan()
@@ -1056,12 +1061,19 @@ class KioskModeTester:
                     if revoke_success:
                         self.test_validate_revoked_token()
                 else:
-                    print("⚠️ SKIPPING KIOSK DEVICE TESTS - Token generation failed")
+                    print("⚠️ SKIPPING AUTHENTICATED KIOSK TESTS - Token generation failed (expected due to auth mismatch)")
             else:
                 print("⚠️ SKIPPING KIOSK TESTS - No events available")
         else:
-            print("\n⚠️ SKIPPING ALL KIOSK TESTS - Authentication Failed")
-            print("Cannot test kiosk functionality without user authentication")
+            # Even without login, we can test some endpoints
+            print("\n🏪 TESTING KIOSK ENDPOINTS WITHOUT AUTHENTICATION")
+            print("-" * 40)
+            events_success = self.test_get_user_events()  # This will try public events
+            if events_success:
+                self.test_kiosk_endpoints_without_auth()
+            
+            print("\n⚠️ SKIPPING AUTHENTICATED KIOSK TESTS - Authentication Failed")
+            print("Cannot test organizer endpoints without user authentication")
         
         print("\n" + "=" * 70)
         print("📊 TEST SUMMARY")
