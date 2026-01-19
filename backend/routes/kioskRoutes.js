@@ -10,15 +10,15 @@ import {
     getKioskLogs,
     getCurrentToken
 } from '../controllers/kioskController.js';
-import { protect } from '../middlewares/authMiddleware.js';
+import verifyToken from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
 // Organizer routes (require authentication)
-router.post('/generate', protect, generateKioskToken);
-router.post('/revoke', protect, revokeKioskToken);
-router.get('/logs/:eventId', protect, getKioskLogs);
-router.get('/token/:eventId', protect, getCurrentToken);
+router.post('/generate', verifyToken, generateKioskToken);
+router.post('/revoke', verifyToken, revokeKioskToken);
+router.get('/logs/:eventId', verifyToken, getKioskLogs);
+router.get('/token/:eventId', verifyToken, getCurrentToken);
 
 // Kiosk routes (token-based, no user auth required)
 router.post('/validate', validateKioskToken);
