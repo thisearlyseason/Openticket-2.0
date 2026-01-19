@@ -552,6 +552,7 @@ const MainContent = () => {
                 <Route path="/manage/:id/refunds" element={<EventRefunds />} />
                 <Route path="/manage/:id/marketing" element={<EventMarketing />} />
                 <Route path="/manage/:id/email-preview" element={<EmailPreview />} />
+                <Route path="/manage/:id/kiosk" element={<KioskSettingsPage />} />
                 <Route path="/dashboard/events/:id/email-preview" element={<EmailPreview />} />
                 <Route path="/manage/:id/analytics" element={<EventAnalytics />} />
                 <Route path="/manage/:id/settings" element={<EventSettings />} />
