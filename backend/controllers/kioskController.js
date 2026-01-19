@@ -13,7 +13,11 @@ import supabase from '../services/supabase.js';
 const generateKioskToken = async (req, res) => {
     try {
         const { eventId, permissions, paymentEnabled, pinCode } = req.body;
-        const userId = req.userId;
+        const userId = req.user?.uid;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         if (!eventId) {
             return res.status(400).json({ error: 'Event ID is required' });
@@ -179,7 +183,7 @@ const validateKioskToken = async (req, res) => {
 const revokeKioskToken = async (req, res) => {
     try {
         const { tokenId, eventId } = req.body;
-        const userId = req.userId;
+        const userId = req.user?.uid;
 
         if (!tokenId || !eventId) {
             return res.status(400).json({ error: 'Token ID and Event ID are required' });
@@ -574,7 +578,7 @@ const processPayment = async (req, res) => {
 const getKioskLogs = async (req, res) => {
     try {
         const { eventId } = req.params;
-        const userId = req.userId;
+        const userId = req.user?.uid;
 
         // Verify ownership
         const { data: event } = await supabase
@@ -614,7 +618,7 @@ const getKioskLogs = async (req, res) => {
 const getCurrentToken = async (req, res) => {
     try {
         const { eventId } = req.params;
-        const userId = req.userId;
+        const userId = req.user?.uid;
 
         // Verify ownership
         const { data: event } = await supabase
