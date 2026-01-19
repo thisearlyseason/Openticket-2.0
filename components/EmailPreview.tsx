@@ -20,35 +20,15 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     const [previewHtml, setPreviewHtml] = useState<string>('');
     const [isLoading, setIsLoading] = useState(!propEvent);
 
-    useEffect(() => {
-        if (!propEvent && id) {
-            loadEvent();
-        } else if (propEvent) {
-            // If event is provided as prop, generate preview immediately
-            generatePreview();
-        }
-    }, [id, propEvent]);
-
-    useEffect(() => {
-        if (event) {
-            console.log('EmailPreview: Generating preview for event:', event.id, 'Type:', selectedType);
-            try {
-                generatePreview();
-                console.log('EmailPreview: Preview generated successfully');
-            } catch (error) {
-                console.error('EmailPreview: Error generating preview:', error);
-            }
-        } else {
-            console.log('EmailPreview: No event available for preview');
-        }
-    }, [event, selectedType]);
-
     const loadEvent = async () => {
         setIsLoading(true);
         try {
             if (id) {
                 const e = await StorageService.getEventFull(id);
-                if (e) setEvent(e);
+                if (e) {
+                    console.log('EmailPreview: Event loaded:', e.id);
+                    setEvent(e);
+                }
             }
         } catch (error) {
             console.error('Error loading event:', error);
@@ -56,6 +36,34 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        console.log('EmailPreview: Initial mount, id:', id, 'propEvent:', !!propEvent);
+        if (!propEvent && id) {
+            loadEvent();
+        } else if (propEvent) {
+            console.log('EmailPreview: Using propEvent');
+            setEvent(propEvent);
+        }
+    }, [id, propEvent]);
+
+    useEffect(() => {
+        console.log('EmailPreview: Event/selectedType changed, event:', !!event, 'type:', selectedType);
+        if (event) {
+            console.log('EmailPreview: Generating preview for event:', event.id, 'Type:', selectedType);
+            // Use setTimeout to ensure state updates are processed
+            setTimeout(() => {
+                try {
+                    generatePreview();
+                    console.log('EmailPreview: Preview generation completed');
+                } catch (error) {
+                    console.error('EmailPreview: Error generating preview:', error);
+                }
+            }, 0);
+        } else {
+            console.log('EmailPreview: No event available for preview');
+        }
+    }, [event, selectedType]);
 
     const generatePreview = () => {
         console.log('generatePreview called, event:', event?.id);
