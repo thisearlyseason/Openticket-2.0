@@ -20,6 +20,8 @@ class KioskModeTester:
         self.results = []
         self.session = requests.Session()
         self.auth_token = None
+        self.event_id = None
+        self.kiosk_token = None
         
     def log_result(self, test_name: str, success: bool, details: str = "", response_data: Any = None):
         """Log test result"""
@@ -36,14 +38,10 @@ class KioskModeTester:
         if response_data and not success:
             print(f"   Response: {response_data}")
     
-    def test_organizer_login(self):
-        """Test Case 1: Login as organizer user - test with tylerans@gmail.com"""
-        # Test with the specific organizer user mentioned in review request
-        test_users = [
-            {"email": "tylerans@gmail.com", "password": "password123"},
-            {"email": "test+openticket@gmail.com", "password": "12345678"},
-            {"email": "thisearlyseason@gmail.com", "password": "password123"},
-        ]
+    def test_user_login(self):
+        """Test Case 1: Login as test user"""
+        # Use the credentials from the review request
+        user_data = {"email": "test+openticket@gmail.com", "password": "12345678"}
         
         for user_data in test_users:
             try:
