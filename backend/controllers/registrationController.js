@@ -1699,17 +1699,24 @@ export const resendConfirmationEmail = async (req, res) => {
             .filter(t => t.status !== 'refunded')
             .reduce((sum, t) => sum + ((t.pricePerTicket || t.price || 0) * (t.quantity || 1)), 0);
 
-        // Generate email
+        // Generate email with the event's ticket design for theming
         const { subject, html } = purchaseConfirmation({
             attendeeName: reg.attendee_name || 'Guest',
             eventTitle: reg.event.title,
             eventDate,
             eventTime: reg.event.time || 'TBD',
             eventLocation,
-            ticketUrl,
-            ticketsDisplay,
-            orderTotal: orderTotal.toFixed(2),
-            orderId: reg.id.substring(0, 8).toUpperCase()
+            tickets: (reg.tickets || [])
+                .filter(t => t.status !== 'refunded')
+                .map(t => ({
+                    name: t.name || 'Ticket',
+                    quantity: t.quantity || 1,
+                    price: t.pricePerTicket || t.price || 0
+                })),
+            totalPaid: orderTotal,
+            orderId: reg.id.substring(0, 8).toUpperCase(),
+            organizerName: reg.event.organizer || 'Event Organizer',
+            ticketDesign: reg.event.ticket_design  // Pass the event's visual design for themed emails
         });
 
         // Send the email
