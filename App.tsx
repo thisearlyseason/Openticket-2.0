@@ -22,6 +22,7 @@ import { RefundsPage } from './components/RefundsPage';
 import { AffiliateDashboard } from './components/AffiliateDashboard';
 import { AttendeeManager } from './components/AttendeeManager';
 import { EventMarketing } from './components/EventMarketing';
+import { EmailPreview } from './components/EmailPreview';
 import { EventAnalytics } from './components/EventAnalytics';
 import { EventSettings } from './components/EventSettings';
 import { AddOnManager } from './components/AddOnManager';
@@ -545,6 +546,8 @@ const MainContent = () => {
                 <Route path="/manage/:id/attendees" element={<AttendeeManager />} />
                 <Route path="/manage/:id/refunds" element={<EventRefunds />} />
                 <Route path="/manage/:id/marketing" element={<EventMarketing />} />
+                <Route path="/manage/:id/email-preview" element={<EmailPreview />} />
+                <Route path="/dashboard/events/:id/email-preview" element={<EmailPreview />} />
                 <Route path="/manage/:id/analytics" element={<EventAnalytics />} />
                 <Route path="/manage/:id/settings" element={<EventSettings />} />
                 <Route path="/manage/:id/addons" element={<AddOnManager />} />
