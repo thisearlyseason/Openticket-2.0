@@ -1,0 +1,58 @@
+[
+  {
+    "test": "Backend Health Check",
+    "success": true,
+    "details": "\u2705 Backend is healthy and responding",
+    "response_data": {
+      "status": "healthy",
+      "uptime": 423.739450102,
+      "timestamp": "2026-01-19T19:26:01.161Z"
+    },
+    "timestamp": "2026-01-19 19:26:01"
+  },
+  {
+    "test": "Backend Kiosk Routes Availability",
+    "success": false,
+    "details": "\u274c Missing routes: ['/api/kiosk/guest-search']",
+    "response_data": {
+      "/api/kiosk/generate": {
+        "exists": true,
+        "status": 401
+      },
+      "/api/kiosk/validate": {
+        "exists": true,
+        "status": 400
+      },
+      "/api/kiosk/revoke": {
+        "exists": true,
+        "status": 401
+      },
+      "/api/kiosk/scan": {
+        "exists": true,
+        "status": 400
+      },
+      "/api/kiosk/guest-search": {
+        "exists": false,
+        "status": 404
+      }
+    },
+    "timestamp": "2026-01-19 19:26:01"
+  },
+  {
+    "test": "User Login",
+    "success": true,
+    "details": "\u2705 Successfully logged in as test+openticket@gmail.com",
+    "response_data": {
+      "email": "test+openticket@gmail.com",
+      "token_received": true
+    },
+    "timestamp": "2026-01-19 19:26:01"
+  },
+  {
+    "test": "Get User Events",
+    "success": false,
+    "details": "\u274c Unexpected status code: 404",
+    "response_data": "{\"error\":\"Event not found\"}",
+    "timestamp": "2026-01-19 19:26:02"
+  }
+]
