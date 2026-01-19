@@ -1,6 +1,7 @@
 /**
  * KIOSK MODE CONTROLLER
  * Handles secure, event-scoped kiosk operations
+ * Last updated: 2026-01-19T20:30:00Z
  */
 
 import { v4 as uuidv4 } from 'uuid';
