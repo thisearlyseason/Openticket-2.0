@@ -43,122 +43,121 @@ class KioskModeTester:
         # Use the credentials from the review request
         user_data = {"email": "test+openticket@gmail.com", "password": "12345678"}
         
-        for user_data in test_users:
-            try:
-                response = self.session.post(f"{BACKEND_URL}/api/auth/login", json=user_data)
-                
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        # Check for different possible token fields in Supabase response
-                        token = None
-                        if 'session' in data and data['session'] and 'access_token' in data['session']:
-                            token = data['session']['access_token']
-                        elif 'token' in data:
-                            token = data['token']
-                        elif 'access_token' in data:
-                            token = data['access_token']
+        try:
+            response = self.session.post(f"{BACKEND_URL}/api/auth/login", json=user_data)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    # Check for different possible token fields in Supabase response
+                    token = None
+                    if 'session' in data and data['session'] and 'access_token' in data['session']:
+                        token = data['session']['access_token']
+                    elif 'token' in data:
+                        token = data['token']
+                    elif 'access_token' in data:
+                        token = data['access_token']
+                    
+                    if token:
+                        self.auth_token = token
+                        self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
                         
-                        if token:
-                            # Note: This is a Supabase token, but the backend expects Firebase tokens
-                            # This is a known authentication system mismatch
-                            self.auth_token = token
-                            self.session.headers.update({'Authorization': f'Bearer {self.auth_token}'})
-                            
-                            self.log_result(
-                                "Organizer Login",
-                                True,
-                                f"✅ Successfully logged in as {user_data['email']} (Note: Token incompatibility with Firebase middleware)",
-                                {"email": user_data['email'], "token_received": True, "auth_system_mismatch": True}
-                            )
-                            return True
-                        else:
-                            self.log_result(
-                                "Organizer Login - Token Missing",
-                                False,
-                                f"❌ Login successful for {user_data['email']} but no token found",
-                                data
-                            )
-                    except json.JSONDecodeError:
                         self.log_result(
-                            "Organizer Login - JSON Error",
-                            False,
-                            f"❌ Invalid JSON response for {user_data['email']}",
-                            response.text
+                            "User Login",
+                            True,
+                            f"✅ Successfully logged in as {user_data['email']}",
+                            {"email": user_data['email'], "token_received": True}
                         )
-                elif response.status_code == 401:
-                    # Continue to next user
-                    continue
-                else:
+                        return True
+                    else:
+                        self.log_result(
+                            "User Login - Token Missing",
+                            False,
+                            f"❌ Login successful for {user_data['email']} but no token found",
+                            data
+                        )
+                except json.JSONDecodeError:
                     self.log_result(
-                        "Organizer Login - Unexpected Response",
+                        "User Login - JSON Error",
                         False,
-                        f"❌ Unexpected response for {user_data['email']}: HTTP {response.status_code}",
+                        f"❌ Invalid JSON response for {user_data['email']}",
                         response.text
                     )
+            elif response.status_code == 401:
+                self.log_result(
+                    "User Login - Invalid Credentials",
+                    False,
+                    f"❌ Invalid credentials for {user_data['email']}",
+                    {"status": response.status_code}
+                )
+            else:
+                self.log_result(
+                    "User Login - Unexpected Response",
+                    False,
+                    f"❌ Unexpected response for {user_data['email']}: HTTP {response.status_code}",
+                    response.text
+                )
                     
-            except Exception as e:
-                self.log_result("Organizer Login - Exception", False, f"Exception for {user_data['email']}: {str(e)}")
+        except Exception as e:
+            self.log_result("User Login - Exception", False, f"Exception for {user_data['email']}: {str(e)}")
         
-        # If we get here, none of the users worked
-        self.log_result(
-            "Organizer Login",
-            False,
-            "❌ Failed to authenticate with any test users",
-            {"attempted_users": [u['email'] for u in test_users]}
-        )
         return False
 
-    def test_organizer_upcoming_payouts_endpoint(self):
-        """Test Case 2: GET /api/admin/organizer/upcoming-payouts - Fetch organizer payouts"""
+    def test_get_user_events(self):
+        """Test Case 2: Get list of user's events"""
         try:
             if not self.auth_token:
                 self.log_result(
-                    "Get Organizer Payouts - Authentication Required",
+                    "Get User Events - Authentication Required",
                     False,
                     "❌ Cannot test without authentication token",
                     {"auth_token": None}
                 )
                 return False
             
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
+            response = self.session.get(f"{BACKEND_URL}/api/events/my-events")
             
             if response.status_code == 200:
                 try:
                     data = response.json()
                     
-                    if 'payouts' in data and isinstance(data['payouts'], list):
-                        payouts = data['payouts']
-                        ready_payouts = [p for p in payouts if p.get('status') == 'ready']
-                        pending_payouts = [p for p in payouts if p.get('status') == 'pending']
+                    if 'events' in data and isinstance(data['events'], list):
+                        events = data['events']
                         
-                        # Calculate total ready amount
-                        total_ready = sum(p.get('amount', 0) for p in ready_payouts)
-                        
-                        self.log_result(
-                            "Get Organizer Payouts Endpoint",
-                            True,
-                            f"✅ Successfully retrieved {len(payouts)} payouts ({len(ready_payouts)} ready, {len(pending_payouts)} pending)",
-                            {
-                                "total_payouts": len(payouts),
-                                "ready_payouts": len(ready_payouts),
-                                "pending_payouts": len(pending_payouts),
-                                "total_ready_amount": total_ready,
-                                "payouts_structure": "valid"
-                            }
-                        )
-                        return {"payouts": payouts, "ready_payouts": ready_payouts, "total_ready": total_ready}
+                        if len(events) > 0:
+                            # Select first event for testing
+                            self.event_id = events[0]['id']
+                            
+                            self.log_result(
+                                "Get User Events",
+                                True,
+                                f"✅ Successfully retrieved {len(events)} events, selected event: {self.event_id}",
+                                {
+                                    "total_events": len(events),
+                                    "selected_event_id": self.event_id,
+                                    "event_title": events[0].get('title', 'Unknown')
+                                }
+                            )
+                            return True
+                        else:
+                            self.log_result(
+                                "Get User Events - No Events",
+                                False,
+                                "❌ User has no events available for testing",
+                                {"events_count": 0}
+                            )
+                            return False
                     else:
                         self.log_result(
-                            "Get Organizer Payouts Endpoint",
+                            "Get User Events - Invalid Response",
                             False,
-                            "❌ Response missing 'payouts' array",
+                            "❌ Response missing 'events' array",
                             data
                         )
                         return False
                 except json.JSONDecodeError:
                     self.log_result(
-                        "Get Organizer Payouts Endpoint",
+                        "Get User Events - JSON Error",
                         False,
                         "❌ Invalid JSON response",
                         response.text
@@ -166,23 +165,15 @@ class KioskModeTester:
                     return False
             elif response.status_code == 401:
                 self.log_result(
-                    "Get Organizer Payouts Endpoint - Authentication",
+                    "Get User Events - Authentication",
                     False,
                     "❌ Authentication failed - token may be invalid",
                     {"status": response.status_code}
                 )
                 return False
-            elif response.status_code == 403:
-                self.log_result(
-                    "Get Organizer Payouts Endpoint - Authorization",
-                    False,
-                    "❌ Access denied - user may not have organizer privileges",
-                    {"status": response.status_code}
-                )
-                return False
             else:
                 self.log_result(
-                    "Get Organizer Payouts Endpoint",
+                    "Get User Events",
                     False,
                     f"❌ Unexpected status code: {response.status_code}",
                     response.text
@@ -190,184 +181,552 @@ class KioskModeTester:
                 return False
                 
         except Exception as e:
-            self.log_result("Get Organizer Payouts Endpoint", False, f"Exception: {str(e)}")
+            self.log_result("Get User Events", False, f"Exception: {str(e)}")
             return False
 
-    def test_payout_balance_calculation(self, payouts_data):
-        """Test Case 3: Verify payout balance calculation logic"""
+    def test_generate_kiosk_token(self):
+        """Test Case 3: Generate a new kiosk token"""
         try:
-            if not payouts_data:
+            if not self.auth_token or not self.event_id:
                 self.log_result(
-                    "Payout Balance Calculation - No Data",
+                    "Generate Kiosk Token - Prerequisites",
                     False,
-                    "❌ Cannot test calculation without payouts data",
-                    {"payouts_data": None}
+                    "❌ Cannot test without authentication token and event ID",
+                    {"auth_token": bool(self.auth_token), "event_id": bool(self.event_id)}
                 )
                 return False
             
-            payouts = payouts_data.get('payouts', [])
-            ready_payouts = payouts_data.get('ready_payouts', [])
-            expected_total = payouts_data.get('total_ready', 0)
+            payload = {
+                "eventId": self.event_id,
+                "paymentEnabled": True,
+                "pinCode": "1234"
+            }
             
-            # Verify each payout has required fields
-            required_fields = ['eventId', 'eventTitle', 'amount', 'status']
-            valid_payouts = []
-            
-            for payout in payouts:
-                missing_fields = [f for f in required_fields if f not in payout]
-                if not missing_fields:
-                    valid_payouts.append(payout)
-                    
-                    # Verify amount is numeric and >= 0
-                    amount = payout.get('amount', 0)
-                    if not isinstance(amount, (int, float)) or amount < 0:
-                        self.log_result(
-                            "Payout Balance Calculation - Invalid Amount",
-                            False,
-                            f"❌ Payout {payout.get('eventId')} has invalid amount: {amount}",
-                            payout
-                        )
-                        return False
-                else:
-                    self.log_result(
-                        "Payout Balance Calculation - Missing Fields",
-                        False,
-                        f"❌ Payout missing required fields: {missing_fields}",
-                        payout
-                    )
-                    return False
-            
-            # Verify ready payouts calculation
-            calculated_total = sum(p.get('amount', 0) for p in ready_payouts)
-            
-            if abs(calculated_total - expected_total) < 0.01:  # Allow for floating point precision
-                self.log_result(
-                    "Payout Balance Calculation",
-                    True,
-                    f"✅ Payout balance calculation correct: ${calculated_total:.2f} from {len(ready_payouts)} ready payouts",
-                    {
-                        "total_payouts": len(payouts),
-                        "ready_payouts": len(ready_payouts),
-                        "calculated_total": calculated_total,
-                        "expected_total": expected_total,
-                        "calculation_correct": True
-                    }
-                )
-                return True
-            else:
-                self.log_result(
-                    "Payout Balance Calculation",
-                    False,
-                    f"❌ Payout balance calculation mismatch: calculated ${calculated_total:.2f}, expected ${expected_total:.2f}",
-                    {
-                        "calculated_total": calculated_total,
-                        "expected_total": expected_total,
-                        "ready_payouts": ready_payouts
-                    }
-                )
-                return False
-                
-        except Exception as e:
-            self.log_result("Payout Balance Calculation", False, f"Exception: {str(e)}")
-            return False
-
-    def test_user_profile_payout_fields(self):
-        """Test Case 4: Verify user profile has availablePayout and totalPaidOut fields"""
-        try:
-            if not self.auth_token:
-                self.log_result(
-                    "User Profile Payout Fields - Authentication Required",
-                    False,
-                    "❌ Cannot test without authentication token",
-                    {"auth_token": None}
-                )
-                return False
-            
-            # Get user profile to check for affiliate payout fields
-            response = self.session.get(f"{BACKEND_URL}/api/auth/me")
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/generate", json=payload)
             
             if response.status_code == 200:
                 try:
-                    profile_data = response.json()
+                    data = response.json()
                     
-                    # Check if user has affiliate fields
-                    has_affiliate_code = 'affiliateCode' in profile_data
-                    available_payout = profile_data.get('availablePayout', 0)
-                    total_paid_out = profile_data.get('totalPaidOut', 0)
-                    
-                    # Verify payout fields exist and are numeric
-                    payout_fields_valid = (
-                        isinstance(available_payout, (int, float)) and
-                        isinstance(total_paid_out, (int, float)) and
-                        available_payout >= 0 and
-                        total_paid_out >= 0
-                    )
-                    
-                    if payout_fields_valid:
-                        total_earnings = available_payout + total_paid_out
+                    if data.get('success') and 'token' in data:
+                        self.kiosk_token = data['token']
                         
                         self.log_result(
-                            "User Profile Payout Fields",
+                            "Generate Kiosk Token",
                             True,
-                            f"✅ User profile has valid payout fields (affiliate: {has_affiliate_code})",
+                            f"✅ Successfully generated kiosk token: {self.kiosk_token[:8]}...",
                             {
-                                "has_affiliate_code": has_affiliate_code,
-                                "available_payout": available_payout,
-                                "total_paid_out": total_paid_out,
-                                "total_earnings": total_earnings,
-                                "fields_valid": True
+                                "token_id": self.kiosk_token,
+                                "expires_at": data.get('expiresAt'),
+                                "kiosk_url": data.get('kioskUrl')
                             }
                         )
-                        return {
-                            "available_payout": available_payout,
-                            "total_paid_out": total_paid_out,
-                            "total_earnings": total_earnings,
-                            "is_affiliate": has_affiliate_code
-                        }
+                        return True
                     else:
                         self.log_result(
-                            "User Profile Payout Fields",
+                            "Generate Kiosk Token - Invalid Response",
                             False,
-                            f"❌ Invalid payout field values: availablePayout={available_payout}, totalPaidOut={total_paid_out}",
-                            {
-                                "available_payout": available_payout,
-                                "total_paid_out": total_paid_out,
-                                "fields_valid": False
-                            }
+                            "❌ Response missing success or token field",
+                            data
                         )
                         return False
-                        
                 except json.JSONDecodeError:
                     self.log_result(
-                        "User Profile Payout Fields",
+                        "Generate Kiosk Token - JSON Error",
                         False,
-                        "❌ Invalid JSON response from profile endpoint",
+                        "❌ Invalid JSON response",
                         response.text
                     )
                     return False
             elif response.status_code == 401:
                 self.log_result(
-                    "User Profile Payout Fields - Authentication",
+                    "Generate Kiosk Token - Authentication",
                     False,
                     "❌ Authentication failed - token may be invalid",
                     {"status": response.status_code}
                 )
                 return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Generate Kiosk Token - Authorization",
+                    False,
+                    "❌ Access denied - user may not own this event",
+                    {"status": response.status_code}
+                )
+                return False
             else:
                 self.log_result(
-                    "User Profile Payout Fields",
+                    "Generate Kiosk Token",
                     False,
-                    f"❌ Failed to fetch user profile: HTTP {response.status_code}",
+                    f"❌ Unexpected status code: {response.status_code}",
                     response.text
                 )
                 return False
                 
         except Exception as e:
-            self.log_result("User Profile Payout Fields", False, f"Exception: {str(e)}")
+            self.log_result("Generate Kiosk Token", False, f"Exception: {str(e)}")
+            return False
+
+    def test_get_kiosk_status(self):
+        """Test Case 4: Get current kiosk status"""
+        try:
+            if not self.auth_token or not self.event_id:
+                self.log_result(
+                    "Get Kiosk Status - Prerequisites",
+                    False,
+                    "❌ Cannot test without authentication token and event ID",
+                    {"auth_token": bool(self.auth_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            response = self.session.get(f"{BACKEND_URL}/api/kiosk/status/{self.event_id}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('success'):
+                        is_active = data.get('active', False)
+                        
+                        self.log_result(
+                            "Get Kiosk Status",
+                            True,
+                            f"✅ Successfully retrieved kiosk status: {'Active' if is_active else 'Inactive'}",
+                            {
+                                "active": is_active,
+                                "token_info": data.get('token'),
+                                "kiosk_url": data.get('kioskUrl')
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Get Kiosk Status - Invalid Response",
+                            False,
+                            "❌ Response missing success field",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Get Kiosk Status - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 401:
+                self.log_result(
+                    "Get Kiosk Status - Authentication",
+                    False,
+                    "❌ Authentication failed - token may be invalid",
+                    {"status": response.status_code}
+                )
+                return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Get Kiosk Status - Authorization",
+                    False,
+                    "❌ Access denied - user may not own this event",
+                    {"status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Get Kiosk Status",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Get Kiosk Status", False, f"Exception: {str(e)}")
+            return False
+
+    def test_validate_kiosk_token(self):
+        """Test Case 5: Validate kiosk token"""
+        try:
+            if not self.kiosk_token or not self.event_id:
+                self.log_result(
+                    "Validate Kiosk Token - Prerequisites",
+                    False,
+                    "❌ Cannot test without kiosk token and event ID",
+                    {"kiosk_token": bool(self.kiosk_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            payload = {
+                "tokenId": self.kiosk_token,
+                "eventId": self.event_id
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/validate", json=payload)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('success') and 'token' in data and 'event' in data:
+                        self.log_result(
+                            "Validate Kiosk Token",
+                            True,
+                            f"✅ Successfully validated kiosk token",
+                            {
+                                "token_valid": True,
+                                "event_title": data['event'].get('title'),
+                                "permissions": data['token'].get('permissions'),
+                                "payment_enabled": data['token'].get('paymentEnabled')
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Validate Kiosk Token - Invalid Response",
+                            False,
+                            "❌ Response missing required fields",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Validate Kiosk Token - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 404:
+                self.log_result(
+                    "Validate Kiosk Token - Not Found",
+                    False,
+                    "❌ Token not found or invalid",
+                    {"status": response.status_code}
+                )
+                return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Validate Kiosk Token - Forbidden",
+                    False,
+                    "❌ Token has been revoked or expired",
+                    {"status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Validate Kiosk Token",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Validate Kiosk Token", False, f"Exception: {str(e)}")
+            return False
+
+    def test_guest_search(self):
+        """Test Case 6: Search for guests"""
+        try:
+            if not self.kiosk_token or not self.event_id:
+                self.log_result(
+                    "Guest Search - Prerequisites",
+                    False,
+                    "❌ Cannot test without kiosk token and event ID",
+                    {"kiosk_token": bool(self.kiosk_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            # Test search with a common query
+            params = {
+                "query": "test",
+                "tokenId": self.kiosk_token,
+                "eventId": self.event_id
+            }
+            
+            response = self.session.get(f"{BACKEND_URL}/api/kiosk/guest-search", params=params)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('success') and 'results' in data:
+                        results = data['results']
+                        
+                        self.log_result(
+                            "Guest Search",
+                            True,
+                            f"✅ Successfully searched guests, found {len(results)} results",
+                            {
+                                "search_query": "test",
+                                "results_count": len(results),
+                                "results_structure": "valid"
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Guest Search - Invalid Response",
+                            False,
+                            "❌ Response missing required fields",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Guest Search - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Guest Search - Forbidden",
+                    False,
+                    "❌ Token invalid or expired",
+                    {"status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Guest Search",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Guest Search", False, f"Exception: {str(e)}")
+            return False
+
+    def test_invalid_ticket_scan(self):
+        """Test Case 7: Scan invalid ticket"""
+        try:
+            if not self.kiosk_token or not self.event_id:
+                self.log_result(
+                    "Invalid Ticket Scan - Prerequisites",
+                    False,
+                    "❌ Cannot test without kiosk token and event ID",
+                    {"kiosk_token": bool(self.kiosk_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            payload = {
+                "qrCode": "INVALID_CODE_12345",
+                "tokenId": self.kiosk_token,
+                "eventId": self.event_id,
+                "deviceId": "test-device"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/scan", json=payload)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    # For invalid tickets, we expect success: false, status: 'invalid'
+                    if not data.get('success') and data.get('status') == 'invalid':
+                        self.log_result(
+                            "Invalid Ticket Scan",
+                            True,
+                            f"✅ Successfully handled invalid ticket scan: {data.get('message')}",
+                            {
+                                "success": data.get('success'),
+                                "status": data.get('status'),
+                                "message": data.get('message')
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Invalid Ticket Scan - Unexpected Response",
+                            False,
+                            "❌ Expected invalid ticket response but got different result",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Invalid Ticket Scan - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Invalid Ticket Scan - Forbidden",
+                    False,
+                    "❌ Token invalid or expired",
+                    {"status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Invalid Ticket Scan",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Invalid Ticket Scan", False, f"Exception: {str(e)}")
+            return False
+
+    def test_revoke_kiosk_token(self):
+        """Test Case 8: Revoke kiosk token"""
+        try:
+            if not self.auth_token or not self.event_id:
+                self.log_result(
+                    "Revoke Kiosk Token - Prerequisites",
+                    False,
+                    "❌ Cannot test without authentication token and event ID",
+                    {"auth_token": bool(self.auth_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            payload = {
+                "eventId": self.event_id
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/revoke", json=payload)
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    
+                    if data.get('success'):
+                        self.log_result(
+                            "Revoke Kiosk Token",
+                            True,
+                            f"✅ Successfully revoked kiosk token",
+                            {
+                                "success": data.get('success'),
+                                "message": data.get('message')
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Revoke Kiosk Token - Invalid Response",
+                            False,
+                            "❌ Response missing success field",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Revoke Kiosk Token - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 401:
+                self.log_result(
+                    "Revoke Kiosk Token - Authentication",
+                    False,
+                    "❌ Authentication failed - token may be invalid",
+                    {"status": response.status_code}
+                )
+                return False
+            elif response.status_code == 403:
+                self.log_result(
+                    "Revoke Kiosk Token - Authorization",
+                    False,
+                    "❌ Access denied - user may not own this event",
+                    {"status": response.status_code}
+                )
+                return False
+            else:
+                self.log_result(
+                    "Revoke Kiosk Token",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Revoke Kiosk Token", False, f"Exception: {str(e)}")
+            return False
+
+    def test_validate_revoked_token(self):
+        """Test Case 9: Validate revoked token (should fail)"""
+        try:
+            if not self.kiosk_token or not self.event_id:
+                self.log_result(
+                    "Validate Revoked Token - Prerequisites",
+                    False,
+                    "❌ Cannot test without kiosk token and event ID",
+                    {"kiosk_token": bool(self.kiosk_token), "event_id": bool(self.event_id)}
+                )
+                return False
+            
+            payload = {
+                "tokenId": self.kiosk_token,
+                "eventId": self.event_id
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/validate", json=payload)
+            
+            if response.status_code == 403:
+                try:
+                    data = response.json()
+                    
+                    if 'error' in data:
+                        self.log_result(
+                            "Validate Revoked Token",
+                            True,
+                            f"✅ Successfully rejected revoked token: {data.get('error')}",
+                            {
+                                "status": response.status_code,
+                                "error": data.get('error')
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Validate Revoked Token - Missing Error",
+                            False,
+                            "❌ Expected error message in response",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Validate Revoked Token - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            elif response.status_code == 200:
+                self.log_result(
+                    "Validate Revoked Token - Unexpected Success",
+                    False,
+                    "❌ Revoked token should not validate successfully",
+                    response.json()
+                )
+                return False
+            else:
+                self.log_result(
+                    "Validate Revoked Token",
+                    False,
+                    f"❌ Unexpected status code: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Validate Revoked Token", False, f"Exception: {str(e)}")
             return False
 
     def test_backend_health_and_connectivity(self):
-        """Test Case 5: Verify backend is healthy and payout endpoints exist"""
+        """Test Case 10: Verify backend is healthy and kiosk endpoints exist"""
         try:
             # Test basic connectivity
             health_response = self.session.get(f"{BACKEND_URL}/api/health", timeout=10)
@@ -396,17 +755,20 @@ class KioskModeTester:
                     health_response.text
                 )
             
-            # Test if the payout routes exist
-            payout_routes = [
-                "/api/admin/upcoming-payouts",
-                "/api/auth/me"
+            # Test if the kiosk routes exist
+            kiosk_routes = [
+                "/api/kiosk/generate",
+                "/api/kiosk/validate",
+                "/api/kiosk/revoke",
+                "/api/kiosk/scan",
+                "/api/kiosk/guest-search"
             ]
             
             route_results = {}
-            for route in payout_routes:
+            for route in kiosk_routes:
                 try:
-                    route_response = self.session.get(f"{BACKEND_URL}{route}", timeout=5)
-                    # 401/403 = auth required (good), 404 = route doesn't exist (bad)
+                    route_response = self.session.post(f"{BACKEND_URL}{route}", json={}, timeout=5)
+                    # 400/401/403 = route exists but needs proper data/auth, 404 = route doesn't exist
                     if route_response.status_code == 404:
                         route_results[route] = {"exists": False, "status": 404}
                     else:
@@ -418,14 +780,14 @@ class KioskModeTester:
             
             if not missing_routes:
                 self.log_result(
-                    "Backend Payout Routes Availability",
+                    "Backend Kiosk Routes Availability",
                     True,
-                    f"✅ All required payout routes exist: {list(route_results.keys())}",
+                    f"✅ All required kiosk routes exist: {list(route_results.keys())}",
                     route_results
                 )
             else:
                 self.log_result(
-                    "Backend Payout Routes Availability",
+                    "Backend Kiosk Routes Availability",
                     False,
                     f"❌ Missing routes: {missing_routes}",
                     route_results
@@ -434,147 +796,54 @@ class KioskModeTester:
         except Exception as e:
             self.log_result("Backend Health and Connectivity", False, f"Exception: {str(e)}")
 
-    def test_payout_endpoints_without_auth(self):
-        """Test Case 6: Test payout endpoints without authentication to verify security"""
-        try:
-            # Test upcoming-payouts endpoint without auth
-            payouts_response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
-            
-            if payouts_response.status_code in [401, 403]:
-                self.log_result(
-                    "Upcoming Payouts Endpoint - Auth Required",
-                    True,
-                    f"✅ Upcoming payouts endpoint properly requires authentication (HTTP {payouts_response.status_code})",
-                    {"status": payouts_response.status_code, "endpoint": "GET /api/admin/upcoming-payouts"}
-                )
-            else:
-                self.log_result(
-                    "Upcoming Payouts Endpoint - Auth Required",
-                    False,
-                    f"❌ Upcoming payouts endpoint should require auth but returned HTTP {payouts_response.status_code}",
-                    {"status": payouts_response.status_code, "response": payouts_response.text[:200]}
-                )
-            
-            # Test profile endpoint without auth
-            profile_response = self.session.get(f"{BACKEND_URL}/api/auth/me")
-            
-            if profile_response.status_code in [401, 403]:
-                self.log_result(
-                    "Profile Endpoint - Auth Required",
-                    True,
-                    f"✅ Profile endpoint properly requires authentication (HTTP {profile_response.status_code})",
-                    {"status": profile_response.status_code, "endpoint": "GET /api/auth/profile"}
-                )
-            else:
-                self.log_result(
-                    "Profile Endpoint - Auth Required",
-                    False,
-                    f"❌ Profile endpoint should require auth but returned HTTP {profile_response.status_code}",
-                    {"status": profile_response.status_code, "response": profile_response.text[:200]}
-                )
-                
-        except Exception as e:
-            self.log_result("Payout Endpoints Without Auth", False, f"Exception: {str(e)}")
-
-    def test_payout_endpoint_structure(self):
-        """Test Case 7: Verify payout endpoint structure and response format"""
-        try:
-            # Test the upcoming-payouts endpoint structure
-            response = self.session.get(f"{BACKEND_URL}/api/admin/upcoming-payouts")
-            
-            if response.status_code == 401:
-                try:
-                    error_data = response.json()
-                    error_message = error_data.get('error', '')
-                    
-                    # Check if it's the expected Firebase token error
-                    if 'Token verification failed' in error_message or 'Missing Authorization header' in error_message:
-                        self.log_result(
-                            "Payout Endpoint Structure",
-                            True,
-                            "✅ Upcoming payouts endpoint exists and has proper authentication (Firebase token required)",
-                            {
-                                "endpoint_exists": True,
-                                "auth_required": True,
-                                "auth_type": "Firebase",
-                                "status": response.status_code,
-                                "error": error_message
-                            }
-                        )
-                        return True
-                    else:
-                        self.log_result(
-                            "Payout Endpoint Structure",
-                            False,
-                            f"❌ Unexpected authentication error: {error_message}",
-                            error_data
-                        )
-                        return False
-                except json.JSONDecodeError:
-                    self.log_result(
-                        "Payout Endpoint Structure",
-                        True,
-                        "✅ Upcoming payouts endpoint exists and requires authentication (HTTP 401)",
-                        {"endpoint_exists": True, "auth_required": True, "status": response.status_code}
-                    )
-                    return True
-            elif response.status_code == 404:
-                self.log_result(
-                    "Payout Endpoint Structure",
-                    False,
-                    "❌ Upcoming payouts endpoint does not exist (HTTP 404)",
-                    {"endpoint_exists": False, "status": response.status_code}
-                )
-                return False
-            else:
-                self.log_result(
-                    "Payout Endpoint Structure",
-                    False,
-                    f"❌ Unexpected response from payouts endpoint: HTTP {response.status_code}",
-                    response.text[:200]
-                )
-                return False
-                
-        except Exception as e:
-            self.log_result("Payout Endpoint Structure", False, f"Exception: {str(e)}")
-            return False
-
     def run_all_tests(self):
-        """Run all payout balance calculation tests as specified in review request"""
-        print("💰 Starting Payout Balance Calculation Testing")
+        """Run all kiosk mode tests as specified in review request"""
+        print("🏪 Starting Kiosk Mode Backend API Testing")
         print("=" * 70)
-        print("🎯 TESTING FOCUS: Organizer & Affiliate Payout Balance Fixes")
+        print("🎯 TESTING FOCUS: Complete Kiosk Mode Implementation")
         print("=" * 70)
         
-        # Core Payout Balance Tests from Review Request
-        print("\n🔧 BACKEND API TESTS")
+        # Backend Infrastructure Tests
+        print("\n🔧 BACKEND INFRASTRUCTURE TESTS")
         print("-" * 40)
         self.test_backend_health_and_connectivity()
-        self.test_payout_endpoints_without_auth()
-        self.test_payout_endpoint_structure()
         
-        # Authentication Test
-        print("\n🔐 AUTHENTICATION TESTS")
+        # Authentication & Event Setup Tests
+        print("\n🔐 AUTHENTICATION & EVENT SETUP TESTS")
         print("-" * 40)
-        login_success = self.test_organizer_login()
+        login_success = self.test_user_login()
         
         if login_success:
-            print("\n💰 PAYOUT BALANCE FUNCTIONALITY TESTS")
-            print("-" * 40)
-            print("⚠️  NOTE: Authentication system mismatch detected (Supabase login + Firebase middleware)")
-            print("    Testing with known incompatible token - expect authentication failures")
+            events_success = self.test_get_user_events()
             
-            # Test 1: Organizer Payout Balance
-            payouts_data = self.test_organizer_upcoming_payouts_endpoint()
-            if payouts_data:
-                self.test_payout_balance_calculation(payouts_data)
-            
-            # Test 2: Affiliate Payout Balance (if applicable)
-            profile_data = self.test_user_profile_payout_fields()
-            
+            if events_success:
+                print("\n🏪 KIOSK MODE FUNCTIONALITY TESTS")
+                print("-" * 40)
+                
+                # Organizer Endpoints (Require Auth Token)
+                print("📋 Testing Organizer Endpoints...")
+                generate_success = self.test_generate_kiosk_token()
+                status_success = self.test_get_kiosk_status()
+                
+                if generate_success:
+                    # Kiosk Device Endpoints (No Auth, Token-Based)
+                    print("\n📱 Testing Kiosk Device Endpoints...")
+                    validate_success = self.test_validate_kiosk_token()
+                    search_success = self.test_guest_search()
+                    scan_success = self.test_invalid_ticket_scan()
+                    
+                    # Test revocation flow
+                    print("\n🔒 Testing Token Revocation...")
+                    revoke_success = self.test_revoke_kiosk_token()
+                    if revoke_success:
+                        self.test_validate_revoked_token()
+                else:
+                    print("⚠️ SKIPPING KIOSK DEVICE TESTS - Token generation failed")
+            else:
+                print("⚠️ SKIPPING KIOSK TESTS - No events available")
         else:
-            print("\n⚠️ SKIPPING PAYOUT TESTS - Authentication Failed")
-            print("Cannot test payout balance calculation without organizer authentication")
+            print("\n⚠️ SKIPPING ALL KIOSK TESTS - Authentication Failed")
+            print("Cannot test kiosk functionality without user authentication")
         
         print("\n" + "=" * 70)
         print("📊 TEST SUMMARY")
@@ -595,41 +864,65 @@ class KioskModeTester:
         
         # Check each test result
         backend_health = next((r for r in self.results if 'Backend Health' in r['test']), None)
-        organizer_login = next((r for r in self.results if 'Organizer Login' in r['test'] and 'Exception' not in r['test']), None)
-        upcoming_payouts = next((r for r in self.results if 'Organizer Payouts' in r['test']), None)
-        payout_calculation = next((r for r in self.results if 'Payout Balance Calculation' in r['test']), None)
-        profile_fields = next((r for r in self.results if 'Profile Payout Fields' in r['test']), None)
-        auth_required = next((r for r in self.results if 'Auth Required' in r['test']), None)
+        user_login = next((r for r in self.results if 'User Login' in r['test'] and 'Exception' not in r['test']), None)
+        get_events = next((r for r in self.results if 'Get User Events' in r['test']), None)
+        generate_token = next((r for r in self.results if 'Generate Kiosk Token' in r['test']), None)
+        kiosk_status = next((r for r in self.results if 'Get Kiosk Status' in r['test']), None)
+        validate_token = next((r for r in self.results if 'Validate Kiosk Token' in r['test'] and 'Revoked' not in r['test']), None)
+        guest_search = next((r for r in self.results if 'Guest Search' in r['test']), None)
+        invalid_scan = next((r for r in self.results if 'Invalid Ticket Scan' in r['test']), None)
+        revoke_token = next((r for r in self.results if 'Revoke Kiosk Token' in r['test']), None)
+        validate_revoked = next((r for r in self.results if 'Validate Revoked Token' in r['test']), None)
         
         if backend_health and backend_health['success']:
-            criteria_results.append("✅ Backend is healthy and payout routes exist")
+            criteria_results.append("✅ Backend is healthy and kiosk routes exist")
         else:
             criteria_results.append("❌ Backend health check failed")
             
-        if auth_required and auth_required['success']:
-            criteria_results.append("✅ Payout endpoints properly require authentication")
+        if user_login and user_login['success']:
+            criteria_results.append("✅ User authentication working")
         else:
-            criteria_results.append("❌ Payout endpoints authentication verification failed")
+            criteria_results.append("❌ User authentication failed")
             
-        if organizer_login and organizer_login['success']:
-            criteria_results.append("✅ Organizer authentication working")
+        if get_events and get_events['success']:
+            criteria_results.append("✅ Event retrieval working")
         else:
-            criteria_results.append("❌ Organizer authentication failed - no valid organizer user found")
+            criteria_results.append("❌ Event retrieval failed")
             
-        if upcoming_payouts and upcoming_payouts['success']:
-            criteria_results.append("✅ GET /api/admin/upcoming-payouts endpoint working")
+        if generate_token and generate_token['success']:
+            criteria_results.append("✅ POST /api/kiosk/generate endpoint working")
         else:
-            criteria_results.append("❌ Upcoming payouts endpoint failed")
+            criteria_results.append("❌ Kiosk token generation failed")
             
-        if payout_calculation and payout_calculation['success']:
-            criteria_results.append("✅ Payout balance calculation logic verified (ready payouts sum)")
+        if kiosk_status and kiosk_status['success']:
+            criteria_results.append("✅ GET /api/kiosk/status/:eventId endpoint working")
         else:
-            criteria_results.append("❌ Payout balance calculation verification failed")
+            criteria_results.append("❌ Kiosk status endpoint failed")
             
-        if profile_fields and profile_fields['success']:
-            criteria_results.append("✅ User profile has availablePayout and totalPaidOut fields")
+        if validate_token and validate_token['success']:
+            criteria_results.append("✅ POST /api/kiosk/validate endpoint working")
         else:
-            criteria_results.append("❌ User profile payout fields verification failed")
+            criteria_results.append("❌ Kiosk token validation failed")
+            
+        if guest_search and guest_search['success']:
+            criteria_results.append("✅ GET /api/kiosk/guest-search endpoint working")
+        else:
+            criteria_results.append("❌ Guest search endpoint failed")
+            
+        if invalid_scan and invalid_scan['success']:
+            criteria_results.append("✅ POST /api/kiosk/scan endpoint working (invalid ticket handling)")
+        else:
+            criteria_results.append("❌ Ticket scan endpoint failed")
+            
+        if revoke_token and revoke_token['success']:
+            criteria_results.append("✅ POST /api/kiosk/revoke endpoint working")
+        else:
+            criteria_results.append("❌ Token revocation failed")
+            
+        if validate_revoked and validate_revoked['success']:
+            criteria_results.append("✅ Revoked token validation properly rejected")
+        else:
+            criteria_results.append("❌ Revoked token validation failed")
         
         for criterion in criteria_results:
             print(f"  {criterion}")
@@ -641,38 +934,36 @@ class KioskModeTester:
                     print(f"  - {result['test']}: {result['details']}")
         
         print("\n📋 TESTING NOTES:")
-        print("  - Test organizer: tylerans@gmail.com (Super Admin/Organizer)")
-        print("  - Organizer endpoint: GET /api/admin/upcoming-payouts")
-        print("  - Expected: Payouts with status='ready' for balance calculation")
-        print("  - Affiliate fields: availablePayout + totalPaidOut from user profile")
-        print("  - ⚠️  AUTHENTICATION SYSTEM MISMATCH DETECTED:")
-        print("    - Login endpoint uses Supabase (returns HS256 tokens)")
-        print("    - Backend middleware expects Firebase (requires RS256 tokens)")
-        print("    - This prevents full end-to-end testing of authenticated endpoints")
+        print("  - Test user: test+openticket@gmail.com")
+        print("  - Organizer endpoints require authentication token")
+        print("  - Kiosk device endpoints use token-based authentication")
+        print("  - Invalid ticket scan should return success: false, status: 'invalid'")
+        print("  - Revoked tokens should be rejected with HTTP 403")
         
         print("\n🔍 EXPECTED BEHAVIOR:")
-        print("  - Organizer login should succeed and return authentication token")
-        print("  - GET /api/admin/upcoming-payouts should return payouts array with status field")
-        print("  - Ready payouts (status='ready') should be summed for payout balance")
-        print("  - User profile should contain availablePayout and totalPaidOut fields")
-        print("  - Affiliate total earnings = availablePayout + totalPaidOut")
-        print("  - All payout operations should require authentication")
-        print("  - 🚨 CRITICAL: Authentication system needs to be unified (either Supabase OR Firebase)")
+        print("  - User login should succeed and return authentication token")
+        print("  - Event list should contain at least one event for testing")
+        print("  - Kiosk token generation should return token, expiresAt, and kioskUrl")
+        print("  - Token validation should return token info and event data")
+        print("  - Guest search should work with token authentication")
+        print("  - Invalid ticket scan should be handled gracefully")
+        print("  - Token revocation should succeed and invalidate the token")
+        print("  - Revoked token validation should fail with appropriate error")
         
         return passed == total
 
 if __name__ == "__main__":
-    tester = PayoutBalanceTester()
+    tester = KioskModeTester()
     success = tester.run_all_tests()
     
     # Save detailed results
-    with open('/app/payout_balance_test_results.json', 'w') as f:
+    with open('/app/kiosk_mode_test_results.json', 'w') as f:
         json.dump(tester.results, f, indent=2)
     
-    print(f"\n📄 Detailed results saved to: /app/payout_balance_test_results.json")
+    print(f"\n📄 Detailed results saved to: /app/kiosk_mode_test_results.json")
     
     if success:
-        print("\n🎉 All Payout Balance Calculation tests PASSED!")
+        print("\n🎉 All Kiosk Mode tests PASSED!")
         exit(0)
     else:
         print("\n⚠️  Some tests FAILED - see details above")
