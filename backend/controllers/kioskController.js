@@ -673,10 +673,12 @@ const getCurrentToken = async (req, res) => {
  */
 const getKioskStatus = async (req, res) => {
     try {
+        console.log('[getKioskStatus] Called - req.user:', req.user ? req.user.uid : 'undefined');
         const { eventId } = req.params;
         const userId = req.user?.uid;
 
         if (!userId) {
+            console.log('[getKioskStatus] No userId, returning 401');
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
