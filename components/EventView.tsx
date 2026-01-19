@@ -1953,7 +1953,7 @@ export const EventView = () => {
                                     <div className="pl-4 shrink-0">
                                         <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Total</div>
                                         <div className="text-2xl md:text-3xl font-black flex items-center gap-2 tracking-tighter">
-                                            ${calculateTotal().toFixed(2)}
+                                            <EventPriceDisplay amount={calculateTotal()} currency={eventCurrency} />
                                             <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
                                         </div>
                                     </div>
