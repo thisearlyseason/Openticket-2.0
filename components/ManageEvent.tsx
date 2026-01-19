@@ -11,7 +11,7 @@ import {
     ArrowLeft, Eye, Mail, Send, Sparkles,
     AlertTriangle, Check, List, BarChart3, Megaphone, ShoppingBag,
     Wallet, Settings, DollarSign, ExternalLink, Share2, Copy, Download, X,
-    TrendingUp, Trash2
+    TrendingUp, Trash2, Lock
 } from 'lucide-react';
 import { ShareButtons } from './UI';
 
