@@ -300,26 +300,29 @@ const WidgetSection: React.FC<{ event: Event }> = ({ event }) => {
             <Card className="p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Live Preview</h3>
                 <p className="text-sm text-zinc-500 mb-4">Preview shows how the widget will appear on your website</p>
-                <div 
-                    className={`rounded-xl overflow-hidden border-2 transition-all ${
-                        theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
-                    }`}
-                    style={{ 
-                        width: Math.min(width, 600), // Cap preview width for display
-                        height: Math.min(height, 500), // Cap preview height for display
-                        maxWidth: '100%'
-                    }}
-                >
-                    <WidgetPreview
-                        event={event}
-                        type={widgetType}
-                        width={width}
-                        height={height}
-                        theme={theme}
-                    />
+                <div className="flex items-center justify-center bg-zinc-50 dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 overflow-auto">
+                    <div 
+                        className={`rounded-xl overflow-hidden border-2 transition-all ${
+                            theme === 'dark' ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
+                        }`}
+                        style={{ 
+                            width: `${width}px`,
+                            height: `${height}px`,
+                            maxWidth: '100%',
+                            flexShrink: 0
+                        }}
+                    >
+                        <WidgetPreview
+                            event={event}
+                            type={widgetType}
+                            width={width}
+                            height={height}
+                            theme={theme}
+                        />
+                    </div>
                 </div>
-                <p className="text-xs text-zinc-400 mt-2">
-                    Actual size: {width}px × {height}px
+                <p className="text-xs text-zinc-400 mt-2 text-center">
+                    Preview size: {width}px × {height}px
                 </p>
             </Card>
         </div>
