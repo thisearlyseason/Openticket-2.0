@@ -34,7 +34,7 @@ const generateKioskToken = async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        if (event.organizer_id !== userId) {
+        if (event.owner_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized: You do not own this event' });
         }
 
@@ -142,7 +142,7 @@ const validateKioskToken = async (req, res) => {
         // Get event data
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, image_url, ticket_tiers, organizer_id, organizer')
+            .select('id, title, date, time, location, image_url, ticket_tiers, owner_id, organizer')
             .eq('id', eventId)
             .single();
 
@@ -166,7 +166,7 @@ const validateKioskToken = async (req, res) => {
                 location: event.location,
                 imageUrl: event.image_url,
                 ticketTiers: event.ticket_tiers,
-                organizerId: event.organizer_id,
+                organizerId: event.owner_id,
                 organizer: event.organizer
             }
         });
@@ -192,11 +192,11 @@ const revokeKioskToken = async (req, res) => {
         // Verify ownership
         const { data: event } = await supabase
             .from('events')
-            .select('organizer_id')
+            .select('owner_id')
             .eq('id', eventId)
             .single();
 
-        if (!event || event.organizer_id !== userId) {
+        if (!event || event.owner_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -583,11 +583,11 @@ const getKioskLogs = async (req, res) => {
         // Verify ownership
         const { data: event } = await supabase
             .from('events')
-            .select('organizer_id')
+            .select('owner_id')
             .eq('id', eventId)
             .single();
 
-        if (!event || event.organizer_id !== userId) {
+        if (!event || event.owner_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -623,11 +623,11 @@ const getCurrentToken = async (req, res) => {
         // Verify ownership
         const { data: event } = await supabase
             .from('events')
-            .select('organizer_id')
+            .select('owner_id')
             .eq('id', eventId)
             .single();
 
-        if (!event || event.organizer_id !== userId) {
+        if (!event || event.owner_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -685,11 +685,11 @@ const getKioskStatus = async (req, res) => {
         // Verify ownership
         const { data: event } = await supabase
             .from('events')
-            .select('organizer_id')
+            .select('owner_id')
             .eq('id', eventId)
             .single();
 
-        if (!event || event.organizer_id !== userId) {
+        if (!event || event.owner_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
