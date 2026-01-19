@@ -3,8 +3,8 @@
  * Handles secure, event-scoped kiosk operations
  */
 
-const { v4: uuidv4 } = require('uuid');
-const db = require('../db');
+import { v4 as uuidv4 } from 'uuid';
+import db from '../db/index.js';
 
 /**
  * Generate a new kiosk token for an event
@@ -590,7 +590,7 @@ async function logKioskAction(tokenId, eventId, action, details) {
     }
 }
 
-module.exports = {
+export {
     generateKioskToken,
     validateKioskToken,
     revokeKioskToken,
