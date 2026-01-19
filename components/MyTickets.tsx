@@ -297,7 +297,7 @@ export const MyTickets = () => {
                     for (let i = 0; i < addon.quantity; i++) {
                         ticketList.push({
                             reg, event,
-                            ticketInfo: { name: addon.name, quantity: addon.quantity },
+                            ticketInfo: { name: addon.name || 'Add-On', quantity: addon.quantity || 1 },
                             uniqueIndex: i,
                             uniqueQrData: `ADDON:${reg.id}:${addon.id}:${i}`,
                             ticketIdDisplay: `${reg.id.slice(-6).toUpperCase()}-ADD-${i + 1}`,
