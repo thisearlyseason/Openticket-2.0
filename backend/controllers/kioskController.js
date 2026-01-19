@@ -20,12 +20,17 @@ const generateKioskToken = async (req, res) => {
         }
 
         // Verify user owns this event
-        const event = await db.collection('events').findOne({ id: eventId }, { projection: { _id: 0 } });
-        if (!event) {
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        if (event.organizerId !== userId) {
+        if (event.organizer_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized: You do not own this event' });
         }
 
