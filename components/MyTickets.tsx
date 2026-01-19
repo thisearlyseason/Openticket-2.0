@@ -493,26 +493,45 @@ export const MyTickets = () => {
                             <p className="text-zinc-500 font-bold">No {activeTab} tickets found.</p>
                         </div>
                     ) : (
-                        eventGroups.map((group) => (
-                            <div key={group.eventId} onClick={() => setSelectedGroupId(group.eventId)} className="group bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-3xl overflow-hidden hover:border-primary transition-all cursor-pointer flex flex-col sm:flex-row h-full sm:h-48 shadow-sm hover:shadow-xl">
+                        eventGroups.map((group) => {
+                            const refundedCount = group.tickets.filter(t => t.status === 'refunded').length;
+                            const hasRefunded = refundedCount > 0;
+                            const allRefunded = refundedCount === group.totalTickets;
+                            
+                            return (
+                            <div key={group.eventId} onClick={() => setSelectedGroupId(group.eventId)} className={`group border rounded-3xl overflow-hidden hover:border-primary transition-all cursor-pointer flex flex-col sm:flex-row h-full sm:h-48 shadow-sm hover:shadow-xl ${
+                                allRefunded 
+                                    ? 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-800 opacity-75' 
+                                    : 'bg-white dark:bg-black border-zinc-200 dark:border-zinc-800'
+                            }`}>
                                 <div className="h-48 sm:h-full sm:w-48 relative shrink-0">
-                                    <img src={group.event.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    <img src={group.event.imageUrl} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${allRefunded ? 'grayscale' : ''}`} />
                                     <div className="absolute top-0 left-0 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-br-xl backdrop-blur-sm">
                                         {group.totalTickets} Ticket{group.totalTickets > 1 ? 's' : ''}
                                     </div>
+                                    {hasRefunded && (
+                                        <div className={`absolute top-0 right-0 text-white text-xs font-bold px-3 py-1 rounded-bl-xl ${allRefunded ? 'bg-red-600' : 'bg-orange-500'}`}>
+                                            {allRefunded ? '💸 REFUNDED' : `${refundedCount} Refunded`}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-6 flex-1 flex flex-col justify-center">
-                                    <h3 className="text-2xl font-black text-zinc-900 dark:text-white mb-2 line-clamp-1">{group.event.title}</h3>
+                                    <h3 className={`text-2xl font-black mb-2 line-clamp-1 ${allRefunded ? 'text-red-800 dark:text-red-300 line-through' : 'text-zinc-900 dark:text-white'}`}>{group.event.title}</h3>
                                     <div className="flex items-center gap-4 text-sm text-zinc-500 mb-4">
                                         <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(group.event.date).toLocaleDateString()}</div>
                                         <div className="flex items-center gap-1"><Clock size={14} /> {formatTime(group.event.time, group.event.timeFormat)}</div>
                                     </div>
+                                    {allRefunded && (
+                                        <div className="text-red-600 dark:text-red-400 text-sm font-bold mb-2">
+                                            This order has been fully refunded
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-1 text-primary font-bold text-sm mt-auto">
                                         View Tickets <ArrowLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </div>
                             </div>
-                        ))
+                        );})
                     )}
                 </div>
             ) : (
