@@ -36,8 +36,8 @@ const generateKioskToken = async (req, res) => {
 
         // Calculate expiration: event end time + 8 hours
         const eventEndDate = new Date(event.date);
-        if (event.endTime) {
-            const [hours, minutes] = event.endTime.split(':');
+        if (event.end_time) {
+            const [hours, minutes] = event.end_time.split(':');
             eventEndDate.setHours(parseInt(hours), parseInt(minutes));
         } else if (event.time) {
             const [hours, minutes] = event.time.split(':');
@@ -46,34 +46,48 @@ const generateKioskToken = async (req, res) => {
         const expiresAt = new Date(eventEndDate.getTime() + 8 * 60 * 60 * 1000); // +8 hours
 
         // Create kiosk token
+        const tokenId = uuidv4();
         const token = {
-            tokenId: uuidv4(),
+            token_id: tokenId,
             type: 'kiosk',
-            eventId,
+            event_id: eventId,
             permissions: permissions || ['scan_ticket', 'manual_checkin', 'door_payment'],
-            paymentEnabled: paymentEnabled !== false,
-            pinCode: pinCode || null, // PIN to exit kiosk (optional)
-            expiresAt: expiresAt.toISOString(),
+            payment_enabled: paymentEnabled !== false,
+            pin_code: pinCode || null,
+            expires_at: expiresAt.toISOString(),
             revoked: false,
-            createdBy: userId,
-            createdAt: new Date().toISOString(),
-            lastUsedAt: null
+            created_by: userId,
+            created_at: new Date().toISOString(),
+            last_used_at: null
         };
 
         // Save to database
-        await db.collection('kiosk_tokens').insertOne(token);
+        const { error: insertError } = await supabase
+            .from('kiosk_tokens')
+            .insert(token);
+
+        if (insertError) {
+            console.error('[Kiosk] Insert error:', insertError);
+            return res.status(500).json({ error: 'Failed to create token' });
+        }
 
         // Update event to mark kiosk enabled
-        await db.collection('events').updateOne(
-            { id: eventId },
-            { $set: { kioskEnabled: true, kioskTokenId: token.tokenId } }
-        );
+        await supabase
+            .from('events')
+            .update({ 
+                kiosk_enabled: true, 
+                kiosk_token_id: tokenId 
+            })
+            .eq('id', eventId);
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const kioskUrl = `${frontendUrl}/#/kiosk/${eventId}?token=${tokenId}`;
 
         res.json({
             success: true,
-            token: token.tokenId,
-            expiresAt: token.expiresAt,
-            kioskUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/#/kiosk/${eventId}?token=${token.tokenId}`
+            token: tokenId,
+            expiresAt: token.expires_at,
+            kioskUrl
         });
     } catch (error) {
         console.error('[Kiosk] Generate token error:', error);
@@ -94,12 +108,14 @@ const validateKioskToken = async (req, res) => {
         }
 
         // Find token
-        const token = await db.collection('kiosk_tokens').findOne(
-            { tokenId, eventId },
-            { projection: { _id: 0 } }
-        );
+        const { data: token, error: tokenError } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId)
+            .single();
 
-        if (!token) {
+        if (tokenError || !token) {
             return res.status(404).json({ error: 'Invalid token' });
         }
 
@@ -109,29 +125,34 @@ const validateKioskToken = async (req, res) => {
         }
 
         // Check if expired
-        if (new Date(token.expiresAt) < new Date()) {
+        if (new Date(token.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Token has expired' });
         }
 
         // Update last used time
-        await db.collection('kiosk_tokens').updateOne(
-            { tokenId },
-            { $set: { lastUsedAt: new Date().toISOString() } }
-        );
+        await supabase
+            .from('kiosk_tokens')
+            .update({ last_used_at: new Date().toISOString() })
+            .eq('token_id', tokenId);
 
         // Get event data
-        const event = await db.collection('events').findOne({ id: eventId }, { projection: { _id: 0 } });
-        if (!event) {
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('id, title, date, time, location, image_url, ticket_tiers, organizer_id, organizer')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
         res.json({
             success: true,
             token: {
-                tokenId: token.tokenId,
+                tokenId: token.token_id,
                 permissions: token.permissions,
-                paymentEnabled: token.paymentEnabled,
-                expiresAt: token.expiresAt
+                paymentEnabled: token.payment_enabled,
+                expiresAt: token.expires_at
             },
             event: {
                 id: event.id,
@@ -139,9 +160,9 @@ const validateKioskToken = async (req, res) => {
                 date: event.date,
                 time: event.time,
                 location: event.location,
-                imageUrl: event.imageUrl,
-                ticketTiers: event.ticketTiers,
-                organizerId: event.organizerId,
+                imageUrl: event.image_url,
+                ticketTiers: event.ticket_tiers,
+                organizerId: event.organizer_id,
                 organizer: event.organizer
             }
         });
@@ -165,26 +186,36 @@ const revokeKioskToken = async (req, res) => {
         }
 
         // Verify ownership
-        const event = await db.collection('events').findOne({ id: eventId });
-        if (!event || event.organizerId !== userId) {
+        const { data: event } = await supabase
+            .from('events')
+            .select('organizer_id')
+            .eq('id', eventId)
+            .single();
+
+        if (!event || event.organizer_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
         // Revoke token
-        const result = await db.collection('kiosk_tokens').updateOne(
-            { tokenId, eventId },
-            { $set: { revoked: true, revokedAt: new Date().toISOString() } }
-        );
+        const { error } = await supabase
+            .from('kiosk_tokens')
+            .update({ 
+                revoked: true, 
+                revoked_at: new Date().toISOString() 
+            })
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId);
 
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: 'Token not found' });
+        if (error) {
+            console.error('[Kiosk] Revoke error:', error);
+            return res.status(500).json({ error: 'Failed to revoke token' });
         }
 
         // Update event
-        await db.collection('events').updateOne(
-            { id: eventId },
-            { $set: { kioskEnabled: false } }
-        );
+        await supabase
+            .from('events')
+            .update({ kiosk_enabled: false })
+            .eq('id', eventId);
 
         res.json({ success: true, message: 'Token revoked successfully' });
     } catch (error) {
@@ -206,18 +237,26 @@ const scanTicket = async (req, res) => {
         }
 
         // Validate token
-        const token = await db.collection('kiosk_tokens').findOne({ tokenId, eventId });
-        if (!token || token.revoked || new Date(token.expiresAt) < new Date()) {
+        const { data: token } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId)
+            .single();
+
+        if (!token || token.revoked || new Date(token.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
 
         // Find registration by QR code (ticket ID)
-        const registration = await db.collection('registrations').findOne(
-            { ticketId: qrCode, eventId },
-            { projection: { _id: 0 } }
-        );
+        const { data: registration, error: regError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('ticket_id', qrCode)
+            .eq('event_id', eventId)
+            .single();
 
-        if (!registration) {
+        if (regError || !registration) {
             // Log failed scan
             await logKioskAction(tokenId, eventId, 'scan_failed', {
                 qrCode,
@@ -233,10 +272,10 @@ const scanTicket = async (req, res) => {
         }
 
         // Check if already checked in
-        if (registration.checkedIn) {
+        if (registration.checked_in) {
             await logKioskAction(tokenId, eventId, 'scan_duplicate', {
-                ticketId: registration.ticketId,
-                attendeeName: registration.attendeeName,
+                ticketId: registration.ticket_id,
+                attendeeName: registration.attendee_name,
                 deviceId
             });
 
@@ -244,20 +283,20 @@ const scanTicket = async (req, res) => {
                 success: false,
                 status: 'already_checked_in',
                 message: 'Already checked in',
-                attendeeName: registration.attendeeName,
-                ticketType: registration.ticketType,
-                checkedInAt: registration.checkedInAt
+                attendeeName: registration.attendee_name,
+                ticketType: registration.ticket_type,
+                checkedInAt: registration.checked_in_at
             });
         }
 
         // Check payment status
-        if (registration.paymentStatus !== 'succeeded' && registration.price > 0) {
+        if (registration.payment_status !== 'succeeded' && registration.price > 0) {
             return res.json({
                 success: true,
                 status: 'payment_required',
                 message: 'Payment required',
-                attendeeName: registration.attendeeName,
-                ticketType: registration.ticketType,
+                attendeeName: registration.attendee_name,
+                ticketType: registration.ticket_type,
                 price: registration.price,
                 registrationId: registration.id
             });
@@ -265,9 +304,9 @@ const scanTicket = async (req, res) => {
 
         // Valid ticket, ready for check-in
         await logKioskAction(tokenId, eventId, 'scan_success', {
-            ticketId: registration.ticketId,
-            attendeeName: registration.attendeeName,
-            ticketType: registration.ticketType,
+            ticketId: registration.ticket_id,
+            attendeeName: registration.attendee_name,
+            ticketType: registration.ticket_type,
             deviceId
         });
 
@@ -275,9 +314,9 @@ const scanTicket = async (req, res) => {
             success: true,
             status: 'valid',
             message: 'Valid ticket',
-            attendeeName: registration.attendeeName,
-            attendeeEmail: registration.attendeeEmail,
-            ticketType: registration.ticketType,
+            attendeeName: registration.attendee_name,
+            attendeeEmail: registration.attendee_email,
+            ticketType: registration.ticket_type,
             price: registration.price,
             registrationId: registration.id
         });
@@ -300,35 +339,39 @@ const searchGuest = async (req, res) => {
         }
 
         // Validate token
-        const token = await db.collection('kiosk_tokens').findOne({ tokenId, eventId });
-        if (!token || token.revoked || new Date(token.expiresAt) < new Date()) {
+        const { data: token } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId)
+            .single();
+
+        if (!token || token.revoked || new Date(token.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
 
-        // Search registrations
-        const searchRegex = new RegExp(query, 'i');
-        const registrations = await db.collection('registrations')
-            .find({
-                eventId,
-                $or: [
-                    { attendeeName: searchRegex },
-                    { attendeeEmail: searchRegex },
-                    { ticketId: searchRegex },
-                    { id: searchRegex }
-                ]
-            })
-            .limit(20)
-            .toArray();
+        // Search registrations using ilike for case-insensitive partial match
+        const { data: registrations, error } = await supabase
+            .from('registrations')
+            .select('id, attendee_name, attendee_email, ticket_type, ticket_id, checked_in, checked_in_at, payment_status, price')
+            .eq('event_id', eventId)
+            .or(`attendee_name.ilike.%${query}%,attendee_email.ilike.%${query}%,ticket_id.ilike.%${query}%,id.ilike.%${query}%`)
+            .limit(20);
+
+        if (error) {
+            console.error('[Kiosk] Search error:', error);
+            return res.status(500).json({ error: 'Search failed' });
+        }
 
         const results = registrations.map(r => ({
             id: r.id,
-            attendeeName: r.attendeeName,
-            attendeeEmail: r.attendeeEmail,
-            ticketType: r.ticketType,
-            ticketId: r.ticketId,
-            checkedIn: r.checkedIn || false,
-            checkedInAt: r.checkedInAt || null,
-            paymentStatus: r.paymentStatus,
+            attendeeName: r.attendee_name,
+            attendeeEmail: r.attendee_email,
+            ticketType: r.ticket_type,
+            ticketId: r.ticket_id,
+            checkedIn: r.checked_in || false,
+            checkedInAt: r.checked_in_at || null,
+            paymentStatus: r.payment_status,
             price: r.price || 0
         }));
 
@@ -352,49 +395,64 @@ const checkInGuest = async (req, res) => {
         }
 
         // Validate token
-        const token = await db.collection('kiosk_tokens').findOne({ tokenId, eventId });
-        if (!token || token.revoked || new Date(token.expiresAt) < new Date()) {
+        const { data: token } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId)
+            .single();
+
+        if (!token || token.revoked || new Date(token.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
 
         // Find registration
-        const registration = await db.collection('registrations').findOne({ id: registrationId, eventId });
-        if (!registration) {
+        const { data: registration, error: regError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', registrationId)
+            .eq('event_id', eventId)
+            .single();
+
+        if (regError || !registration) {
             return res.status(404).json({ error: 'Registration not found' });
         }
 
         // Check if already checked in
-        if (registration.checkedIn) {
+        if (registration.checked_in) {
             return res.status(400).json({ 
                 error: 'Already checked in',
-                checkedInAt: registration.checkedInAt
+                checkedInAt: registration.checked_in_at
             });
         }
 
         // Check payment if required
-        if (registration.price > 0 && registration.paymentStatus !== 'succeeded') {
+        if (registration.price > 0 && registration.payment_status !== 'succeeded') {
             return res.status(400).json({ error: 'Payment required before check-in' });
         }
 
         // Check in
         const checkedInAt = new Date().toISOString();
-        await db.collection('registrations').updateOne(
-            { id: registrationId },
-            {
-                $set: {
-                    checkedIn: true,
-                    checkedInAt,
-                    checkedInMethod: 'kiosk',
-                    checkedInDevice: deviceId || 'unknown'
-                }
-            }
-        );
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({
+                checked_in: true,
+                checked_in_at: checkedInAt,
+                checked_in_method: 'kiosk',
+                checked_in_device: deviceId || 'unknown'
+            })
+            .eq('id', registrationId);
+
+        if (updateError) {
+            console.error('[Kiosk] Check-in update error:', updateError);
+            return res.status(500).json({ error: 'Failed to check in' });
+        }
 
         // Log action
         await logKioskAction(tokenId, eventId, 'checkin', {
             registrationId,
-            attendeeName: registration.attendeeName,
-            ticketType: registration.ticketType,
+            attendeeName: registration.attendee_name,
+            ticketType: registration.ticket_type,
             deviceId,
             timestamp: checkedInAt
         });
@@ -402,7 +460,7 @@ const checkInGuest = async (req, res) => {
         res.json({
             success: true,
             message: 'Checked in successfully',
-            attendeeName: registration.attendeeName,
+            attendeeName: registration.attendee_name,
             checkedInAt
         });
     } catch (error) {
@@ -412,7 +470,7 @@ const checkInGuest = async (req, res) => {
 };
 
 /**
- * Process door payment (Stripe Payment Link)
+ * Process door payment
  * POST /api/kiosk/payment
  */
 const processPayment = async (req, res) => {
@@ -424,23 +482,35 @@ const processPayment = async (req, res) => {
         }
 
         // Validate token
-        const token = await db.collection('kiosk_tokens').findOne({ tokenId, eventId });
-        if (!token || token.revoked || new Date(token.expiresAt) < new Date()) {
+        const { data: token } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('token_id', tokenId)
+            .eq('event_id', eventId)
+            .single();
+
+        if (!token || token.revoked || new Date(token.expires_at) < new Date()) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
 
-        if (!token.paymentEnabled) {
+        if (!token.payment_enabled) {
             return res.status(403).json({ error: 'Payments are not enabled for this kiosk' });
         }
 
         // Find registration
-        const registration = await db.collection('registrations').findOne({ id: registrationId, eventId });
+        const { data: registration } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', registrationId)
+            .eq('event_id', eventId)
+            .single();
+
         if (!registration) {
             return res.status(404).json({ error: 'Registration not found' });
         }
 
         // Check if already paid
-        if (registration.paymentStatus === 'succeeded') {
+        if (registration.payment_status === 'succeeded') {
             return res.status(400).json({ error: 'Already paid' });
         }
 
@@ -455,29 +525,23 @@ const processPayment = async (req, res) => {
                 amount: amount || registration.price
             };
 
-            await db.collection('registrations').updateOne(
-                { id: registrationId },
-                {
-                    $set: {
-                        paymentStatus: 'succeeded',
-                        paymentMethod: 'cash',
-                        paidAt: new Date().toISOString(),
-                        paymentSource: 'kiosk',
-                        kioskDeviceId: deviceId
-                    }
-                }
-            );
-        } else if (paymentMethod === 'card') {
+            await supabase
+                .from('registrations')
+                .update({
+                    payment_status: 'succeeded',
+                    payment_method: 'cash',
+                    paid_at: new Date().toISOString(),
+                    payment_source: 'kiosk',
+                    kiosk_device_id: deviceId
+                })
+                .eq('id', registrationId);
+        } else if (paymentMethod === 'card' || paymentMethod === 'stripe') {
             // Generate Stripe Payment Link
-            // This will be handled by returning a payment URL
-            const event = await db.collection('events').findOne({ id: eventId });
-            
-            // For now, return payment link URL
-            // In production, integrate with Stripe Payment Links API
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
             return res.json({
                 success: true,
                 requiresPayment: true,
-                paymentUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/#/kiosk/${eventId}/payment/${registrationId}`,
+                paymentUrl: `${frontendUrl}/#/kiosk/${eventId}/payment/${registrationId}?token=${tokenId}`,
                 amount: registration.price
             });
         }
@@ -485,7 +549,7 @@ const processPayment = async (req, res) => {
         // Log payment
         await logKioskAction(tokenId, eventId, 'payment', {
             registrationId,
-            attendeeName: registration.attendeeName,
+            attendeeName: registration.attendee_name,
             amount: paymentResult.amount,
             method: paymentMethod,
             paymentId: paymentResult.id,
@@ -513,17 +577,28 @@ const getKioskLogs = async (req, res) => {
         const userId = req.userId;
 
         // Verify ownership
-        const event = await db.collection('events').findOne({ id: eventId });
-        if (!event || event.organizerId !== userId) {
+        const { data: event } = await supabase
+            .from('events')
+            .select('organizer_id')
+            .eq('id', eventId)
+            .single();
+
+        if (!event || event.organizer_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
         // Get logs
-        const logs = await db.collection('kiosk_logs')
-            .find({ eventId })
-            .sort({ timestamp: -1 })
-            .limit(500)
-            .toArray();
+        const { data: logs, error } = await supabase
+            .from('kiosk_logs')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('timestamp', { ascending: false })
+            .limit(500);
+
+        if (error) {
+            console.error('[Kiosk] Get logs error:', error);
+            return res.status(500).json({ error: 'Failed to fetch logs' });
+        }
 
         res.json({ success: true, logs });
     } catch (error) {
@@ -542,33 +617,44 @@ const getCurrentToken = async (req, res) => {
         const userId = req.userId;
 
         // Verify ownership
-        const event = await db.collection('events').findOne({ id: eventId });
-        if (!event || event.organizerId !== userId) {
+        const { data: event } = await supabase
+            .from('events')
+            .select('organizer_id')
+            .eq('id', eventId)
+            .single();
+
+        if (!event || event.organizer_id !== userId) {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
         // Get active token
-        const token = await db.collection('kiosk_tokens').findOne(
-            { eventId, revoked: false },
-            { projection: { _id: 0 } }
-        );
+        const { data: token, error } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('revoked', false)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // Not found is OK
+            console.error('[Kiosk] Get token error:', error);
+        }
 
         if (!token) {
             return res.json({ success: true, token: null });
         }
 
         // Check if expired
-        const isExpired = new Date(token.expiresAt) < new Date();
+        const isExpired = new Date(token.expires_at) < new Date();
 
         res.json({
             success: true,
             token: {
-                tokenId: token.tokenId,
-                expiresAt: token.expiresAt,
+                tokenId: token.token_id,
+                expiresAt: token.expires_at,
                 isExpired,
-                createdAt: token.createdAt,
-                lastUsedAt: token.lastUsedAt,
-                paymentEnabled: token.paymentEnabled
+                createdAt: token.created_at,
+                lastUsedAt: token.last_used_at,
+                paymentEnabled: token.payment_enabled
             }
         });
     } catch (error) {
@@ -582,14 +668,16 @@ const getCurrentToken = async (req, res) => {
  */
 async function logKioskAction(tokenId, eventId, action, details) {
     try {
-        await db.collection('kiosk_logs').insertOne({
-            id: uuidv4(),
-            tokenId,
-            eventId,
-            action,
-            details,
-            timestamp: new Date().toISOString()
-        });
+        await supabase
+            .from('kiosk_logs')
+            .insert({
+                id: uuidv4(),
+                token_id: tokenId,
+                event_id: eventId,
+                action,
+                details,
+                timestamp: new Date().toISOString()
+            });
     } catch (error) {
         console.error('[Kiosk] Log action error:', error);
     }
