@@ -574,25 +574,38 @@ export const refundRegistration = async (req, res) => {
             ? 'Manual refund recorded (no Stripe payment to refund)' 
             : (stripeRefundId ? 'Stripe refund processed successfully' : 'Refund recorded but Stripe processing failed');
 
-        // 7. Send refund confirmation email (fallback - in case webhook doesn't fire)
-        // This is important for preview environments or when webhooks aren't configured
+        // 7. Send refund confirmation email (ALWAYS send for successful refunds)
+        // This ensures email delivery regardless of webhook status
+        let emailSent = false;
+        let emailError = null;
+        
         try {
             const { refundConfirmation } = await import('../services/emailTemplates.js');
             const emailAudit = await import('../services/emailAuditService.js');
             const { sendEmailWithProvider } = await import('../services/cronService.js');
 
             // Get event details for the email
-            const { data: eventData } = await supabase
+            const { data: eventData, error: eventError } = await supabase
                 .from('events')
-                .select('title, date, location, owner_id, email_settings, ticket_design')
+                .select('title, date, location, owner_id, email_settings, ticket_design, organizer')
                 .eq('id', reg.event_id)
                 .single();
 
+            if (eventError) {
+                console.warn('[Refund] Could not fetch event details:', eventError.message);
+            }
+
             const emailSettings = eventData?.email_settings || {};
             
-            // Only send if refund emails are enabled
-            if (emailSettings.refundEnabled !== false && reg.attendee_email) {
-                // Check if email was already sent (by webhook)
+            // Send refund email if:
+            // 1. Refund emails are NOT explicitly disabled (default: enabled)
+            // 2. Attendee has an email address
+            const shouldSendEmail = emailSettings.refundEnabled !== false && reg.attendee_email;
+            
+            console.log(`[Refund] Email check: shouldSend=${shouldSendEmail}, email=${reg.attendee_email}, refundEnabled=${emailSettings.refundEnabled}`);
+            
+            if (shouldSendEmail) {
+                // Check if email was already sent (by webhook) to prevent duplicates
                 const alreadySent = await emailAudit.wasEmailSent(
                     'refund_api',
                     emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
@@ -600,11 +613,13 @@ export const refundRegistration = async (req, res) => {
                 );
 
                 if (!alreadySent) {
+                    console.log(`[Refund] Preparing refund email for ${reg.attendee_email}...`);
+                    
                     const eventDate = eventData?.date 
                         ? new Date(eventData.date).toLocaleDateString('en-US', {
                             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                         })
-                        : 'N/A';
+                        : 'Date not available';
 
                     const { subject, html } = refundConfirmation({
                         attendeeName: reg.attendee_name || 'Guest',
@@ -618,8 +633,11 @@ export const refundRegistration = async (req, res) => {
                         refundDate: new Date().toLocaleDateString('en-US', {
                             year: 'numeric', month: 'long', day: 'numeric'
                         }),
-                        ticketDesign: eventData?.ticket_design  // Pass theme
+                        ticketDesign: eventData?.ticket_design,  // Pass event's visual design for themed emails
+                        organizerName: eventData?.organizer || 'Event Organizer'
                     });
+
+                    console.log(`[Refund] Sending email with subject: ${subject}`);
 
                     const emailResult = await sendEmailWithProvider(
                         reg.attendee_email,
@@ -628,7 +646,7 @@ export const refundRegistration = async (req, res) => {
                         eventData?.owner_id
                     );
 
-                    // Log and mark as sent
+                    // Log the email attempt
                     await emailAudit.logEmailSend({
                         triggerType: 'refund_api',
                         emailType: emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
@@ -638,20 +656,39 @@ export const refundRegistration = async (req, res) => {
                         success: emailResult.sent || emailResult.simulated,
                         messageId: emailResult.messageId,
                         error: emailResult.error,
-                        metadata: { refundAmount: amountToRefundCents / 100, stripeRefundId }
+                        metadata: { 
+                            refundAmount: amountToRefundCents / 100, 
+                            stripeRefundId,
+                            ticketsRefunded: ticketsBeingRefunded 
+                        }
                     });
 
-                    if (emailResult.sent || emailResult.simulated) {
+                    if (emailResult.sent) {
                         await emailAudit.markEmailSent('refund_api', emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION, id);
-                        console.log(`[Refund] ✅ Refund email sent to ${reg.attendee_email}`);
+                        console.log(`[Refund] ✅ Refund email SENT to ${reg.attendee_email}`);
+                        emailSent = true;
+                    } else if (emailResult.simulated) {
+                        console.log(`[Refund] 📧 Refund email SIMULATED for ${reg.attendee_email} (Resend not configured)`);
+                        emailSent = true; // Count simulation as success for response
+                    } else {
+                        console.error(`[Refund] ❌ Failed to send refund email: ${emailResult.error}`);
+                        emailError = emailResult.error;
                     }
                 } else {
-                    console.log(`[Refund] Refund email already sent for registration ${id}`);
+                    console.log(`[Refund] ℹ️ Refund email already sent for registration ${id}`);
+                    emailSent = true; // Already sent counts as success
+                }
+            } else {
+                if (!reg.attendee_email) {
+                    console.log(`[Refund] ⚠️ No email address for registration ${id}`);
+                } else {
+                    console.log(`[Refund] ⚠️ Refund emails disabled for this event`);
                 }
             }
-        } catch (emailError) {
-            console.error('[Refund] Failed to send refund email:', emailError.message);
-            // Don't fail the refund if email fails
+        } catch (emailErr) {
+            console.error('[Refund] ❌ Email sending exception:', emailErr.message);
+            console.error('[Refund] Stack:', emailErr.stack);
+            emailError = emailErr.message;
         }
 
         res.json({ 
