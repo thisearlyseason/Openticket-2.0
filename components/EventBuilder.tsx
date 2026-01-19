@@ -2268,6 +2268,32 @@ export const EventBuilder = () => {
                     </div>
                 </div>
             )}
+
+            {/* Email Preview Modal */}
+            {showEmailPreview && (
+                <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4" onClick={() => setShowEmailPreview(false)}>
+                    <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4 flex items-center justify-between z-10">
+                            <h2 className="text-xl font-bold">Email Preview</h2>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowEmailPreview(false)}
+                                className="flex items-center gap-2"
+                            >
+                                <X size={20} />
+                                Close
+                            </Button>
+                        </div>
+                        <div className="p-6">
+                            <EmailPreview 
+                                event={formData as Event} 
+                                embedded={true}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };
