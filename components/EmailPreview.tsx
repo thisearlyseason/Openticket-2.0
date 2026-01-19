@@ -23,6 +23,9 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     useEffect(() => {
         if (!propEvent && id) {
             loadEvent();
+        } else if (propEvent) {
+            // If event is provided as prop, generate preview immediately
+            generatePreview();
         }
     }, [id, propEvent]);
 
