@@ -1146,12 +1146,12 @@ export const EventBuilder = () => {
                                     <p className="text-sm text-zinc-500 mb-4">Sell merchandise, parking passes, or donations along with tickets.</p>
 
                                     <div className="space-y-4 mb-4">
-                                        {formData.addOns?.map((addon, idx) => (
-                                            <div key={addon.id} className="p-4 border rounded-xl bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+                                        {formData.addOns?.map((addon, idx) => addon && (
+                                            <div key={addon.id || idx} className="p-4 border rounded-xl bg-white dark:bg-black border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
                                                 <div>
-                                                    <div className="font-bold">{addon.name}</div>
+                                                    <div className="font-bold">{addon.name || 'Unnamed Add-on'}</div>
                                                     <div className="text-sm text-zinc-500">
-                                                        ${addon.price} {addon.question && `• ${addon.question}`}
+                                                        ${addon.price || 0} {addon.question && `• ${addon.question}`}
                                                         {addon.taxable && <span className="ml-2 text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-500 font-bold border border-zinc-200 dark:border-zinc-700">+ TAX</span>}
                                                     </div>
                                                 </div>
