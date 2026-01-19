@@ -574,6 +574,86 @@ export const refundRegistration = async (req, res) => {
             ? 'Manual refund recorded (no Stripe payment to refund)' 
             : (stripeRefundId ? 'Stripe refund processed successfully' : 'Refund recorded but Stripe processing failed');
 
+        // 7. Send refund confirmation email (fallback - in case webhook doesn't fire)
+        // This is important for preview environments or when webhooks aren't configured
+        try {
+            const { refundConfirmation } = await import('../services/emailTemplates.js');
+            const emailAudit = await import('../services/emailAuditService.js');
+            const { sendEmailWithProvider } = await import('../services/cronService.js');
+
+            // Get event details for the email
+            const { data: eventData } = await supabase
+                .from('events')
+                .select('title, date, location, owner_id, email_settings, ticket_design')
+                .eq('id', reg.event_id)
+                .single();
+
+            const emailSettings = eventData?.email_settings || {};
+            
+            // Only send if refund emails are enabled
+            if (emailSettings.refundEnabled !== false && reg.attendee_email) {
+                // Check if email was already sent (by webhook)
+                const alreadySent = await emailAudit.wasEmailSent(
+                    'refund_api',
+                    emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+                    id
+                );
+
+                if (!alreadySent) {
+                    const eventDate = eventData?.date 
+                        ? new Date(eventData.date).toLocaleDateString('en-US', {
+                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                        })
+                        : 'N/A';
+
+                    const { subject, html } = refundConfirmation({
+                        attendeeName: reg.attendee_name || 'Guest',
+                        eventTitle: eventData?.title || 'Event',
+                        eventDate,
+                        eventLocation: eventData?.location || 'TBD',
+                        refundAmount: amountToRefundCents / 100,
+                        ticketsRefunded: ticketsBeingRefunded,
+                        orderId: id.substring(0, 8).toUpperCase(),
+                        refundReason: reason || '',
+                        refundDate: new Date().toLocaleDateString('en-US', {
+                            year: 'numeric', month: 'long', day: 'numeric'
+                        }),
+                        ticketDesign: eventData?.ticket_design  // Pass theme
+                    });
+
+                    const emailResult = await sendEmailWithProvider(
+                        reg.attendee_email,
+                        subject,
+                        html,
+                        eventData?.owner_id
+                    );
+
+                    // Log and mark as sent
+                    await emailAudit.logEmailSend({
+                        triggerType: 'refund_api',
+                        emailType: emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION,
+                        recipient: reg.attendee_email,
+                        registrationId: id,
+                        eventId: reg.event_id,
+                        success: emailResult.sent || emailResult.simulated,
+                        messageId: emailResult.messageId,
+                        error: emailResult.error,
+                        metadata: { refundAmount: amountToRefundCents / 100, stripeRefundId }
+                    });
+
+                    if (emailResult.sent || emailResult.simulated) {
+                        await emailAudit.markEmailSent('refund_api', emailAudit.EMAIL_TYPES.REFUND_CONFIRMATION, id);
+                        console.log(`[Refund] ✅ Refund email sent to ${reg.attendee_email}`);
+                    }
+                } else {
+                    console.log(`[Refund] Refund email already sent for registration ${id}`);
+                }
+            }
+        } catch (emailError) {
+            console.error('[Refund] Failed to send refund email:', emailError.message);
+            // Don't fail the refund if email fails
+        }
+
         res.json({ 
             success: true,
             registration: data[0],
