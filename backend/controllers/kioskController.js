@@ -668,6 +668,86 @@ const getCurrentToken = async (req, res) => {
 };
 
 /**
+ * Get kiosk status for an event (active token info)
+ * GET /api/kiosk/status/:eventId
+ */
+const getKioskStatus = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user?.uid;
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        // Verify ownership
+        const { data: event } = await supabase
+            .from('events')
+            .select('organizer_id')
+            .eq('id', eventId)
+            .single();
+
+        if (!event || event.organizer_id !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Get active non-revoked token
+        const { data: token, error } = await supabase
+            .from('kiosk_tokens')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('revoked', false)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error && error.code !== 'PGRST116') { // Not found is OK
+            console.error('[Kiosk] Get status error:', error);
+        }
+
+        // No active token
+        if (!token) {
+            return res.json({
+                success: true,
+                active: false
+            });
+        }
+
+        // Check if expired
+        const isExpired = new Date(token.expires_at) < new Date();
+
+        if (isExpired) {
+            return res.json({
+                success: true,
+                active: false
+            });
+        }
+
+        // Active token found
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        const kioskUrl = `${frontendUrl}/#/kiosk/${eventId}?token=${token.token_id}`;
+
+        res.json({
+            success: true,
+            active: true,
+            token: {
+                tokenId: token.token_id,
+                permissions: token.permissions,
+                paymentEnabled: token.payment_enabled,
+                expiresAt: token.expires_at,
+                pinCode: token.pin_code,
+                createdAt: token.created_at,
+                lastUsedAt: token.last_used_at
+            },
+            kioskUrl
+        });
+    } catch (error) {
+        console.error('[Kiosk] Get kiosk status error:', error);
+        res.status(500).json({ error: 'Failed to get kiosk status' });
+    }
+};
+
+/**
  * Helper: Log kiosk action
  */
 async function logKioskAction(tokenId, eventId, action, details) {
