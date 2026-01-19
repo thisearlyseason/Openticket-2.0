@@ -331,7 +331,7 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
  * REFUND CONFIRMATION
  * Triggered by: refund.succeeded (Stripe webhook)
  */
-export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventLocation, refundAmount, ticketsRefunded, orderId, refundReason, refundDate, ticketDesign }) => {
+export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventLocation, refundAmount, ticketsRefunded, orderId, refundReason, refundDate, ticketDesign, organizerName }) => {
     // Get theme (uses red tint for refund emails regardless of event theme)
     const theme = getThemeFromDesign(ticketDesign);
     
