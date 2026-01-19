@@ -339,18 +339,6 @@ export const ManageEvent = () => {
                         </Card>
                     </Link>
 
-                    <Link to={`/manage/${event.id}/email-preview`} className="block group">
-                        <Card className="p-6 cursor-pointer hover:border-blue-500 transition-all hover:-translate-y-1 h-full">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                                    <Eye size={24} />
-                                </div>
-                            </div>
-                            <h3 className="font-bold text-lg">Email Preview</h3>
-                            <p className="text-xs text-zinc-500">View themed emails</p>
-                        </Card>
-                    </Link>
-
                     <Link to={`/manage/${event.id}/kiosk`} className="block group">
                         <Card className="p-6 cursor-pointer hover:border-primary transition-all hover:-translate-y-1 h-full">
                             <div className="flex justify-between items-start mb-4">
