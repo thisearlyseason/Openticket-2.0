@@ -71,7 +71,7 @@ export const KioskSettings: React.FC<KioskSettingsProps> = ({ eventId }) => {
 
             const data = await response.json();
             setKioskUrl(data.kioskUrl);
-            await loadCurrentToken(); // Reload to get full token details
+            await loadCurrentToken();
             setShowQR(true);
         } catch (error: any) {
             alert(error.message || 'Failed to generate kiosk token');
@@ -126,4 +126,141 @@ export const KioskSettings: React.FC<KioskSettingsProps> = ({ eventId }) => {
                 <p className="text-zinc-500 mt-4">Loading kiosk settings...</p>
             </div>
         );
-    }\n\n    return (\n        <div className=\"space-y-6\">\n            {/* Header */}\n            <div>\n                <h2 className=\"text-2xl font-bold mb-2 flex items-center gap-2\">\n                    <Lock className=\"text-primary\" />\n                    Kiosk Mode\n                </h2>\n                <p className=\"text-zinc-500\">\n                    Enable secure, event-scoped kiosk mode for iPad/tablet check-in at the door.\n                </p>\n            </div>\n\n            {/* Current Status */}\n            {currentToken && !currentToken.isExpired ? (\n                <Card className=\"p-6 border-green-500/50 bg-green-500/5\">\n                    <div className=\"flex items-center justify-between mb-4\">\n                        <div className=\"flex items-center gap-3\">\n                            <CheckCircle2 className=\"text-green-500\" size={24} />\n                            <div>\n                                <h3 className=\"font-bold text-lg\">Kiosk Active</h3>\n                                <p className=\"text-sm text-zinc-500\">\n                                    Expires: {new Date(currentToken.expiresAt).toLocaleString()}\n                                </p>\n                            </div>\n                        </div>\n                        <Badge variant=\"success\">Active</Badge>\n                    </div>\n\n                    <div className=\"grid gap-4\">\n                        {/* Kiosk URL */}\n                        <div>\n                            <label className=\"block text-sm font-bold mb-2\">Kiosk URL</label>\n                            <div className=\"flex gap-2\">\n                                <Input\n                                    value={kioskUrl}\n                                    readOnly\n                                    className=\"flex-1 font-mono text-sm\"\n                                />\n                                <Button\n                                    onClick={() => copyToClipboard(kioskUrl)}\n                                    variant=\"secondary\"\n                                    size=\"sm\"\n                                >\n                                    <Copy size={16} />\n                                </Button>\n                                <Button\n                                    onClick={() => setShowQR(!showQR)}\n                                    variant=\"secondary\"\n                                    size=\"sm\"\n                                >\n                                    <QrCode size={16} />\n                                </Button>\n                            </div>\n                        </div>\n\n                        {/* QR Code */}\n                        {showQR && (\n                            <div className=\"text-center p-6 bg-white rounded-lg\">\n                                <QRCodeSVG value={kioskUrl} size={256} />\n                                <p className=\"text-sm text-zinc-600 mt-4\">Scan with iPad/tablet to open kiosk</p>\n                            </div>\n                        )}\n\n                        {/* Actions */}\n                        <div className=\"flex gap-4 pt-4 border-t border-zinc-700\">\n                            <Button\n                                onClick={() => window.open(kioskUrl, '_blank')}\n                                variant=\"secondary\"\n                                className=\"flex-1\"\n                            >\n                                <ExternalLink size={16} className=\"mr-2\" />\n                                Test Kiosk\n                            </Button>\n                            <Button\n                                onClick={handleRevoke}\n                                disabled={isRevoking}\n                                variant=\"destructive\"\n                                className=\"flex-1\"\n                            >\n                                {isRevoking ? (\n                                    <Loader2 className=\"animate-spin mr-2\" size={16} />\n                                ) : (\n                                    <XCircle size={16} className=\"mr-2\" />\n                                )}\n                                Revoke Token\n                            </Button>\n                        </div>\n                    </div>\n                </Card>\n            ) : (\n                <Card className=\"p-6\">\n                    <div className=\"text-center py-6\">\n                        <Shield className=\"mx-auto mb-4 text-zinc-500\" size={48} />\n                        <h3 className=\"text-lg font-bold mb-2\">Kiosk Mode Not Active</h3>\n                        <p className=\"text-zinc-500 mb-6\">\n                            Generate a secure kiosk token to enable door check-in.\n                        </p>\n\n                        {/* Configuration */}\n                        <div className=\"max-w-md mx-auto space-y-4 mb-6\">\n                            <div className=\"flex items-center justify-between p-4 bg-zinc-800 rounded-lg\">\n                                <div className=\"text-left\">\n                                    <p className=\"font-bold text-sm\">Enable Door Payments</p>\n                                    <p className=\"text-xs text-zinc-500\">Allow cash/card payments at kiosk</p>\n                                </div>\n                                <Switch\n                                    checked={paymentEnabled}\n                                    onChange={setPaymentEnabled}\n                                />\n                            </div>\n\n                            <div>\n                                <label className=\"block text-sm font-bold mb-2 text-left\">Exit PIN (Optional)</label>\n                                <Input\n                                    type=\"text\"\n                                    value={pinCode}\n                                    onChange={(e) => setPinCode(e.target.value)}\n                                    placeholder=\"Leave empty for no PIN\"\n                                    maxLength={6}\n                                />\n                                <p className=\"text-xs text-zinc-500 mt-1 text-left\">\n                                    Require PIN to exit kiosk mode\n                                </p>\n                            </div>\n                        </div>\n\n                        <Button\n                            onClick={handleGenerate}\n                            disabled={isGenerating}\n                            size=\"lg\"\n                            className=\"px-8\"\n                        >\n                            {isGenerating ? (\n                                <Loader2 className=\"animate-spin mr-2\" size={20} />\n                            ) : (\n                                <Key size={20} className=\"mr-2\" />\n                            )}\n                            Generate Kiosk Token\n                        </Button>\n                    </div>\n                </Card>\n            )}\n\n            {/* Setup Instructions */}\n            <Card className=\"p-6 bg-zinc-900\">\n                <h3 className=\"font-bold mb-4 flex items-center gap-2\">\n                    <Shield size={20} />\n                    Device Setup Instructions\n                </h3>\n                <div className=\"space-y-4 text-sm\">\n                    <div>\n                        <h4 className=\"font-bold mb-2\">📱 iPad Setup (Guided Access)</h4>\n                        <ol className=\"list-decimal list-inside space-y-1 text-zinc-400\">\n                            <li>Go to Settings → Accessibility → Guided Access</li>\n                            <li>Enable Guided Access and set a passcode</li>\n                            <li>Open the kiosk URL in Safari</li>\n                            <li>Triple-click the side button to start Guided Access</li>\n                            <li>Kiosk is now locked to this app</li>\n                        </ol>\n                    </div>\n\n                    <div>\n                        <h4 className=\"font-bold mb-2\">🤖 Android Setup (Screen Pinning)</h4>\n                        <ol className=\"list-decimal list-inside space-y-1 text-zinc-400\">\n                            <li>Go to Settings → Security → Screen Pinning</li>\n                            <li>Enable Screen Pinning</li>\n                            <li>Open the kiosk URL in Chrome</li>\n                            <li>Open Recent Apps and tap the app icon</li>\n                            <li>Select \"Pin\" to lock the screen</li>\n                        </ol>\n                    </div>\n\n                    <div className=\"p-3 bg-blue-500/10 rounded-lg border border-blue-500/50\">\n                        <p className=\"text-blue-400 text-xs\">\n                            <strong>Tip:</strong> Install as PWA for fullscreen experience. Tap Share → Add to Home Screen.\n                        </p>\n                    </div>\n                </div>\n            </Card>\n\n            {/* Security Features */}\n            <Card className=\"p-6 bg-zinc-900\">\n                <h3 className=\"font-bold mb-4 flex items-center gap-2\">\n                    <Clock size={20} />\n                    Security Features\n                </h3>\n                <ul className=\"space-y-2 text-sm text-zinc-400\">\n                    <li className=\"flex items-start gap-2\">\n                        <CheckCircle2 size={16} className=\"text-green-500 mt-0.5\" />\n                        <span>Token auto-expires 8 hours after event end</span>\n                    </li>\n                    <li className=\"flex items-start gap-2\">\n                        <CheckCircle2 size={16} className=\"text-green-500 mt-0.5\" />\n                        <span>Event-scoped: Can only access this event</span>\n                    </li>\n                    <li className=\"flex items-start gap-2\">\n                        <CheckCircle2 size={16} className=\"text-green-500 mt-0.5\" />\n                        <span>No dashboard or admin access</span>\n                    </li>\n                    <li className=\"flex items-start gap-2\">\n                        <CheckCircle2 size={16} className=\"text-green-500 mt-0.5\" />\n                        <span>Instant revocation locks all devices</span>\n                    </li>\n                    <li className=\"flex items-start gap-2\">\n                        <CheckCircle2 size={16} className=\"text-green-500 mt-0.5\" />\n                        <span>All actions logged for audit trail</span>\n                    </li>\n                </ul>\n            </Card>\n        </div>\n    );\n};\n
+    }
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <Lock className="text-primary" />
+                    Kiosk Mode
+                </h2>
+                <p className="text-zinc-500">
+                    Enable secure, event-scoped kiosk mode for iPad/tablet check-in at the door.
+                </p>
+            </div>
+
+            {currentToken && !currentToken.isExpired ? (
+                <Card className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="text-green-500" size={24} />
+                            <div>
+                                <h3 className="font-bold text-lg">Kiosk Active</h3>
+                                <p className="text-sm text-zinc-500">
+                                    Expires: {new Date(currentToken.expiresAt).toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+                        <Badge variant="success">Active</Badge>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-bold mb-2">Kiosk URL</label>
+                            <div className="flex gap-2">
+                                <Input
+                                    value={kioskUrl}
+                                    readOnly
+                                    className="flex-1 font-mono text-sm"
+                                />
+                                <Button
+                                    onClick={() => copyToClipboard(kioskUrl)}
+                                    variant="secondary"
+                                    size="sm"
+                                >
+                                    <Copy size={16} />
+                                </Button>
+                                <Button
+                                    onClick={() => setShowQR(!showQR)}
+                                    variant="secondary"
+                                    size="sm"
+                                >
+                                    <QrCode size={16} />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {showQR && (
+                            <div className="text-center p-6 bg-white dark:bg-zinc-800 rounded-lg">
+                                <QRCodeSVG value={kioskUrl} size={256} />
+                                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-4">Scan with iPad/tablet</p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                            <Button
+                                onClick={() => window.open(kioskUrl, '_blank')}
+                                variant="secondary"
+                                className="flex-1"
+                            >
+                                <ExternalLink size={16} className="mr-2" />
+                                Test Kiosk
+                            </Button>
+                            <Button
+                                onClick={handleRevoke}
+                                disabled={isRevoking}
+                                variant="destructive"
+                                className="flex-1"
+                            >
+                                {isRevoking ? (
+                                    <Loader2 className="animate-spin mr-2" size={16} />
+                                ) : (
+                                    <XCircle size={16} className="mr-2" />
+                                )}
+                                Revoke Token
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+            ) : (
+                <Card className="p-6">
+                    <div className="text-center py-6">
+                        <Shield className="mx-auto mb-4 text-zinc-500" size={48} />
+                        <h3 className="text-lg font-bold mb-2">Kiosk Mode Not Active</h3>
+                        <p className="text-zinc-500 mb-6">
+                            Generate a secure kiosk token to enable door check-in.
+                        </p>
+
+                        <div className="max-w-md mx-auto space-y-4 mb-6">
+                            <div className="flex items-center justify-between p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                                <div className="text-left">
+                                    <p className="font-bold text-sm">Enable Door Payments</p>
+                                    <p className="text-xs text-zinc-500">Allow cash/card payments</p>
+                                </div>
+                                <Switch
+                                    checked={paymentEnabled}
+                                    onChange={setPaymentEnabled}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold mb-2 text-left">Exit PIN (Optional)</label>
+                                <Input
+                                    type="text"
+                                    value={pinCode}
+                                    onChange={(e) => setPinCode(e.target.value)}
+                                    placeholder="Leave empty for no PIN"
+                                    maxLength={6}
+                                />
+                            </div>
+                        </div>
+
+                        <Button
+                            onClick={handleGenerate}
+                            disabled={isGenerating}
+                            size="lg"
+                        >
+                            {isGenerating ? (
+                                <Loader2 className="animate-spin mr-2" size={20} />
+                            ) : (
+                                <Key size={20} className="mr-2" />
+                            )}
+                            Generate Kiosk Token
+                        </Button>
+                    </div>
+                </Card>
+            )}
+        </div>
+    );
+};
