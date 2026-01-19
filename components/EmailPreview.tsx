@@ -519,12 +519,21 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                     <Card className="p-6 lg:col-span-2">
                         <h3 className="text-sm font-bold uppercase text-zinc-500 mb-4">Live Preview</h3>
                         <div className="bg-zinc-100 dark:bg-zinc-900 rounded-lg p-4 border border-zinc-200 dark:border-zinc-800">
-                            <iframe
-                                srcDoc={previewHtml}
-                                className="w-full bg-white rounded"
-                                style={{ height: '600px', border: 'none' }}
-                                title="Email Preview"
-                            />
+                            {previewHtml ? (
+                                <iframe
+                                    srcDoc={previewHtml}
+                                    className="w-full bg-white rounded"
+                                    style={{ height: '600px', border: 'none' }}
+                                    title="Email Preview"
+                                />
+                            ) : (
+                                <div className="w-full bg-white rounded flex items-center justify-center" style={{ height: '600px' }}>
+                                    <div className="text-center">
+                                        <Loader2 className="animate-spin text-primary mx-auto mb-4" size={32} />
+                                        <p className="text-sm text-zinc-500">Loading preview...</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 </div>
