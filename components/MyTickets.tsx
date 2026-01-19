@@ -254,7 +254,7 @@ export const MyTickets = () => {
                             ticketList.push({
                                 reg, event,
                                 ticketInfo: { 
-                                    name: t.name, 
+                                    name: t.name || t.tierId || 'Ticket', 
                                     quantity: quantity, 
                                     date: t.date 
                                 },
