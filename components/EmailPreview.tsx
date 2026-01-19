@@ -58,60 +58,72 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     };
 
     const generatePreview = () => {
-        if (!event) return;
-
-        const ticketDesign = event.ticketDesign || {};
-        const theme = getThemeFromDesign(ticketDesign);
-
-        // Sample data for preview
-        const sampleData = {
-            attendeeName: 'John Doe',
-            eventTitle: event.title || 'Sample Event',
-            eventDate: event.date || 'TBD',
-            eventTime: event.time || 'TBD',
-            eventLocation: event.location || 'TBD',
-            organizerName: event.organizer || 'Event Organizer',
-            totalPaid: event.ticketTiers?.[0]?.price || 50,
-            orderId: 'ORD-123456',
-            tickets: event.ticketTiers?.slice(0, 2).map(t => ({
-                name: t.name,
-                quantity: 1,
-                price: t.price
-            })) || [{ name: 'General Admission', quantity: 1, price: 50 }],
-            refundAmount: 50,
-            ticketsRefunded: 1,
-            refundDate: new Date().toLocaleDateString(),
-            refundReason: 'Customer request',
-            timeUntilEvent: event.reminderSettings?.secondaryTime === '1h' ? '1 hour' : '2 hours',
-            checkoutUrl: `${window.location.origin}/#/event/${event.id}`,
-            ticketUrl: `${window.location.origin}/#/ticket/sample`,
-            feedbackUrl: event.organizerWebsite || ''
-        };
-
-        let html = '';
-
-        switch (selectedType) {
-            case 'purchase':
-                html = generatePurchaseEmail(sampleData, theme, ticketDesign);
-                break;
-            case 'refund':
-                html = generateRefundEmail(sampleData, theme, ticketDesign);
-                break;
-            case 'reminder24h':
-                html = generateReminderEmail(sampleData, theme, ticketDesign, '24 hours');
-                break;
-            case 'reminderSecondary':
-                html = generateReminderEmail(sampleData, theme, ticketDesign, sampleData.timeUntilEvent);
-                break;
-            case 'postEvent':
-                html = generatePostEventEmail(sampleData, theme, ticketDesign);
-                break;
-            case 'abandonedCart':
-                html = generateAbandonedCartEmail(sampleData);
-                break;
+        console.log('generatePreview called, event:', event?.id);
+        if (!event) {
+            console.log('generatePreview: No event, returning');
+            return;
         }
 
-        setPreviewHtml(html);
+        try {
+            const ticketDesign = event.ticketDesign || {};
+            const theme = getThemeFromDesign(ticketDesign);
+
+            // Sample data for preview
+            const sampleData = {
+                attendeeName: 'John Doe',
+                eventTitle: event.title || 'Sample Event',
+                eventDate: event.date || 'TBD',
+                eventTime: event.time || 'TBD',
+                eventLocation: event.location || 'TBD',
+                organizerName: event.organizer || 'Event Organizer',
+                totalPaid: event.ticketTiers?.[0]?.price || 50,
+                orderId: 'ORD-123456',
+                tickets: event.ticketTiers?.slice(0, 2).map(t => ({
+                    name: t.name,
+                    quantity: 1,
+                    price: t.price
+                })) || [{ name: 'General Admission', quantity: 1, price: 50 }],
+                refundAmount: 50,
+                ticketsRefunded: 1,
+                refundDate: new Date().toLocaleDateString(),
+                refundReason: 'Customer request',
+                timeUntilEvent: event.reminderSettings?.secondaryTime === '1h' ? '1 hour' : '2 hours',
+                checkoutUrl: `${window.location.origin}/#/event/${event.id}`,
+                ticketUrl: `${window.location.origin}/#/ticket/sample`,
+                feedbackUrl: event.organizerWebsite || ''
+            };
+
+            let html = '';
+
+            console.log('generatePreview: Generating for type:', selectedType);
+
+            switch (selectedType) {
+                case 'purchase':
+                    html = generatePurchaseEmail(sampleData, theme, ticketDesign);
+                    break;
+                case 'refund':
+                    html = generateRefundEmail(sampleData, theme, ticketDesign);
+                    break;
+                case 'reminder24h':
+                    html = generateReminderEmail(sampleData, theme, ticketDesign, '24 hours');
+                    break;
+                case 'reminderSecondary':
+                    html = generateReminderEmail(sampleData, theme, ticketDesign, sampleData.timeUntilEvent);
+                    break;
+                case 'postEvent':
+                    html = generatePostEventEmail(sampleData, theme, ticketDesign);
+                    break;
+                case 'abandonedCart':
+                    html = generateAbandonedCartEmail(sampleData);
+                    break;
+            }
+
+            console.log('generatePreview: HTML generated, length:', html.length);
+            setPreviewHtml(html);
+            console.log('generatePreview: previewHtml state updated');
+        } catch (error) {
+            console.error('generatePreview: Error occurred:', error);
+        }
     };
 
     // Theme helper (matches backend logic)
