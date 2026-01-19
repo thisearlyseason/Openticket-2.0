@@ -1625,11 +1625,11 @@ export const EventBuilder = () => {
 
                                             <div>
                                                 <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Custom Fees</label>
-                                                {formData.customFees?.map((fee, index) => (
+                                                {formData.customFees?.map((fee, index) => fee && (
                                                     <div key={index} className="flex gap-2 mb-2">
                                                         <Input
                                                             placeholder="Name"
-                                                            value={fee.name}
+                                                            value={fee.name || ''}
                                                             onChange={e => {
                                                                 const newFees = [...(formData.customFees || [])];
                                                                 newFees[index].name = e.target.value;
@@ -1642,7 +1642,7 @@ export const EventBuilder = () => {
                                                             <Input
                                                                 type="number"
                                                                 placeholder="Amount"
-                                                                value={fee.amount}
+                                                                value={fee.amount || ''}
                                                                 onChange={e => {
                                                                     const newFees = [...(formData.customFees || [])];
                                                                     newFees[index].amount = Number(e.target.value);
@@ -1653,7 +1653,7 @@ export const EventBuilder = () => {
                                                         </div>
                                                         <select
                                                             className="bg-white dark:bg-black rounded-lg text-sm px-2 border border-zinc-300 dark:border-zinc-700 h-10"
-                                                            value={fee.type}
+                                                            value={fee.type || 'fixed'}
                                                             onChange={e => {
                                                                 const newFees = [...(formData.customFees || [])];
                                                                 newFees[index].type = e.target.value as 'fixed' | 'percent';
