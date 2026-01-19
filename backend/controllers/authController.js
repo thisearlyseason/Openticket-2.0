@@ -22,7 +22,13 @@ export const login = async (req, res) => {
         const { email, password } = req.body;
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        res.json({ session: data.session, user: data.user });
+        
+        // Return both session and token for compatibility
+        res.json({ 
+            session: data.session,
+            user: data.user,
+            token: data.session.access_token  // Add access_token as token field
+        });
     } catch (error) {
         res.status(401).json({ error: error.message });
     }
