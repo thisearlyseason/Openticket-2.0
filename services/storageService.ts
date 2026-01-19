@@ -1295,6 +1295,11 @@ export const StorageService = {
         return StorageService.getMyEvents();
     },
 
+    // Alias for backwards compatibility
+    getEvent: async (id: string): Promise<Event | null> => {
+        return StorageService.getEventById(id);
+    },
+
     getEventById: async (id: string): Promise<Event | null> => {
         if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id) || null;
         try {
