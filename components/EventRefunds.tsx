@@ -310,9 +310,31 @@ export const EventRefunds = () => {
             }, 5000);
 
         } catch (error: any) {
-            // Show detailed error modal instead of basic alert
+            // Show detailed error in a user-friendly way
             console.error('[Refund] Error:', error);
-            window.alert('Refund failed: ' + error.message);
+            
+            // Parse error message for better display
+            const errorParts = error.message.split('\n\n');
+            const mainError = errorParts[0] || 'An error occurred';
+            const stripeError = errorParts.find((p: string) => p.startsWith('Stripe Error:'));
+            
+            // Create a more informative error message
+            let userMessage = `❌ Refund Failed\n\n${mainError}`;
+            
+            if (stripeError) {
+                userMessage += `\n\n${stripeError}`;
+                
+                // Add helpful hints based on common Stripe errors
+                if (error.message.includes('charge_already_refunded')) {
+                    userMessage += '\n\n💡 This payment has already been refunded in Stripe.';
+                } else if (error.message.includes('charge_not_found')) {
+                    userMessage += '\n\n💡 The original payment could not be found in Stripe.';
+                } else if (error.message.includes('insufficient_funds')) {
+                    userMessage += '\n\n💡 Your Stripe account has insufficient funds for this refund.';
+                }
+            }
+            
+            window.alert(userMessage);
         } finally {
             setIsProcessing(false);
         }
