@@ -227,7 +227,7 @@ export const MobileTicketView = () => {
                 setRegistration(reg);
 
                 // Fetch event
-                const evt = await StorageService.getEvent(reg.eventId);
+                const evt = await StorageService.getEventById(reg.eventId);
                 if (!evt) {
                     setError('Event not found');
                     setLoading(false);

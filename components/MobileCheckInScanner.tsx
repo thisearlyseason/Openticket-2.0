@@ -79,7 +79,7 @@ export const MobileCheckInScanner: React.FC = () => {
             
             // Try online first
             if (navigator.onLine) {
-                eventData = await StorageService.getEvent(id);
+                eventData = await StorageService.getEventById(id);
                 if (eventData) {
                     // Cache for offline use
                     await offlineSyncService.cacheEvent(id, eventData);
