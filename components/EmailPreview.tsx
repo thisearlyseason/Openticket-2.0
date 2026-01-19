@@ -589,6 +589,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                             {previewHtml ? (
                                 <iframe
                                     srcDoc={previewHtml}
+                                    sandbox="allow-same-origin"
                                     className="w-full bg-white rounded"
                                     style={{ height: '600px', border: 'none' }}
                                     title="Email Preview"
