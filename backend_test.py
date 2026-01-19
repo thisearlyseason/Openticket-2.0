@@ -778,7 +778,166 @@ class KioskModeTester:
             self.log_result("Validate Revoked Token", False, f"Exception: {str(e)}")
             return False
 
-    def test_backend_health_and_connectivity(self):
+    def test_kiosk_endpoints_without_auth(self):
+        """Test Case 10: Test kiosk endpoints that don't require authentication"""
+        try:
+            if not self.event_id:
+                self.log_result(
+                    "Kiosk Endpoints Without Auth - No Event ID",
+                    False,
+                    "❌ Cannot test without event ID",
+                    {"event_id": None}
+                )
+                return False
+            
+            # Test validate endpoint with invalid token (should return 404/403)
+            payload = {
+                "tokenId": "invalid-token-12345",
+                "eventId": self.event_id
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/validate", json=payload)
+            
+            if response.status_code in [404, 403]:
+                try:
+                    data = response.json()
+                    if 'error' in data:
+                        self.log_result(
+                            "Kiosk Validate Endpoint (Invalid Token)",
+                            True,
+                            f"✅ Correctly rejected invalid token: {data.get('error')}",
+                            {
+                                "status": response.status_code,
+                                "error": data.get('error'),
+                                "endpoint_working": True
+                            }
+                        )
+                    else:
+                        self.log_result(
+                            "Kiosk Validate Endpoint - Missing Error",
+                            False,
+                            "❌ Expected error message in response",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Kiosk Validate Endpoint - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Kiosk Validate Endpoint",
+                    False,
+                    f"❌ Unexpected status code for invalid token: {response.status_code}",
+                    response.text
+                )
+                return False
+            
+            # Test guest search with invalid token (should return 403)
+            params = {
+                "query": "test",
+                "tokenId": "invalid-token-12345",
+                "eventId": self.event_id
+            }
+            
+            response = self.session.get(f"{BACKEND_URL}/api/kiosk/guest-search", params=params)
+            
+            if response.status_code == 403:
+                try:
+                    data = response.json()
+                    if 'error' in data:
+                        self.log_result(
+                            "Kiosk Guest Search Endpoint (Invalid Token)",
+                            True,
+                            f"✅ Correctly rejected invalid token: {data.get('error')}",
+                            {
+                                "status": response.status_code,
+                                "error": data.get('error'),
+                                "endpoint_working": True
+                            }
+                        )
+                    else:
+                        self.log_result(
+                            "Kiosk Guest Search Endpoint - Missing Error",
+                            False,
+                            "❌ Expected error message in response",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Kiosk Guest Search Endpoint - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Kiosk Guest Search Endpoint",
+                    False,
+                    f"❌ Unexpected status code for invalid token: {response.status_code}",
+                    response.text
+                )
+                return False
+            
+            # Test scan endpoint with invalid token (should return 403)
+            payload = {
+                "qrCode": "INVALID_CODE_12345",
+                "tokenId": "invalid-token-12345",
+                "eventId": self.event_id,
+                "deviceId": "test-device"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/api/kiosk/scan", json=payload)
+            
+            if response.status_code == 403:
+                try:
+                    data = response.json()
+                    if 'error' in data:
+                        self.log_result(
+                            "Kiosk Scan Endpoint (Invalid Token)",
+                            True,
+                            f"✅ Correctly rejected invalid token: {data.get('error')}",
+                            {
+                                "status": response.status_code,
+                                "error": data.get('error'),
+                                "endpoint_working": True
+                            }
+                        )
+                        return True
+                    else:
+                        self.log_result(
+                            "Kiosk Scan Endpoint - Missing Error",
+                            False,
+                            "❌ Expected error message in response",
+                            data
+                        )
+                        return False
+                except json.JSONDecodeError:
+                    self.log_result(
+                        "Kiosk Scan Endpoint - JSON Error",
+                        False,
+                        "❌ Invalid JSON response",
+                        response.text
+                    )
+                    return False
+            else:
+                self.log_result(
+                    "Kiosk Scan Endpoint",
+                    False,
+                    f"❌ Unexpected status code for invalid token: {response.status_code}",
+                    response.text
+                )
+                return False
+                
+        except Exception as e:
+            self.log_result("Kiosk Endpoints Without Auth", False, f"Exception: {str(e)}")
+            return False
         """Test Case 10: Verify backend is healthy and kiosk endpoints exist"""
         try:
             # Test basic connectivity
