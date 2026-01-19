@@ -383,7 +383,7 @@ export const refundConfirmation = ({ attendeeName, eventTitle, eventDate, eventL
             "Refund Processed 💸",
             "Your tickets have been refunded",
             content,
-            "This is an automated message from OpenTicket",
+            `From ${organizerName || 'Event Organizer'} • Powered by OpenTicket`,
             { logoUrl: ticketDesign?.logoUrl, theme }
         )
     };
