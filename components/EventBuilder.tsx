@@ -2116,7 +2116,15 @@ export const EventBuilder = () => {
                                                     <Button
                                                         size="sm"
                                                         variant="secondary"
-                                                        onClick={() => navigate(`/dashboard/events/${id}/email-preview`)}
+                                                        onClick={() => {
+                                                            if (id) {
+                                                                // If editing existing event, navigate to preview page
+                                                                navigate(`/manage/${id}/email-preview`);
+                                                            } else {
+                                                                // If creating new event, show inline preview
+                                                                setShowEmailPreview(true);
+                                                            }
+                                                        }}
                                                         className="flex items-center gap-2"
                                                     >
                                                         <Eye size={14} />
