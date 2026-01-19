@@ -1312,6 +1312,26 @@ When API calls return 401 Unauthorized:
 - [x] Backend runs with all cron jobs initialized
 - [ ] Full end-to-end email testing pending (requires Stripe webhooks)
 
+### ✅ UI/UX Improvements (January 18, 2026)
+
+#### Refunded Tickets Display Enhancement
+- [x] **MyTickets.tsx - Event List View:**
+  - Shows refunded count badge on event cards
+  - Fully refunded orders: Red background, "💸 REFUNDED" badge, grayscale image, strikethrough title
+  - Partially refunded: Orange badge showing "X Refunded"
+  
+- [x] **MyTickets.tsx - Ticket Detail View:**
+  - Refunded tickets now shown in Active tab (not hidden)
+  - Red border, red background tint, opacity reduced
+  - Large pulsing "💸 REFUNDED" badge
+  - "NO LONGER VALID" additional badge
+  - Event title has strikethrough styling
+  - QR code area grayed out for refunded tickets
+
+- [x] **EventRefunds.tsx - Better Error Handling:**
+  - Enhanced error messages with Stripe error details
+  - Helpful hints for common errors (already_refunded, charge_not_found, insufficient_funds)
+
 ---
 
 ## Backlog & Future Tasks
