@@ -24,6 +24,8 @@ interface AttendeeItem {
     checkedIn: boolean; // For tickets: check-in. For addons: fulfilled.
     fulfilled?: boolean;
     addOns?: { name: string; quantity: number; price: number }[]; // Add-ons for this guest
+    ticketId?: string;  // Unique ticket ID for individual tickets
+    ticketNumber?: string;  // Human-readable ticket number
 }
 
 export const AttendeeManager = () => {
