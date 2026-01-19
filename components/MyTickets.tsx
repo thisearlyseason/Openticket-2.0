@@ -532,25 +532,41 @@ export const MyTickets = () => {
 
                     <div className="space-y-6">
                         {selectedGroup.tickets.map((ticket, i) => (
-                            <div key={i} className={`rounded-3xl overflow-hidden shadow-lg flex flex-col md:flex-row relative transition-all hover:shadow-xl ${ticket.isAddOn ? 'bg-zinc-50 dark:bg-zinc-900/40 border-2 border-dashed border-zinc-200 dark:border-zinc-800' : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800'}`}>
+                            <div key={i} className={`rounded-3xl overflow-hidden shadow-lg flex flex-col md:flex-row relative transition-all hover:shadow-xl ${
+                                ticket.status === 'refunded' 
+                                    ? 'bg-red-50 dark:bg-red-950/30 border-2 border-red-300 dark:border-red-800 opacity-75' 
+                                    : ticket.isAddOn 
+                                        ? 'bg-zinc-50 dark:bg-zinc-900/40 border-2 border-dashed border-zinc-200 dark:border-zinc-800' 
+                                        : 'bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800'
+                            }`}>
+                                {/* Refunded Overlay */}
+                                {ticket.status === 'refunded' && (
+                                    <div className="absolute inset-0 bg-red-500/5 dark:bg-red-500/10 z-0 pointer-events-none" />
+                                )}
+                                
                                 {/* Status Banner */}
-                                {ticket.status === 'refunded' && <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase z-10">Refunded</div>}
+                                {ticket.status === 'refunded' && (
+                                    <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-black uppercase z-10 shadow-lg animate-pulse">
+                                        💸 REFUNDED
+                                    </div>
+                                )}
                                 {ticket.status === 'pay_at_door' && <div className="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black uppercase z-10">Pay at Door</div>}
                                 {ticket.transferStatus === 'transferred_in' && <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-black uppercase z-10">Transferred In</div>}
 
-                                <div className="flex-1 p-6 md:p-8">
+                                <div className={`flex-1 p-6 md:p-8 relative z-1 ${ticket.status === 'refunded' ? 'opacity-60' : ''}`}>
                                     <div className="flex justify-between items-start mb-6">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <div className={`text-xs font-bold uppercase tracking-wider ${ticket.isAddOn ? 'text-pink-500' : 'text-zinc-500'}`}>{ticket.isAddOn ? 'Add-On Item' : ticket.ticketInfo.name}</div>
+                                                <div className={`text-xs font-bold uppercase tracking-wider ${ticket.status === 'refunded' ? 'text-red-500' : ticket.isAddOn ? 'text-pink-500' : 'text-zinc-500'}`}>{ticket.isAddOn ? 'Add-On Item' : ticket.ticketInfo.name}</div>
                                                 {ticket.isAddOn && <Badge className="bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 text-[10px]">EXTRA</Badge>}
+                                                {ticket.status === 'refunded' && <Badge className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px]">NO LONGER VALID</Badge>}
                                                 {ticket.transferStatus === 'transferred_in' && ticket.transferredFrom && (
                                                     <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
                                                         FROM: {ticket.transferredFrom}
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <h2 className="text-3xl font-black text-zinc-900 dark:text-white leading-none mb-1">{ticket.event.title}</h2>
+                                            <h2 className={`text-3xl font-black leading-none mb-1 ${ticket.status === 'refunded' ? 'text-red-900 dark:text-red-300 line-through' : 'text-zinc-900 dark:text-white'}`}>{ticket.event.title}</h2>
                                             {ticket.isAddOn && <div className="text-lg font-bold text-zinc-900 dark:text-white mt-2">{ticket.ticketInfo.name}</div>}
                                             {ticket.addOnAnswer && <div className="text-sm font-medium text-zinc-500 mt-1">Option: <span className="text-zinc-900 dark:text-white font-bold">{ticket.addOnAnswer}</span></div>}
                                         </div>
