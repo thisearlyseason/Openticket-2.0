@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGlobalUI } from './GlobalUIProvider';
 import { useConfirm } from './ConfirmContext';
-import { Info, Image as ImageIcon, MapPin, Calendar, Clock, DollarSign, Plus, Trash2, Save, ArrowLeft, Loader2, Sparkles, Check, ChevronRight, Settings, Ticket, Target, Users, CreditCard, Shield, Globe, Gift, HelpCircle, FileText, Megaphone, CheckCircle2, QrCode, Tag, Percent, LinkIcon as LinkIcon, Copy, Mail, AlertCircle, X, Heart } from 'lucide-react';
+import { Info, Image as ImageIcon, MapPin, Calendar, Clock, DollarSign, Plus, Trash2, Save, ArrowLeft, Loader2, Sparkles, Check, ChevronRight, Settings, Ticket, Target, Users, CreditCard, Shield, Globe, Gift, HelpCircle, FileText, Megaphone, CheckCircle2, QrCode, Tag, Percent, LinkIcon as LinkIcon, Copy, Mail, AlertCircle, X, Heart, Eye } from 'lucide-react';
 import { Button, Input, RichTextarea, Select, Card, FileDropZone, DatePicker, TimePicker, Switch, Tooltip, formatTime, ErrorModal } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { GeminiService } from '../services/geminiService';
