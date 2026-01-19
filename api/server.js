@@ -211,6 +211,9 @@ app.use('/api/upload', uploadRoutes);
 // Settings routes (global admin settings)
 app.use('/api/settings', settingsRoutes);
 
+// Kiosk routes (event-scoped kiosk mode)
+app.use('/api/kiosk', kioskRoutes);
+
 // SMM (Social Media Management) routes
 app.use('/api/smm', smmRoutes);
 
