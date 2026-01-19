@@ -8,6 +8,7 @@ import { Button, Input, RichTextarea, Select, Card, FileDropZone, DatePicker, Ti
 import { StorageService, PLANS } from '../services/storageService';
 import { GeminiService } from '../services/geminiService';
 import { Event, User, TicketTier, AddOn, AffiliateLink, GalleryItem, PromoCode, PaymentConfig, Question } from '../types';
+import { EmailPreview } from './EmailPreview';
 
 const STEPS = [
     { id: 1, label: 'Details', icon: Calendar },
