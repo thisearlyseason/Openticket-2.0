@@ -36,6 +36,7 @@ import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
 import settingsRoutes from '../backend/routes/settingsRoutes.js';
 import smmRoutes from '../backend/routes/smmRoutes.js';
+import kioskRoutes from '../backend/routes/kioskRoutes.js';
 
 // Controllers
 import { handleWebhook } from '../backend/controllers/stripeWebhookController.js';
