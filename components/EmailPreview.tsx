@@ -206,9 +206,18 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
         let g = parseInt(hex.substring(2, 4), 16);
         let b = parseInt(hex.substring(4, 6), 16);
 
-        r = Math.max(0, Math.min(255, r + (r * percent / 100)));
-        g = Math.max(0, Math.min(255, g + (g * percent / 100)));
-        b = Math.max(0, Math.min(255, b + (b * percent / 100)));
+        // For lightening (positive percent), blend with white
+        if (percent > 0) {
+            const factor = percent / 100;
+            r = Math.round(r + (255 - r) * factor);
+            g = Math.round(g + (255 - g) * factor);
+            b = Math.round(b + (255 - b) * factor);
+        } else {
+            // For darkening (negative percent), reduce values
+            r = Math.max(0, Math.min(255, r + (r * percent / 100)));
+            g = Math.max(0, Math.min(255, g + (g * percent / 100)));
+            b = Math.max(0, Math.min(255, b + (b * percent / 100)));
+        }
 
         return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
     };
