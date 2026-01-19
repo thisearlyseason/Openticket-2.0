@@ -114,12 +114,16 @@ class OfflineSyncService {
     return new Promise((resolve, reject) => {
       const tx = this.db!.transaction(STORES.OFFLINE_CHECKINS, 'readonly');
       const store = tx.objectStore(STORES.OFFLINE_CHECKINS);
-      const index = store.index('synced');
-      const request = index.getAll(false);
+      
+      // Use getAll() on the store and filter results instead of using index with boolean key
+      // Boolean keys don't work consistently across browsers with IndexedDB
+      const request = store.getAll();
 
       request.onsuccess = () => {
-        console.log('[OfflineSync] Found pending check-ins:', request.result.length);
-        resolve(request.result);
+        const allRecords = request.result || [];
+        const pendingRecords = allRecords.filter((record: any) => record.synced === false);
+        console.log('[OfflineSync] Found pending check-ins:', pendingRecords.length);
+        resolve(pendingRecords);
       };
 
       request.onerror = () => reject(request.error);
