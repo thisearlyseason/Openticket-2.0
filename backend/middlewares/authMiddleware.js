@@ -26,10 +26,15 @@ const verifyToken = async (req, res, next) => {
     
     // Try Supabase authentication first (shorter tokens, JWT format)
     try {
+        console.log('[Auth] Attempting Supabase verification, token length:', token.length);
         const { data: { user }, error } = await supabase.auth.getUser(token);
         
+        if (error) {
+            console.log('[Auth] Supabase error:', error.message);
+        }
+        
         if (user && !error) {
-            console.log('[Auth] Supabase token verified for user:', user.id);
+            console.log('[Auth] ✅ Supabase token verified for user:', user.id, user.email);
             // Format user object to match Firebase structure
             req.user = {
                 uid: user.id,
@@ -40,7 +45,7 @@ const verifyToken = async (req, res, next) => {
             return next();
         }
     } catch (supabaseError) {
-        console.log('[Auth] Supabase verification failed, trying Firebase...', supabaseError.message);
+        console.log('[Auth] Supabase verification exception:', supabaseError.message);
     }
     
     // Fallback to Firebase authentication (longer tokens)
