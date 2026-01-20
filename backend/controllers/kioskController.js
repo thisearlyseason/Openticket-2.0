@@ -30,20 +30,25 @@ const generateKioskToken = async (req, res) => {
         // Try to find the profile's Firebase ID if using Supabase auth
         console.log('[Kiosk] Checking ID mapping - userId length:', userId.length, 'email:', req.user.email);
         if (userId && userId.length > 30 && req.user.email) { // Supabase auth IDs are longer
-            console.log('[Kiosk] Looking up profile for email:', req.user.email);
-            const { data: profiles, error: profileError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('email', req.user.email);
-            
-            const profile = profiles && profiles.length > 0 ? profiles[0] : null;
-            console.log('[Kiosk] Profile lookup result - profile:', profile, 'error:', profileError?.message, 'count:', profiles?.length);
-            
-            if (profile) {
-                console.log('[Kiosk] ✅ Mapped Supabase ID to Firebase ID:', userId, '→', profile.id);
-                userId = profile.id; // Use the Firebase ID from profiles
-            } else {
-                console.log('[Kiosk] No profile found, using original userId:', userId);
+            try {
+                console.log('[Kiosk] Looking up profile for email:', req.user.email);
+                const { data: profiles, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('email', req.user.email);
+                
+                const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+                console.log('[Kiosk] Profile lookup result - profile:', profile, 'error:', profileError?.message, 'count:', profiles?.length);
+                
+                if (profile) {
+                    console.log('[Kiosk] ✅ Mapped Supabase ID to Firebase ID:', userId, '→', profile.id);
+                    userId = profile.id; // Use the Firebase ID from profiles
+                } else {
+                    console.log('[Kiosk] No profile found, using original userId:', userId);
+                }
+            } catch (err) {
+                console.error('[Kiosk] Profile lookup exception:', err.message);
+                console.log('[Kiosk] Continuing with original userId:', userId);
             }
         }
 
