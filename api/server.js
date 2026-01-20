@@ -19,6 +19,7 @@ dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
 // Log Resend configuration status
 console.log('[Server] RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY);
 console.log('[Server] SENDER_EMAIL:', process.env.SENDER_EMAIL || 'not set');
+console.log('[Server] FRONTEND_URL:', process.env.FRONTEND_URL || 'NOT SET');
 
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
