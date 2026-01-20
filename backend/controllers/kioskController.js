@@ -331,18 +331,33 @@ const scanTicket = async (req, res) => {
         }
 
         if (!foundRegistration || !foundTicket) {
-            console.log('[Kiosk Scan] ❌ Ticket not found. QR code:', qrCode);
+            console.log('[Kiosk Scan] ❌ Ticket not found');
+            console.log('[Kiosk Scan] QR code searched:', qrCode);
+            console.log('[Kiosk Scan] Total registrations searched:', registrations?.length || 0);
+            console.log('[Kiosk Scan] Event ID:', eventId);
+            
+            // Debug: Log a sample ticket structure if any exist
+            if (registrations && registrations.length > 0 && registrations[0].tickets) {
+                const sampleTicket = registrations[0].tickets[0];
+                console.log('[Kiosk Scan] Sample ticket structure:', JSON.stringify({
+                    id: sampleTicket.id,
+                    ticketNumber: sampleTicket.ticketNumber,
+                    ticketId: sampleTicket.ticketId
+                }));
+            }
+            
             // Log failed scan
             await logKioskAction(tokenId, eventId, 'scan_failed', {
                 qrCode,
                 reason: 'ticket_not_found',
+                searchedRegistrations: registrations?.length || 0,
                 deviceId
             });
 
             return res.json({
                 success: false,
                 status: 'invalid',
-                message: 'Ticket not found'
+                message: 'Ticket not found. Please ensure this ticket is for this event and was purchased recently.'
             });
         }
 
