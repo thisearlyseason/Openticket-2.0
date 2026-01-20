@@ -3,7 +3,7 @@
  * Handles all kiosk-related API calls
  */
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://openticket.events';
+const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://www.openticket.events';
 
 export interface KioskToken {
     tokenId: string;
