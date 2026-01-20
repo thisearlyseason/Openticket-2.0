@@ -244,6 +244,67 @@ export const KioskHome: React.FC = () => {
                     </Badge>
                 </div>
             </div>
+
+            {/* PIN Prompt Modal */}
+            {showPinPrompt && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <Card className="max-w-md w-full p-6 bg-zinc-900 border-zinc-800">
+                        <div className="text-center mb-6">
+                            <Lock className="mx-auto mb-4 text-primary" size={48} />
+                            <h3 className="text-xl font-bold text-white mb-2">Enter PIN to Exit</h3>
+                            <p className="text-zinc-400 text-sm">
+                                This kiosk is PIN protected. Enter the 4-digit PIN to exit kiosk mode.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <input
+                                type="password"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={4}
+                                value={enteredPin}
+                                onChange={(e) => {
+                                    setEnteredPin(e.target.value.replace(/\D/g, ''));
+                                    setPinError('');
+                                }}
+                                onKeyPress={(e) => e.key === 'Enter' && handlePinSubmit()}
+                                placeholder="••••"
+                                className="w-full text-center text-3xl font-mono tracking-widest bg-zinc-800 border-zinc-700 rounded-lg p-4 text-white focus:ring-2 focus:ring-primary focus:border-primary"
+                                autoFocus
+                            />
+
+                            {pinError && (
+                                <div className="flex items-center gap-2 text-red-500 text-sm bg-red-500/10 p-3 rounded-lg">
+                                    <AlertTriangle size={16} />
+                                    <span>{pinError}</span>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={() => {
+                                        setShowPinPrompt(false);
+                                        setEnteredPin('');
+                                        setPinError('');
+                                    }}
+                                    variant="ghost"
+                                    className="flex-1"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={handlePinSubmit}
+                                    disabled={enteredPin.length !== 4}
+                                    className="flex-1"
+                                >
+                                    Exit Kiosk
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };
