@@ -439,12 +439,17 @@ const searchGuest = async (req, res) => {
         // Flatten results - each ticket becomes a separate result
         const results = [];
         (registrations || []).forEach(r => {
+            // SKIP REFUNDED REGISTRATIONS
+            if (r.payment_status === 'refunded' || r.refunded_amount > 0) {
+                return;
+            }
+
             if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
                 // Add each ticket as a separate result
                 r.tickets.forEach(ticket => {
                     results.push({
                         id: r.id,
-                        ticketId: ticket.id,
+                        ticketId: ticket.id, // SHOW TICKET ID
                         attendeeName: ticket.attendeeName || r.attendee_name,
                         attendeeEmail: ticket.attendeeEmail || r.attendee_email,
                         ticketType: ticket.name || 'General Admission',
