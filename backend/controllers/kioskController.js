@@ -15,6 +15,8 @@ const generateKioskToken = async (req, res) => {
     try {
         const { eventId, permissions, paymentEnabled, pinCode } = req.body;
         let userId = req.user?.uid;
+        
+        console.log('[Kiosk] generateKioskToken called - userId:', userId, 'eventId:', eventId);
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -26,6 +28,7 @@ const generateKioskToken = async (req, res) => {
 
         // Supabase auth ID might not match Firebase ID in profiles table
         // Try to find the profile's Firebase ID if using Supabase auth
+        console.log('[Kiosk] Checking ID mapping - userId length:', userId.length, 'email:', req.user.email);
         if (userId && userId.length > 30 && req.user.email) { // Supabase auth IDs are longer
             const { data: profile } = await supabase
                 .from('profiles')
