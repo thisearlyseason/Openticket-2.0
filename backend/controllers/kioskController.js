@@ -384,11 +384,12 @@ const scanTicket = async (req, res) => {
             success: true,
             status: 'valid',
             message: 'Valid ticket',
-            attendeeName: registration.attendee_name,
-            attendeeEmail: registration.attendee_email,
-            ticketType: registration.ticket_type,
-            price: registration.price,
-            registrationId: registration.id
+            attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
+            attendeeEmail: foundTicket.attendeeEmail || foundRegistration.attendee_email,
+            ticketType: foundTicket.name,
+            price: foundTicket.pricePerTicket || 0,
+            registrationId: foundRegistration.id,
+            ticketId: foundTicket.id
         });
     } catch (error) {
         console.error('[Kiosk] Scan ticket error:', error);
