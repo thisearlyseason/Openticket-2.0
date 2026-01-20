@@ -340,11 +340,19 @@ class KioskService {
      */
     async revokeToken(eventId: string): Promise<{ success: boolean }> {
         try {
+            // Get Firebase auth token
+            const { getAuthToken } = await import('./firebaseConfig');
+            const authToken = await getAuthToken();
+            
+            if (!authToken) {
+                throw new Error('Not authenticated');
+            }
+            
             const response = await fetch(`${API_URL}/api/kiosk/revoke`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({ eventId })
             });
