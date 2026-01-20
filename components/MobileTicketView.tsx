@@ -9,38 +9,33 @@ import { Button, Badge } from './UI';
 interface TicketDisplayProps {
     registration: Registration;
     event: Event;
-    ticketIndex: number;
-    tierId: string;
-    ticketName: string;
-    attendeeName: string;
-    isCheckedIn: boolean;
+    ticket: any; // Individual ticket object with unique ID
 }
 
 const TicketCard: React.FC<TicketDisplayProps> = ({ 
     registration, 
     event, 
-    ticketIndex, 
-    tierId, 
-    ticketName,
-    attendeeName,
-    isCheckedIn 
+    ticket
 }) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const [isExpanded, setIsExpanded] = useState(true);
 
     useEffect(() => {
-        // Generate QR code with ticket data
-        const ticketData = `TICKET:${registration.id}:${tierId}:${ticketIndex}`;
-        QRCode.toDataURL(ticketData, {
-            width: 300,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#ffffff'
-            },
-            errorCorrectionLevel: 'H'
-        }).then(setQrCodeUrl);
-    }, [registration.id, tierId, ticketIndex]);
+        // Generate QR code with UNIQUE ticket ID
+        const ticketData = ticket.qrCodeData || ticket.ticketId || ticket.ticketNumber;
+        
+        if (ticketData) {
+            QRCode.toDataURL(ticketData, {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                },
+                errorCorrectionLevel: 'H'
+            }).then(setQrCodeUrl);
+        }
+    }, [ticket.ticketId, ticket.qrCodeData, ticket.ticketNumber]);
 
     const eventDate = new Date(event.date);
     const formattedDate = eventDate.toLocaleDateString('en-US', {
@@ -49,11 +44,15 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
         day: 'numeric',
         year: 'numeric'
     });
-    const formattedTime = eventDate.toLocaleTimeString('en-US', {
+    const formattedTime = event.time || eventDate.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
     });
+
+    const isCheckedIn = ticket.checkedIn || false;
+    const attendeeName = ticket.attendeeName || registration.attendeeName;
+    const ticketName = ticket.name || 'General Admission';
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -70,11 +69,9 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
     };
 
     const handleAddToWallet = () => {
-        // For now, download the QR code as an image
-        // In production, this would integrate with Apple Wallet / Google Wallet
         if (qrCodeUrl) {
             const link = document.createElement('a');
-            link.download = `ticket-${event.title}-${ticketIndex}.png`;
+            link.download = `ticket-${event.title}-${ticket.ticketNumber || ticket.ticketId}.png`;
             link.href = qrCodeUrl;
             link.click();
         }
@@ -165,6 +162,19 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
                         <div>
                             <p className="text-xs text-zinc-500 uppercase font-bold">Location</p>
                             <p className="font-bold text-zinc-900 dark:text-white">{event.location}</p>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Ticket ID Display */}
+                {(ticket.ticketNumber || ticket.ticketId) && (
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
+                            <Ticket size={18} className="text-zinc-500" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-zinc-500 uppercase font-bold">Ticket #</p>
+                            <p className="font-bold text-zinc-900 dark:text-white font-mono">{ticket.ticketNumber || ticket.ticketId}</p>
                         </div>
                     </div>
                 )}
@@ -265,45 +275,8 @@ export const MobileTicketView = () => {
         );
     }
 
-    // Build list of individual tickets
-    const tickets: Array<{
-        index: number;
-        tierId: string;
-        name: string;
-        attendeeName: string;
-        isCheckedIn: boolean;
-    }> = [];
-
-    if (registration.tickets && registration.tickets.length > 0) {
-        registration.tickets.forEach((ticket, tIndex) => {
-            for (let i = 0; i < ticket.quantity; i++) {
-                const ticketKey = `${ticket.tierId || 'general'}-${tIndex}-${i}`;
-                const statusEntry = registration.checkInStatuses?.[ticketKey];
-                const isCheckedIn = statusEntry ? statusEntry.checkedIn : (registration.checkedIn || false);
-                
-                tickets.push({
-                    index: i,
-                    tierId: ticket.tierId || 'general',
-                    name: ticket.name || 'General Admission',
-                    attendeeName: ticket.attendeeName || registration.attendeeName,
-                    isCheckedIn
-                });
-            }
-        });
-    } else {
-        // Fallback for registrations without tickets array
-        const ticketKey = 'general-0';
-        const statusEntry = registration.checkInStatuses?.[ticketKey];
-        const isCheckedIn = statusEntry ? statusEntry.checkedIn : (registration.checkedIn || false);
-        
-        tickets.push({
-            index: 0,
-            tierId: 'general',
-            name: 'General Admission',
-            attendeeName: registration.attendeeName,
-            isCheckedIn
-        });
-    }
+    // Use the NEW ticket structure directly (each ticket is already unique)
+    const tickets = registration.tickets || [];
 
     return (
         <div className="min-h-screen bg-zinc-100 dark:bg-black pb-safe">
@@ -332,44 +305,39 @@ export const MobileTicketView = () => {
                     </p>
                 )}
                 
-                {tickets.map((ticket, idx) => (
+                {tickets.length > 0 ? (
+                    tickets.map((ticket, idx) => (
+                        <TicketCard
+                            key={ticket.ticketId || `ticket-${idx}`}
+                            registration={registration}
+                            event={event}
+                            ticket={ticket}
+                        />
+                    ))
+                ) : (
                     <TicketCard
-                        key={`${ticket.tierId}-${idx}`}
+                        key="default-ticket"
                         registration={registration}
                         event={event}
-                        ticketIndex={ticket.index}
-                        tierId={ticket.tierId}
-                        ticketName={ticket.name}
-                        attendeeName={ticket.attendeeName}
-                        isCheckedIn={ticket.isCheckedIn}
+                        ticket={{
+                            ticketNumber: 'GENERAL-001',
+                            ticketId: registration.id,
+                            qrCodeData: registration.id,
+                            name: 'General Admission',
+                            attendeeName: registration.attendeeName,
+                            checkedIn: registration.checkedIn || false
+                        }}
                     />
-                ))}
+                )}
 
                 {/* Event Info Card */}
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800">
                     <h4 className="font-bold text-zinc-900 dark:text-white mb-3">Event Information</h4>
-                    <div className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-                        {event.description && (
-                            <p className="line-clamp-3">{event.description}</p>
-                        )}
-                        <Button 
-                            variant="ghost" 
-                            onClick={() => navigate(`/event/${event.id}`)}
-                            className="w-full mt-3"
-                        >
-                            View Event Details
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Help Section */}
-                <div className="text-center text-xs text-zinc-400 py-4">
-                    <p>Show this QR code at the venue entrance</p>
-                    <p className="mt-1">Having issues? Contact the event organizer</p>
+                    {event.description && (
+                        <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">{event.description}</p>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
-
-export default MobileTicketView;
