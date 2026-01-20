@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Environment variables are loaded by server.js before this module is imported
-// Do NOT call dotenv.config() here - it causes initialization timing issues
+// Use environment variables that are already loaded by the server
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validate environment variables are present
+if (!supabaseUrl || !supabaseKey) {
+    console.error('[Supabase] CRITICAL: Missing environment variables!');
+    console.error('[Supabase] SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING');
+    console.error('[Supabase] SUPABASE_SERVICE_ROLE_KEY:', supabaseKey ? 'SET' : 'MISSING');
+    throw new Error('Supabase client not initialized: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing');
+}
 
 let supabase;
 
