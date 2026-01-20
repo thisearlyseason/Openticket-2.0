@@ -247,10 +247,13 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
     // Get theme from ticketDesign
     const theme = getThemeFromDesign(ticketDesign);
     
-    const ticketList = (tickets || []).map(t => `
+    // Each ticket is UNIQUE - display them individually with their unique IDs
+    const ticketList = (tickets || []).map((t, idx) => `
         <div style="border: 1px solid ${BASE_STYLES.borderColor}; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb;">
-            <h4 style="margin: 0 0 8px 0; color: ${theme.textColor};">🎫 ${t.name || 'Ticket'}</h4>
-            <p style="margin: 0; color: ${theme.mutedColor}; font-size: 14px;">Qty: ${t.quantity || 1} × $${(t.price || 0).toFixed(2)}</p>
+            <h4 style="margin: 0 0 8px 0; color: ${theme.textColor};">🎫 ${t.name || 'Ticket'} ${tickets.length > 1 ? `#${idx + 1}` : ''}</h4>
+            <p style="margin: 0 0 4px 0; color: ${theme.mutedColor}; font-size: 14px;">Attendee: <strong style="color: ${theme.textColor};">${t.attendeeName || attendeeName}</strong></p>
+            <p style="margin: 0 0 4px 0; color: ${theme.mutedColor}; font-size: 14px;">Price: $${(t.pricePerTicket || t.price || 0).toFixed(2)}</p>
+            ${t.ticketNumber || t.id ? `<p style="margin: 0; font-family: monospace; color: #9ca3af; font-size: 12px;">Ticket ID: ${t.ticketNumber || t.id}</p>` : ''}
         </div>
     `).join('');
 
