@@ -338,7 +338,7 @@ class KioskService {
     /**
      * Revoke kiosk token (organizer only)
      */
-    async revokeToken(eventId: string): Promise<{ success: boolean }> {
+    async revokeToken(eventId: string, tokenId?: string): Promise<{ success: boolean }> {
         try {
             // Get Firebase auth token
             const { getAuthToken } = await import('./firebaseConfig');
@@ -354,7 +354,10 @@ class KioskService {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${authToken}`
                 },
-                body: JSON.stringify({ eventId })
+                body: JSON.stringify({ 
+                    eventId,
+                    tokenId: tokenId || this.tokenId // Use provided tokenId or stored one
+                })
             });
 
             if (!response.ok) {
