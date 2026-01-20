@@ -5,7 +5,7 @@ import { Button } from './UI';
 
 interface QRScannerProps {
     onScan: (result: string) => void;
-    onClose: () => void;
+    onClose?: () => void;
     isOpen: boolean;
 }
 
