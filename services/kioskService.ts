@@ -255,14 +255,23 @@ class KioskService {
         kioskUrl?: string;
     }> {
         try {
+            // Get Firebase auth token
+            const { getAuthToken } = await import('./firebaseConfig');
+            const authToken = await getAuthToken();
+            
+            if (!authToken) {
+                throw new Error('Not authenticated');
+            }
+            
             const response = await fetch(`${API_URL}/api/kiosk/status/${eventId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
 
             if (!response.ok) {
-                throw new Error('Failed to get kiosk status');
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to get kiosk status');
             }
 
             return await response.json();
