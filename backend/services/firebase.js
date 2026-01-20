@@ -1,4 +1,8 @@
 import admin from 'firebase-admin';
+import dotenv from 'dotenv';
+
+// Load environment variables if not already loaded
+dotenv.config();
 
 // Environment variables are loaded by server.js
 if (!process.env.FIREBASE_PRIVATE_KEY) {

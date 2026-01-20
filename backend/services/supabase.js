@@ -1,6 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-// Environment variables are loaded by server.js
+// Load environment variables if not already loaded
+// This is safe - dotenv won't override already-set variables
+dotenv.config();
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
