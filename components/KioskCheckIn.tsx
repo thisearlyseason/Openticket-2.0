@@ -18,6 +18,7 @@ export const KioskCheckIn: React.FC = () => {
     const { eventId } = useParams<{ eventId: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const tokenId = searchParams.get('token');
 
     const [showScanner, setShowScanner] = useState(searchParams.get('mode') !== 'search');
     const [showSearch, setShowSearch] = useState(searchParams.get('mode') === 'search');
@@ -108,7 +109,11 @@ export const KioskCheckIn: React.FC = () => {
     };
 
     const handlePayment = (registrationId: string) => {
-        navigate(`/kiosk/${eventId}/payment/${registrationId}`);
+        navigate(`/kiosk/${eventId}/payment/${registrationId}?token=${tokenId}`);
+    };
+
+    const handleBack = () => {
+        navigate(`/kiosk/${eventId}?token=${tokenId}`);
     };
 
     const getStatusColor = (status: string) => {
@@ -128,7 +133,7 @@ export const KioskCheckIn: React.FC = () => {
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Button
                         variant="ghost"
-                        onClick={() => navigate(`/kiosk/${eventId}`)}
+                        onClick={handleBack}
                         className="flex items-center gap-2"
                     >
                         <ArrowLeft size={20} />
@@ -173,7 +178,8 @@ export const KioskCheckIn: React.FC = () => {
                     <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
                         <QRScanner
                             onScan={handleScan}
-                            isActive={showScanner && !isProcessing}
+                            onClose={() => setShowScanner(false)}
+                            isOpen={showScanner && !isProcessing}
                         />
                         {isProcessing && (
                             <div className="text-center py-4">
