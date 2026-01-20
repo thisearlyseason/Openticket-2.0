@@ -35,6 +35,7 @@ export const KioskCheckIn: React.FC = () => {
 
         setIsProcessing(true);
         setCurrentScan(null);
+        setShowScanner(false); // STOP scanning after successful scan
 
         try {
             console.log('[KioskCheckIn] Scanning QR:', qrData);
@@ -74,7 +75,9 @@ export const KioskCheckIn: React.FC = () => {
         setIsSearching(true);
         try {
             const results = await kioskService.searchGuest(searchQuery);
-            setSearchResults(results);
+            // FILTER OUT REFUNDED TICKETS
+            const validResults = results.filter(r => r.paymentStatus !== 'refunded');
+            setSearchResults(validResults);
         } catch (error) {
             console.error('[KioskCheckIn] Search error:', error);
         } finally {
@@ -113,7 +116,18 @@ export const KioskCheckIn: React.FC = () => {
     };
 
     const handleBack = () => {
+        if (!tokenId) {
+            console.error('[KioskCheckIn] No token found in URL');
+            navigate(`/kiosk/${eventId}`);
+            return;
+        }
         navigate(`/kiosk/${eventId}?token=${tokenId}`);
+    };
+
+    const handleScanAnother = () => {
+        setCurrentScan(null);
+        setShowScanner(true);
+        setShowSearch(false);
     };
 
     const getStatusColor = (status: string) => {
@@ -124,6 +138,15 @@ export const KioskCheckIn: React.FC = () => {
             case 'payment_required': return 'bg-orange-500';
             default: return 'bg-zinc-500';
         }
+    };
+
+    // Check if payment is actually required (not just unpaid)
+    const needsPayment = (guest: GuestSearchResult) => {
+        // Only show "Pay Now" if payment_status is NOT 'paid' or 'succeeded'
+        // AND price > 0
+        return guest.price > 0 && 
+               guest.paymentStatus !== 'paid' && 
+               guest.paymentStatus !== 'succeeded';
     };
 
     return (
@@ -145,36 +168,38 @@ export const KioskCheckIn: React.FC = () => {
             </div>
 
             <div className="max-w-7xl mx-auto p-6">
-                {/* Mode Toggle */}
-                <div className="flex gap-4 mb-6">
-                    <Button
-                        onClick={() => {
-                            setShowScanner(true);
-                            setShowSearch(false);
-                        }}
-                        variant={showScanner ? 'default' : 'secondary'}
-                        className="flex-1"
-                        size="lg"
-                    >
-                        <QrCode size={20} className="mr-2" />
-                        Scan QR Code
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            setShowScanner(false);
-                            setShowSearch(true);
-                        }}
-                        variant={showSearch ? 'default' : 'secondary'}
-                        className="flex-1"
-                        size="lg"
-                    >
-                        <Search size={20} className="mr-2" />
-                        Manual Search
-                    </Button>
-                </div>
+                {/* Mode Toggle - Only show if no current scan result */}
+                {!currentScan && (
+                    <div className="flex gap-4 mb-6">
+                        <Button
+                            onClick={() => {
+                                setShowScanner(true);
+                                setShowSearch(false);
+                            }}
+                            variant={showScanner ? 'default' : 'secondary'}
+                            className="flex-1"
+                            size="lg"
+                        >
+                            <QrCode size={20} className="mr-2" />
+                            Scan QR Code
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setShowScanner(false);
+                                setShowSearch(true);
+                            }}
+                            variant={showSearch ? 'default' : 'secondary'}
+                            className="flex-1"
+                            size="lg"
+                        >
+                            <Search size={20} className="mr-2" />
+                            Manual Search
+                        </Button>
+                    </div>
+                )}
 
                 {/* Scanner Mode */}
-                {showScanner && (
+                {showScanner && !currentScan && (
                     <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
                         <QRScanner
                             onScan={handleScan}
@@ -191,7 +216,7 @@ export const KioskCheckIn: React.FC = () => {
                 )}
 
                 {/* Search Mode */}
-                {showSearch && (
+                {showSearch && !currentScan && (
                     <Card className="p-6 bg-zinc-900 border-zinc-800 mb-6">
                         <div className="flex gap-4 mb-6">
                             <Input
@@ -227,7 +252,7 @@ export const KioskCheckIn: React.FC = () => {
                                 </h3>
                                 {searchResults.map((guest) => (
                                     <Card
-                                        key={guest.id}
+                                        key={`${guest.id}-${guest.ticketId}`}
                                         className={`p-4 cursor-pointer hover:border-primary transition-colors ${
                                             guest.checkedIn ? 'bg-zinc-800/50 border-zinc-700' : 'bg-zinc-800 border-zinc-700'
                                         }`}
@@ -241,6 +266,11 @@ export const KioskCheckIn: React.FC = () => {
                                                     <Badge variant="secondary" className="text-xs">
                                                         {guest.ticketType}
                                                     </Badge>
+                                                    {guest.ticketId && (
+                                                        <Badge variant="outline" className="text-xs font-mono">
+                                                            {guest.ticketId}
+                                                        </Badge>
+                                                    )}
                                                     {guest.price > 0 && (
                                                         <span className="text-xs text-zinc-500">
                                                             ${guest.price.toFixed(2)}
@@ -253,7 +283,7 @@ export const KioskCheckIn: React.FC = () => {
                                                     <CheckCircle2 size={16} />
                                                     Checked In
                                                 </Badge>
-                                            ) : guest.paymentStatus !== 'succeeded' && guest.price > 0 ? (
+                                            ) : needsPayment(guest) ? (
                                                 <Button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -302,6 +332,14 @@ export const KioskCheckIn: React.FC = () => {
                                     <h2 className="text-3xl font-bold text-white mb-2">Welcome!</h2>
                                     <p className="text-2xl text-white/90 mb-2">{currentScan.attendeeName}</p>
                                     <p className="text-white/80">{currentScan.ticketType}</p>
+                                    <Button
+                                        onClick={handleScanAnother}
+                                        variant="secondary"
+                                        size="lg"
+                                        className="mt-6"
+                                    >
+                                        Scan Another
+                                    </Button>
                                 </>
                             ) : currentScan.status === 'payment_required' ? (
                                 <>
@@ -324,12 +362,27 @@ export const KioskCheckIn: React.FC = () => {
                                     <AlertTriangle className="mx-auto mb-4 text-white" size={64} />
                                     <h2 className="text-2xl font-bold text-white mb-2">Already Checked In</h2>
                                     <p className="text-xl text-white/90">{currentScan.attendeeName}</p>
+                                    <Button
+                                        onClick={handleScanAnother}
+                                        variant="secondary"
+                                        size="lg"
+                                        className="mt-6"
+                                    >
+                                        Scan Another
+                                    </Button>
                                 </>
                             ) : (
                                 <>
                                     <XCircle className="mx-auto mb-4 text-white" size={64} />
                                     <h2 className="text-2xl font-bold text-white mb-2">Invalid Ticket</h2>
-                                    <p className="text-white/90">{currentScan.message}</p>
+                                    <p className="text-white/90 mb-6">{currentScan.message}</p>
+                                    <Button
+                                        onClick={handleScanAnother}
+                                        variant="secondary"
+                                        size="lg"
+                                    >
+                                        Try Again
+                                    </Button>
                                 </>
                             )}
                         </div>
