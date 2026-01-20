@@ -31,16 +31,16 @@ const generateKioskToken = async (req, res) => {
         console.log('[Kiosk] Checking ID mapping - userId length:', userId.length, 'email:', req.user.email);
         if (userId && userId.length > 30 && req.user.email) { // Supabase auth IDs are longer
             console.log('[Kiosk] Looking up profile for email:', req.user.email);
-            const { data: profile, error: profileError } = await supabase
+            const { data: profiles, error: profileError } = await supabase
                 .from('profiles')
                 .select('id')
-                .eq('email', req.user.email)
-                .single();
+                .eq('email', req.user.email);
             
-            console.log('[Kiosk] Profile lookup result - profile:', profile, 'error:', profileError?.message);
+            const profile = profiles && profiles.length > 0 ? profiles[0] : null;
+            console.log('[Kiosk] Profile lookup result - profile:', profile, 'error:', profileError?.message, 'count:', profiles?.length);
             
             if (profile) {
-                console.log('[Kiosk] Mapped Supabase ID to Firebase ID:', userId, '→', profile.id);
+                console.log('[Kiosk] ✅ Mapped Supabase ID to Firebase ID:', userId, '→', profile.id);
                 userId = profile.id; // Use the Firebase ID from profiles
             } else {
                 console.log('[Kiosk] No profile found, using original userId:', userId);
