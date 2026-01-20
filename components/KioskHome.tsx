@@ -14,6 +14,8 @@ export const KioskHome: React.FC = () => {
     const [token, setToken] = useState<KioskToken | null>(null);
     const [event, setEvent] = useState<KioskEvent | null>(null);
     const [showPinPrompt, setShowPinPrompt] = useState(false);
+    const [enteredPin, setEnteredPin] = useState('');
+    const [pinError, setPinError] = useState('');
 
     useEffect(() => {
         initializeKiosk();
@@ -65,10 +67,33 @@ export const KioskHome: React.FC = () => {
     };
 
     const handleExitKiosk = () => {
-        // If PIN is required, show prompt
-        // For now, just clear and exit
+        // Check if PIN is required
+        if (token?.pinCode) {
+            setShowPinPrompt(true);
+            setEnteredPin('');
+            setPinError('');
+        } else {
+            confirmExit();
+        }
+    };
+
+    const handlePinSubmit = () => {
+        if (enteredPin === token?.pinCode) {
+            setShowPinPrompt(false);
+            confirmExit();
+        } else {
+            setPinError('Incorrect PIN. Please try again.');
+            setEnteredPin('');
+        }
+    };
+
+    const confirmExit = () => {
         if (window.confirm('Are you sure you want to exit kiosk mode?')) {
             kioskService.clearSession();
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.log('Exit fullscreen error:', err));
+            }
             window.location.href = '/';
         }
     };
