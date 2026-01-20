@@ -109,7 +109,7 @@ export const KioskSettings: React.FC<KioskSettingsProps> = ({ eventId }) => {
             setError(null);
             setSuccessMessage(null);
 
-            await kioskService.revokeToken(eventId);
+            await kioskService.revokeToken(eventId, token?.tokenId);
 
             setToken(null);
             setKioskUrl('');
