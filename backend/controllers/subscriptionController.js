@@ -1,10 +1,9 @@
 
-import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
-dotenv.config();
+// Environment variables are loaded by server.js
 
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
