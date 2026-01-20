@@ -1,7 +1,6 @@
 import admin from 'firebase-admin';
-import dotenv from 'dotenv';
-dotenv.config();
 
+// Environment variables are loaded by server.js
 if (!process.env.FIREBASE_PRIVATE_KEY) {
     console.error('CRITICAL: FIREBASE_PRIVATE_KEY is missing');
 }
