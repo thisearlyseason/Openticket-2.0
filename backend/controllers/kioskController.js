@@ -297,6 +297,7 @@ const scanTicket = async (req, res) => {
         }
 
         // Find registration by searching within tickets JSON array
+        console.log('[Kiosk Scan] Looking for QR code:', qrCode);
         const { data: registrations, error: regError } = await supabase
             .from('registrations')
             .select('*')
@@ -311,6 +312,8 @@ const scanTicket = async (req, res) => {
             });
         }
 
+        console.log('[Kiosk Scan] Found', registrations?.length || 0, 'registrations for event');
+
         // Search for the ticket ID within the tickets array
         let foundRegistration = null;
         let foundTicket = null;
@@ -321,12 +324,14 @@ const scanTicket = async (req, res) => {
                 if (ticket) {
                     foundRegistration = reg;
                     foundTicket = ticket;
+                    console.log('[Kiosk Scan] ✅ Found matching ticket:', ticket.id);
                     break;
                 }
             }
         }
 
         if (!foundRegistration || !foundTicket) {
+            console.log('[Kiosk Scan] ❌ Ticket not found. QR code:', qrCode);
             // Log failed scan
             await logKioskAction(tokenId, eventId, 'scan_failed', {
                 qrCode,
