@@ -22,7 +22,8 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
 
     useEffect(() => {
         // Generate QR code with UNIQUE ticket ID
-        const ticketData = ticket.qrCodeData || ticket.ticketId || ticket.ticketNumber;
+        // Use ticket.id directly (e.g., "tix-1768706525528-0-7woa")
+        const ticketData = ticket.id || ticket.ticketId || ticket.ticketNumber || ticket.qrCodeData;
         
         if (ticketData) {
             QRCode.toDataURL(ticketData, {
@@ -35,7 +36,7 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
                 errorCorrectionLevel: 'H'
             }).then(setQrCodeUrl);
         }
-    }, [ticket.ticketId, ticket.qrCodeData, ticket.ticketNumber]);
+    }, [ticket.id, ticket.ticketId, ticket.qrCodeData, ticket.ticketNumber]);
 
     const eventDate = new Date(event.date);
     const formattedDate = eventDate.toLocaleDateString('en-US', {
