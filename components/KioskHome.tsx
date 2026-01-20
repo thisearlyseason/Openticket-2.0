@@ -20,7 +20,51 @@ export const KioskHome: React.FC = () => {
     useEffect(() => {
         initializeKiosk();
         requestFullscreen();
+        lockKioskMode();
+        
+        return () => {
+            unlockKioskMode();
+        };
     }, [eventId]);
+
+    const lockKioskMode = () => {
+        // Prevent back button
+        window.history.pushState(null, '', window.location.href);
+        window.onpopstate = () => {
+            window.history.pushState(null, '', window.location.href);
+        };
+
+        // Disable context menu
+        document.addEventListener('contextmenu', preventDefaultAction);
+        
+        // Disable common keyboard shortcuts
+        document.addEventListener('keydown', preventKeyboardShortcuts);
+    };
+
+    const unlockKioskMode = () => {
+        window.onpopstate = null;
+        document.removeEventListener('contextmenu', preventDefaultAction);
+        document.removeEventListener('keydown', preventKeyboardShortcuts);
+    };
+
+    const preventDefaultAction = (e: Event) => {
+        e.preventDefault();
+        return false;
+    };
+
+    const preventKeyboardShortcuts = (e: KeyboardEvent) => {
+        // Prevent F11, Ctrl+W, Alt+F4, etc.
+        if (
+            e.key === 'F11' ||
+            (e.ctrlKey && e.key === 'w') ||
+            (e.altKey && e.key === 'F4') ||
+            (e.ctrlKey && e.key === 't') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'I')
+        ) {
+            e.preventDefault();
+            return false;
+        }
+    };
 
     const requestFullscreen = () => {
         try {
