@@ -17,7 +17,21 @@ export const KioskHome: React.FC = () => {
 
     useEffect(() => {
         initializeKiosk();
+        requestFullscreen();
     }, [eventId]);
+
+    const requestFullscreen = () => {
+        try {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(err => {
+                    console.log('[Kiosk] Fullscreen request failed:', err);
+                });
+            }
+        } catch (err) {
+            console.log('[Kiosk] Fullscreen not supported:', err);
+        }
+    };
 
     const initializeKiosk = async () => {
         try {
