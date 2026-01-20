@@ -296,15 +296,37 @@ const scanTicket = async (req, res) => {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
 
-        // Find registration by QR code (ticket ID)
-        const { data: registration, error: regError } = await supabase
+        // Find registration by searching within tickets JSON array
+        const { data: registrations, error: regError } = await supabase
             .from('registrations')
             .select('*')
-            .eq('ticket_id', qrCode)
-            .eq('event_id', eventId)
-            .single();
+            .eq('event_id', eventId);
 
-        if (regError || !registration) {
+        if (regError) {
+            console.error('[Kiosk] Scan query error:', regError);
+            return res.json({
+                success: false,
+                status: 'invalid',
+                message: 'Database error'
+            });
+        }
+
+        // Search for the ticket ID within the tickets array
+        let foundRegistration = null;
+        let foundTicket = null;
+
+        for (const reg of registrations || []) {
+            if (reg.tickets && Array.isArray(reg.tickets)) {
+                const ticket = reg.tickets.find(t => t.id === qrCode || t.ticketNumber === qrCode || t.ticketId === qrCode);
+                if (ticket) {
+                    foundRegistration = reg;
+                    foundTicket = ticket;
+                    break;
+                }
+            }
+        }
+
+        if (!foundRegistration || !foundTicket) {
             // Log failed scan
             await logKioskAction(tokenId, eventId, 'scan_failed', {
                 qrCode,
@@ -320,10 +342,10 @@ const scanTicket = async (req, res) => {
         }
 
         // Check if already checked in
-        if (registration.checked_in) {
+        if (foundTicket.checkedIn || foundTicket.status === 'used') {
             await logKioskAction(tokenId, eventId, 'scan_duplicate', {
-                ticketId: registration.ticket_id,
-                attendeeName: registration.attendee_name,
+                ticketId: foundTicket.id,
+                attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
                 deviceId
             });
 
@@ -331,30 +353,30 @@ const scanTicket = async (req, res) => {
                 success: false,
                 status: 'already_checked_in',
                 message: 'Already checked in',
-                attendeeName: registration.attendee_name,
-                ticketType: registration.ticket_type,
-                checkedInAt: registration.checked_in_at
+                attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
+                ticketType: foundTicket.name,
+                checkedInAt: foundTicket.checkedInAt
             });
         }
 
         // Check payment status
-        if (registration.payment_status !== 'succeeded' && registration.price > 0) {
+        if (foundRegistration.payment_status !== 'paid' && foundRegistration.payment_status !== 'succeeded' && foundRegistration.total_amount > 0) {
             return res.json({
                 success: true,
                 status: 'payment_required',
                 message: 'Payment required',
-                attendeeName: registration.attendee_name,
-                ticketType: registration.ticket_type,
-                price: registration.price,
-                registrationId: registration.id
+                attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
+                ticketType: foundTicket.name,
+                price: foundRegistration.total_amount,
+                registrationId: foundRegistration.id
             });
         }
 
         // Valid ticket, ready for check-in
         await logKioskAction(tokenId, eventId, 'scan_success', {
-            ticketId: registration.ticket_id,
-            attendeeName: registration.attendee_name,
-            ticketType: registration.ticket_type,
+            ticketId: foundTicket.id,
+            attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
+            ticketType: foundTicket.name,
             deviceId
         });
 
