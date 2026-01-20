@@ -164,6 +164,15 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Debug endpoint to check environment
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        frontendUrl: process.env.FRONTEND_URL || 'NOT SET',
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT
+    });
+});
+
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/auth/change-password', passwordLimiter); // Extra strict for password changes
 app.use('/api/events', eventRoutes);
