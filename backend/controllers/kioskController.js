@@ -128,6 +128,9 @@ const generateKioskToken = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const kioskUrl = `${frontendUrl}/#/kiosk/${eventId}?token=${tokenId}`;
 
+        console.log('[generateKioskToken] Using frontendUrl:', frontendUrl);
+        console.log('[generateKioskToken] Generated kioskUrl:', kioskUrl);
+
         res.json({
             success: true,
             token: tokenId,
@@ -769,6 +772,9 @@ const getKioskStatus = async (req, res) => {
         // Active token found
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const kioskUrl = `${frontendUrl}/#/kiosk/${eventId}?token=${token.token_id}`;
+
+        console.log('[getKioskStatus] Generating URL with frontendUrl:', frontendUrl);
+        console.log('[getKioskStatus] Final kioskUrl:', kioskUrl);
 
         res.json({
             success: true,
