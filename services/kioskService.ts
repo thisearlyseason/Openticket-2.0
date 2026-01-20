@@ -260,7 +260,8 @@ class KioskService {
             const authToken = await getAuthToken();
             
             if (!authToken) {
-                throw new Error('Not authenticated');
+                console.error('[KioskService] No auth token available - user may not be logged in');
+                throw new Error('Not authenticated. Please log in and try again.');
             }
             
             const response = await fetch(`${API_URL}/api/kiosk/status/${eventId}`, {
@@ -274,7 +275,9 @@ class KioskService {
                 throw new Error(error.error || 'Failed to get kiosk status');
             }
 
-            return await response.json();
+            const result = await response.json();
+            console.log('[KioskService] Status result:', result);
+            return result;
         } catch (error) {
             console.error('[KioskService] Get status error:', error);
             throw error;
