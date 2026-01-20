@@ -292,11 +292,19 @@ class KioskService {
         kioskUrl: string;
     }> {
         try {
+            // Get Firebase auth token
+            const { getAuthToken } = await import('./firebaseConfig');
+            const authToken = await getAuthToken();
+            
+            if (!authToken) {
+                throw new Error('Not authenticated');
+            }
+            
             const response = await fetch(`${API_URL}/api/kiosk/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
                     eventId,
@@ -307,7 +315,7 @@ class KioskService {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to generate token');
+                throw new Error(error.error || 'Token is missing');
             }
 
             const data = await response.json();
