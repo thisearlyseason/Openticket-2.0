@@ -3,7 +3,7 @@
  * Handles all kiosk-related API calls
  */
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || 'https://scan-entry-3.preview.emergentagent.com';
 
 export interface KioskToken {
     tokenId: string;
