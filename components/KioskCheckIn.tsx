@@ -30,6 +30,20 @@ export const KioskCheckIn: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
 
+    // KIOSK LOCK: Prevent navigation away except via Back button
+    useEffect(() => {
+        const blockNavigation = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        
+        window.addEventListener('beforeunload', blockNavigation);
+        
+        return () => {
+            window.removeEventListener('beforeunload', blockNavigation);
+        };
+    }, []);
+
     const handleScan = useCallback(async (qrData: string) => {
         if (isProcessing) return;
 
