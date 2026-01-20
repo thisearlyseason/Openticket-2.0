@@ -399,11 +399,13 @@ const searchGuest = async (req, res) => {
         }
 
         // Search registrations using ilike for case-insensitive partial match
+        // Search in: attendee_name, attendee_email, and id (registration ID)
+        const searchPattern = `%${query}%`;
         const { data: registrations, error } = await supabase
             .from('registrations')
-            .select('id, attendee_name, attendee_email, ticket_type, ticket_id, checked_in, checked_in_at, payment_status, price')
+            .select('id, attendee_name, attendee_email, ticket_type, checked_in, checked_in_at, payment_status, price, tickets')
             .eq('event_id', eventId)
-            .or(`attendee_name.ilike.%${query}%,attendee_email.ilike.%${query}%,ticket_id.ilike.%${query}%,id.ilike.%${query}%`)
+            .or(`attendee_name.ilike.${searchPattern},attendee_email.ilike.${searchPattern},id.ilike.${searchPattern}`)
             .limit(20);
 
         if (error) {
@@ -411,16 +413,16 @@ const searchGuest = async (req, res) => {
             return res.status(500).json({ error: 'Search failed' });
         }
 
-        const results = registrations.map(r => ({
+        const results = (registrations || []).map(r => ({
             id: r.id,
             attendeeName: r.attendee_name,
             attendeeEmail: r.attendee_email,
-            ticketType: r.ticket_type,
-            ticketId: r.ticket_id,
+            ticketType: r.ticket_type || 'General Admission',
             checkedIn: r.checked_in || false,
             checkedInAt: r.checked_in_at || null,
             paymentStatus: r.payment_status,
-            price: r.price || 0
+            price: r.price || 0,
+            tickets: r.tickets || []
         }));
 
         res.json({ success: true, results });
