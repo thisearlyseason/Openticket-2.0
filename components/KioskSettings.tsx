@@ -100,7 +100,12 @@ export const KioskSettings: React.FC<KioskSettingsProps> = ({ eventId }) => {
     };
 
     const handleRevokeToken = async () => {
-        if (!window.confirm('Are you sure you want to disable kiosk mode? All active kiosk devices will be immediately locked out.')) {
+        // Try to use window.confirm if available, otherwise proceed without confirmation
+        const shouldRevoke = typeof window.confirm === 'function' 
+            ? window.confirm('Are you sure you want to disable kiosk mode? All active kiosk devices will be immediately locked out.')
+            : true;
+            
+        if (!shouldRevoke) {
             return;
         }
 
