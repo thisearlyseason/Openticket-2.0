@@ -298,7 +298,7 @@ export const KioskSettings: React.FC<KioskSettingsProps> = ({ eventId }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span className="font-semibold text-green-900 dark:text-green-100">Permissions:</span>
-                                <div className="mt-1 space-x-2">
+                                <div className="mt-1 flex flex-wrap gap-2">
                                     <Badge variant="secondary">Scan Tickets</Badge>
                                     <Badge variant="secondary">Manual Check-in</Badge>
                                     {token.paymentEnabled && <Badge variant="secondary">Door Payments</Badge>}
