@@ -21,14 +21,6 @@ console.log('[Server] RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY)
 console.log('[Server] SENDER_EMAIL:', process.env.SENDER_EMAIL || 'not set');
 console.log('[Server] FRONTEND_URL:', process.env.FRONTEND_URL || 'NOT SET');
 
-// Debug endpoint to check environment
-app.get('/api/debug-env', (req, res) => {
-    res.json({
-        frontendUrl: process.env.FRONTEND_URL || 'NOT SET',
-        allEnvKeys: Object.keys(process.env).filter(k => k.includes('FRONTEND') || k.includes('URL'))
-    });
-});
-
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
