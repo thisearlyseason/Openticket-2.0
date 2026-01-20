@@ -426,7 +426,7 @@ const searchGuest = async (req, res) => {
         const searchPattern = `%${query}%`;
         const { data: registrations, error } = await supabase
             .from('registrations')
-            .select('id, attendee_name, attendee_email, ticket_type, checked_in, checked_in_at, payment_status, price, tickets')
+            .select('*')
             .eq('event_id', eventId)
             .or(`attendee_name.ilike.${searchPattern},attendee_email.ilike.${searchPattern},id.ilike.${searchPattern}`)
             .limit(20);
@@ -436,17 +436,39 @@ const searchGuest = async (req, res) => {
             return res.status(500).json({ error: 'Search failed' });
         }
 
-        const results = (registrations || []).map(r => ({
-            id: r.id,
-            attendeeName: r.attendee_name,
-            attendeeEmail: r.attendee_email,
-            ticketType: r.ticket_type || 'General Admission',
-            checkedIn: r.checked_in || false,
-            checkedInAt: r.checked_in_at || null,
-            paymentStatus: r.payment_status,
-            price: r.price || 0,
-            tickets: r.tickets || []
-        }));
+        // Flatten results - each ticket becomes a separate result
+        const results = [];
+        (registrations || []).forEach(r => {
+            if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
+                // Add each ticket as a separate result
+                r.tickets.forEach(ticket => {
+                    results.push({
+                        id: r.id,
+                        ticketId: ticket.id,
+                        attendeeName: ticket.attendeeName || r.attendee_name,
+                        attendeeEmail: ticket.attendeeEmail || r.attendee_email,
+                        ticketType: ticket.name || 'General Admission',
+                        checkedIn: ticket.checkedIn || ticket.status === 'used' || false,
+                        checkedInAt: ticket.checkedInAt || null,
+                        paymentStatus: r.payment_status,
+                        price: ticket.pricePerTicket || 0
+                    });
+                });
+            } else {
+                // No tickets array, add registration as single result
+                results.push({
+                    id: r.id,
+                    ticketId: null,
+                    attendeeName: r.attendee_name,
+                    attendeeEmail: r.attendee_email,
+                    ticketType: 'General Admission',
+                    checkedIn: false,
+                    checkedInAt: null,
+                    paymentStatus: r.payment_status,
+                    price: r.total_amount || 0
+                });
+            }
+        });
 
         res.json({ success: true, results });
     } catch (error) {
