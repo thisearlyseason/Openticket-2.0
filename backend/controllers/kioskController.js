@@ -186,11 +186,12 @@ const validateKioskToken = async (req, res) => {
         // Get event data
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, title, date, time, location, image_url, ticket_tiers, owner_id, organizer')
+            .select('id, title, date, time, location, image_url, ticket_tiers, owner_id')
             .eq('id', eventId)
             .single();
 
         if (eventError || !event) {
+            console.error('[Kiosk] Event lookup error:', eventError?.message);
             return res.status(404).json({ error: 'Event not found' });
         }
 
@@ -210,8 +211,7 @@ const validateKioskToken = async (req, res) => {
                 location: event.location,
                 imageUrl: event.image_url,
                 ticketTiers: event.ticket_tiers,
-                organizerId: event.owner_id,
-                organizer: event.organizer
+                organizerId: event.owner_id
             }
         });
     } catch (error) {
