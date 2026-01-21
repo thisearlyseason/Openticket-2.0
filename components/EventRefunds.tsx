@@ -247,6 +247,12 @@ export const EventRefunds = () => {
             return;
         }
 
+        console.log('[Refund] Starting refund process...', {
+            registrationId: selectedRefund.registration.id,
+            selectedTickets: selectedRefund.selectedTickets,
+            reason: refundReason
+        });
+
         setIsProcessing(true);
         try {
             const { registration, selectedTickets } = selectedRefund;
@@ -260,9 +266,16 @@ export const EventRefunds = () => {
             const activeTickets = registration.tickets?.filter(t => t.status !== 'refunded' && t.status !== 'refunding') || [];
             const isFullOrder = selectedTickets.length === activeTickets.length;
             
+            console.log('[Refund] Processing refund...', {
+                isFullOrder,
+                activeTicketsCount: activeTickets.length,
+                selectedTicketsCount: selectedTickets.length
+            });
+            
             let response;
             if (isFullOrder) {
                 // Full order refund
+                console.log('[Refund] Calling full order refund API...');
                 response = await StorageService.refundRegistration(
                     registration.id,
                     [], // Empty array signals full refund
@@ -277,12 +290,15 @@ export const EventRefunds = () => {
                     return ticket;
                 });
                 
+                console.log('[Refund] Calling partial refund API...');
                 response = await StorageService.refundRegistration(
                     registration.id,
                     updatedTickets,
                     refundReason
                 );
             }
+
+            console.log('[Refund] API Response received:', response);
 
             // Check response for errors
             if (response && response.error) {
