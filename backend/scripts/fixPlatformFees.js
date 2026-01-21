@@ -48,7 +48,6 @@ async function fixPlatformFees() {
                 registrations!inner(
                     id,
                     service_fee,
-                    organizer_absorbed_fee,
                     events!inner(
                         id,
                         price_type,
