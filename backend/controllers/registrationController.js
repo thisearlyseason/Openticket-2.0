@@ -2114,3 +2114,106 @@ export const approveRegistration = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+/**
+ * Force complete a stuck refund
+ * POST /api/registrations/:id/force-complete-refund
+ * For tickets stuck in "refunding" status
+ */
+export const forceCompleteRefund = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.uid;
+
+        console.log(`[ForceCompleteRefund] Processing stuck refund for registration ${id}`);
+
+        // Get registration with event details
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(id, title, owner_id)')
+            .eq('id', id)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Verify ownership
+        if (reg.event.owner_id !== owner_id) {
+            return res.status(403).json({ error: 'Unauthorized - You do not own this event' });
+        }
+
+        // Check if already refunded
+        if (reg.payment_status === 'refunded') {
+            return res.status(400).json({ error: 'Registration is already fully refunded' });
+        }
+
+        // Check if in refunding state
+        if (reg.payment_status !== 'refunding') {
+            return res.status(400).json({ 
+                error: 'Registration is not in refunding state', 
+                currentStatus: reg.payment_status 
+            });
+        }
+
+        // Calculate refunded amount and remaining tickets
+        let totalRefunded = 0;
+        let activeTickets = 0;
+        let refundedTickets = 0;
+
+        if (reg.tickets && Array.isArray(reg.tickets)) {
+            reg.tickets.forEach(ticket => {
+                if (ticket.status === 'refunded') {
+                    totalRefunded += (ticket.pricePerTicket || 0) * (ticket.quantity || 1);
+                    refundedTickets++;
+                } else if (ticket.status === 'active' || ticket.status === 'paid') {
+                    activeTickets++;
+                }
+            });
+        }
+
+        // Determine final status
+        const finalStatus = activeTickets > 0 ? 'paid' : 'refunded';
+
+        console.log(`[ForceCompleteRefund] Completing refund - Active: ${activeTickets}, Refunded: ${refundedTickets}, Final Status: ${finalStatus}`);
+
+        // Update registration status
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({ 
+                payment_status: finalStatus,
+                refunded_amount: totalRefunded
+            })
+            .eq('id', id);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // Update event refund count
+        try {
+            if (finalStatus === 'refunded') {
+                await supabase.rpc('increment_event_refund_count', {
+                    p_event_id: reg.event_id,
+                    increment_by: 1
+                });
+            }
+        } catch (countError) {
+            console.warn('[ForceCompleteRefund] Failed to update refund count:', countError.message);
+        }
+
+        res.json({ 
+            success: true, 
+            message: `Refund completed. Status changed from "refunding" to "${finalStatus}"`,
+            finalStatus,
+            activeTickets,
+            refundedTickets,
+            totalRefunded
+        });
+
+    } catch (error) {
+        console.error('[ForceCompleteRefund] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+
+};
