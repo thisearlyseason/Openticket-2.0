@@ -89,6 +89,8 @@ router.post('/find-by-email', async (req, res) => {
         }
     } catch (error) {
         console.error('[TicketLookup] Error:', error);
+        console.log('[TicketLookup] Error stack:', error.stack);
+        console.log('[TicketLookup] Error message:', error.message);
         res.status(500).json({ error: 'An error occurred while finding your tickets' });
     }
 });
