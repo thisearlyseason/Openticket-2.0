@@ -374,10 +374,6 @@ export const EventRefunds = () => {
             }
             
             window.alert(userMessage);
-        } catch (unexpectedError: any) {
-            // Catch any errors that weren't caught above
-            console.error('[Refund] Unexpected error:', unexpectedError);
-            window.alert(`❌ Unexpected Error\n\n${unexpectedError.message || 'An unknown error occurred'}\n\nPlease check the console for details.`);
         } finally {
             console.log('[Refund] Process complete, resetting loading state');
             setIsProcessing(false);
