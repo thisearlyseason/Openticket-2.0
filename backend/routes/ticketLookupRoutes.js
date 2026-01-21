@@ -18,11 +18,14 @@ router.post('/find-by-email', async (req, res) => {
 
         console.log(`[TicketLookup] Finding tickets for email: ${email}`);
 
+        // Normalize email for case-insensitive search
+        const normalizedEmail = email.toLowerCase().trim();
+
         // Find all registrations (tickets) associated with this email
         const { data: registrations, error: registrationsError } = await supabase
             .from('registrations')
             .select('*, events!inner(*)')
-            .eq('attendee_email', email)
+            .ilike('attendee_email', normalizedEmail)
             .order('created_at', { ascending: false });
 
         if (registrationsError) {
