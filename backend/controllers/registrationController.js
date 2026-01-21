@@ -2216,4 +2216,143 @@ export const forceCompleteRefund = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 
+
+
+/**
+ * Sync refund status from Stripe
+ * POST /api/registrations/:id/sync-stripe-refund
+ * For tickets that were refunded in Stripe but database not updated
+ */
+export const syncStripeRefundStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner_id = req.user.uid;
+
+        console.log(`[SyncStripeRefund] Checking Stripe refund status for registration ${id}`);
+
+        // Get registration
+        const { data: reg, error: regError } = await supabase
+            .from('registrations')
+            .select('*, event:events(id, title, owner_id)')
+            .eq('id', id)
+            .single();
+
+        if (regError || !reg) {
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+
+        // Verify ownership
+        if (reg.event.owner_id !== owner_id) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Check if there's a Stripe session
+        if (!reg.stripe_checkout_session_id && !reg.stripe_payment_intent_id) {
+            return res.status(400).json({ 
+                error: 'No Stripe payment found for this registration',
+                action: 'Use Force Complete Refund instead'
+            });
+        }
+
+        const stripe = getStripe();
+        
+        // Get payment intent
+        let paymentIntentId = reg.stripe_payment_intent_id;
+        
+        if (!paymentIntentId && reg.stripe_checkout_session_id) {
+            try {
+                const session = await stripe.checkout.sessions.retrieve(reg.stripe_checkout_session_id);
+                paymentIntentId = session.payment_intent;
+            } catch (sessionError) {
+                console.error('[SyncStripeRefund] Failed to get session:', sessionError.message);
+                return res.status(400).json({ error: 'Failed to retrieve Stripe session' });
+            }
+        }
+
+        if (!paymentIntentId) {
+            return res.status(400).json({ error: 'No payment intent found' });
+        }
+
+        // Get payment intent and check for refunds
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        console.log(`[SyncStripeRefund] Payment Intent status: ${paymentIntent.status}`);
+        console.log(`[SyncStripeRefund] Amount refunded: ${paymentIntent.amount_refunded}`);
+
+        if (paymentIntent.amount_refunded === 0) {
+            return res.json({ 
+                synced: false, 
+                message: 'No refunds found in Stripe for this charge',
+                currentStatus: reg.payment_status
+            });
+        }
+
+        // Calculate refund details
+        const totalCharged = paymentIntent.amount / 100; // Convert cents to dollars
+        const totalRefunded = paymentIntent.amount_refunded / 100;
+        const isFullyRefunded = paymentIntent.amount_refunded === paymentIntent.amount;
+
+        console.log(`[SyncStripeRefund] Total charged: $${totalCharged}, Refunded: $${totalRefunded}, Fully refunded: ${isFullyRefunded}`);
+
+        // Update registration status
+        const newStatus = isFullyRefunded ? 'refunded' : 'paid';
+        
+        // Mark all tickets as refunded if fully refunded
+        let updatedTickets = reg.tickets;
+        if (isFullyRefunded && updatedTickets) {
+            updatedTickets = updatedTickets.map(ticket => ({
+                ...ticket,
+                status: 'refunded'
+            }));
+        }
+
+        const { error: updateError } = await supabase
+            .from('registrations')
+            .update({ 
+                payment_status: newStatus,
+                refunded_amount: totalRefunded,
+                tickets: updatedTickets
+            })
+            .eq('id', id);
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // Create financial transaction record if doesn't exist
+        try {
+            await supabase.from('financial_transactions').insert({
+                registration_id: id,
+                event_id: reg.event_id,
+                gross_amount: -totalRefunded,
+                platform_fee: 0,
+                stripe_fee: 0,
+                organizer_net: -totalRefunded,
+                currency: 'usd',
+                status: 'refunded',
+                payout_status: 'settled',
+                transaction_type: 'refund',
+                stripe_refund_id: paymentIntent.charges?.data[0]?.refunds?.data[0]?.id || 'synced'
+            });
+            console.log('[SyncStripeRefund] Created financial transaction record');
+        } catch (finError) {
+            // Ignore if already exists
+            console.warn('[SyncStripeRefund] Financial record may already exist:', finError.message);
+        }
+
+        res.json({ 
+            synced: true, 
+            message: 'Refund status synced from Stripe',
+            oldStatus: reg.payment_status,
+            newStatus,
+            totalRefunded,
+            isFullyRefunded
+        });
+
+    } catch (error) {
+        console.error('[SyncStripeRefund] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 };
