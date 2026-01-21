@@ -79,15 +79,19 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
         try {
             const errorBody = await res.json();
             
+            console.log('[postSupabase] Error response:', { status: res.status, errorBody });
+            
             // For structured error responses (like refund errors), return the full error object
             // This allows callers to access stripeError, diagnostics, canRefund, etc.
-            if (errorBody.error || errorBody.stripeError || errorBody.diagnostics) {
+            if (errorBody && typeof errorBody === 'object' && (errorBody.error || errorBody.stripeError || errorBody.diagnostics)) {
+                console.log('[postSupabase] Returning structured error response');
                 // Return the error body directly so the caller can access all fields
                 return errorBody;
             }
             
             // For simple errors, throw with the error message
-            const errorMsg = errorBody.error || errorBody.details || `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+            const errorMsg = errorBody?.error || errorBody?.details || `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+            console.log('[postSupabase] Throwing simple error:', errorMsg);
             throw new Error(errorMsg);
         } catch (e) {
             // If JSON parsing fails, try text
