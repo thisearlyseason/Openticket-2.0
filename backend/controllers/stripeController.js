@@ -219,8 +219,6 @@ export const createOrder = async (req, res) => {
         }
 
         // 6. Build tickets data for DB using unique ticket generator
-        import { generateTicketId, generateTicketNumber } from '../utils/ticketGenerator.js';
-        
         const ticketsData = [];
         for (const item of breakdown.items) {
             if (item.type !== 'ticket') continue;
