@@ -341,8 +341,15 @@ export const EventRefunds = () => {
                 userMessage += `\n\n${stripeError}`;
                 
                 // Add helpful hints based on common Stripe errors
-                if (error.message.includes('charge_already_refunded')) {
+                if (error.message.includes('charge_already_refunded') || error.message.includes('already been refunded')) {
                     userMessage += '\n\n💡 This payment has already been refunded in Stripe.';
+                    userMessage += '\n\nWould you like to sync the refund status from Stripe?';
+                    
+                    if (window.confirm(userMessage)) {
+                        // Call sync function
+                        await handleSyncStripeRefund(selectedRefund.registration.id);
+                        return; // Exit, don't show alert again
+                    }
                 } else if (error.message.includes('charge_not_found')) {
                     userMessage += '\n\n💡 The original payment could not be found in Stripe.';
                 } else if (error.message.includes('insufficient_funds')) {
