@@ -293,8 +293,8 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
         });
     }
 
-    // Add platform service fee as line item
-    if (breakdown.platformFee > 0) {
+    // Add platform service fee as line item (ONLY if attendee pays it)
+    if (breakdown.platformFee > 0 && !breakdown.platformFeeAbsorbedByOrganizer) {
         lineItems.push({
             price_data: {
                 currency: currency,
