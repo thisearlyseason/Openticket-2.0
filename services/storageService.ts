@@ -109,7 +109,17 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
             }
         }
     }
-    return res.json().catch(() => ({}));
+    
+    // Parse successful response
+    try {
+        const data = await res.json();
+        console.log('[postSupabase] Success response:', data);
+        return data;
+    } catch (jsonError) {
+        console.error('[postSupabase] Failed to parse JSON response:', jsonError);
+        // If JSON parsing fails on success response, return empty object
+        return {};
+    }
 };
 
 // Caching State
