@@ -703,6 +703,18 @@ export const EventRefunds = () => {
                                                     Fix Stuck Refund
                                                 </Button>
                                             )}
+                                            {/* Show sync button for paid registrations that might be refunded in Stripe */}
+                                            {!isRefunding && reg.paymentStatus === 'paid' && (
+                                                <Button
+                                                    onClick={() => handleSyncStripeRefund(reg.id)}
+                                                    className="bg-blue-500 hover:bg-blue-600 text-white border-none"
+                                                    size="sm"
+                                                    title="Check if this was refunded in Stripe and sync status"
+                                                >
+                                                    <RefreshCw size={16} className="mr-1" />
+                                                    Sync from Stripe
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
 
