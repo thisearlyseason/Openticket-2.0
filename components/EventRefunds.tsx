@@ -393,6 +393,47 @@ export const EventRefunds = () => {
             window.alert(`✅ Refund completed!\n\nStatus: ${data.finalStatus}\nActive Tickets: ${data.activeTickets}\nRefunded Tickets: ${data.refundedTickets}\nTotal Refunded: $${data.totalRefunded.toFixed(2)}`);
             
             // Reload data
+
+    const handleSyncStripeRefund = async (registrationId: string) => {
+        setIsProcessing(true);
+        try {
+            const { getAuthToken } = await import('../services/firebaseConfig');
+            const token = await getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch(`/api/registrations/${registrationId}/sync-stripe-refund`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to sync refund status');
+            }
+
+            if (data.synced) {
+                window.alert(`✅ Refund Status Synced!\n\nOld Status: ${data.oldStatus}\nNew Status: ${data.newStatus}\nTotal Refunded: $${data.totalRefunded.toFixed(2)}\n\nThe database has been updated to match Stripe.`);
+            } else {
+                window.alert(`ℹ️ No Sync Needed\n\n${data.message}\n\nCurrent Status: ${data.currentStatus}`);
+            }
+            
+            // Reload data
+            await loadData();
+            setSelectedRefund(null);
+        } catch (error: any) {
+            console.error('[SyncStripeRefund] Error:', error);
+            window.alert(`❌ Failed to sync refund status:\n\n${error.message}`);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
             await loadData();
         } catch (error: any) {
             console.error('[ForceCompleteRefund] Error:', error);
