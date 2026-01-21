@@ -160,17 +160,19 @@ export const Badge = ({ children, color = 'blue', className = '' }: { children?:
     const colors: Record<string, string> = {
         blue: 'bg-blue-600 text-white border-blue-400',
         green: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
-        purple: 'bg-accent text-white border-transparent',
+        purple: 'bg-accent border-transparent',
         red: 'bg-red-500 text-white border-transparent',
-        primary: 'bg-primary text-white border-transparent',
+        primary: 'bg-primary border-transparent',
         secondary: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
         orange: 'bg-orange-500 border-transparent',
         gray: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700',
         yellow: 'bg-[#E0FF20] border-transparent'
     };
     
-    // Force black text color for yellow and orange badges using inline style
-    const style = (color === 'yellow' || color === 'orange') ? { color: '#000000' } : undefined;
+    // Force black text color for light/bright badges using inline style
+    // This includes: yellow, orange, purple (accent - neon green), primary (pink in dark)
+    const lightColors = ['yellow', 'orange', 'purple', 'primary', 'green', 'secondary'];
+    const style = lightColors.includes(color) ? { color: '#000000' } : undefined;
     
     return <span style={style} className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
 };
