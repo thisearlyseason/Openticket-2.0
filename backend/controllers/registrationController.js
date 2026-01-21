@@ -432,7 +432,11 @@ export const refundRegistration = async (req, res) => {
                 console.error('[Refund] ❌ Stripe API error:', {
                     error: err.message,
                     code: err.code,
-                    type: err.type
+                    type: err.type,
+                    rawError: err,
+                    registrationId: id,
+                    sessionId: reg.stripe_checkout_session_id,
+                    paymentIntent: session?.payment_intent
                 });
                 
                 // CRITICAL: Reset payment_status since Stripe failed
@@ -447,12 +451,16 @@ export const refundRegistration = async (req, res) => {
                 return res.status(400).json({
                     error: 'Stripe refund failed',
                     stripeError: err.message,
+                    stripeCode: err.code,
+                    stripeType: err.type,
                     canRefund: false,
                     diagnostics: {
                         errorCode: err.code,
                         errorType: err.type,
                         registrationId: id,
-                        sessionId: reg.stripe_checkout_session_id
+                        sessionId: reg.stripe_checkout_session_id,
+                        paymentIntent: session?.payment_intent,
+                        attemptedAmount: amountToRefundCents
                     }
                 });
             }
