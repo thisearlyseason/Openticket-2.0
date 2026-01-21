@@ -75,18 +75,35 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
     // DELETE operations might return 204 No Content
     if (res.status === 204) return null;
     if (!res.ok) {
-        let errorMsg = `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+        // Try to parse the error response body
         try {
             const errorBody = await res.json();
-            if (errorBody.error) errorMsg += ` - ${errorBody.error}`;
-            if (errorBody.details) errorMsg += ` (${errorBody.details})`;
+            
+            // For structured error responses (like refund errors), return the full error object
+            // This allows callers to access stripeError, diagnostics, canRefund, etc.
+            if (errorBody.error || errorBody.stripeError || errorBody.diagnostics) {
+                // Return the error body directly so the caller can access all fields
+                return errorBody;
+            }
+            
+            // For simple errors, throw with the error message
+            const errorMsg = errorBody.error || errorBody.details || `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+            throw new Error(errorMsg);
         } catch (e) {
+            // If JSON parsing fails, try text
+            if (e instanceof Error && e.message.startsWith('Backend')) {
+                // If it's already our formatted error, re-throw it
+                throw e;
+            }
+            
             try {
                 const text = await res.text();
-                if (text) errorMsg += ` - ${text.substring(0, 100)}`;
-            } catch (e2) { }
+                const errorMsg = text ? `Backend POST error: ${res.status} - ${text.substring(0, 100)}` : `Backend POST error: ${res.status} ${res.statusText || 'No status text'}`;
+                throw new Error(errorMsg);
+            } catch (e2) {
+                throw new Error(`Backend POST error: ${res.status} ${res.statusText || 'No status text'}`);
+            }
         }
-        throw new Error(errorMsg);
     }
     return res.json().catch(() => ({}));
 };
