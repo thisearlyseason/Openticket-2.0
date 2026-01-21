@@ -92,8 +92,8 @@ async function fixPlatformFees() {
                 continue;
             }
 
-            // Calculate correct platform fee
-            const organizerPlan = profile.subscription_plan || 'free';
+            // Extract plan from subscription JSONB field
+            const organizerPlan = profile.subscription?.plan || 'free';
             const grossAmount = tx.gross_amount;
             const correctPlatformFee = calculatePlatformFee(grossAmount, organizerPlan);
             
