@@ -330,6 +330,7 @@ export const createOrder = async (req, res) => {
             discount_amount: breakdown.discountAmount,
             total_amount: breakdown.grandTotal + donationAmount, // Include donation in total
             service_fee: breakdown.platformFee,
+            organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
             tax_amount: breakdown.taxAmount,
             custom_fees_amount: breakdown.customFeesAmount,
             affiliate_code: affiliateCode || null,
