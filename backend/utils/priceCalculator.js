@@ -188,26 +188,38 @@ export const calculateOrderBreakdown = ({
     // 6. Calculate platform fee
     const feeBase = breakdown.discountedSubtotal + breakdown.taxAmount + breakdown.customFeesAmount;
     
-    // Only charge platform fee if:
-    // - Event doesn't absorb fees
-    // - Event is not free or donation type
-    // - There's an actual amount to charge
-    const shouldChargeFee = !event.absorb_fees && 
-        event.price_type !== 'free' && 
-        event.price_type !== 'donation' && 
-        feeBase > 0;
+    // CRITICAL: ALWAYS calculate platform fee for paid transactions
+    // Free tickets are the ONLY exception (per business requirements)
+    // - Donation tickets: YES, charge platform fee on donation amount
+    // - Organizer absorbs fees: YES, calculate fee but deduct from organizer revenue
+    const isPaidTransaction = event.price_type !== 'free' && feeBase > 0;
 
-    if (shouldChargeFee) {
+    if (isPaidTransaction) {
         breakdown.platformFee = calculatePlatformFee(feeBase, organizerPlan);
+        // Track whether organizer is absorbing this fee
+        breakdown.platformFeeAbsorbedByOrganizer = event.absorb_fees === true;
+    } else {
+        breakdown.platformFeeAbsorbedByOrganizer = false;
     }
 
     // 7. Calculate grand total
-    breakdown.grandTotal = Number((
-        breakdown.discountedSubtotal + 
-        breakdown.taxAmount + 
-        breakdown.customFeesAmount + 
-        breakdown.platformFee
-    ).toFixed(2));
+    // If organizer absorbs fees, don't add platform fee to attendee's total
+    if (breakdown.platformFeeAbsorbedByOrganizer) {
+        // Attendee pays: subtotal + tax + custom fees (NO platform fee)
+        breakdown.grandTotal = Number((
+            breakdown.discountedSubtotal + 
+            breakdown.taxAmount + 
+            breakdown.customFeesAmount
+        ).toFixed(2));
+    } else {
+        // Attendee pays: subtotal + tax + custom fees + platform fee
+        breakdown.grandTotal = Number((
+            breakdown.discountedSubtotal + 
+            breakdown.taxAmount + 
+            breakdown.customFeesAmount + 
+            breakdown.platformFee
+        ).toFixed(2));
+    }
 
     return breakdown;
 };
