@@ -2215,8 +2215,7 @@ export const forceCompleteRefund = async (req, res) => {
         console.error('[ForceCompleteRefund] Error:', error);
         res.status(500).json({ error: error.message });
     }
-
-
+};
 
 /**
  * Sync refund status from Stripe
