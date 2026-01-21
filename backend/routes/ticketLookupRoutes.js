@@ -31,7 +31,8 @@ router.post('/find-by-email', async (req, res) => {
 
         if (registrationsError) {
             console.error('[TicketLookup] Error fetching registrations:', registrationsError);
-            throw registrationsError;
+            console.log('[TicketLookup] Error details:', JSON.stringify(registrationsError));
+            throw new Error(`Database query failed: ${registrationsError.message}`);
         }
 
         if (!registrations || registrations.length === 0) {
