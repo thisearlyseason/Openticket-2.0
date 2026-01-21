@@ -387,6 +387,7 @@ export const getEventFinancials = async (req, res) => {
             if (transactions) {
                 transactions.forEach(tx => {
                     if (tx.gross_amount > 0) {
+                        // Positive amounts are sales
                         financials.grossSales += Number(tx.gross_amount) || 0;
                         financials.platformFees += Number(tx.platform_fee) || 0;
                         financials.stripeFees += Number(tx.stripe_fee) || 0;
@@ -394,8 +395,18 @@ export const getEventFinancials = async (req, res) => {
                         financials.netEarnings += Number(tx.organizer_net) || 0;
                         financials.transactionCount += 1;
                     } else {
-                        financials.refundedAmount += Math.abs(Number(tx.gross_amount) || 0);
+                        // Negative amounts are refunds
+                        const refundAmount = Math.abs(Number(tx.gross_amount) || 0);
+                        financials.refundedAmount += refundAmount;
                         financials.refundCount += 1;
+                        
+                        // CRITICAL FIX: Subtract refunded amounts from gross sales
+                        // This ensures financial totals reflect the net after refunds
+                        financials.grossSales -= refundAmount;
+                        financials.platformFees -= Math.abs(Number(tx.platform_fee) || 0);
+                        financials.stripeFees -= Math.abs(Number(tx.stripe_fee) || 0);
+                        financials.taxCollected -= Math.abs(Number(tx.tax_amount) || 0);
+                        financials.netEarnings -= Math.abs(Number(tx.organizer_net) || 0);
                     }
                 });
             }
