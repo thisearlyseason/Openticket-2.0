@@ -187,7 +187,9 @@ export const getAllRegistrations = async (req, res) => {
             query = query.eq('stripe_checkout_session_id', stripe_checkout_session_id);
         }
         if (hasValidEmail) {
-            query = query.eq('attendee_email', email);
+            // Case-insensitive email matching using ilike
+            const normalizedEmail = email.toLowerCase().trim();
+            query = query.ilike('attendee_email', normalizedEmail);
         }
         if (hasValidUserId) {
             query = query.eq('user_id', user_id);
