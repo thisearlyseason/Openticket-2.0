@@ -567,8 +567,56 @@ export const Settings = () => {
 
     const profileCompleteness = getProfileCompleteness();
 
+    // Check if user needs to complete onboarding
+    const needsOnboarding = user?.role === 'organizer' && (!businessName || !businessType);
+    const onboardingFromUrl = window.location.search.includes('onboarding=true');
+
     return (
         <div className="max-w-5xl mx-auto py-12 px-4 pb-24">
+            {/* Onboarding Banner */}
+            {needsOnboarding && (
+                <div className="mb-6 bg-gradient-to-r from-secondary/20 to-primary/20 border border-secondary/30 rounded-2xl p-6 animate-in fade-in slide-in-from-top-4">
+                    <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                            <Briefcase className="text-black" size={24} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">
+                                🎉 Welcome to OpenTicket!
+                            </h3>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                                Complete your organizer profile to unlock all features and start creating events.
+                            </p>
+                            <ul className="text-xs text-zinc-500 dark:text-zinc-400 space-y-1 mb-4">
+                                <li className="flex items-center gap-2">
+                                    {businessName ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                    Business/Organization Name
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    {businessType ? <CheckCircle size={14} className="text-green-500" /> : <XCircle size={14} className="text-zinc-400" />}
+                                    Type of Business
+                                </li>
+                            </ul>
+                            <Button
+                                onClick={() => {
+                                    setActiveTab('profile');
+                                    // Scroll to business name field
+                                    setTimeout(() => {
+                                        const businessNameInput = document.querySelector('input[placeholder*="Business"]') as HTMLElement;
+                                        businessNameInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        businessNameInput?.focus();
+                                    }, 100);
+                                }}
+                                className="bg-secondary text-black border-none hover:opacity-90"
+                                size="sm"
+                            >
+                                Complete Profile →
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-between items-end mb-8">
                 <h1 className="text-3xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Settings</h1>
                 {!isPro && (
