@@ -217,22 +217,43 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        // 6. Build tickets data for DB
+        // 6. Build tickets data for DB using unique ticket generator
+        import { generateTicketId, generateTicketNumber } from '../utils/ticketGenerator.js';
+        
         const ticketsData = [];
         for (const item of breakdown.items) {
             if (item.type !== 'ticket') continue;
             for (let i = 0; i < item.quantity; i++) {
                 // Get assignment if available
                 const assignment = assignments?.[item.id]?.[i] || {};
+                
+                // Generate unique ticket ID and QR code for each individual ticket
+                const ticketId = generateTicketId();
+                const ticketNumber = generateTicketNumber();
+                
                 ticketsData.push({
-                    id: `tix-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
+                    // Unique identifiers - CRITICAL for ticket uniqueness
+                    id: ticketId,
+                    ticketId: ticketId,
+                    ticketNumber: ticketNumber,
+                    qrCodeData: ticketId, // QR code contains only the unique ticket ID
+                    
+                    // Tier information
                     tierId: item.id,
                     name: item.name,
                     pricePerTicket: item.unitPrice,
-                    quantity: 1,
+                    quantity: 1, // Always 1 for individual tickets
+                    
+                    // Status
                     status: 'valid',
+                    checkedIn: false,
+                    
+                    // Attendee information - CRITICAL for mapping name to ticket
                     attendeeName: assignment.name || customerName,
                     attendeeEmail: assignment.email || customerEmail,
+                    
+                    // Metadata
+                    createdAt: new Date().toISOString(),
                 });
             }
         }
