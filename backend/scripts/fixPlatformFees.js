@@ -109,12 +109,11 @@ async function fixPlatformFees() {
             console.log(`   Organizer Net: $${tx.organizer_net} → $${correctedOrganizerNet.toFixed(2)}`);
 
             try {
-                // Update financial_transactions
+                // Update financial_transactions (without organizer_absorbed_fee if column doesn't exist)
                 const { error: updateTxError } = await supabase
                     .from('financial_transactions')
                     .update({
                         platform_fee: correctPlatformFee,
-                        organizer_absorbed_fee: event.absorb_fees || false,
                         organizer_net: correctedOrganizerNet
                     })
                     .eq('id', tx.id);
@@ -125,12 +124,11 @@ async function fixPlatformFees() {
                     continue;
                 }
 
-                // Update registration
+                // Update registration (without organizer_absorbed_fee if column doesn't exist)
                 const { error: updateRegError } = await supabase
                     .from('registrations')
                     .update({
-                        service_fee: correctPlatformFee,
-                        organizer_absorbed_fee: event.absorb_fees || false
+                        service_fee: correctPlatformFee
                     })
                     .eq('id', tx.registration_id);
 
