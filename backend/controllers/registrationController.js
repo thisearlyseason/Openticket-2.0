@@ -233,23 +233,31 @@ export const refundRegistration = async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
-        // Check if already refunding or refunded (use payment_status since refund_status column may not exist)
-        if (reg.payment_status === 'refunding') {
-            return res.status(400).json({ 
-                error: 'A refund is already being processed for this registration',
-                canRefund: false
-            });
-        }
-        
+        // Check if already fully refunded
         if (reg.payment_status === 'refunded') {
             return res.status(400).json({ 
-                error: 'This registration has already been refunded',
+                error: 'This registration has already been fully refunded',
                 canRefund: false
             });
         }
 
-        // Validate payment status before refund - must be paid to refund
-        if (reg.payment_status !== 'paid' && reg.payment_status !== 'completed') {
+        // If partial refund requested, check if those specific tickets are already refunding/refunded
+        if (Array.isArray(tickets) && tickets.length > 0 && reg.tickets) {
+            const alreadyRefunding = tickets.some(ticketIdx => {
+                const ticket = reg.tickets[ticketIdx];
+                return ticket && (ticket.status === 'refunding' || ticket.status === 'refunded');
+            });
+            
+            if (alreadyRefunding) {
+                return res.status(400).json({ 
+                    error: 'One or more selected tickets are already being refunded',
+                    canRefund: false
+                });
+            }
+        }
+        
+        // Allow refund if payment was completed (even if status is 'refunding' for other tickets)
+        if (reg.payment_status !== 'paid' && reg.payment_status !== 'completed' && reg.payment_status !== 'refunding') {
             console.error('[Refund] Cannot refund - payment not complete:', reg.payment_status);
             return res.status(400).json({ 
                 error: 'Cannot refund: Payment is not complete',
