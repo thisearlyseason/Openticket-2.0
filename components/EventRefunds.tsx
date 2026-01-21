@@ -205,9 +205,9 @@ export const EventRefunds = () => {
         if (e) setEvent(e);
 
         const regs = await StorageService.getRegistrations(id);
-        // Only show paid registrations that aren't fully refunded
+        // Show paid AND refunding registrations that have non-refunded tickets
         const refundableRegs = regs.filter(r => 
-            (r.paymentStatus === 'paid' || r.paymentStatus === 'completed') &&
+            (r.paymentStatus === 'paid' || r.paymentStatus === 'completed' || r.paymentStatus === 'refunding') &&
             r.tickets?.some(t => t.status !== 'refunded')
         );
         setRegistrations(refundableRegs);
