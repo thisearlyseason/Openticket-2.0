@@ -356,6 +356,46 @@ export const EventRefunds = () => {
         }
     };
 
+    const handleForceCompleteRefund = async (registrationId: string) => {
+        if (!window.confirm('Force complete this stuck refund? This will change the status from "refunding" to either "paid" (if some tickets remain) or "refunded" (if all tickets are refunded).')) {
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const { getAuthToken } = await import('../services/firebaseConfig');
+            const token = await getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch(`/api/registrations/${registrationId}/force-complete-refund`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to force complete refund');
+            }
+
+            window.alert(`✅ Refund completed!\n\nStatus: ${data.finalStatus}\nActive Tickets: ${data.activeTickets}\nRefunded Tickets: ${data.refundedTickets}\nTotal Refunded: $${data.totalRefunded.toFixed(2)}`);
+            
+            // Reload data
+            await loadData();
+        } catch (error: any) {
+            console.error('[ForceCompleteRefund] Error:', error);
+            window.alert(`❌ Failed to force complete refund:\n\n${error.message}`);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+
     const filteredRegistrations = registrations.filter(reg => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
