@@ -404,8 +404,18 @@ export const AttendeeManager = () => {
             return;
         }
 
-        // Navigate to refunds page with pre-selected registration
-        navigate(`/manage/${event!.id}/refunds?selectedReg=${regIds[0]}`);
+        // Navigate to dedicated refund page with selected tickets
+        // Pass both registration ID and ticket indices
+        const selectedTicketIndices = Array.from(selectedIds)
+            .filter(id => id.startsWith(`${regIds[0]}-ticket-`))
+            .map(id => parseInt(id.split('-ticket-')[1]))
+            .filter(idx => !isNaN(idx));
+        
+        const ticketsParam = selectedTicketIndices.length > 0 
+            ? `&tickets=${selectedTicketIndices.join(',')}` 
+            : '';
+        
+        navigate(`/manage/${event!.id}/refunds?selectedReg=${regIds[0]}${ticketsParam}`);
     };
 
     const handleCheckInToggle = async (item: AttendeeItem) => {
