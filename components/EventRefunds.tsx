@@ -215,12 +215,28 @@ export const EventRefunds = () => {
         // Check for pre-selected registration from URL
         const urlParams = new URLSearchParams(window.location.search);
         const selectedRegId = urlParams.get('selectedReg');
+        const ticketsParam = urlParams.get('tickets');
         
         if (selectedRegId) {
             const preSelectedReg = refundableRegs.find(r => r.id === selectedRegId);
             if (preSelectedReg) {
-                // Auto-select this order for refund
-                handleSelectOrder(preSelectedReg);
+                // Parse ticket indices if provided
+                const ticketIndices = ticketsParam 
+                    ? ticketsParam.split(',').map(i => parseInt(i)).filter(i => !isNaN(i))
+                    : [];
+                
+                // Auto-select this order for refund with specific tickets
+                if (ticketIndices.length > 0) {
+                    // Pre-select only specified tickets
+                    setSelectedRefund({
+                        registration: preSelectedReg,
+                        selectedTickets: ticketIndices,
+                        refundAmount: calculateRefundAmount(preSelectedReg, ticketIndices)
+                    });
+                } else {
+                    // No specific tickets - select all non-refunded tickets
+                    handleSelectOrder(preSelectedReg);
+                }
             }
         }
     };
