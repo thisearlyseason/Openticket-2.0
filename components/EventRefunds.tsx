@@ -603,24 +603,37 @@ export const EventRefunds = () => {
                                             <p className="text-sm text-zinc-400">{reg.attendeeEmail}</p>
                                             <p className="text-xs text-zinc-500 mt-1">Order ID: {reg.id.substring(0, 8)}</p>
                                         </div>
-                                        <Button
-                                            onClick={() => handleSelectOrder(reg)}
-                                            className="bg-red-500 hover:bg-red-600 text-white border-none"
-                                            disabled={isRefunding}
-                                            data-testid={`refund-order-btn-${reg.id}`}
-                                        >
-                                            {isRefunding ? (
-                                                <>
-                                                    <Loader className="animate-spin mr-2" size={18} />
-                                                    Refunding...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <DollarSign size={18} className="mr-2" />
-                                                    Refund Order
-                                                </>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={() => handleSelectOrder(reg)}
+                                                className="bg-red-500 hover:bg-red-600 text-white border-none"
+                                                disabled={isRefunding}
+                                                data-testid={`refund-order-btn-${reg.id}`}
+                                            >
+                                                {isRefunding ? (
+                                                    <>
+                                                        <Loader className="animate-spin mr-2" size={18} />
+                                                        Refunding...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <DollarSign size={18} className="mr-2" />
+                                                        Refund Order
+                                                    </>
+                                                )}
+                                            </Button>
+                                            {isRefunding && (
+                                                <Button
+                                                    onClick={() => handleForceCompleteRefund(reg.id)}
+                                                    className="bg-yellow-500 hover:bg-yellow-600 text-black border-none"
+                                                    size="sm"
+                                                    title="Force complete this stuck refund"
+                                                >
+                                                    <AlertCircle size={16} className="mr-1" />
+                                                    Fix Stuck Refund
+                                                </Button>
                                             )}
-                                        </Button>
+                                        </div>
                                     </div>
 
                                 {/* Tickets */}
