@@ -70,7 +70,14 @@ router.post('/find-by-email', async (req, res) => {
 
         // Send email with tickets
         console.log(`[TicketLookup] Sending ticket retrieval email to ${email}`);
-        const emailResult = await EmailService.sendTicketRetrievalLink(email, formattedTickets, events);
+        
+        let emailResult;
+        try {
+            emailResult = await EmailService.sendTicketRetrievalLink(email, formattedTickets, events);
+        } catch (emailError) {
+            console.error(`[TicketLookup] ❌ Email function threw error:`, emailError);
+            emailResult = { sent: false, error: emailError.message };
+        }
 
         if (emailResult.sent) {
             console.log(`[TicketLookup] ✅ Email sent successfully`);
