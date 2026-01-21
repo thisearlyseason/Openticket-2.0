@@ -364,14 +364,21 @@ export const EventFinance = () => {
                 
                 const refundAmt = reg.refundedAmount || calculatedTotal;
                 refundedAmount += refundAmt;
+                
+                // CRITICAL FIX: Deduct refunded amounts from gross sales
+                // Refunds should reduce the gross sales, platform fees, and tax collected
+                grossSales -= refundAmt;
+                platformFees -= serviceFee;
+                taxCollected -= tax;
+                
                 mockTransactions.push({
                     id: `refund-${reg.id}`,
                     registration_id: reg.id,
                     gross_amount: -refundAmt,
-                    platform_fee: 0,
-                    stripe_fee: 0,
-                    tax_amount: 0,
-                    organizer_net: -refundAmt,
+                    platform_fee: -serviceFee,
+                    stripe_fee: -Number((refundAmt * 0.029 + 0.30).toFixed(2)),
+                    tax_amount: -tax,
+                    organizer_net: -refundAmt + serviceFee + Number((refundAmt * 0.029 + 0.30).toFixed(2)),
                     status: 'refunded',
                     transaction_type: 'refund',
                     created_at: new Date(reg.timestamp).toISOString(),
