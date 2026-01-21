@@ -623,12 +623,14 @@ export const refundRegistration = async (req, res) => {
         // But we can create it here as backup if webhook doesn't fire
         if (!reg.stripe_checkout_session_id && amountToRefundCents > 0) {
             // Manual/offline registration refund - create financial record
+            // For manual payments, we don't have original fee data, so set to 0
             await supabase.from('financial_transactions').insert({
                 registration_id: id,
                 event_id: reg.event_id,
                 gross_amount: -(amountToRefundCents / 100),
                 platform_fee: 0,
                 stripe_fee: 0,
+                organizer_absorbed_fee: false,
                 organizer_net: -(amountToRefundCents / 100),
                 currency: 'usd',
                 status: 'refunded',
@@ -636,15 +638,53 @@ export const refundRegistration = async (req, res) => {
                 transaction_type: 'refund',
             });
         } else if (stripeRefundId && amountToRefundCents > 0) {
-            // Stripe refund - create backup financial record marked as pending_webhook
+            // Stripe refund - calculate proportional fees from original transaction
             try {
+                // Get original transaction to calculate proportional fees
+                const { data: originalTx, error: txError } = await supabase
+                    .from('financial_transactions')
+                    .select('*')
+                    .eq('registration_id', id)
+                    .eq('transaction_type', 'ticket_sale')
+                    .single();
+
+                let refundPlatformFee = 0;
+                let refundStripeFee = 0;
+                let organizerAbsorbedFee = false;
+
+                if (originalTx && !txError) {
+                    // Calculate proportional fees based on refund ratio
+                    const originalGrossAmount = Math.abs(originalTx.gross_amount || 0);
+                    const refundAmount = amountToRefundCents / 100;
+                    
+                    if (originalGrossAmount > 0) {
+                        const refundRatio = refundAmount / originalGrossAmount;
+                        refundPlatformFee = (originalTx.platform_fee || 0) * refundRatio;
+                        refundStripeFee = (originalTx.stripe_fee || 0) * refundRatio;
+                        organizerAbsorbedFee = originalTx.organizer_absorbed_fee || false;
+                        
+                        console.log('[Refund] Calculated proportional fees:', {
+                            originalGross: originalGrossAmount,
+                            refundAmount,
+                            refundRatio: refundRatio.toFixed(4),
+                            originalPlatformFee: originalTx.platform_fee,
+                            refundPlatformFee: refundPlatformFee.toFixed(2),
+                            originalStripeFee: originalTx.stripe_fee,
+                            refundStripeFee: refundStripeFee.toFixed(2),
+                            organizerAbsorbedFee
+                        });
+                    }
+                }
+
+                // Create refund financial transaction with negative fees
                 await supabase.from('financial_transactions').insert({
                     registration_id: id,
                     event_id: reg.event_id,
                     gross_amount: -(amountToRefundCents / 100),
-                    platform_fee: 0,
-                    stripe_fee: 0,
-                    organizer_net: -(amountToRefundCents / 100),
+                    platform_fee: -refundPlatformFee,
+                    stripe_fee: -refundStripeFee,
+                    organizer_absorbed_fee: organizerAbsorbedFee,
+                    organizer_net: -(amountToRefundCents / 100) + refundPlatformFee + refundStripeFee,
                     currency: 'usd',
                     status: 'refunded',
                     payout_status: 'pending_webhook',
