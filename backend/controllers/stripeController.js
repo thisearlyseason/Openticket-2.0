@@ -630,6 +630,7 @@ export const verifySession = async (req, res) => {
             stripe_payment_intent_id: paymentIntentId,
             gross_amount: grossAmount,
             platform_fee: platformFee,
+            organizer_absorbed_fee: reg.organizer_absorbed_fee || false, // Track fee absorption
             stripe_fee: stripeFee,
             tax_amount: taxAmount,
             organizer_net: organizerNet,
