@@ -17,6 +17,7 @@ router.put('/:id', verifyToken, registrationController.updateRegistration);
 router.delete('/:id', verifyToken, registrationController.deleteRegistration);
 router.post('/:id/refund', verifyToken, registrationController.refundRegistration);
 router.post('/:id/refund-addon', verifyToken, registrationController.refundAddOn);
+router.post('/:id/force-complete-refund', verifyToken, registrationController.forceCompleteRefund);
 router.post('/:id/resend-email', verifyToken, registrationController.resendConfirmationEmail);
 router.post('/:id/approve', verifyToken, registrationController.approveRegistration);
 
