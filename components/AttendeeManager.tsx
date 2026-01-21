@@ -663,7 +663,7 @@ export const AttendeeManager = () => {
                             <h1 className="text-3xl md:text-4xl font-black text-zinc-900 dark:text-white uppercase tracking-tight">Guest List</h1>
                             <div className="flex flex-wrap gap-2 mt-2">
                                 <Badge color="gray" className="truncate max-w-[200px]">{event?.title}</Badge>
-                                <Badge color="purple">{attendees.length} Guests</Badge>
+                                <Badge color="purple">{attendees.filter(a => a.status !== 'refunded').length} Guests</Badge>
                             </div>
                         </div>
                     </div>
