@@ -22,9 +22,10 @@ router.post('/find-by-email', async (req, res) => {
         const normalizedEmail = email.toLowerCase().trim();
 
         // Find all registrations (tickets) associated with this email
+        // Select only needed event fields to avoid issues with missing columns
         const { data: registrations, error: registrationsError } = await supabase
             .from('registrations')
-            .select('*, events!inner(*)')
+            .select('*, events!inner(id, title, date, location, venue_name, owner_id)')
             .ilike('attendee_email', normalizedEmail)
             .order('created_at', { ascending: false });
 
