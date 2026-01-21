@@ -1171,6 +1171,10 @@ export const StorageService = {
                 business_name: cleanData.businessName
             };
 
+            // Include onboarding fields (stored in subscription.settings JSONB)
+            if (cleanData.businessType) payload.business_type = cleanData.businessType;
+            if (cleanData.eventTypes) payload.event_types = cleanData.eventTypes;
+
             // Include nonprofit fields if present
             if (cleanData.nonProfitStatus) payload.nonprofit_status = cleanData.nonProfitStatus;
             if (cleanData.nonProfitName) payload.nonprofit_name = cleanData.nonProfitName;
