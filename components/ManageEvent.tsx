@@ -51,7 +51,8 @@ export const ManageEvent = () => {
                     try {
                         const registrations = await StorageService.getRegistrations(id);
                         const paidRegistrations = registrations.filter(r => 
-                            r.paymentStatus === 'paid' || r.paymentStatus === 'completed'
+                            (r.paymentStatus === 'paid' || r.paymentStatus === 'completed') &&
+                            r.paymentStatus !== 'refunded'
                         );
                         
                         // Count total guests (sum of all non-refunded ticket quantities)
