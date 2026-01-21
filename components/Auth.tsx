@@ -391,7 +391,14 @@ export const Auth = () => {
             if (user.isAdmin) {
                 navigate('/admin');
             } else if (user.role === 'organizer') {
-                navigate('/dashboard');
+                // Check if organizer has completed onboarding
+                const needsOnboarding = !user.businessName || !user.businessType;
+                if (needsOnboarding) {
+                    // Redirect to settings to complete profile
+                    navigate('/settings?onboarding=true');
+                } else {
+                    navigate('/dashboard');
+                }
             } else if (user.role === 'affiliate') {
                 navigate('/affiliate');
             } else {
