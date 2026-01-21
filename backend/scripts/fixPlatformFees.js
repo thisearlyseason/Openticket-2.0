@@ -53,9 +53,10 @@ async function fixPlatformFees() {
                         id,
                         price_type,
                         absorb_fees,
+                        owner_id,
                         profiles!inner(
                             id,
-                            subscription_plan
+                            subscription
                         )
                     )
                 )
