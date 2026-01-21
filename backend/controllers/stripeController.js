@@ -273,6 +273,7 @@ export const createOrder = async (req, res) => {
                 conversionRate: currencyConversionRate.toString(), // Rate used for conversion
                 // Store breakdown for webhook reconciliation (in organizer's currency)
                 platformFee: breakdown.platformFee.toString(),
+                platformFeeAbsorbed: breakdown.platformFeeAbsorbedByOrganizer ? 'true' : 'false',
                 taxAmount: breakdown.taxAmount.toString(),
                 discountAmount: breakdown.discountAmount.toString(),
                 promoCode: validPromoCode?.code || '',
