@@ -168,7 +168,7 @@ export const Badge = ({ children, color = 'blue', className = '' }: { children?:
         gray: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700',
         yellow: 'bg-[#E0FF20] text-black border-transparent'
     };
-    return <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
+    return <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
 };
 
 export const Input = ({ label, error, required, className = '', containerClassName = '', icon: Icon, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string, error?: string, containerClassName?: string, icon?: React.ElementType }) => {
