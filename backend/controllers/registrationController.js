@@ -384,7 +384,7 @@ export const refundRegistration = async (req, res) => {
                     stripeAttempted = false;
                     stripeError = null; // Clear any error - this is expected for incomplete checkouts
                     
-                } else if (session.payment_status !== 'paid') {
+                } else if (session.payment_status !== 'paid' && session.payment_status !== 'succeeded') {
                     // Session has payment intent but payment was not completed
                     console.warn('[Refund] Session payment not completed, treating as manual refund:', {
                         sessionId: reg.stripe_checkout_session_id,
