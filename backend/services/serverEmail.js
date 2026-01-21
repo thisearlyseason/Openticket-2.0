@@ -140,6 +140,83 @@ class EmailService {
     }
 
     /**
+     * Send ticket retrieval link via email (Find My Tickets feature)
+     * @param {string} to - Recipient email
+     * @param {Array} tickets - Array of ticket objects
+     * @param {Array} events - Array of associated event objects
+     */
+    static async sendTicketRetrievalLink(to, tickets, events) {
+        if (!resend) {
+            console.warn("[EmailService] ❌ Resend not configured");
+            return { sent: false, error: 'Email service not configured' };
+        }
+
+        // Generate ticket list HTML
+        const ticketList = events.map(event => {
+            const eventTickets = tickets.filter(t => t.event_id === event.id);
+            const ticketCount = eventTickets.length;
+            
+            return `
+                <div style="margin-bottom: 20px; padding: 20px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #E0FF20;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #111827;">${event.title}</h3>
+                    <p style="margin: 0; color: #6b7280; font-size: 14px;">
+                        📅 ${new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}<br/>
+                        📍 ${event.location || event.venue_name || 'TBD'}<br/>
+                        🎟️ ${ticketCount} ticket${ticketCount !== 1 ? 's' : ''}
+                    </p>
+                    <a href="${process.env.FRONTEND_URL || 'https://openticket.app'}/#/my-tickets" 
+                       style="display: inline-block; margin-top: 15px; padding: 12px 24px; background: #E0FF20; color: #000; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+                        View My Tickets →
+                    </a>
+                </div>
+            `;
+        }).join('');
+
+        const subject = `🎟️ Your OpenTicket Tickets - ${events.length} Event${events.length !== 1 ? 's' : ''}`;
+        const html = `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #000 0%, #1a1a1a 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: #E0FF20; margin: 0; font-size: 28px; font-weight: bold;">Your Tickets</h1>
+                    <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px;">We found your tickets!</p>
+                </div>
+                <div style="padding: 30px; background: #ffffff; color: #111827;">
+                    <p style="font-size: 16px; line-height: 1.6; color: #374151; margin: 0 0 20px 0;">
+                        Hi! Here are the tickets we found for <strong>${to}</strong>:
+                    </p>
+                    
+                    ${ticketList}
+                    
+                    <div style="margin-top: 30px; padding: 20px; background: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+                        <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
+                            <strong>💡 Tip:</strong> Sign in to your OpenTicket account to manage your tickets, transfer them, or add them to your wallet.
+                        </p>
+                        <a href="${process.env.FRONTEND_URL || 'https://openticket.app'}/#/auth" 
+                           style="display: inline-block; margin-top: 10px; color: #2563eb; text-decoration: underline; font-size: 14px;">
+                            Sign In / Create Account →
+                        </a>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                            This email was sent because someone requested tickets for this email address. 
+                            If you didn't request this, you can safely ignore this email.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        try {
+            const result = await sendEmailViaResend(to, subject, html);
+            console.log(`[EmailService] Ticket retrieval email sent to ${to}:`, result.sent);
+            return result;
+        } catch (error) {
+            console.error('[EmailService] Failed to send ticket retrieval email:', error.message);
+            return { sent: false, error: error.message };
+        }
+    }
+
+    /**
      * Send event update notification email
      * @param {string} to - Recipient email
      * @param {Object} eventDetails - Event details
