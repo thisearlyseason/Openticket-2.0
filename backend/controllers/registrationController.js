@@ -344,10 +344,11 @@ export const refundRegistration = async (req, res) => {
         
         if (isStripePayment && amountToRefundCents > 0) {
             stripeAttempted = true;
+            let session = null; // Declare outside try block for error handling
             
             try {
                 console.log('[Refund] Retrieving Stripe session:', reg.stripe_checkout_session_id);
-                const session = await stripe.checkout.sessions.retrieve(reg.stripe_checkout_session_id);
+                session = await stripe.checkout.sessions.retrieve(reg.stripe_checkout_session_id);
                 
                 if (!session) {
                     stripeError = 'Stripe session not found';
