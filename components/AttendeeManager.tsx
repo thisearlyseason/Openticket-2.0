@@ -613,8 +613,13 @@ export const AttendeeManager = () => {
             return window.alert("This ticket is already refunded.");
         }
 
-        // Navigate to refunds page with this registration pre-selected
-        navigate(`/manage/${event!.id}/refunds?selectedReg=${item.regId}`);
+        // Navigate to refunds page with this registration and specific ticket pre-selected
+        // Pass the ticket index so only this ticket is shown for refund
+        const ticketsParam = item.itemType === 'ticket' 
+            ? `&tickets=${item.ticketIndex}` 
+            : '';
+        
+        navigate(`/manage/${event!.id}/refunds?selectedReg=${item.regId}${ticketsParam}`);
     };
 
     const handlePrintBadge = (item: AttendeeItem) => {
