@@ -405,6 +405,72 @@ export const refundRegistration = async (req, res) => {
                     stripeError = null;
                     
                 } else {
+                    // Validate payment intent before attempting refund
+                    console.log('[Refund] Validating payment intent:', session.payment_intent);
+                    
+                    // Retrieve the payment intent to check its status
+                    let paymentIntent;
+                    try {
+                        paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+                        console.log('[Refund] Payment Intent details:', {
+                            id: paymentIntent.id,
+                            status: paymentIntent.status,
+                            amount: paymentIntent.amount,
+                            currency: paymentIntent.currency,
+                            chargeId: paymentIntent.latest_charge,
+                            amountReceived: paymentIntent.amount_received,
+                            amountRefunded: paymentIntent.amount_refunded || 0,
+                            refundable: (paymentIntent.amount_received || paymentIntent.amount) - (paymentIntent.amount_refunded || 0)
+                        });
+                        
+                        // VALIDATION 1: Check payment intent status
+                        if (paymentIntent.status !== 'succeeded') {
+                            throw new Error(`Payment intent status is '${paymentIntent.status}', must be 'succeeded' to refund`);
+                        }
+                        
+                        // VALIDATION 2: Check if already fully refunded
+                        const amountRefunded = paymentIntent.amount_refunded || 0;
+                        const amountReceived = paymentIntent.amount_received || paymentIntent.amount;
+                        const refundableAmount = amountReceived - amountRefunded;
+                        
+                        if (refundableAmount <= 0) {
+                            throw new Error(`Payment has already been fully refunded. Amount refunded: $${amountRefunded / 100}, Amount received: $${amountReceived / 100}`);
+                        }
+                        
+                        // VALIDATION 3: Check if requested amount exceeds refundable
+                        if (!isFullRefund && amountToRefundCents > refundableAmount) {
+                            throw new Error(`Requested refund ($${amountToRefundCents / 100}) exceeds refundable amount ($${refundableAmount / 100})`);
+                        }
+                        
+                        // VALIDATION 4: Ensure there's a charge to refund
+                        if (!paymentIntent.latest_charge) {
+                            throw new Error('Payment intent has no charge to refund');
+                        }
+                        
+                    } catch (validationError) {
+                        console.error('[Refund] ❌ Validation failed:', validationError.message);
+                        
+                        // Reset payment_status
+                        await supabase
+                            .from('registrations')
+                            .update({ payment_status: reg.payment_status })
+                            .eq('id', id);
+                        
+                        return res.status(400).json({
+                            error: 'Refund validation failed',
+                            stripeError: validationError.message,
+                            canRefund: false,
+                            diagnostics: {
+                                paymentIntent: session.payment_intent,
+                                paymentIntentStatus: paymentIntent?.status,
+                                amountReceived: paymentIntent?.amount_received,
+                                amountRefunded: paymentIntent?.amount_refunded,
+                                refundableAmount: paymentIntent ? (paymentIntent.amount_received || paymentIntent.amount) - (paymentIntent.amount_refunded || 0) : 0,
+                                requestedAmount: amountToRefundCents
+                            }
+                        });
+                    }
+                    
                     const refundParams = {
                         payment_intent: session.payment_intent,
                         reason: 'requested_by_customer',
@@ -420,20 +486,24 @@ export const refundRegistration = async (req, res) => {
                         refundParams.amount = amountToRefundCents;
                     }
 
-                    console.log('[Refund] Calling Stripe API:', {
+                    console.log('[Refund] 🔄 Calling Stripe refunds.create API:', {
                         paymentIntent: session.payment_intent,
                         amount: refundParams.amount ? `$${refundParams.amount / 100}` : 'FULL',
-                        isPartialRefund: !!refundParams.amount
+                        amountInCents: refundParams.amount || 'FULL',
+                        isPartialRefund: !!refundParams.amount,
+                        currency: paymentIntent.currency
                     });
 
                     const refund = await stripe.refunds.create(refundParams);
                     stripeRefundId = refund.id;
                     
-                    console.log('[Refund] ✅ Stripe refund created:', {
+                    console.log('[Refund] ✅ Stripe refund created successfully:', {
                         refundId: refund.id,
-                        amount: `$${amountToRefundCents / 100}`,
+                        amount: `$${(refund.amount || amountToRefundCents) / 100}`,
                         status: refund.status,
-                        currency: refund.currency
+                        currency: refund.currency,
+                        paymentIntent: refund.payment_intent,
+                        charge: refund.charge
                     });
                 }
             } catch (err) {
