@@ -1350,16 +1350,26 @@ export const StorageService = {
         if (isOffline) return getLocal<Event>(LS_EVENTS_KEY).find(e => e.id === id) || null;
         try {
             console.log(`[StorageService] Fetching event by ID: ${id}`);
+            
+            // Try unauthenticated fetch first (public events)
             const response = await fetchSupabase(`/events/${id}`, false);
             console.log(`[StorageService] Event response:`, response);
+            
             const event = response?.event;
             if (!event) {
                 console.warn(`[StorageService] No event in response for ID: ${id}`);
                 return null;
             }
-            return normalizeEvent(event);
+            
+            const normalized = normalizeEvent(event);
+            console.log(`[StorageService] Normalized event:`, { 
+                title: normalized.title, 
+                date: normalized.date,
+                imageUrl: normalized.imageUrl?.substring(0, 50)
+            });
+            return normalized;
         } catch (e) {
-            console.warn("Get Event By ID failed", e);
+            console.error("[StorageService] Get Event By ID failed:", e);
             return null;
         }
     },
