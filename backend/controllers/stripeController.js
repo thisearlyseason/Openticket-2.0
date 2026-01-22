@@ -812,7 +812,9 @@ export const verifySession = async (req, res) => {
 
         res.json({ 
             status: 'success',
-            registration: updatedReg
+            registration: updatedReg,
+            chargedCurrency: session.currency?.toUpperCase() || 'USD',
+            chargedAmount: grossAmount
         });
 
     } catch (error) {
