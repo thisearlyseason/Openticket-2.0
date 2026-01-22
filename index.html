@@ -61,86 +61,11 @@
       }
     })();
   </script>
-  <!-- Tailwind CSS - Using CDN for now, will be bundled in production build -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Space Grotesk', 'sans-serif'],
-          },
-          colors: {
-            background: 'var(--color-background)',
-            surface: 'var(--color-surface)',
-            primary: 'var(--color-primary)',
-            'primary-fg': 'var(--color-primary-fg)',
-            secondary: 'var(--color-secondary)',
-            'secondary-fg': 'var(--color-secondary-fg)',
-            accent: 'var(--color-accent)',
-            'accent-fg': 'var(--color-accent-fg)',
-            muted: 'var(--color-muted)',
-            'muted-fg': 'var(--color-muted-fg)',
-            'neon-green': '#00ff9d',
-          },
-          animation: {
-            'blob': "blob 10s infinite",
-            'float': "float 6s ease-in-out infinite",
-            'pulse-slow': "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-          },
-          keyframes: {
-            blob: {
-              "0%": { transform: "translate(0px, 0px) scale(1)" },
-              "33%": { transform: "translate(30px, -50px) scale(1.2)" },
-              "66%": { transform: "translate(-20px, 20px) scale(0.8)" },
-              "100%": { transform: "translate(0px, 0px) scale(1)" },
-            },
-            float: {
-              "0%, 100%": { transform: "translateY(0)" },
-              "50%": { transform: "translateY(-10px)" },
-            }
-          },
-        }
-      }
-    };
-  </script>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap"
     rel="stylesheet">
   <style>
-    :root {
-      --color-background: #ffffff;
-      --color-surface: #f4f4f5;
-      --color-primary: #0f172a;
-      --color-primary-fg: #ffffff;
-      /* Slate 900 - Dark & Readable */
-      --color-secondary: #E0FF20;
-      /* High-contrast Neon Yellow */
-      --color-secondary-fg: #000000;
-      /* Black text on Neon */
-      --color-accent: #059669;
-      /* Emerald 600 */
-    }
-
-    .dark {
-      --color-background: #000000;
-      /* Pure Black to match Landing */
-      --color-surface: #121212;
-      /* Very Dark Grey */
-      --color-primary: #ec4899;
-      /* Neon Pink */
-      --color-primary-fg: #000000;
-      /* Black text on Pink */
-      --color-secondary: #E0FF20;
-      /* Neon Yellow */
-      --color-secondary-fg: #000000;
-      /* Black text on Neon Yellow */
-      --color-accent: #00ff9d;
-      /* Neon Green */
-    }
-
+    /* Glass effect */
     .glass {
       background-color: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(16px);
