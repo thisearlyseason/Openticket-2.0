@@ -694,6 +694,16 @@ export const Lightbox = ({ images, currentIndex, onClose, onChangeIndex }: { ima
 export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }: { isOpen: boolean, onClose: () => void, registration: Registration, event: Event, organizer?: User }) => {
     if (!isOpen) return null;
 
+    // Get currency from event or default to USD
+    const currency = event.currency || 'USD';
+    const currencySymbols: Record<string, string> = {
+        USD: '$', CAD: 'CA$', EUR: '€', GBP: '£', AUD: 'A$', INR: '₹', JPY: '¥', MXN: 'MX$', BRL: 'R$'
+    };
+    const symbol = currencySymbols[currency] || currency + ' ';
+    
+    // Currency formatter helper
+    const formatAmount = (amount: number) => `${symbol}${amount.toFixed(2)}`;
+
     const totalTickets = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.quantity), 0) || 0;
     const ticketCost = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.pricePerTicket * t.quantity), 0) || 0;
     const addOnCost = registration.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
@@ -702,9 +712,16 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
     const subtotal = ticketCost + addOnCost;
     const fees = (registration.serviceFee || 0) + (registration.customFeesAmount || 0);
     const tax = registration.taxAmount || 0;
-    const donation = (registration.donationAmount || 0) + (registration.platformDonationAmount || 0);
+    
+    // Platform donation from answers._metadata or direct field
+    const platformDonation = registration.answers?._metadata?.platform_donation_amount 
+        || registration.platformDonationAmount 
+        || 0;
+    const eventDonation = registration.donationAmount || 0;
+    const totalDonations = platformDonation + eventDonation;
+    
     const discount = registration.discountAmount || 0;
-    const total = Math.max(0, subtotal + fees + tax + donation - discount);
+    const total = Math.max(0, subtotal + fees + tax + totalDonations - discount);
     const refunded = registration.refundedAmount || 0;
 
     const hasBranding = organizer && (organizer.subscription?.plan === 'pro' || organizer.subscription?.plan === 'premium') && organizer.logoUrl;
