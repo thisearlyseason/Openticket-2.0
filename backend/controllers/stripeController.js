@@ -333,7 +333,8 @@ export const createOrder = async (req, res) => {
         const session = await stripe.checkout.sessions.create(sessionOptions);
 
         // 11. Create pending registration record
-        // Note: Store fee absorption info in metadata until DB column is added
+        // Only use columns that definitely exist in the registrations table
+        // Extra metadata is stored in the answers JSONB field
         const registrationPayload = {
             event_id: eventId,
             attendee_email: customerEmail,
@@ -344,20 +345,21 @@ export const createOrder = async (req, res) => {
             tickets: ticketsData,
             add_ons: addOnsData,
             stripe_checkout_session_id: session.id,
-            answers: {},
             created_at: new Date(),
             phone_number: phoneNumber,
             promo_code_used: validPromoCode?.code || null,
             discount_amount: breakdown.discountAmount,
-            total_amount: breakdown.grandTotal + donationAmount, // Include donation in total
+            total_amount: breakdown.grandTotal + donationAmount,
             service_fee: breakdown.platformFee,
             tax_amount: breakdown.taxAmount,
             affiliate_code: affiliateCode || null,
-            // Store fee absorption and other metadata in the answers field temporarily
-            metadata: {
-                organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
-                custom_fees_amount: breakdown.customFeesAmount || 0,
-                platform_donation_amount: donationAmount || 0
+            // Store additional metadata in answers field (definitely exists as JSONB)
+            answers: {
+                _metadata: {
+                    organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
+                    custom_fees_amount: breakdown.customFeesAmount || 0,
+                    platform_donation_amount: donationAmount || 0
+                }
             }
         };
 
