@@ -1259,6 +1259,14 @@ export const StorageService = {
         if (updates.organizerWebsite) payload.website = updates.organizerWebsite;
         if (updates.affiliateCode) payload.affiliate_code = updates.affiliateCode;
         if (updates.defaultCurrency) payload.default_currency = updates.defaultCurrency;
+        
+        // Onboarding fields
+        if (updates.eventTypes) payload.event_types = updates.eventTypes;
+        if (updates.teamSize) payload.team_size = updates.teamSize;
+        if (updates.heardFrom) payload.heard_from = updates.heardFrom;
+        if (updates.suggestions) payload.suggestions = updates.suggestions;
+        if (updates.onboardingCompleted !== undefined) payload.onboarding_completed = updates.onboardingCompleted;
+        if (updates.onboardingCompletedAt) payload.onboarding_completed_at = updates.onboardingCompletedAt;
 
         try {
             // Use dedicated Update endpoint for robustness
