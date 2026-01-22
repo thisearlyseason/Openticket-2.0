@@ -333,6 +333,7 @@ export const createOrder = async (req, res) => {
         const session = await stripe.checkout.sessions.create(sessionOptions);
 
         // 11. Create pending registration record
+        // Note: Store fee absorption info in metadata until DB column is added
         const registrationPayload = {
             event_id: eventId,
             attendee_email: customerEmail,
@@ -350,11 +351,14 @@ export const createOrder = async (req, res) => {
             discount_amount: breakdown.discountAmount,
             total_amount: breakdown.grandTotal + donationAmount, // Include donation in total
             service_fee: breakdown.platformFee,
-            organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
             tax_amount: breakdown.taxAmount,
-            custom_fees_amount: breakdown.customFeesAmount,
             affiliate_code: affiliateCode || null,
-            platform_donation_amount: donationAmount, // Track separately
+            // Store fee absorption and other metadata in the answers field temporarily
+            metadata: {
+                organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
+                custom_fees_amount: breakdown.customFeesAmount || 0,
+                platform_donation_amount: donationAmount || 0
+            }
         };
 
         const { data: insertedReg, error: insertError } = await supabase
