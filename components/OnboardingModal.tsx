@@ -75,7 +75,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
 
         try {
             // Update user profile with onboarding data
-            await StorageService.updateProfile({
+            const currentUser = StorageService.getCurrentUser();
+            if (!currentUser) {
+                setError('User not found. Please try logging in again.');
+                setIsSubmitting(false);
+                return;
+            }
+            
+            await StorageService.updateUser(currentUser.id, {
                 businessName,
                 businessType,
                 eventTypes: eventTypes.join(','),
