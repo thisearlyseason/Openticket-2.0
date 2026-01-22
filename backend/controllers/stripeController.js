@@ -781,8 +781,22 @@ export const verifySession = async (req, res) => {
                     id: reg.event_id,
                     title: reg.event?.title || 'Event',
                     date: reg.event?.date,
+                    time: reg.event?.time,
                     location: reg.event?.location || reg.event?.venue_name,
-                    organizerName: reg.event?.organizer_name || 'Event Organizer'
+                    organizer: reg.event?.organizer_name || 'Event Organizer',
+                    ticket_design: reg.event?.ticket_design,
+                    currency: session.currency?.toUpperCase() || reg.event?.currency || 'USD'
+                },
+                // Order details for full breakdown
+                {
+                    registrationId: reg.id,
+                    attendeeName: reg.attendee_name,
+                    currency: session.currency?.toUpperCase() || 'USD',
+                    serviceFee: reg.service_fee || 0,
+                    taxAmount: reg.tax_amount || 0,
+                    platformDonation: reg.answers?._metadata?.platform_donation_amount || reg.platform_donation_amount || 0,
+                    discountAmount: reg.discount_amount || 0,
+                    promoCode: reg.promo_code_used || null
                 }
             );
             console.log(`[Stripe] ✅ Confirmation email sent successfully`);
