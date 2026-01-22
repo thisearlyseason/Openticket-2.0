@@ -36,8 +36,9 @@ class EmailService {
      * @param {string} to - Recipient email
      * @param {Array} tickets - Array of UNIQUE ticket objects with individual IDs
      * @param {Object} eventDetails - Event information
+     * @param {Object} orderDetails - Full order details including fees, currency, donations
      */
-    static async sendTicketConfirmation(to, tickets, eventDetails) {
+    static async sendTicketConfirmation(to, tickets, eventDetails, orderDetails = {}) {
         if (!to || !tickets || !Array.isArray(tickets) || tickets.length === 0) {
             console.error("[EmailService] Invalid parameters", { to, ticketsCount: tickets?.length });
             return false;
@@ -60,29 +61,50 @@ class EmailService {
                 })
                 : 'TBD';
             
-            // Calculate total paid from ALL individual tickets
-            const totalPaid = tickets.reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
+            // Calculate subtotal from tickets
+            const subtotal = tickets.reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
+            
+            // Calculate total with all fees and donations
+            const totalPaid = subtotal 
+                + (orderDetails.serviceFee || 0)
+                + (orderDetails.taxAmount || 0)
+                + (orderDetails.platformDonation || 0)
+                - (orderDetails.discountAmount || 0);
+            
+            // Generate proper Order ID
+            const registrationId = orderDetails.registrationId || tickets[0]?.registrationId;
+            const orderId = registrationId 
+                ? `ORD-${registrationId.substring(0, 8).toUpperCase()}`
+                : `ORD-${Date.now().toString(36).toUpperCase()}`;
             
             // CRITICAL: Pass tickets as-is (each ticket is already unique)
             // DO NOT transform or group them!
             const { subject, html } = purchaseConfirmation({
-                attendeeName: tickets[0]?.attendeeName || 'Guest',
+                attendeeName: tickets[0]?.attendeeName || orderDetails.attendeeName || 'Guest',
                 eventTitle: eventDetails?.title || 'Event',
                 eventDate,
                 eventTime: eventDetails?.time || 'TBD',
                 eventLocation: eventDetails?.location || eventDetails?.venue_name || 'TBD',
                 tickets: tickets, // Pass unique tickets directly
                 totalPaid,
-                orderId: tickets[0]?.registrationId?.substring(0, 8).toUpperCase() || 'N/A',
+                orderId,
                 organizerName: eventDetails?.organizer || 'Event Organizer',
-                ticketDesign: eventDetails?.ticket_design
+                ticketDesign: eventDetails?.ticket_design,
+                // New fields for full breakdown
+                currency: orderDetails.currency || eventDetails?.currency || 'USD',
+                subtotal,
+                serviceFee: orderDetails.serviceFee || 0,
+                taxAmount: orderDetails.taxAmount || 0,
+                platformDonation: orderDetails.platformDonation || 0,
+                discountAmount: orderDetails.discountAmount || 0,
+                promoCode: orderDetails.promoCode || null,
+                qrCodeBaseUrl: null // Can be customized per organizer
             });
 
             console.log(`[EmailService] Sending confirmation email to ${to} with ${tickets.length} unique ticket(s)...`);
             const result = await sendEmailViaResend(to, subject, html);
             
             // Log to audit (registration ID from first ticket)
-            const registrationId = tickets[0]?.registrationId || tickets[0]?.id;
             if (registrationId) {
                 await emailAudit.logEmailSend({
                     triggerType: emailAudit.TRIGGER_TYPES.STRIPE_CHECKOUT_COMPLETED,
@@ -103,6 +125,9 @@ class EmailService {
             
             // Fallback to basic template - each ticket individually
             const subject = `🎟️ Your Tickets for ${eventDetails?.title || 'OpenTicket Event'}`;
+            const orderId = orderDetails.registrationId 
+                ? `ORD-${orderDetails.registrationId.substring(0, 8).toUpperCase()}`
+                : `ORD-${Date.now().toString(36).toUpperCase()}`;
             const ticketRows = tickets.map(t => `
                 <div style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 12px; background: #f9fafb;">
                     <h3 style="margin: 0 0 8px 0; color: #111827;">${t.name || 'Ticket'}</h3>
@@ -122,7 +147,7 @@ class EmailService {
                         <h2 style="font-size: 18px; color: #111827; margin-top: 30px;">Your ${tickets.length} Ticket${tickets.length > 1 ? 's' : ''}</h2>
                         ${ticketRows}
                         <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-top: 20px;">
-                            <p style="margin: 0; color: #6b7280; font-size: 14px;">Order ID: <strong style="font-family: monospace; color: #111827;">${tickets[0]?.id?.substring(0, 8).toUpperCase() || 'N/A'}</strong></p>
+                            <p style="margin: 0; color: #6b7280; font-size: 14px;">Order ID: <strong style="font-family: monospace; color: #111827;">${orderId}</strong></p>
                         </div>
                         <p style="margin-top: 20px; color: #6b7280; font-size: 14px;">Save this email for check-in at the event.</p>
                     </div>
