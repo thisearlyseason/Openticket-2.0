@@ -526,7 +526,7 @@ export const Auth = () => {
             } else {
                 if (role === 'organizer') {
                     // Show onboarding modal for organizers
-                    setNewUserEmail(email);
+                    setNewUserEmail(formData.email);
                     setShowOnboardingModal(true);
                 } else {
                     // Attendees go straight to my tickets
