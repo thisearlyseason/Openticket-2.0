@@ -1530,27 +1530,45 @@ export const StorageService = {
             const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
             console.log(`[StorageService] Found ${userRegs.length} matches`);
 
-            // Get all events to join with registrations
-            const allEvents = await StorageService.getEvents();
-            console.log(`[StorageService] Found ${allEvents.length} events to match against`);
+            if (userRegs.length === 0) {
+                return [];
+            }
+
+            // Get unique event IDs from registrations
+            const eventIds = [...new Set(userRegs.map((r: Registration) => r.eventId))];
+            console.log(`[StorageService] Need to fetch ${eventIds.length} unique events:`, eventIds);
             
-            // Log event IDs for debugging
-            const eventIds = userRegs.map((r: Registration) => r.eventId);
-            console.log(`[StorageService] Registration event IDs:`, eventIds);
+            // Fetch events individually by ID (bypasses cache issues with unpublished events)
+            const eventMap: Record<string, Event> = {};
+            for (const eventId of eventIds) {
+                try {
+                    const event = await StorageService.getEventById(eventId);
+                    if (event) {
+                        eventMap[eventId] = event;
+                        console.log(`[StorageService] Found event: ${event.title} (${eventId})`);
+                    } else {
+                        console.warn(`[StorageService] Event ${eventId} not found by ID`);
+                    }
+                } catch (e) {
+                    console.error(`[StorageService] Error fetching event ${eventId}:`, e);
+                }
+            }
             
-            // Match registrations with events - if event not found, create a placeholder
+            // Match registrations with events
             const result = userRegs.map((reg: Registration) => {
-                const event = allEvents.find(e => e.id === reg.eventId);
+                const event = eventMap[reg.eventId];
                 if (!event) {
-                    console.warn(`[StorageService] Event not found for registration ${reg.id}, eventId: ${reg.eventId}`);
-                    // Return a placeholder event so the ticket still shows
+                    console.warn(`[StorageService] Creating placeholder for event ${reg.eventId}`);
+                    // Create placeholder with future date so it shows in Active tab
+                    const futureDate = new Date();
+                    futureDate.setDate(futureDate.getDate() + 30); // 30 days in future
                     return { 
                         reg, 
                         event: {
                             id: reg.eventId,
                             title: 'Event Details Unavailable',
-                            date: new Date().toISOString().split('T')[0],
-                            time: '00:00',
+                            date: futureDate.toISOString().split('T')[0],
+                            time: '12:00',
                             location: 'Unknown',
                             ticketTiers: [],
                             currency: 'USD'
