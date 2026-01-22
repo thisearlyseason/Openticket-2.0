@@ -247,12 +247,21 @@ export const EventView = () => {
                                         discountAmount: reg.discount_amount || 0,
                                         promoCodeUsed: reg.promo_code_used || null,
                                         answers: reg.answers || {},
+                                        // Store the total amount as charged
+                                        totalAmount: reg.total_amount || 0,
                                     };
                                     
-                                    // Set the actual charged currency from Stripe
+                                    // Set the actual charged currency and amount from Stripe
                                     if (result.chargedCurrency) {
                                         setChargedCurrency(result.chargedCurrency);
                                         console.log('[EventView] Charged currency from Stripe:', result.chargedCurrency);
+                                    }
+                                    
+                                    // Store the charged amount for display
+                                    if (result.chargedAmount) {
+                                        // Update the registration with the actual charged amount
+                                        normalizedReg.chargedAmount = result.chargedAmount;
+                                        console.log('[EventView] Charged amount from Stripe:', result.chargedAmount);
                                     }
                                     
                                     setCompletedRegistration(normalizedReg as any);
