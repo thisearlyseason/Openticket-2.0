@@ -1524,3 +1524,39 @@ Applied conversion ratio (`chargedAmount / usdTotal`) to ALL displayed amounts a
 - `/app/components/EventView.tsx`
 - `/app/components/UI.tsx`
 - `/app/backend/services/emailTemplates.js`
+
+### ✅ Platform Improvements (January 22, 2026)
+
+#### Two-Option Signup Flow
+- Already implemented at Auth.tsx Step 0
+- "I want to find events" → Attendee role (minimal signup: name, email, password)
+- "I want to host events" → Organizer role (full onboarding flow)
+- Verified working correctly
+
+#### My Tickets Tab Bug Fix
+- Fixed date parsing to handle null/undefined/invalid dates
+- Added safeguard: events with no valid date default to Active tab
+- Added ISO format detection for proper parsing
+- Added detailed logging for debugging
+
+#### Email Template UI Overhaul
+- Changed all 7 themes to use muted, professional colors:
+  - Modern: Gray (#374151)
+  - Classic: Navy (#1e3a5f)
+  - Festive: Burgundy (#991b1b)
+  - Purple: Deep Purple (#5b21b6)
+  - Blue: Dark Blue (#1e40af)
+  - Orange: Dark Orange (#c2410c)
+- Removed emojis from email subjects for professional appearance
+- Header now says "Purchase Confirmed" instead of "You're In! 🎉"
+
+#### Currency Metadata Storage
+- Registration now stores `charged_currency` and `charged_amount` in `answers._metadata`
+- Enables accurate currency display on future receipt views
+- `normalizeRegistration()` extracts this data for frontend use
+
+#### Test Results
+- 18/18 iteration 44 tests passed
+- Signup flow UI verified
+- Email themes verified muted
+- Currency metadata storage verified
