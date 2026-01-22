@@ -151,6 +151,13 @@ export interface User {
   nonProfitDocUrl?: string;
   auditLogs?: AuditLog[];
 
+  // Onboarding
+  teamSize?: string;
+  heardFrom?: string;
+  suggestions?: string;
+  onboardingCompleted?: boolean;
+  onboardingCompletedAt?: string;
+
   // Preferences
   defaultPaymentMethod?: string;
   defaultPaymentLink?: string;
