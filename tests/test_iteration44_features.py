@@ -81,14 +81,13 @@ class TestRegistrationCurrencyMetadata:
         """Verify stripeController.js stores charged_currency in answers._metadata"""
         import subprocess
         result = subprocess.run(
-            ['grep', '-n', 'charged_currency', '/app/backend/controllers/stripeController.js'],
+            ['grep', '-B5', 'charged_currency', '/app/backend/controllers/stripeController.js'],
             capture_output=True, text=True
         )
         assert 'charged_currency' in result.stdout, "charged_currency not found in stripeController.js"
-        assert '_metadata' in result.stdout or 'answers' in result.stdout, "Should be stored in answers._metadata"
+        assert '_metadata' in result.stdout, "Should be stored in answers._metadata"
         
         print(f"✅ stripeController.js stores charged_currency in answers._metadata")
-        print(f"   Found at: {result.stdout.strip()}")
         
     def test_stripe_controller_stores_amount_metadata(self):
         """Verify stripeController.js stores charged_amount in answers._metadata"""
@@ -208,7 +207,7 @@ class TestTwoOptionSignupFlow:
         """Verify clicking 'Find Events' sets role to attendee"""
         import subprocess
         result = subprocess.run(
-            ['grep', '-B2', '-A2', "I want to find events", '/app/components/Auth.tsx'],
+            ['grep', '-B10', "I want to find events", '/app/components/Auth.tsx'],
             capture_output=True, text=True
         )
         assert "setRole('attendee')" in result.stdout, "Find Events should set role to attendee"
@@ -219,7 +218,7 @@ class TestTwoOptionSignupFlow:
         """Verify clicking 'Host Events' sets role to organizer"""
         import subprocess
         result = subprocess.run(
-            ['grep', '-B2', '-A2', "I want to host events", '/app/components/Auth.tsx'],
+            ['grep', '-B10', "I want to host events", '/app/components/Auth.tsx'],
             capture_output=True, text=True
         )
         assert "setRole('organizer')" in result.stdout, "Host Events should set role to organizer"
