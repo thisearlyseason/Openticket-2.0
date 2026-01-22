@@ -697,7 +697,11 @@ const normalizeRegistration = (r: any): Registration => {
         stripePaymentIntentId: r.stripe_payment_intent_id,
         discountAmount: r.discount_amount || 0,
         // Map joined financial data
-        stripeFee: (r.financial_transactions && r.financial_transactions.length > 0) ? r.financial_transactions[0].stripe_fee : 0
+        stripeFee: (r.financial_transactions && r.financial_transactions.length > 0) ? r.financial_transactions[0].stripe_fee : 0,
+        // Currency conversion data from Stripe
+        totalAmount: r.total_amount || r.answers?._metadata?.total_amount || 0,
+        chargedAmount: r.charged_amount || r.answers?._metadata?.charged_amount || 0,
+        chargedCurrency: r.charged_currency || r.answers?._metadata?.charged_currency || null,
     };
 };
 
