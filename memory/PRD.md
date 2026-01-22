@@ -1390,3 +1390,53 @@ When API calls return 401 Unauthorized:
 - [x] Backend APIs responding correctly
 - [x] Frontend build succeeds
 
+
+### ✅ Confirmation Screen, Receipt, Email, Guest Ownership Fixes (January 22, 2026)
+
+#### 1. Email Ticket Template Overhaul
+- [x] **Full cost breakdown** - Email now shows subtotal, discount, fees, tax, platform donation
+- [x] **Currency display** - Shows amount paid and currency used (USD, EUR, etc.)
+- [x] **Platform donation** - Now displayed as a line item when present
+- [x] **QR codes** - Each ticket in email now has a scannable QR code
+- [x] **Order ID** - Generates proper order ID format: `ORD-XXXXXXXX`
+- [x] **Professional design** - Modern, clean template with themed colors
+- [x] **File changed**: `/app/backend/services/emailTemplates.js`
+
+#### 2. Email Service Update
+- [x] **New orderDetails parameter** - Accepts full breakdown (fees, tax, donations, currency)
+- [x] **Proper Order ID generation** - Uses registration ID prefix
+- [x] **Currency support** - Passes through currency to template
+- [x] **File changed**: `/app/backend/services/serverEmail.js`
+
+#### 3. Guest Checkout → Account Linking
+- [x] **Auto-link on signup** - Guest purchases automatically attach when account created with same email
+- [x] **Auto-link on login** - Links any orphaned tickets on subsequent logins
+- [x] **Email matching** - Case-insensitive email comparison
+- [x] **File changed**: `/app/backend/controllers/authController.js`
+
+#### 4. Registration Query Enhancement
+- [x] **Dual lookup** - Queries by user_id OR matching email (for unlinked guest purchases)
+- [x] **Backward compatible** - Works with existing tickets that have null user_id
+- [x] **File changed**: `/app/backend/controllers/registrationController.js`
+
+#### 5. Stripe Controller Update
+- [x] **Email includes order details** - Passes full breakdown to email service
+- [x] **Currency from Stripe session** - Uses actual charged currency
+- [x] **Platform donation in email** - Extracted from answers._metadata
+- [x] **File changed**: `/app/backend/controllers/stripeController.js`
+
+#### Database Schema Requirements (User Action Needed)
+To enable all features, run this SQL in Supabase:
+```sql
+ALTER TABLE registrations 
+ADD COLUMN IF NOT EXISTS organizer_absorbed_fee BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS custom_fees_amount DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS platform_donation_amount DECIMAL(10,2) DEFAULT 0;
+```
+
+#### Testing Status
+- Ticket purchase flow: Ready for testing after deployment
+- Email confirmation: Template updated, needs real transaction to test
+- Guest ticket linking: Logic implemented, needs account creation test
+- Confirmation screen: Already shows breakdown in existing code
+
