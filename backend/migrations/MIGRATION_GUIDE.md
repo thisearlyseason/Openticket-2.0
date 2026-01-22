@@ -195,3 +195,23 @@ If you encounter any issues:
 - [ ] Migration 3: Materialized views - **Ready to run**
 
 After running each migration successfully, mark it as complete with a checkmark! ✅
+
+---
+
+### 4. ✅ Missing Schema Columns (P3 - Currency conversion support)
+**File:** `add_missing_columns.sql`
+**Purpose:** Adds columns that the codebase expects but may be missing in production:
+- `events.currency` - Default currency for event pricing
+- `events.email_settings` - JSONB for email configuration
+- `events.organizer_absorbed_fee` - Boolean for fee absorption setting
+- `registrations.charged_currency` - Actual currency user was charged in
+- `registrations.charged_amount` - Actual amount charged
+**Status:** Created January 22, 2026 - Ready to run
+
+**Important:** This migration includes data migration from `answers._metadata` to the dedicated columns. The codebase has backwards compatibility to read from either location, so this migration can be run at any time without breaking functionality.
+
+To run:
+1. Open Supabase SQL Editor
+2. Copy contents of `add_missing_columns.sql`
+3. Execute the SQL
+4. Verify with the included verification query at the bottom of the file
