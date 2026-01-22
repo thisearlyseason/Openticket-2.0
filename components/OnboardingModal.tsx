@@ -9,7 +9,7 @@ interface OnboardingModalProps {
     userEmail: string;
 }
 
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, userEmail }) => {
+const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, userEmail }) => {
     const [businessName, setBusinessName] = useState('');
     const [businessType, setBusinessType] = useState('');
     const [eventTypes, setEventTypes] = useState<string[]>([]);
