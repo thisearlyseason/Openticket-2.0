@@ -278,6 +278,8 @@ export const Auth = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [findTickets, setFindTickets] = useState(false);
     const [ticketMessage, setTicketMessage] = useState('');
+    const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+    const [newUserEmail, setNewUserEmail] = useState('');
     const navigate = useNavigate();
 
     // Redirect logged-in users to dashboard
