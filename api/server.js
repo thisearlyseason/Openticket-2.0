@@ -59,6 +59,9 @@ const allowedOrigins = [
     'https://openticket.events',
     'https://www.openticket.events',
     'https://app.openticket.events',
+    // Vercel preview deployments (branch deployments)
+    /\.vercel\.app$/,
+    /openticket.*\.vercel\.app$/,
     // Preview/Development domains
     /\.preview\.emergentagent\.com$/,
     /localhost:\d+$/,
