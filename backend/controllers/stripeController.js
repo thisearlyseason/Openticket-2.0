@@ -620,6 +620,7 @@ export const verifySession = async (req, res) => {
         const platformFee = Number(session.metadata?.platformFee || reg.service_fee || 0);
         const taxAmount = Number(session.metadata?.taxAmount || reg.tax_amount || 0);
         const discountAmount = Number(session.metadata?.discountAmount || reg.discount_amount || 0);
+        const donationAmount = Number(session.metadata?.platformDonationAmount || reg.answers?._metadata?.platform_donation_amount || 0);
         const affiliateCode = session.metadata?.affiliateCode || reg.affiliate_code || null;
 
         // NOTE: Affiliate commissions are ONLY for subscriptions, NOT ticket sales
