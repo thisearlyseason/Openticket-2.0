@@ -186,7 +186,7 @@ export const getAllRegistrations = async (req, res) => {
             *,
             events:event_id (
                 id, title, date, time, location, venue_name, image_url, 
-                ticket_tiers, currency, owner_id
+                ticket_tiers, owner_id
             )
         `);
 
