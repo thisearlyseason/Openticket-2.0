@@ -596,13 +596,13 @@ export const Auth = () => {
 
                 {/* MODE SWITCHER */}
                 <div className="flex gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-6">
-                    <button onClick={() => { setIsLogin(true); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                    <button data-testid="auth-signin-tab" onClick={() => { setIsLogin(true); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
                         Sign In
                     </button>
-                    <button onClick={() => { setIsLogin(false); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                    <button data-testid="auth-signup-tab" onClick={() => { setIsLogin(false); setFindTickets(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${!isLogin && !findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
                         Sign Up
                     </button>
-                    <button onClick={() => { setFindTickets(true); setIsLogin(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
+                    <button data-testid="auth-find-tickets-tab" onClick={() => { setFindTickets(true); setIsLogin(false); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${findTickets ? 'bg-white dark:bg-zinc-700 shadow-sm text-black dark:text-white' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
                         Find Tickets
                     </button>
                 </div>
