@@ -660,7 +660,6 @@ export const refundRegistration = async (req, res) => {
                         const refundRatio = refundAmount / originalGrossAmount;
                         refundPlatformFee = (originalTx.platform_fee || 0) * refundRatio;
                         refundStripeFee = (originalTx.stripe_fee || 0) * refundRatio;
-                        organizerAbsorbedFee = originalTx.organizer_absorbed_fee || false;
                         
                         console.log('[Refund] Calculated proportional fees:', {
                             originalGross: originalGrossAmount,
@@ -669,8 +668,7 @@ export const refundRegistration = async (req, res) => {
                             originalPlatformFee: originalTx.platform_fee,
                             refundPlatformFee: refundPlatformFee.toFixed(2),
                             originalStripeFee: originalTx.stripe_fee,
-                            refundStripeFee: refundStripeFee.toFixed(2),
-                            organizerAbsorbedFee
+                            refundStripeFee: refundStripeFee.toFixed(2)
                         });
                     }
                 }
