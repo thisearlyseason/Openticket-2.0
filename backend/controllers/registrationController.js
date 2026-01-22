@@ -649,7 +649,6 @@ export const refundRegistration = async (req, res) => {
 
                 let refundPlatformFee = 0;
                 let refundStripeFee = 0;
-                let organizerAbsorbedFee = false;
 
                 if (originalTx && !txError) {
                     // Calculate proportional fees based on refund ratio
