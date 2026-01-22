@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StorageService } from '../services/storageService';
 import { Button, Input, Card, Select, FileDropZone } from './UI';
 import { User as UserIcon, Briefcase, Calendar, Ticket, Building2, ShieldCheck, Ban, Zap, Chrome, Eye, EyeOff, Check, X, Upload, Loader2, FileText, Trash2 } from 'lucide-react';
+import { OnboardingModal } from './OnboardingModal';
 
 // Document Upload Component with Supabase Storage
 // Falls back to base64 if user is not authenticated (during signup)
