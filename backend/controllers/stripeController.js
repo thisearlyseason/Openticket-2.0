@@ -642,30 +642,60 @@ export const verifySession = async (req, res) => {
         const chargedCurrency = session.currency?.toUpperCase() || 'USD';
         const chargedAmount = grossAmount; // This is already in the charged currency
 
-        const { data: updatedReg, error: updateError } = await supabase
-            .from('registrations')
-            .update({
-                payment_status: 'paid',
-                stripe_payment_intent_id: paymentIntentId,
-                tickets: finalizedTickets,
-                total_amount: grossAmount,
-                service_fee: platformFee,
-                tax_amount: taxAmount,
-                discount_amount: discountAmount,
-                // Store charged currency info in answers._metadata for currency conversion
-                answers: {
-                    ...reg.answers,
-                    _metadata: {
-                        ...(reg.answers?._metadata || {}),
-                        charged_currency: chargedCurrency,
-                        charged_amount: chargedAmount,
-                        platform_donation_amount: donationAmount
-                    }
+        // Build update payload - store currency data in both dedicated columns (if available) 
+        // and answers._metadata (for backwards compatibility)
+        const updatePayload = {
+            payment_status: 'paid',
+            stripe_payment_intent_id: paymentIntentId,
+            tickets: finalizedTickets,
+            total_amount: grossAmount,
+            service_fee: platformFee,
+            tax_amount: taxAmount,
+            discount_amount: discountAmount,
+            // Try dedicated columns (may not exist in older schemas)
+            charged_currency: chargedCurrency,
+            charged_amount: chargedAmount,
+            // Also store in answers._metadata for backwards compatibility
+            answers: {
+                ...reg.answers,
+                _metadata: {
+                    ...(reg.answers?._metadata || {}),
+                    charged_currency: chargedCurrency,
+                    charged_amount: chargedAmount,
+                    platform_donation_amount: donationAmount
                 }
-            })
+            }
+        };
+
+        let updatedReg, updateError;
+        
+        // Try with dedicated columns first
+        const result1 = await supabase
+            .from('registrations')
+            .update(updatePayload)
             .eq('id', reg.id)
             .select()
             .single();
+        
+        if (result1.error && result1.error.message?.includes('column')) {
+            // Dedicated columns don't exist, fall back to just answers._metadata
+            console.log('[Stripe] Dedicated currency columns not available, using answers._metadata only');
+            delete updatePayload.charged_currency;
+            delete updatePayload.charged_amount;
+            
+            const result2 = await supabase
+                .from('registrations')
+                .update(updatePayload)
+                .eq('id', reg.id)
+                .select()
+                .single();
+            
+            updatedReg = result2.data;
+            updateError = result2.error;
+        } else {
+            updatedReg = result1.data;
+            updateError = result1.error;
+        }
 
         if (updateError) {
             console.error('[Stripe] Failed to update registration:', updateError);
