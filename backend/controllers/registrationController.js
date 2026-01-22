@@ -630,7 +630,6 @@ export const refundRegistration = async (req, res) => {
                 gross_amount: -(amountToRefundCents / 100),
                 platform_fee: 0,
                 stripe_fee: 0,
-                organizer_absorbed_fee: false,
                 organizer_net: -(amountToRefundCents / 100),
                 currency: 'usd',
                 status: 'refunded',
