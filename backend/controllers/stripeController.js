@@ -754,6 +754,26 @@ export const verifySession = async (req, res) => {
             }
         }
 
+        // 8. Send ticket confirmation email to attendee
+        try {
+            console.log(`[Stripe] Sending ticket confirmation email to: ${reg.attendee_email}`);
+            await EmailService.sendTicketConfirmation(
+                reg.attendee_email,
+                reg.tickets || [],
+                {
+                    id: reg.event_id,
+                    title: reg.event?.title || 'Event',
+                    date: reg.event?.date,
+                    location: reg.event?.location || reg.event?.venue_name,
+                    organizerName: reg.event?.organizer_name || 'Event Organizer'
+                }
+            );
+            console.log(`[Stripe] ✅ Confirmation email sent successfully`);
+        } catch (emailError) {
+            console.error('[Stripe] ❌ Failed to send confirmation email:', emailError.message);
+            // Don't fail the whole transaction if email fails
+        }
+
         res.json({ 
             status: 'success',
             registration: updatedReg
