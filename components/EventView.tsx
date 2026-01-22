@@ -835,6 +835,9 @@ export const EventView = () => {
 
     // Global currency for this event - use organizer's default currency as source of truth
     const eventCurrency = organizerUser?.defaultCurrency || event.currency || 'USD';
+    
+    // For confirmation screen: use the actual charged currency if available, otherwise fall back to event currency
+    const confirmationCurrency = chargedCurrency || eventCurrency;
 
     const shareUrl = `${window.location.origin}/#/event/${event.id}`;
     const metaTitle = event.seo?.metaTitle || event.title;
