@@ -476,11 +476,11 @@ export const purchaseConfirmation = ({
     `;
 
     return {
-        subject: `🎟️ Your Tickets for ${eventTitle}`,
+        subject: `Your Tickets for ${eventTitle}`,
         html: baseEmailWrapper(
             theme.headerGradient,
-            "You're In! 🎉",
-            "Your purchase is confirmed",
+            "Purchase Confirmed",
+            "Your tickets are ready",
             content,
             `Organized by ${organizerName || 'Event Organizer'} • Powered by OpenTicket`,
             { 
