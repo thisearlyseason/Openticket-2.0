@@ -1485,3 +1485,42 @@ ADD COLUMN IF NOT EXISTS platform_donation_amount DECIMAL(10,2) DEFAULT 0;
 - My Tickets loading: Ready for testing
 - UI colors: Ready for testing
 
+
+### ✅ Currency Display Fix - P0 Financial Accuracy (January 22, 2026)
+
+#### Issue
+When users pay in local currency (e.g., CAD), the confirmation screen, receipt, and email showed line items in USD but the total in the charged currency, causing the numbers to not add up and eroding user trust.
+
+#### Root Cause
+- Prices are stored in USD in the database
+- Stripe charges in the user's local currency
+- The conversion ratio wasn't being applied to all line items displayed
+
+#### Fix Implemented
+Applied conversion ratio (`chargedAmount / usdTotal`) to ALL displayed amounts across:
+
+1. **EventView.tsx (Confirmation Screen)** - Lines 967-1105
+   - Conversion ratio calculated from Stripe's charged amount vs USD total
+   - Applied to: ticket prices, add-ons, subtotal, fees, tax, donations, discounts
+   
+2. **UI.tsx (ReceiptModal)** - Lines 694-926
+   - Same conversion logic implemented
+   - Individual line items and totals now converted to charged currency
+   
+3. **emailTemplates.js (Purchase Confirmation Email)** - Lines 289-420
+   - `convertAmount()` helper function applies ratio to all breakdown items
+   - All line items now display in charged currency
+
+4. **stripeController.js** - Lines 260-275
+   - `chargedCurrency` and `chargedAmount` stored in registration object
+   - Passed through to all views for accurate display
+
+#### Test Results
+- 11/11 currency conversion tests passed
+- Conversion math verified: all line items sum correctly to charged total
+- Code review confirms conversion applied to all 9 item types
+
+#### Files Modified
+- `/app/components/EventView.tsx`
+- `/app/components/UI.tsx`
+- `/app/backend/services/emailTemplates.js`
