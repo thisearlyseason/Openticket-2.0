@@ -239,9 +239,11 @@ export const EventView = () => {
                                         customFeesAmount: reg.custom_fees_amount || 0,
                                         taxAmount: reg.tax_amount || 0,
                                         donationAmount: reg.donation_amount || 0,
-                                        platformDonationAmount: reg.platform_donation_amount || 0,
+                                        // Platform donation can be in answers._metadata (new) or direct field (legacy)
+                                        platformDonationAmount: reg.answers?._metadata?.platform_donation_amount || reg.platform_donation_amount || 0,
                                         discountAmount: reg.discount_amount || 0,
                                         promoCodeUsed: reg.promo_code_used || null,
+                                        answers: reg.answers || {},
                                     };
                                     
                                     setCompletedRegistration(normalizedReg as any);
