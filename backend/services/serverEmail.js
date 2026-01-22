@@ -61,15 +61,21 @@ class EmailService {
                 })
                 : 'TBD';
             
-            // Calculate subtotal from tickets
+            // Calculate subtotal from tickets (for display breakdown)
             const subtotal = tickets.reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
             
-            // Calculate total with all fees and donations
-            const totalPaid = subtotal 
-                + (orderDetails.serviceFee || 0)
-                + (orderDetails.taxAmount || 0)
-                + (orderDetails.platformDonation || 0)
-                - (orderDetails.discountAmount || 0);
+            // Use the actual total from Stripe if provided, otherwise calculate
+            const totalPaid = orderDetails.totalPaid 
+                ? orderDetails.totalPaid 
+                : subtotal 
+                    + (orderDetails.serviceFee || 0)
+                    + (orderDetails.taxAmount || 0)
+                    + (orderDetails.platformDonation || 0)
+                    - (orderDetails.discountAmount || 0);
+            
+            // Get the actual currency from order details
+            const currency = orderDetails.currency || eventDetails?.currency || 'USD';
+            console.log(`[EmailService] Email currency: ${currency}, Total: ${totalPaid}`);
             
             // Generate proper Order ID
             const registrationId = orderDetails.registrationId || tickets[0]?.registrationId;
