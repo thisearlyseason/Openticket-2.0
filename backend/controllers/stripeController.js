@@ -658,6 +658,9 @@ export const verifySession = async (req, res) => {
         }
 
         // 4. Insert financial transaction record
+        // Get fee absorption info from answers._metadata if stored there
+        const absorbedFee = reg.answers?._metadata?.organizer_absorbed_fee || reg.organizer_absorbed_fee || false;
+        
         const { error: txError } = await supabase.from('financial_transactions').insert({
             registration_id: reg.id,
             event_id: reg.event_id,
@@ -665,7 +668,6 @@ export const verifySession = async (req, res) => {
             stripe_payment_intent_id: paymentIntentId,
             gross_amount: grossAmount,
             platform_fee: platformFee,
-            organizer_absorbed_fee: reg.organizer_absorbed_fee || false, // Track fee absorption
             stripe_fee: stripeFee,
             tax_amount: taxAmount,
             organizer_net: organizerNet,
