@@ -185,14 +185,27 @@ export const getAllRegistrations = async (req, res) => {
 
         if (hasValidSessionId) {
             query = query.eq('stripe_checkout_session_id', stripe_checkout_session_id);
-        }
-        if (hasValidEmail) {
+        } else if (hasValidEmail) {
             // Case-insensitive email matching using ilike
+            // This gets both guest purchases (user_id is null) AND linked purchases
             const normalizedEmail = email.toLowerCase().trim();
             query = query.ilike('attendee_email', normalizedEmail);
-        }
-        if (hasValidUserId) {
-            query = query.eq('user_id', user_id);
+        } else if (hasValidUserId) {
+            // When querying by user_id, also get guest tickets with matching email
+            // First get the user's email from profiles
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('id', user_id)
+                .single();
+            
+            if (profile?.email) {
+                // Get tickets by user_id OR by matching email (for unlinked guest purchases)
+                const normalizedEmail = profile.email.toLowerCase().trim();
+                query = query.or(`user_id.eq.${user_id},and(attendee_email.ilike.${normalizedEmail},user_id.is.null)`);
+            } else {
+                query = query.eq('user_id', user_id);
+            }
         }
 
         const { data, error } = await query;
