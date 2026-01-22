@@ -858,7 +858,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                                             <span className="font-bold">{t.quantity}x</span> {t.name}
                                         </div>
                                         <div className={t.status === 'refunded' ? 'line-through text-gray-400' : ''}>
-                                            {formatAmount(t.pricePerTicket * t.quantity)}
+                                            {formatAmount(convert(t.pricePerTicket * t.quantity))}
                                         </div>
                                     </div>
                                 ))}
@@ -867,7 +867,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                                         <div>
                                             <span className="font-bold">{a.quantity}x</span> {a.name}
                                         </div>
-                                        <div>{formatAmount(a.price * a.quantity)}</div>
+                                        <div>{formatAmount(convert(a.price * a.quantity))}</div>
                                     </div>
                                 ))}
                             </div>
