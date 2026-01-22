@@ -76,6 +76,9 @@ export const EventView = () => {
     // Display Currency State (UI-only, doesn't affect Stripe charges)
     const [displayCurrency, setDisplayCurrency] = useState<string>('');
     
+    // Charged currency from Stripe (actual currency used for payment)
+    const [chargedCurrency, setChargedCurrency] = useState<string>('');
+    
     // Initialize display currency from user's locale/geo detection
     useEffect(() => {
         const initDisplayCurrency = async () => {
