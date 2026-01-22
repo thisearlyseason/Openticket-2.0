@@ -854,6 +854,13 @@ export const Auth = () => {
 
 
             </Card>
+            
+            {/* Onboarding Modal */}
+            <OnboardingModal 
+                isOpen={showOnboardingModal}
+                onComplete={handleOnboardingComplete}
+                userEmail={newUserEmail}
+            />
         </div>
     );
 };
