@@ -773,7 +773,10 @@ export const verifySession = async (req, res) => {
 
         // 8. Send ticket confirmation email to attendee
         try {
-            console.log(`[Stripe] Sending ticket confirmation email to: ${reg.attendee_email}`);
+            // Get the actual currency from Stripe session
+            const actualCurrency = session.currency?.toUpperCase() || 'USD';
+            console.log(`[Stripe] Sending confirmation email - Currency: ${actualCurrency}, Total: ${grossAmount}`);
+            
             await EmailService.sendTicketConfirmation(
                 reg.attendee_email,
                 reg.tickets || [],
@@ -785,17 +788,19 @@ export const verifySession = async (req, res) => {
                     location: reg.event?.location || reg.event?.venue_name,
                     organizer: reg.event?.organizer_name || 'Event Organizer',
                     ticket_design: reg.event?.ticket_design,
-                    currency: session.currency?.toUpperCase() || reg.event?.currency || 'USD'
+                    currency: actualCurrency
                 },
-                // Order details for full breakdown
+                // Order details for full breakdown - use the actual paid amounts
                 {
                     registrationId: reg.id,
                     attendeeName: reg.attendee_name,
-                    currency: session.currency?.toUpperCase() || 'USD',
-                    serviceFee: reg.service_fee || 0,
-                    taxAmount: reg.tax_amount || 0,
-                    platformDonation: reg.answers?._metadata?.platform_donation_amount || reg.platform_donation_amount || 0,
-                    discountAmount: reg.discount_amount || 0,
+                    currency: actualCurrency,
+                    // Use gross amount from Stripe session for accurate total
+                    totalPaid: grossAmount,
+                    serviceFee: platformFee,
+                    taxAmount: taxAmount,
+                    platformDonation: donationAmount,
+                    discountAmount: discountAmount,
                     promoCode: reg.promo_code_used || null
                 }
             );
