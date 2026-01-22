@@ -1533,58 +1533,43 @@ export const StorageService = {
         console.log(`[StorageService] Fetching registrations for: ${userId ? 'user_id' : 'email'}: ${searchBy}`);
 
         try {
-            // Use backend filtering secure endpoint
+            // Use backend filtering secure endpoint - now includes event data via JOIN
             const queryParam = userId ? `user_id=${encodeURIComponent(userId)}` : `email=${encodeURIComponent(email)}`;
             const { registrations } = await fetchSupabase(`/registrations?${queryParam}`, true);
 
-            const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
-            console.log(`[StorageService] Found ${userRegs.length} matches`);
+            console.log(`[StorageService] Raw registrations response:`, registrations?.length || 0);
 
-            if (userRegs.length === 0) {
+            if (!registrations || registrations.length === 0) {
                 return [];
             }
 
-            // Get unique event IDs from registrations
-            const eventIds = [...new Set(userRegs.map((r: Registration) => r.eventId))];
-            console.log(`[StorageService] Need to fetch ${eventIds.length} unique events:`, eventIds);
-            
-            // Fetch events individually by ID (bypasses cache issues with unpublished events)
-            const eventMap: Record<string, Event> = {};
-            for (const eventId of eventIds) {
-                try {
-                    const event = await StorageService.getEventById(eventId);
-                    if (event) {
-                        eventMap[eventId] = event;
-                        console.log(`[StorageService] Found event: ${event.title} (${eventId})`);
-                    } else {
-                        console.warn(`[StorageService] Event ${eventId} not found by ID`);
-                    }
-                } catch (e) {
-                    console.error(`[StorageService] Error fetching event ${eventId}:`, e);
+            // Process registrations with embedded event data
+            const result = registrations.map((r: any) => {
+                const reg = normalizeRegistration(r);
+                
+                // Use embedded event data from JOIN if available
+                let event: Event | null = null;
+                if (r.events) {
+                    console.log(`[StorageService] Using embedded event data for reg ${reg.id}:`, r.events.title);
+                    event = normalizeEvent(r.events);
                 }
-            }
-            
-            // Match registrations with events
-            const result = userRegs.map((reg: Registration) => {
-                const event = eventMap[reg.eventId];
+                
+                // Fallback to placeholder if no event data
                 if (!event) {
-                    console.warn(`[StorageService] Creating placeholder for event ${reg.eventId}`);
-                    // Create placeholder with future date so it shows in Active tab
+                    console.warn(`[StorageService] No event data for registration ${reg.id}, using placeholder`);
                     const futureDate = new Date();
-                    futureDate.setDate(futureDate.getDate() + 30); // 30 days in future
-                    return { 
-                        reg, 
-                        event: {
-                            id: reg.eventId,
-                            title: 'Event Details Unavailable',
-                            date: futureDate.toISOString().split('T')[0],
-                            time: '12:00',
-                            location: 'Unknown',
-                            ticketTiers: [],
-                            currency: 'USD'
-                        } as Event 
-                    };
+                    futureDate.setDate(futureDate.getDate() + 30);
+                    event = {
+                        id: reg.eventId,
+                        title: 'Event Details Unavailable',
+                        date: futureDate.toISOString().split('T')[0],
+                        time: '12:00',
+                        location: 'Unknown',
+                        ticketTiers: [],
+                        currency: 'USD'
+                    } as Event;
                 }
+                
                 return { reg, event };
             });
             
