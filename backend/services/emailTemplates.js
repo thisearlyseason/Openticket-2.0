@@ -346,71 +346,76 @@ export const purchaseConfirmation = ({
         </tr>
     </table>`;
 
-    // Build cost breakdown rows
+    // Build cost breakdown rows - ALL amounts converted to charged currency
     let breakdownRows = '';
     
-    // Subtotal
+    // Subtotal (converted to charged currency)
     if (subtotal > 0 || (tickets && tickets.length > 0)) {
         const calcSubtotal = subtotal || tickets.reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
+        const convertedSubtotal = convertAmount(calcSubtotal);
         breakdownRows += `
         <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
                 <span style="color: ${theme.textColor}; font-size: 14px;">Subtotal (${tickets?.length || 1} ticket${tickets?.length !== 1 ? 's' : ''})</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                <span style="color: ${theme.textColor}; font-size: 14px;">${formatCurrency(calcSubtotal)}</span>
+                <span style="color: ${theme.textColor}; font-size: 14px;">${formatCurrency(convertedSubtotal)}</span>
             </td>
         </tr>`;
     }
     
-    // Discount
+    // Discount (converted to charged currency)
     if (discountAmount > 0) {
+        const convertedDiscount = convertAmount(discountAmount);
         breakdownRows += `
         <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
                 <span style="color: #10b981; font-size: 14px;">🎟️ Discount${promoCode ? ` (${promoCode})` : ''}</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                <span style="color: #10b981; font-size: 14px;">-${formatCurrency(discountAmount)}</span>
+                <span style="color: #10b981; font-size: 14px;">-${formatCurrency(convertedDiscount)}</span>
             </td>
         </tr>`;
     }
     
-    // Service Fee
+    // Service Fee (converted to charged currency)
     if (serviceFee > 0) {
+        const convertedServiceFee = convertAmount(serviceFee);
         breakdownRows += `
         <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
                 <span style="color: ${theme.mutedColor}; font-size: 14px;">Service Fee</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(serviceFee)}</span>
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(convertedServiceFee)}</span>
             </td>
         </tr>`;
     }
     
-    // Tax
+    // Tax (converted to charged currency)
     if (taxAmount > 0) {
+        const convertedTax = convertAmount(taxAmount);
         breakdownRows += `
         <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
                 <span style="color: ${theme.mutedColor}; font-size: 14px;">Tax</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(taxAmount)}</span>
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(convertedTax)}</span>
             </td>
         </tr>`;
     }
     
-    // Platform Donation
+    // Platform Donation (converted to charged currency)
     if (platformDonation > 0) {
+        const convertedPlatformDonation = convertAmount(platformDonation);
         breakdownRows += `
         <tr>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
                 <span style="color: #3b82f6; font-size: 14px;">💙 Platform Support</span>
             </td>
             <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                <span style="color: #3b82f6; font-size: 14px;">${formatCurrency(platformDonation)}</span>
+                <span style="color: #3b82f6; font-size: 14px;">${formatCurrency(convertedPlatformDonation)}</span>
             </td>
         </tr>`;
     }

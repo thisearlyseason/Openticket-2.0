@@ -694,35 +694,53 @@ export const Lightbox = ({ images, currentIndex, onClose, onChangeIndex }: { ima
 export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }: { isOpen: boolean, onClose: () => void, registration: Registration, event: Event, organizer?: User }) => {
     if (!isOpen) return null;
 
-    // Get currency from event or default to USD
-    const currency = event.currency || 'USD';
+    // Calculate USD totals from stored amounts (prices are stored in USD)
+    const usdTicketCost = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.pricePerTicket * t.quantity), 0) || 0;
+    const usdAddOnCost = registration.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
+    const usdSubtotal = usdTicketCost + usdAddOnCost;
+    const usdFees = (registration.serviceFee || 0) + (registration.customFeesAmount || 0);
+    const usdTax = registration.taxAmount || 0;
+    const usdPlatformDonation = registration.answers?._metadata?.platform_donation_amount 
+        || registration.platformDonationAmount 
+        || 0;
+    const usdEventDonation = registration.donationAmount || 0;
+    const usdTotalDonations = usdPlatformDonation + usdEventDonation;
+    const usdDiscount = registration.discountAmount || 0;
+    const usdTotal = usdSubtotal + usdFees + usdTax + usdTotalDonations - usdDiscount;
+
+    // Get actual charged amount from Stripe (in local currency like CAD)
+    const chargedAmount = (registration as any).chargedAmount || registration.totalAmount || usdTotal;
+    
+    // Calculate conversion ratio (charged currency / USD)
+    const conversionRatio = usdTotal > 0 ? chargedAmount / usdTotal : 1;
+    
+    // Helper to convert USD amounts to charged currency
+    const convert = (amount: number) => Math.round(amount * conversionRatio * 100) / 100;
+
+    // Determine display currency - use charged currency if available, else event currency
+    const currency = (registration as any).chargedCurrency || event.currency || 'USD';
     const currencySymbols: Record<string, string> = {
         USD: '$', CAD: 'CA$', EUR: '€', GBP: '£', AUD: 'A$', INR: '₹', JPY: '¥', MXN: 'MX$', BRL: 'R$'
     };
     const symbol = currencySymbols[currency] || currency + ' ';
     
-    // Currency formatter helper
+    // Currency formatter helper - uses converted amounts
     const formatAmount = (amount: number) => `${symbol}${amount.toFixed(2)}`;
 
     const totalTickets = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.quantity), 0) || 0;
-    const ticketCost = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.pricePerTicket * t.quantity), 0) || 0;
-    const addOnCost = registration.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
-
-    // Calculate totals
-    const subtotal = ticketCost + addOnCost;
-    const fees = (registration.serviceFee || 0) + (registration.customFeesAmount || 0);
-    const tax = registration.taxAmount || 0;
     
-    // Platform donation from answers._metadata or direct field
-    const platformDonation = registration.answers?._metadata?.platform_donation_amount 
-        || registration.platformDonationAmount 
-        || 0;
-    const eventDonation = registration.donationAmount || 0;
-    const totalDonations = platformDonation + eventDonation;
-    
-    const discount = registration.discountAmount || 0;
-    const total = Math.max(0, subtotal + fees + tax + totalDonations - discount);
-    const refunded = registration.refundedAmount || 0;
+    // All displayed values are converted to charged currency
+    const ticketCost = convert(usdTicketCost);
+    const addOnCost = convert(usdAddOnCost);
+    const subtotal = convert(usdSubtotal);
+    const fees = convert(usdFees);
+    const tax = convert(usdTax);
+    const platformDonation = convert(usdPlatformDonation);
+    const eventDonation = convert(usdEventDonation);
+    const totalDonations = convert(usdTotalDonations);
+    const discount = convert(usdDiscount);
+    const total = chargedAmount; // Use actual charged amount for total
+    const refunded = convert(registration.refundedAmount || 0);
 
     const hasBranding = organizer && (organizer.subscription?.plan === 'pro' || organizer.subscription?.plan === 'premium') && organizer.logoUrl;
 
