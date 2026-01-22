@@ -1058,19 +1058,24 @@ export const EventView = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Total Calculation */}
+                                                    {/* Total Calculation - Use the actual charged amount from Stripe */}
                                                     <div className="mt-4 flex justify-between items-center pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
                                                         <div className="text-lg sm:text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Paid</div>
                                                         <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
                                                             <EventPriceDisplay amount={
-                                                                (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
-                                                                (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
-                                                                (completedRegistration?.serviceFee || 0) +
-                                                                (completedRegistration?.customFeesAmount || 0) +
-                                                                (completedRegistration?.taxAmount || 0) +
-                                                                (completedRegistration?.donationAmount || 0) +
-                                                                (completedRegistration?.platformDonationAmount || 0) -
-                                                                (completedRegistration?.discountAmount || 0)
+                                                                // Use the chargedAmount from Stripe if available, otherwise calculate
+                                                                (completedRegistration as any)?.chargedAmount || 
+                                                                completedRegistration?.totalAmount ||
+                                                                (
+                                                                    (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
+                                                                    (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
+                                                                    (completedRegistration?.serviceFee || 0) +
+                                                                    (completedRegistration?.customFeesAmount || 0) +
+                                                                    (completedRegistration?.taxAmount || 0) +
+                                                                    (completedRegistration?.donationAmount || 0) +
+                                                                    (completedRegistration?.platformDonationAmount || 0) -
+                                                                    (completedRegistration?.discountAmount || 0)
+                                                                )
                                                             } currency={confirmationCurrency} />
                                                         </div>
                                                     </div>
