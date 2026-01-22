@@ -524,9 +524,21 @@ export const Auth = () => {
             if (redirectPlan) {
                 navigate(`/pricing?select=${redirectPlan}`);
             } else {
-                navigate(role === 'organizer' ? '/dashboard' : '/my-tickets');
+                if (role === 'organizer') {
+                    // Show onboarding modal for organizers
+                    setNewUserEmail(email);
+                    setShowOnboardingModal(true);
+                } else {
+                    // Attendees go straight to my tickets
+                    navigate('/my-tickets');
+                }
             }
         }
+    };
+
+    const handleOnboardingComplete = () => {
+        setShowOnboardingModal(false);
+        navigate('/dashboard');
     };
 
     // Helper to auto-login as Admin
