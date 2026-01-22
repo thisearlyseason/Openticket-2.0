@@ -633,10 +633,14 @@ export const verifySession = async (req, res) => {
         // Calculate organizer net earnings (no affiliate commission deducted for tickets)
         const organizerNet = Number((grossAmount - platformFee - stripeFee).toFixed(2));
 
-        // 3. Update registration with all data
+        // 3. Update registration with all data including charged currency
         const paymentIntentId = typeof session.payment_intent === 'object' 
             ? session.payment_intent.id 
             : session.payment_intent;
+        
+        // Get charged currency and amount from Stripe session
+        const chargedCurrency = session.currency?.toUpperCase() || 'USD';
+        const chargedAmount = grossAmount; // This is already in the charged currency
 
         const { data: updatedReg, error: updateError } = await supabase
             .from('registrations')
@@ -647,7 +651,17 @@ export const verifySession = async (req, res) => {
                 total_amount: grossAmount,
                 service_fee: platformFee,
                 tax_amount: taxAmount,
-                discount_amount: discountAmount
+                discount_amount: discountAmount,
+                // Store charged currency info in answers._metadata for currency conversion
+                answers: {
+                    ...reg.answers,
+                    _metadata: {
+                        ...(reg.answers?._metadata || {}),
+                        charged_currency: chargedCurrency,
+                        charged_amount: chargedAmount,
+                        platform_donation_amount: donationAmount
+                    }
+                }
             })
             .eq('id', reg.id)
             .select()
