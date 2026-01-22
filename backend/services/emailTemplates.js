@@ -242,33 +242,164 @@ const infoRow = (label, value, borderBottom = true) => `
  * PURCHASE CONFIRMATION
  * Triggered by: payment_intent.succeeded (Stripe webhook)
  * Supports custom theming from event's ticketDesign
+ * 
+ * Now includes:
+ * - Full cost breakdown (subtotal, fees, taxes, donations)
+ * - Currency display
+ * - QR code for each ticket
+ * - Platform donation line item
+ * - Professional ticket design
  */
-export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, eventTime, eventLocation, tickets, totalPaid, orderId, organizerName, ticketDesign }) => {
+export const purchaseConfirmation = ({ 
+    attendeeName, 
+    eventTitle, 
+    eventDate, 
+    eventTime, 
+    eventLocation, 
+    tickets, 
+    totalPaid, 
+    orderId, 
+    organizerName, 
+    ticketDesign,
+    // New fields for full breakdown
+    currency = 'USD',
+    subtotal = 0,
+    serviceFee = 0,
+    taxAmount = 0,
+    platformDonation = 0,
+    discountAmount = 0,
+    promoCode = null,
+    qrCodeBaseUrl = null
+}) => {
     // Get theme from ticketDesign
     const theme = getThemeFromDesign(ticketDesign);
     
-    // Each ticket is UNIQUE - display them individually with their unique IDs
-    const ticketList = (tickets || []).map((t, idx) => `
-        <div style="border: 1px solid ${BASE_STYLES.borderColor}; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb;">
-            <h4 style="margin: 0 0 8px 0; color: ${theme.textColor};">🎫 ${t.name || 'Ticket'} ${tickets.length > 1 ? `#${idx + 1}` : ''}</h4>
-            <p style="margin: 0 0 4px 0; color: ${theme.mutedColor}; font-size: 14px;">Attendee: <strong style="color: ${theme.textColor};">${t.attendeeName || attendeeName}</strong></p>
-            <p style="margin: 0 0 4px 0; color: ${theme.mutedColor}; font-size: 14px;">Price: $${(t.pricePerTicket || t.price || 0).toFixed(2)}</p>
-            ${t.ticketNumber || t.id ? `<p style="margin: 0; font-family: monospace; color: #9ca3af; font-size: 12px;">Ticket ID: ${t.ticketNumber || t.id}</p>` : ''}
+    // Currency formatter
+    const formatCurrency = (amount, curr = currency) => {
+        const symbols = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', INR: '₹', JPY: '¥' };
+        const symbol = symbols[curr] || curr + ' ';
+        return `${symbol}${(amount || 0).toFixed(2)}`;
+    };
+    
+    // Generate Order ID if not provided (use registration ID prefix)
+    const displayOrderId = orderId && orderId !== 'N/A' && orderId !== 'NA' 
+        ? orderId.toUpperCase() 
+        : `ORD-${Date.now().toString(36).toUpperCase()}`;
+    
+    // Each ticket is UNIQUE - display them individually with QR codes
+    const ticketList = (tickets || []).map((t, idx) => {
+        const ticketId = t.ticketNumber || t.ticketId || t.id || `TKT-${idx + 1}`;
+        const qrCodeUrl = qrCodeBaseUrl 
+            ? `${qrCodeBaseUrl}?data=${encodeURIComponent(ticketId)}` 
+            : `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(ticketId)}`;
+        
+        return `
+        <div style="border: 2px solid ${theme.accentColor}; padding: 20px; margin-bottom: 16px; border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="vertical-align: top; width: 70%;">
+                        <h4 style="margin: 0 0 8px 0; color: ${theme.textColor}; font-size: 18px; font-weight: 700;">
+                            🎫 ${t.name || 'Ticket'} ${tickets.length > 1 ? `#${idx + 1}` : ''}
+                        </h4>
+                        <p style="margin: 0 0 6px 0; color: ${theme.mutedColor}; font-size: 14px;">
+                            <strong style="color: ${theme.textColor};">Attendee:</strong> ${t.attendeeName || attendeeName}
+                        </p>
+                        <p style="margin: 0 0 6px 0; color: ${theme.mutedColor}; font-size: 14px;">
+                            <strong style="color: ${theme.textColor};">Price:</strong> ${formatCurrency(t.pricePerTicket || t.price || 0)}
+                        </p>
+                        <p style="margin: 12px 0 0 0; font-family: 'Courier New', monospace; color: ${theme.accentColor}; font-size: 13px; background: ${adjustBrightness(theme.accentColor, 90)}; padding: 8px 12px; border-radius: 6px; display: inline-block;">
+                            ${ticketId}
+                        </p>
+                    </td>
+                    <td style="vertical-align: middle; text-align: right; width: 30%;">
+                        <img src="${qrCodeUrl}" alt="QR Code" style="width: 100px; height: 100px; border-radius: 8px; border: 1px solid #e5e7eb;" />
+                    </td>
+                </tr>
+            </table>
         </div>
-    `).join('');
+    `}).join('');
 
-    // Themed event details box
+    // Event details box with modern design
     const themedEventBox = `
-    <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+    <table width="100%" style="background: linear-gradient(135deg, ${adjustBrightness(theme.accentColor, 85)} 0%, ${adjustBrightness(theme.accentColor, 95)} 100%); border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 12px; margin-bottom: 30px;">
         <tr>
-            <td style="padding: 20px;">
-                <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${eventTitle}</h2>
-                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${eventDate}</p>
-                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${eventTime}</p>
-                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+            <td style="padding: 24px;">
+                <h2 style="color: ${theme.textColor}; font-size: 22px; font-weight: 700; margin: 0 0 16px 0;">${eventTitle}</h2>
+                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0 0 8px 0;">📅 ${eventDate}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0 0 8px 0;">🕐 ${eventTime}</p>
+                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0;">📍 ${eventLocation}</p>
             </td>
         </tr>
     </table>`;
+
+    // Build cost breakdown rows
+    let breakdownRows = '';
+    
+    // Subtotal
+    if (subtotal > 0 || (tickets && tickets.length > 0)) {
+        const calcSubtotal = subtotal || tickets.reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
+        breakdownRows += `
+        <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                <span style="color: ${theme.textColor}; font-size: 14px;">Subtotal (${tickets?.length || 1} ticket${tickets?.length !== 1 ? 's' : ''})</span>
+            </td>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                <span style="color: ${theme.textColor}; font-size: 14px;">${formatCurrency(calcSubtotal)}</span>
+            </td>
+        </tr>`;
+    }
+    
+    // Discount
+    if (discountAmount > 0) {
+        breakdownRows += `
+        <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                <span style="color: #10b981; font-size: 14px;">🎟️ Discount${promoCode ? ` (${promoCode})` : ''}</span>
+            </td>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                <span style="color: #10b981; font-size: 14px;">-${formatCurrency(discountAmount)}</span>
+            </td>
+        </tr>`;
+    }
+    
+    // Service Fee
+    if (serviceFee > 0) {
+        breakdownRows += `
+        <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">Service Fee</span>
+            </td>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(serviceFee)}</span>
+            </td>
+        </tr>`;
+    }
+    
+    // Tax
+    if (taxAmount > 0) {
+        breakdownRows += `
+        <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">Tax</span>
+            </td>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                <span style="color: ${theme.mutedColor}; font-size: 14px;">${formatCurrency(taxAmount)}</span>
+            </td>
+        </tr>`;
+    }
+    
+    // Platform Donation
+    if (platformDonation > 0) {
+        breakdownRows += `
+        <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
+                <span style="color: #3b82f6; font-size: 14px;">💙 Platform Support</span>
+            </td>
+            <td style="padding: 10px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
+                <span style="color: #3b82f6; font-size: 14px;">${formatCurrency(platformDonation)}</span>
+            </td>
+        </tr>`;
+    }
 
     const content = `
         <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -280,27 +411,29 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
         
         ${themedEventBox}
         
-        <h3 style="color: ${theme.textColor}; font-size: 16px; margin: 0 0 15px 0;">Your Tickets</h3>
+        <h3 style="color: ${theme.textColor}; font-size: 18px; font-weight: 700; margin: 0 0 20px 0; padding-bottom: 10px; border-bottom: 2px solid ${theme.accentColor};">Your Tickets</h3>
         ${ticketList || '<p style="color: ' + theme.mutedColor + ';">1x General Admission</p>'}
         
-        <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border-radius: 8px; margin: 20px 0;">
+        <!-- Order Summary -->
+        <table width="100%" style="background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%); border: 1px solid ${BASE_STYLES.borderColor}; border-radius: 12px; margin: 30px 0;">
             <tr>
-                <td style="padding: 15px;">
+                <td style="padding: 20px;">
+                    <h4 style="margin: 0 0 16px 0; color: ${theme.textColor}; font-size: 16px; font-weight: 700;">Order Summary</h4>
                     <table width="100%">
+                        ${breakdownRows}
+                        <!-- Total -->
                         <tr>
-                            <td style="padding: 8px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor};">
-                                <span style="color: ${theme.mutedColor}; font-size: 14px;">Total Paid</span>
+                            <td style="padding: 16px 0 8px 0;">
+                                <strong style="color: ${theme.textColor}; font-size: 18px;">Total Paid</strong>
                             </td>
-                            <td style="padding: 8px 0; border-bottom: 1px solid ${BASE_STYLES.borderColor}; text-align: right;">
-                                <strong style="color: ${theme.accentColor}; font-size: 18px;">$${(totalPaid || 0).toFixed(2)}</strong>
+                            <td style="padding: 16px 0 8px 0; text-align: right;">
+                                <strong style="color: ${theme.accentColor}; font-size: 22px;">${formatCurrency(totalPaid)}</strong>
                             </td>
                         </tr>
+                        <!-- Currency Note -->
                         <tr>
-                            <td style="padding: 8px 0;">
-                                <span style="color: ${theme.mutedColor}; font-size: 14px;">Order ID</span>
-                            </td>
-                            <td style="padding: 8px 0; text-align: right;">
-                                <strong style="color: ${theme.textColor}; font-family: monospace;">${orderId}</strong>
+                            <td colspan="2" style="padding: 4px 0;">
+                                <span style="color: ${theme.mutedColor}; font-size: 12px;">Charged in ${currency}</span>
                             </td>
                         </tr>
                     </table>
@@ -308,8 +441,18 @@ export const purchaseConfirmation = ({ attendeeName, eventTitle, eventDate, even
             </tr>
         </table>
         
-        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
-            Save this email for your records. You may need to show it at check-in.
+        <!-- Order ID Box -->
+        <table width="100%" style="background: ${theme.accentColor}; border-radius: 12px; margin: 20px 0;">
+            <tr>
+                <td style="padding: 20px; text-align: center;">
+                    <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.8); font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Order ID</p>
+                    <p style="margin: 0; color: #ffffff; font-family: 'Courier New', monospace; font-size: 20px; font-weight: 700; letter-spacing: 2px;">${displayOrderId}</p>
+                </td>
+            </tr>
+        </table>
+        
+        <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0; text-align: center;">
+            📱 Save this email for check-in. Show your QR code at the event.
         </p>
     `;
 
