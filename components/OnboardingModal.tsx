@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Briefcase, Calendar, Users, Building2, HelpCircle, MessageSquare } from 'lucide-react';
-import { Button, Input, Card } from './UI';
+import { Button, Card } from './UI';
 import { StorageService } from '../services/storageService';
 
 interface OnboardingModalProps {
@@ -10,7 +10,6 @@ interface OnboardingModalProps {
 }
 
 const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, userEmail }) => {
-    const [businessName, setBusinessName] = useState('');
     const [businessType, setBusinessType] = useState('');
     const [eventTypes, setEventTypes] = useState<string[]>([]);
     const [teamSize, setTeamSize] = useState('');
@@ -61,10 +60,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
     };
 
     const handleSubmit = async () => {
-        if (!businessName.trim()) {
-            setError('Please enter your organization name');
-            return;
-        }
         if (!businessType) {
             setError('Please select your organization type');
             return;
@@ -74,7 +69,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
         setError('');
 
         try {
-            // Update user profile with onboarding data
             const currentUser = StorageService.getCurrentUser();
             if (!currentUser) {
                 setError('User not found. Please try logging in again.');
@@ -83,7 +77,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
             }
             
             await StorageService.updateUser(currentUser.id, {
-                businessName,
                 businessType,
                 eventTypes: eventTypes.join(','),
                 teamSize,
@@ -111,7 +104,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                         🎉 Welcome to OpenTicket!
                     </h2>
                     <p className="text-black/80 text-sm">
-                        Let's set up your organizer profile to get started
+                        Help us personalize your experience
                     </p>
                 </div>
 
@@ -123,26 +116,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                         </div>
                     )}
 
-                    {/* Business Name */}
-                    <div>
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                            Organization Name <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                            value={businessName}
-                            onChange={(e) => setBusinessName(e.target.value)}
-                            placeholder="e.g., Acme Events, Community Center, etc."
-                            className="w-full"
-                        />
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                            This will appear on your events and tickets
-                        </p>
-                    </div>
-
-                    {/* Business Type */}
+                    {/* Organization Type */}
                     <div>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                            Organization Type <span className="text-red-500">*</span>
+                            What type of organization are you? <span className="text-red-500">*</span>
                         </label>
                         <div className="grid grid-cols-2 gap-3">
                             {businessTypeOptions.map((option) => {
@@ -162,32 +139,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                                         <span className={`text-sm font-medium ${isSelected ? 'text-secondary' : 'text-zinc-700 dark:text-zinc-300'}`}>
                                             {option.label}
                                         </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Team Size - NEW */}
-                    <div>
-                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                            <Users size={16} className="inline mr-2" />
-                            How many people work at your organization?
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                            {teamSizeOptions.map((option) => {
-                                const isSelected = teamSize === option.value;
-                                return (
-                                    <button
-                                        key={option.value}
-                                        onClick={() => setTeamSize(option.value)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                            isSelected
-                                                ? 'bg-primary text-white'
-                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                        }`}
-                                    >
-                                        {option.label}
                                     </button>
                                 );
                             })}
@@ -219,7 +170,33 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                         </div>
                     </div>
 
-                    {/* How did you hear about us - NEW */}
+                    {/* Team Size */}
+                    <div>
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+                            <Users size={16} className="inline mr-2" />
+                            How many people work at your organization?
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {teamSizeOptions.map((option) => {
+                                const isSelected = teamSize === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => setTeamSize(option.value)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            isSelected
+                                                ? 'bg-primary text-white'
+                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* How did you hear about us */}
                     <div>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                             <HelpCircle size={16} className="inline mr-2" />
@@ -245,11 +222,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                         </div>
                     </div>
 
-                    {/* Suggestions - NEW */}
+                    {/* Suggestions */}
                     <div>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
                             <MessageSquare size={16} className="inline mr-2" />
-                            Any features you'd love to see or suggestions for us?
+                            Any features you'd love to see or suggestions?
                         </label>
                         <textarea
                             value={suggestions}
@@ -271,7 +248,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                             disabled={isSubmitting}
                             className="bg-secondary text-black border-none hover:opacity-90 px-6"
                         >
-                            {isSubmitting ? 'Saving...' : 'Complete Setup →'}
+                            {isSubmitting ? 'Saving...' : 'Get Started →'}
                         </Button>
                     </div>
                 </div>
