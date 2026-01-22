@@ -181,7 +181,14 @@ export const getAllRegistrations = async (req, res) => {
             return res.status(403).json({ error: "Missing filter parameters" });
         }
 
-        let query = supabase.from('registrations').select('*');
+        // Join with events table to include event details
+        let query = supabase.from('registrations').select(`
+            *,
+            events:event_id (
+                id, title, date, time, location, venue_name, image_url, 
+                ticket_tiers, currency, owner_id
+            )
+        `);
 
         if (hasValidSessionId) {
             query = query.eq('stripe_checkout_session_id', stripe_checkout_session_id);
