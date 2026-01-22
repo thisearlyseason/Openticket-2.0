@@ -357,16 +357,25 @@ export const createOrder = async (req, res) => {
             platform_donation_amount: donationAmount, // Track separately
         };
 
-        const { error: insertError } = await supabase
+        const { data: insertedReg, error: insertError } = await supabase
             .from('registrations')
-            .insert([registrationPayload]);
+            .insert([registrationPayload])
+            .select()
+            .single();
 
         if (insertError) {
             console.error("Failed to save pending registration:", insertError);
-            // Don't fail the checkout - webhook will handle verification
+            console.error("Insert error details:", JSON.stringify(insertError, null, 2));
+            console.error("Registration payload:", JSON.stringify(registrationPayload, null, 2));
+            // CRITICAL: Return error to user instead of silently failing
+            return res.status(500).json({ 
+                error: `Failed to create registration: ${insertError.message || 'Database error'}`,
+                details: insertError.code
+            });
         }
 
         console.log(`[Stripe] Checkout session created: ${session.id}`);
+        console.log(`[Stripe] Registration created: ${insertedReg?.id || 'unknown'}`);
         res.json({ url: session.url, id: session.id });
 
     } catch (error) {
