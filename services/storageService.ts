@@ -687,12 +687,15 @@ const normalizeRegistration = (r: any): Registration => {
         answers: r.answers || {},
         serviceFee: r.service_fee || 0,
         donationAmount: r.donation_amount || 0,
+        // Platform donation can be in answers._metadata (new) or direct field (legacy)
+        platformDonationAmount: r.answers?._metadata?.platform_donation_amount || r.platform_donation_amount || 0,
         addOns: r.add_ons || [],
         promoCodeUsed: r.promo_code_used,
         timestamp: new Date(r.created_at || Date.now()).getTime(),
         taxAmount: r.tax_amount || 0,
-        customFeesAmount: r.custom_fees_amount || 0,
+        customFeesAmount: r.custom_fees_amount || r.answers?._metadata?.custom_fees_amount || 0,
         stripePaymentIntentId: r.stripe_payment_intent_id,
+        discountAmount: r.discount_amount || 0,
         // Map joined financial data
         stripeFee: (r.financial_transactions && r.financial_transactions.length > 0) ? r.financial_transactions[0].stripe_fee : 0
     };
