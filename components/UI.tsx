@@ -840,7 +840,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                                             <span className="font-bold">{t.quantity}x</span> {t.name}
                                         </div>
                                         <div className={t.status === 'refunded' ? 'line-through text-gray-400' : ''}>
-                                            ${(t.pricePerTicket * t.quantity).toFixed(2)}
+                                            {formatAmount(t.pricePerTicket * t.quantity)}
                                         </div>
                                     </div>
                                 ))}
@@ -849,7 +849,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                                         <div>
                                             <span className="font-bold">{a.quantity}x</span> {a.name}
                                         </div>
-                                        <div>${(a.price * a.quantity).toFixed(2)}</div>
+                                        <div>{formatAmount(a.price * a.quantity)}</div>
                                     </div>
                                 ))}
                             </div>
@@ -858,54 +858,58 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                         <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
                             <div className="flex justify-between text-gray-600">
                                 <span>Subtotal</span>
-                                <span>${subtotal.toFixed(2)}</span>
+                                <span>{formatAmount(subtotal)}</span>
                             </div>
                             {discount > 0 && (
                                 <div className="flex justify-between text-green-600">
                                     <span>
                                         Discount {registration.promoCodeUsed ? `(${registration.promoCodeUsed})` : ''}
                                     </span>
-                                    <span>-${discount.toFixed(2)}</span>
+                                    <span>-{formatAmount(discount)}</span>
                                 </div>
                             )}
                             {(registration.serviceFee || 0) > 0 && (
                                 <div className="flex justify-between text-gray-600">
                                     <span>Service Fee</span>
-                                    <span>${(registration.serviceFee || 0).toFixed(2)}</span>
+                                    <span>{formatAmount(registration.serviceFee || 0)}</span>
                                 </div>
                             )}
                             {(registration.customFeesAmount || 0) > 0 && (
                                 <div className="flex justify-between text-gray-600">
                                     <span>Processing Fee</span>
-                                    <span>${(registration.customFeesAmount || 0).toFixed(2)}</span>
+                                    <span>{formatAmount(registration.customFeesAmount || 0)}</span>
                                 </div>
                             )}
                             {tax > 0 && (
                                 <div className="flex justify-between text-gray-600">
                                     <span>Tax</span>
-                                    <span>${tax.toFixed(2)}</span>
+                                    <span>{formatAmount(tax)}</span>
                                 </div>
                             )}
-                            {(registration.donationAmount || 0) > 0 && (
+                            {eventDonation > 0 && (
                                 <div className="flex justify-between text-pink-600">
                                     <span>Event Donation</span>
-                                    <span>${(registration.donationAmount || 0).toFixed(2)}</span>
+                                    <span>{formatAmount(eventDonation)}</span>
                                 </div>
                             )}
-                            {(registration.platformDonationAmount || 0) > 0 && (
+                            {platformDonation > 0 && (
                                 <div className="flex justify-between text-blue-600">
-                                    <span>Platform Tip</span>
-                                    <span>${(registration.platformDonationAmount || 0).toFixed(2)}</span>
+                                    <span>💙 Platform Support</span>
+                                    <span>{formatAmount(platformDonation)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-xl font-black pt-2 border-t border-gray-200 mt-2">
                                 <span>Total</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>{formatAmount(total)}</span>
+                            </div>
+                            {/* Currency indicator */}
+                            <div className="text-xs text-gray-400 text-right">
+                                Charged in {currency}
                             </div>
                             {refunded > 0 && (
                                 <div className="flex justify-between text-red-600 font-bold">
                                     <span>Refunded</span>
-                                    <span>-${refunded.toFixed(2)}</span>
+                                    <span>-{formatAmount(refunded)}</span>
                                 </div>
                             )}
                         </div>
