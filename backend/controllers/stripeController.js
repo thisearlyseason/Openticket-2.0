@@ -775,19 +775,21 @@ export const verifySession = async (req, res) => {
         try {
             // Get the actual currency from Stripe session
             const actualCurrency = session.currency?.toUpperCase() || 'USD';
-            console.log(`[Stripe] Sending confirmation email - Currency: ${actualCurrency}, Total: ${grossAmount}`);
+            // Note: Supabase joins create 'events' not 'event' 
+            const eventData = reg.event || reg.events || {};
+            console.log(`[Stripe] Sending confirmation email - Currency: ${actualCurrency}, Total: ${grossAmount}, Event: ${eventData.title || 'Unknown'}`);
             
             await EmailService.sendTicketConfirmation(
                 reg.attendee_email,
                 reg.tickets || [],
                 {
                     id: reg.event_id,
-                    title: reg.event?.title || 'Event',
-                    date: reg.event?.date,
-                    time: reg.event?.time,
-                    location: reg.event?.location || reg.event?.venue_name,
-                    organizer: reg.event?.organizer_name || 'Event Organizer',
-                    ticket_design: reg.event?.ticket_design,
+                    title: eventData.title || 'Event',
+                    date: eventData.date,
+                    time: eventData.time,
+                    location: eventData.location || eventData.venue_name,
+                    organizer: eventData.organizer_name || 'Event Organizer',
+                    ticket_design: eventData.ticket_design,
                     currency: actualCurrency
                 },
                 // Order details for full breakdown - use the actual paid amounts
