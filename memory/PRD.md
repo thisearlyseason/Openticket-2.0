@@ -1440,3 +1440,48 @@ ADD COLUMN IF NOT EXISTS platform_donation_amount DECIMAL(10,2) DEFAULT 0;
 - Guest ticket linking: Logic implemented, needs account creation test
 - Confirmation screen: Already shows breakdown in existing code
 
+
+### ✅ Receipt, Confirmation, My Tickets, and UI Fixes (January 22, 2026)
+
+#### 1. Receipt Modal - Currency & Donation Fix
+- [x] **Currency-aware formatting** - Uses event's currency (USD, CAD, EUR, etc.) instead of hardcoded $
+- [x] **Platform donation display** - Shows "💙 Platform Support" line item when present
+- [x] **Currency indicator** - Shows "Charged in CAD" at bottom of receipt
+- [x] **Data source fix** - Extracts platformDonation from `answers._metadata` (new) or direct field (legacy)
+- [x] **File changed**: `/app/components/UI.tsx` - ReceiptModal component
+
+#### 2. Confirmation Screen - Platform Donation
+- [x] **Platform donation mapping** - Now correctly extracts from `reg.answers?._metadata?.platform_donation_amount`
+- [x] **Answers field preserved** - Registration normalization includes answers object
+- [x] **File changed**: `/app/components/EventView.tsx` - normalizedReg object
+
+#### 3. My Tickets - Registration Display Fix
+- [x] **Fixed filtering bug** - Registrations were being filtered out when event not found
+- [x] **Placeholder events** - If event not in cache, creates placeholder so tickets still show
+- [x] **Detailed logging** - Added event ID logging for debugging
+- [x] **File changed**: `/app/services/storageService.ts` - getRegistrationsByEmail
+
+#### 4. Storage Service - Normalize Registration
+- [x] **Platform donation extraction** - `answers._metadata.platform_donation_amount || platform_donation_amount`
+- [x] **Custom fees extraction** - `custom_fees_amount || answers._metadata.custom_fees_amount`
+- [x] **Discount amount added** - `discountAmount` field now included in normalization
+- [x] **File changed**: `/app/services/storageService.ts` - normalizeRegistration
+
+#### 5. UI Color Fix - Softer Secondary Color
+- [x] **Light mode** - Changed from `#6366f1` (bright indigo) to `#60a5fa` (soft blue-400)
+- [x] **Dark mode** - Changed from `#818cf8` (bright indigo) to `#93c5fd` (soft blue-300)
+- [x] **Text contrast** - Changed secondary-fg from white to `#1e3a5f` (dark blue)
+- [x] **File changed**: `/app/index.css`
+
+#### 6. Removed Tailwind CDN
+- [x] **Console warning fixed** - Removed `cdn.tailwindcss.com` script from index.html
+- [x] **Duplicate config removed** - Removed inline tailwind.config and CSS variables
+- [x] **Cleaner build** - Now only uses local Tailwind build from Vite
+- [x] **File changed**: `/app/index.html`
+
+#### Testing Status
+- Receipt currency display: Ready for testing
+- Platform donation display: Ready for testing  
+- My Tickets loading: Ready for testing
+- UI colors: Ready for testing
+
