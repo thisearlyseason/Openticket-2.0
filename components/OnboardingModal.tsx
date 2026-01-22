@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Briefcase, Calendar, Users, Building2 } from 'lucide-react';
 import { Button, Input, Card } from './UI';
-import StorageService from '../services/storageService';
+import { StorageService } from '../services/storageService';
 
 interface OnboardingModalProps {
     isOpen: boolean;
