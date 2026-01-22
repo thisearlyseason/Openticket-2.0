@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Briefcase, Calendar, Users, Building2 } from 'lucide-react';
+import { Briefcase, Calendar, Users, Building2, HelpCircle, MessageSquare } from 'lucide-react';
 import { Button, Input, Card } from './UI';
 import { StorageService } from '../services/storageService';
 
@@ -13,6 +13,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
     const [businessName, setBusinessName] = useState('');
     const [businessType, setBusinessType] = useState('');
     const [eventTypes, setEventTypes] = useState<string[]>([]);
+    const [teamSize, setTeamSize] = useState('');
+    const [heardFrom, setHeardFrom] = useState('');
+    const [suggestions, setSuggestions] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -30,6 +33,23 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
     const eventTypeOptions = [
         'Conferences', 'Workshops', 'Concerts', 'Festivals', 'Fundraisers',
         'Sports Events', 'Community Events', 'Classes', 'Meetups', 'Other'
+    ];
+
+    const teamSizeOptions = [
+        { value: 'solo', label: 'Just me' },
+        { value: '2-5', label: '2-5 people' },
+        { value: '6-20', label: '6-20 people' },
+        { value: '21-50', label: '21-50 people' },
+        { value: '50+', label: '50+ people' }
+    ];
+
+    const heardFromOptions = [
+        { value: 'search', label: 'Search Engine (Google, etc.)' },
+        { value: 'social', label: 'Social Media' },
+        { value: 'friend', label: 'Friend or Colleague' },
+        { value: 'event', label: 'Attended an OpenTicket event' },
+        { value: 'ad', label: 'Online Advertisement' },
+        { value: 'other', label: 'Other' }
     ];
 
     const handleEventTypeToggle = (type: string) => {
@@ -58,7 +78,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
             await StorageService.updateProfile({
                 businessName,
                 businessType,
-                eventTypes: eventTypes.join(',')
+                eventTypes: eventTypes.join(','),
+                teamSize,
+                heardFrom,
+                suggestions,
+                onboardingCompleted: true,
+                onboardingCompletedAt: new Date().toISOString()
             });
 
             onComplete();
@@ -136,10 +161,36 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                         </div>
                     </div>
 
+                    {/* Team Size - NEW */}
+                    <div>
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+                            <Users size={16} className="inline mr-2" />
+                            How many people work at your organization?
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {teamSizeOptions.map((option) => {
+                                const isSelected = teamSize === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => setTeamSize(option.value)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            isSelected
+                                                ? 'bg-primary text-white'
+                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Event Types */}
                     <div>
                         <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
-                            What types of events will you host? (Optional)
+                            What types of events will you host?
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {eventTypeOptions.map((type) => {
@@ -159,6 +210,46 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
                                 );
                             })}
                         </div>
+                    </div>
+
+                    {/* How did you hear about us - NEW */}
+                    <div>
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
+                            <HelpCircle size={16} className="inline mr-2" />
+                            Where did you hear about us?
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {heardFromOptions.map((option) => {
+                                const isSelected = heardFrom === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => setHeardFrom(option.value)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            isSelected
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Suggestions - NEW */}
+                    <div>
+                        <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                            <MessageSquare size={16} className="inline mr-2" />
+                            Any features you'd love to see or suggestions for us?
+                        </label>
+                        <textarea
+                            value={suggestions}
+                            onChange={(e) => setSuggestions(e.target.value)}
+                            placeholder="We'd love to hear your thoughts..."
+                            className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-zinc-900 dark:text-white resize-none h-20 text-sm"
+                        />
                     </div>
                 </div>
 
