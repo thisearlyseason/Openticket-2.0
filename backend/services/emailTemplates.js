@@ -286,12 +286,26 @@ export const purchaseConfirmation = ({
         ? orderId.toUpperCase() 
         : `ORD-${Date.now().toString(36).toUpperCase()}`;
     
+    // Calculate USD totals from stored amounts
+    const usdTicketTotal = (tickets || []).reduce((sum, t) => sum + (t.pricePerTicket || t.price || 0), 0);
+    const usdSubtotal = subtotal || usdTicketTotal;
+    const usdTotal = usdSubtotal + serviceFee + taxAmount + platformDonation - discountAmount;
+    
+    // Calculate conversion ratio (e.g., if paid in CAD, totalPaid is CAD, usdTotal is USD)
+    const conversionRatio = usdTotal > 0 ? totalPaid / usdTotal : 1;
+    
+    // Helper to convert amounts to charged currency
+    const convertAmount = (amount) => Math.round(amount * conversionRatio * 100) / 100;
+    
     // Each ticket is UNIQUE - display them individually with QR codes
     const ticketList = (tickets || []).map((t, idx) => {
         const ticketId = t.ticketNumber || t.ticketId || t.id || `TKT-${idx + 1}`;
         const qrCodeUrl = qrCodeBaseUrl 
             ? `${qrCodeBaseUrl}?data=${encodeURIComponent(ticketId)}` 
             : `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(ticketId)}`;
+        
+        // Convert ticket price to charged currency
+        const convertedPrice = convertAmount(t.pricePerTicket || t.price || 0);
         
         return `
         <div style="border: 2px solid ${theme.accentColor}; padding: 20px; margin-bottom: 16px; border-radius: 12px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);">
@@ -305,7 +319,7 @@ export const purchaseConfirmation = ({
                             <strong style="color: ${theme.textColor};">Attendee:</strong> ${t.attendeeName || attendeeName}
                         </p>
                         <p style="margin: 0 0 6px 0; color: ${theme.mutedColor}; font-size: 14px;">
-                            <strong style="color: ${theme.textColor};">Price:</strong> ${formatCurrency(t.pricePerTicket || t.price || 0)}
+                            <strong style="color: ${theme.textColor};">Price:</strong> ${formatCurrency(convertedPrice)}
                         </p>
                         <p style="margin: 12px 0 0 0; font-family: 'Courier New', monospace; color: ${theme.accentColor}; font-size: 13px; background: ${adjustBrightness(theme.accentColor, 90)}; padding: 8px 12px; border-radius: 6px; display: inline-block;">
                             ${ticketId}
