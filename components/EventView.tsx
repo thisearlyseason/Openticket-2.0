@@ -249,6 +249,12 @@ export const EventView = () => {
                                         answers: reg.answers || {},
                                     };
                                     
+                                    // Set the actual charged currency from Stripe
+                                    if (result.chargedCurrency) {
+                                        setChargedCurrency(result.chargedCurrency);
+                                        console.log('[EventView] Charged currency from Stripe:', result.chargedCurrency);
+                                    }
+                                    
                                     setCompletedRegistration(normalizedReg as any);
                                     setIsSuccess(true);
                                     setIsProcessingPayment(false);
