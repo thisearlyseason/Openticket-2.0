@@ -13,7 +13,7 @@ import os
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://kioskmode.preview.emergentagent.com"
+BACKEND_URL = "https://ticketmgr-1.preview.emergentagent.com"
 
 class KioskModeTester:
     def __init__(self):
