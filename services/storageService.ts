@@ -1527,8 +1527,38 @@ export const StorageService = {
             const userRegs = (registrations || []).map((r: any) => normalizeRegistration(r));
             console.log(`[StorageService] Found ${userRegs.length} matches`);
 
+            // Get all events to join with registrations
             const allEvents = await StorageService.getEvents();
-            return userRegs.map((reg: Registration) => ({ reg, event: allEvents.find(e => e.id === reg.eventId)! })).filter((x: any) => x.event);
+            console.log(`[StorageService] Found ${allEvents.length} events to match against`);
+            
+            // Log event IDs for debugging
+            const eventIds = userRegs.map((r: Registration) => r.eventId);
+            console.log(`[StorageService] Registration event IDs:`, eventIds);
+            
+            // Match registrations with events - if event not found, create a placeholder
+            const result = userRegs.map((reg: Registration) => {
+                const event = allEvents.find(e => e.id === reg.eventId);
+                if (!event) {
+                    console.warn(`[StorageService] Event not found for registration ${reg.id}, eventId: ${reg.eventId}`);
+                    // Return a placeholder event so the ticket still shows
+                    return { 
+                        reg, 
+                        event: {
+                            id: reg.eventId,
+                            title: 'Event Details Unavailable',
+                            date: new Date().toISOString().split('T')[0],
+                            time: '00:00',
+                            location: 'Unknown',
+                            ticketTiers: [],
+                            currency: 'USD'
+                        } as Event 
+                    };
+                }
+                return { reg, event };
+            });
+            
+            console.log(`[StorageService] Returning ${result.length} registrations with events`);
+            return result;
         } catch (e) {
             console.error('[StorageService] Fetch registrations failed:', e);
             return [];
