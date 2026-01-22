@@ -8,15 +8,15 @@
 
 const TEMPLATE_THEMES = {
     modern: {
-        headerGradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-        accentColor: '#059669',
+        headerGradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
+        accentColor: '#374151',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     classic: {
-        headerGradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
-        accentColor: '#1e40af',
+        headerGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
+        accentColor: '#1e3a5f',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
@@ -29,29 +29,29 @@ const TEMPLATE_THEMES = {
         mutedColor: '#6b7280'
     },
     festive: {
-        headerGradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-        accentColor: '#dc2626',
+        headerGradient: 'linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%)',
+        accentColor: '#991b1b',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     purple: {
-        headerGradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-        accentColor: '#7c3aed',
+        headerGradient: 'linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%)',
+        accentColor: '#5b21b6',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     blue: {
-        headerGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-        accentColor: '#2563eb',
+        headerGradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+        accentColor: '#1e40af',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     orange: {
-        headerGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-        accentColor: '#ea580c',
+        headerGradient: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)',
+        accentColor: '#c2410c',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
