@@ -8,25 +8,25 @@
 
 const TEMPLATE_THEMES = {
     modern: {
-        headerGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        accentColor: '#10b981',
+        headerGradient: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+        accentColor: '#059669',
         bgColor: '#ffffff',
-        textColor: '#111827',
+        textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     classic: {
-        headerGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
-        accentColor: '#1e3a5f',
+        headerGradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
+        accentColor: '#1e40af',
         bgColor: '#ffffff',
-        textColor: '#0f172a',
-        mutedColor: '#475569'
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
     },
     minimal: {
-        headerGradient: 'linear-gradient(135deg, #18181b 0%, #27272a 100%)',
-        accentColor: '#18181b',
+        headerGradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
+        accentColor: '#374151',
         bgColor: '#ffffff',
-        textColor: '#18181b',
-        mutedColor: '#71717a'
+        textColor: '#1f2937',
+        mutedColor: '#6b7280'
     },
     festive: {
         headerGradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
@@ -36,22 +36,22 @@ const TEMPLATE_THEMES = {
         mutedColor: '#6b7280'
     },
     purple: {
-        headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-        accentColor: '#8b5cf6',
+        headerGradient: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+        accentColor: '#7c3aed',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     blue: {
-        headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-        accentColor: '#3b82f6',
+        headerGradient: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+        accentColor: '#2563eb',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     orange: {
-        headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-        accentColor: '#f97316',
+        headerGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+        accentColor: '#ea580c',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
