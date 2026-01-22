@@ -181,3 +181,4 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete, u
         </div>
     );
 };
+export default OnboardingModal;
