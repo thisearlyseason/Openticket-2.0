@@ -964,126 +964,139 @@ export const EventView = () => {
                                             <div className="space-y-4 mb-12">
                                                 <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">Order Summary</h3>
                                                 <div className="bg-zinc-50 dark:bg-black p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-zinc-100 dark:border-zinc-800">
-                                                    {/* Tickets Section */}
-                                                    {completedRegistration?.tickets?.map((ticket, idx) => (
-                                                        <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 transform transition-all hover:scale-[1.01]">
-                                                            <div className="min-w-0 flex-1 mr-4">
-                                                                <div className="font-black text-zinc-900 dark:text-white truncate">{ticket.name}</div>
-                                                                <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter truncate">Holder: {ticket.attendeeName || completedRegistration.attendeeName}</div>
-                                                            </div>
-                                                            <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap"><EventPriceDisplay amount={ticket.pricePerTicket} currency={confirmationCurrency} /></div>
-                                                        </div>
-                                                    ))}
-                                                    
-                                                    {/* Add-ons Section */}
-                                                    {completedRegistration?.addOns && completedRegistration.addOns.length > 0 && (
-                                                        <>
-                                                            {completedRegistration.addOns.map((addon, idx) => (
-                                                                <div key={`addon-${idx}`} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0">
-                                                                    <div className="min-w-0 flex-1 mr-4">
-                                                                        <div className="font-black text-zinc-900 dark:text-white truncate">{addon.name} {addon.quantity > 1 ? `×${addon.quantity}` : ''}</div>
-                                                                        <div className="text-xs font-bold text-zinc-500 uppercase">Add-on</div>
+                                                    {/* Calculate conversion ratio from USD to charged currency */}
+                                                    {(() => {
+                                                        // Calculate USD total from stored amounts
+                                                        const usdTicketTotal = completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0;
+                                                        const usdAddOnTotal = completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
+                                                        const usdSubtotal = usdTicketTotal + usdAddOnTotal;
+                                                        const usdFees = (completedRegistration?.serviceFee || 0) + (completedRegistration?.customFeesAmount || 0);
+                                                        const usdTax = completedRegistration?.taxAmount || 0;
+                                                        const usdDonation = (completedRegistration?.donationAmount || 0) + (completedRegistration?.platformDonationAmount || 0);
+                                                        const usdDiscount = completedRegistration?.discountAmount || 0;
+                                                        const usdTotal = usdSubtotal + usdFees + usdTax + usdDonation - usdDiscount;
+                                                        
+                                                        // Get actual charged amount (in local currency like CAD)
+                                                        const chargedTotal = (completedRegistration as any)?.chargedAmount || completedRegistration?.totalAmount || usdTotal;
+                                                        
+                                                        // Calculate conversion ratio (e.g., CAD/USD = 1.43)
+                                                        const conversionRatio = usdTotal > 0 ? chargedTotal / usdTotal : 1;
+                                                        
+                                                        // Helper to convert amounts
+                                                        const convert = (amount: number) => Math.round(amount * conversionRatio * 100) / 100;
+                                                        
+                                                        return (
+                                                            <>
+                                                                {/* Tickets Section */}
+                                                                {completedRegistration?.tickets?.map((ticket, idx) => (
+                                                                    <div key={idx} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0 transform transition-all hover:scale-[1.01]">
+                                                                        <div className="min-w-0 flex-1 mr-4">
+                                                                            <div className="font-black text-zinc-900 dark:text-white truncate">{ticket.name}</div>
+                                                                            <div className="text-xs font-bold text-zinc-500 uppercase tracking-tighter truncate">Holder: {ticket.attendeeName || completedRegistration?.attendeeName}</div>
+                                                                        </div>
+                                                                        <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap">
+                                                                            <EventPriceDisplay amount={convert(ticket.pricePerTicket)} currency={confirmationCurrency} />
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap"><EventPriceDisplay amount={addon.price * addon.quantity} currency={confirmationCurrency} /></div>
+                                                                ))}
+                                                                
+                                                                {/* Add-ons Section */}
+                                                                {completedRegistration?.addOns && completedRegistration.addOns.length > 0 && (
+                                                                    <>
+                                                                        {completedRegistration.addOns.map((addon, idx) => (
+                                                                            <div key={`addon-${idx}`} className="flex justify-between items-center py-3 border-b border-zinc-200 dark:border-zinc-800 last:border-0">
+                                                                                <div className="min-w-0 flex-1 mr-4">
+                                                                                    <div className="font-black text-zinc-900 dark:text-white truncate">{addon.name} {addon.quantity > 1 ? `×${addon.quantity}` : ''}</div>
+                                                                                    <div className="text-xs font-bold text-zinc-500 uppercase">Add-on</div>
+                                                                                </div>
+                                                                                <div className="font-black text-zinc-900 dark:text-white whitespace-nowrap">
+                                                                                    <EventPriceDisplay amount={convert(addon.price * addon.quantity)} currency={confirmationCurrency} />
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </>
+                                                                )}
+
+                                                                {/* Subtotal */}
+                                                                <div className="flex justify-between items-center py-3 border-t border-zinc-200 dark:border-zinc-800 mt-2">
+                                                                    <span className="font-bold text-zinc-600 dark:text-zinc-400">Subtotal</span>
+                                                                    <span className="font-bold text-zinc-900 dark:text-white">
+                                                                        <EventPriceDisplay amount={convert(usdSubtotal)} currency={confirmationCurrency} />
+                                                                    </span>
                                                                 </div>
-                                                            ))}
-                                                        </>
-                                                    )}
 
-                                                    {/* Subtotal */}
-                                                    <div className="flex justify-between items-center py-3 border-t border-zinc-200 dark:border-zinc-800 mt-2">
-                                                        <span className="font-bold text-zinc-600 dark:text-zinc-400">Subtotal</span>
-                                                        <span className="font-bold text-zinc-900 dark:text-white">
-                                                            <EventPriceDisplay amount={
-                                                                (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
-                                                                (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0)
-                                                            } currency={confirmationCurrency} />
-                                                        </span>
-                                                    </div>
+                                                                {/* Discount/Promo Code */}
+                                                                {usdDiscount > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm">
+                                                                        <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
+                                                                            <span>🎟️</span>
+                                                                            Promo Code {completedRegistration?.promoCodeUsed ? `(${completedRegistration.promoCodeUsed})` : ''}
+                                                                        </span>
+                                                                        <span className="text-green-600 dark:text-green-400 font-bold">
+                                                                            -<EventPriceDisplay amount={convert(usdDiscount)} currency={confirmationCurrency} />
+                                                                        </span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Discount/Promo Code */}
-                                                    {(completedRegistration?.discountAmount || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm">
-                                                            <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
-                                                                <span>🎟️</span>
-                                                                Promo Code {completedRegistration?.promoCodeUsed ? `(${completedRegistration.promoCodeUsed})` : ''}
-                                                            </span>
-                                                            <span className="text-green-600 dark:text-green-400 font-bold">
-                                                                -<EventPriceDisplay amount={completedRegistration?.discountAmount || 0} currency={confirmationCurrency} />
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                                                {/* Service Fee */}
+                                                                {(completedRegistration?.serviceFee || 0) > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                                        <span>Service Fee</span>
+                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.serviceFee || 0)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Platform & Service Fees */}
-                                                    {(completedRegistration?.serviceFee || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                            <span>Service Fee</span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.serviceFee || 0} currency={confirmationCurrency} /></span>
-                                                        </div>
-                                                    )}
+                                                                {/* Custom Fees */}
+                                                                {(completedRegistration?.customFeesAmount || 0) > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                                        <span>Processing Fee</span>
+                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.customFeesAmount || 0)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Custom Fees */}
-                                                    {(completedRegistration?.customFeesAmount || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                            <span>Processing Fee</span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.customFeesAmount || 0} currency={confirmationCurrency} /></span>
-                                                        </div>
-                                                    )}
+                                                                {/* Tax */}
+                                                                {usdTax > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                                        <span>Tax</span>
+                                                                        <span><EventPriceDisplay amount={convert(usdTax)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Tax */}
-                                                    {(completedRegistration?.taxAmount || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                            <span>Tax</span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.taxAmount || 0} currency={confirmationCurrency} /></span>
-                                                        </div>
-                                                    )}
+                                                                {/* Event Donation */}
+                                                                {(completedRegistration?.donationAmount || 0) > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-pink-600 dark:text-pink-400 font-medium">
+                                                                        <span className="flex items-center gap-2">
+                                                                            <Heart size={14} /> Donation
+                                                                        </span>
+                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.donationAmount || 0)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Event Donation */}
-                                                    {(completedRegistration?.donationAmount || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm text-pink-600 dark:text-pink-400 font-medium">
-                                                            <span className="flex items-center gap-2">
-                                                                <Heart size={14} /> Donation
-                                                            </span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.donationAmount || 0} currency={confirmationCurrency} /></span>
-                                                        </div>
-                                                    )}
+                                                                {/* Platform Donation (Tip) */}
+                                                                {(completedRegistration?.platformDonationAmount || 0) > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-blue-600 dark:text-blue-400 font-medium">
+                                                                        <span className="flex items-center gap-2">
+                                                                            <Gift size={14} /> Platform Tip
+                                                                        </span>
+                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.platformDonationAmount || 0)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                    {/* Platform Donation (Tip) */}
-                                                    {(completedRegistration?.platformDonationAmount || 0) > 0 && (
-                                                        <div className="flex justify-between items-center py-2 text-sm text-blue-600 dark:text-blue-400 font-medium">
-                                                            <span className="flex items-center gap-2">
-                                                                <Gift size={14} /> Platform Tip
-                                                            </span>
-                                                            <span><EventPriceDisplay amount={completedRegistration?.platformDonationAmount || 0} currency={confirmationCurrency} /></span>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Total Calculation - Use the actual charged amount from Stripe */}
-                                                    <div className="mt-4 flex justify-between items-center pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
-                                                        <div className="text-lg sm:text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Paid</div>
-                                                        <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                                                            <EventPriceDisplay amount={
-                                                                // Use the chargedAmount from Stripe if available, otherwise calculate
-                                                                (completedRegistration as any)?.chargedAmount || 
-                                                                completedRegistration?.totalAmount ||
-                                                                (
-                                                                    (completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0) +
-                                                                    (completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0) +
-                                                                    (completedRegistration?.serviceFee || 0) +
-                                                                    (completedRegistration?.customFeesAmount || 0) +
-                                                                    (completedRegistration?.taxAmount || 0) +
-                                                                    (completedRegistration?.donationAmount || 0) +
-                                                                    (completedRegistration?.platformDonationAmount || 0) -
-                                                                    (completedRegistration?.discountAmount || 0)
-                                                                )
-                                                            } currency={confirmationCurrency} />
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* Currency Note */}
-                                                    <div className="text-center text-xs text-zinc-500 mt-2">
-                                                        Charged in {confirmationCurrency}
-                                                    </div>
+                                                                {/* Total - Use actual charged amount */}
+                                                                <div className="mt-4 flex justify-between items-center pt-4 border-t-2 border-dashed border-zinc-200 dark:border-zinc-800">
+                                                                    <div className="text-lg sm:text-xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Total Paid</div>
+                                                                    <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                                                                        <EventPriceDisplay amount={chargedTotal} currency={confirmationCurrency} />
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Currency Note */}
+                                                                <div className="text-center text-xs text-zinc-500 mt-2">
+                                                                    Charged in {confirmationCurrency}
+                                                                </div>
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
 
