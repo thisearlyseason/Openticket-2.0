@@ -264,6 +264,12 @@ export const EventView = () => {
                                         console.log('[EventView] Charged amount from Stripe:', result.chargedAmount);
                                     }
                                     
+                                    // Store the charged currency for display
+                                    if (result.chargedCurrency) {
+                                        normalizedReg.chargedCurrency = result.chargedCurrency;
+                                        console.log('[EventView] Charged currency from Stripe:', result.chargedCurrency);
+                                    }
+                                    
                                     setCompletedRegistration(normalizedReg as any);
                                     setIsSuccess(true);
                                     setIsProcessingPayment(false);
