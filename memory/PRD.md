@@ -1351,3 +1351,42 @@ When API calls return 401 Unauthorized:
 ### P3 (Low Priority)
 - [ ] Fix ESLint/TypeScript linter configuration for `.tsx` files
 
+
+### ✅ Critical Bug Fixes (January 22, 2026)
+
+#### Organizer Signup Fix (P0 Critical)
+- [x] **Root Cause:** `Auth.tsx` line 529 used undefined variable `email` instead of `formData.email`
+- [x] **Error:** `ReferenceError: email is not defined` caused infinite spinner during signup
+- [x] **Fix Location:** `/app/components/Auth.tsx` line 529
+- [x] **Solution:** Changed `setNewUserEmail(email)` to `setNewUserEmail(formData.email)`
+
+#### OnboardingModal StorageService Fix (P0 Critical)
+- [x] **Root Cause:** Called non-existent `StorageService.updateProfile()` method
+- [x] **Fix Location:** `/app/components/OnboardingModal.tsx` line 78
+- [x] **Solution:** Changed to `StorageService.updateUser(currentUser.id, {...})` with proper user lookup
+
+#### Onboarding Fields Added to Type System
+- [x] **types.ts:** Added `teamSize`, `heardFrom`, `suggestions`, `onboardingCompleted`, `onboardingCompletedAt`
+- [x] **storageService.ts:** Added field mappings in `updateUser()` for new onboarding fields
+
+#### Enhanced Onboarding Modal
+- [x] **New Questions Added:**
+  - "How many people work at your organization?" (team size selector)
+  - "Where did you hear about us?" (source attribution)  
+  - "Any features you'd love to see or suggestions for us?" (feedback textarea)
+- [x] **Existing Fields:** Organization Name, Organization Type, Event Types
+- [x] **File:** `/app/components/OnboardingModal.tsx`
+
+#### Stripe Verify-Session Endpoint Verified
+- [x] **Status:** Endpoint exists and works correctly
+- [x] **Route:** `/api/stripe/verify-session` registered in `/app/backend/routes/stripeRoutes.js` line 12
+- [x] **Controller:** `verifySession()` function in `/app/backend/controllers/stripeController.js` lines 517-786
+- [x] **Note:** 404 errors on production (openticket.events) may indicate cached deployment or CDN issues
+
+#### Test Results (January 22, 2026)
+- [x] Login flow working - test user redirects correctly
+- [x] Verify-session endpoint returns proper responses (not 404)
+- [x] Onboarding modal has all 6 required fields
+- [x] Backend APIs responding correctly
+- [x] Frontend build succeeds
+
