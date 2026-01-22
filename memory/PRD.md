@@ -1560,3 +1560,22 @@ Applied conversion ratio (`chargedAmount / usdTotal`) to ALL displayed amounts a
 - Signup flow UI verified
 - Email themes verified muted
 - Currency metadata storage verified
+
+### ✅ P3 Tasks Completed (January 22, 2026)
+
+#### Database Migration Script Created
+- **File:** `/app/backend/migrations/add_missing_columns.sql`
+- **Columns Added:**
+  - `events.currency` - Default event pricing currency
+  - `events.email_settings` - JSONB email configuration
+  - `events.organizer_absorbed_fee` - Fee absorption setting
+  - `registrations.charged_currency` - Actual charged currency from Stripe
+  - `registrations.charged_amount` - Actual amount charged
+- **Backwards Compatible:** Code checks dedicated columns first, falls back to `answers._metadata`
+- **Data Migration Included:** Script migrates existing data from `answers._metadata` to dedicated columns
+- **Status:** Ready to run on production Supabase
+
+#### Downloadable Receipt Feature
+- Already implemented in ReceiptModal (UI.tsx)
+- Download PDF and Print buttons available
+- Accessible from both Confirmation Screen and My Tickets page
