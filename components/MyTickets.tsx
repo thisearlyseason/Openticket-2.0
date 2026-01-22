@@ -152,9 +152,30 @@ export const MyTickets = () => {
                 if (Date.now() > reg.timestamp + (event.paymentTimeLimit * 3600 * 1000)) isExpired = true;
             }
 
-            const eventDateStr = event.date + 'T' + (event.time || '00:00');
-            const eventTimestamp = new Date(eventDateStr).getTime();
-            const isPastEvent = !isNaN(eventTimestamp) && eventTimestamp < now;
+            // Safely parse event date - handle null/undefined/invalid dates
+            let isPastEvent = false;
+            if (event.date) {
+                // Try to parse the date - handle both ISO format and YYYY-MM-DD
+                const eventDateStr = event.date.includes('T') 
+                    ? event.date 
+                    : `${event.date}T${event.time || '23:59'}`;
+                const eventTimestamp = new Date(eventDateStr).getTime();
+                isPastEvent = !isNaN(eventTimestamp) && eventTimestamp < now;
+                
+                console.log('[MyTickets] Date parsing:', {
+                    eventId: event.id,
+                    rawDate: event.date,
+                    rawTime: event.time,
+                    parsedStr: eventDateStr,
+                    timestamp: eventTimestamp,
+                    isPast: isPastEvent,
+                    now: now
+                });
+            } else {
+                // No date means we can't determine - default to NOT past (show in active)
+                console.warn('[MyTickets] Event has no date, defaulting to active:', event.id, event.title);
+                isPastEvent = false;
+            }
             
             console.log('[MyTickets] Registration filters:', {
                 id: reg.id,
