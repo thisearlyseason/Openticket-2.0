@@ -989,15 +989,43 @@ export const checkInTicket = async (req, res) => {
         }
         
         // 2. Find the registration containing this ticket ID
-        const { data: registrations, error: searchError } = await supabase
-            .from('registrations')
-            .select('*')
-            .eq('event_id', eventId || '');
+        let registrations = [];
         
-        if (searchError) {
-            console.error('[CheckIn] Search error:', searchError);
-            return res.status(500).json({ error: 'Failed to search for ticket' });
+        if (eventId) {
+            // Search within specific event
+            const { data, error: searchError } = await supabase
+                .from('registrations')
+                .select('*')
+                .eq('event_id', eventId);
+            
+            if (searchError) {
+                console.error('[CheckIn] Search error:', searchError);
+                return res.status(500).json({ error: 'Failed to search for ticket' });
+            }
+            registrations = data || [];
+        } else {
+            // No eventId provided - search all events owned by this organizer
+            const { data: events } = await supabase
+                .from('events')
+                .select('id')
+                .eq('owner_id', organizerId);
+            
+            if (events && events.length > 0) {
+                const eventIds = events.map(e => e.id);
+                const { data, error: searchError } = await supabase
+                    .from('registrations')
+                    .select('*')
+                    .in('event_id', eventIds);
+                
+                if (searchError) {
+                    console.error('[CheckIn] Search error:', searchError);
+                    return res.status(500).json({ error: 'Failed to search for ticket' });
+                }
+                registrations = data || [];
+            }
         }
+        
+        console.log(`[CheckIn] Found ${registrations.length} registrations to search for ticket ${ticketId}`);
         
         // 3. Search through all registrations for the ticket
         let targetRegistration = null;
