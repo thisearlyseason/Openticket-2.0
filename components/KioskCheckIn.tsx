@@ -228,11 +228,12 @@ export const KioskCheckIn: React.FC = () => {
 
     // Check if payment is actually required (not just unpaid)
     const needsPayment = (guest: GuestSearchResult) => {
-        // Only show "Pay Now" if payment_status is NOT 'paid' or 'succeeded'
+        // Only show "Pay Now" if payment_status is NOT completed/paid/succeeded
         // AND price > 0
         return guest.price > 0 && 
                guest.paymentStatus !== 'paid' && 
-               guest.paymentStatus !== 'succeeded';
+               guest.paymentStatus !== 'succeeded' &&
+               guest.paymentStatus !== 'completed';
     };
 
     return (
