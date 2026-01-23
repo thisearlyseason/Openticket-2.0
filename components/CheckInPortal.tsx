@@ -905,16 +905,21 @@ export const CheckInPortal = () => {
 
     const handleScanInput = async (rawValue: string) => {
         setScanResult(rawValue);
+        console.log('[CheckInPortal] Scanning QR:', rawValue);
         
         try {
             // NEW: Check if this is a unique ticket ID (format: TKT-timestamp-hash)
             if (rawValue.startsWith('TKT-')) {
+                console.log('[CheckInPortal] Detected TKT format, calling check-in API');
                 // Call new check-in API with unique ticket ID
+                const token = await StorageService.getAuthToken();
+                console.log('[CheckInPortal] Auth token obtained:', !!token);
+                
                 const response = await fetch('/api/registrations/checkin', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         ticketId: rawValue,
@@ -923,6 +928,7 @@ export const CheckInPortal = () => {
                 });
                 
                 const result = await response.json();
+                console.log('[CheckInPortal] API response:', response.status, result);
                 
                 if (response.ok && result.success) {
                     setShowScanner(false);
@@ -931,7 +937,8 @@ export const CheckInPortal = () => {
                     }, 100);
                     loadRegistrations(); // Refresh the list
                 } else {
-                    window.alert(`❌ Check-in failed: ${result.message || result.error}`);
+                    console.error('[CheckInPortal] Check-in failed:', result);
+                    window.alert(`Check-in failed: ${result.message || result.error || 'Unknown error'}`);
                 }
                 return;
             }
