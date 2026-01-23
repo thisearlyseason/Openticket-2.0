@@ -618,6 +618,50 @@ export const EventFinance = () => {
                 </div>
             </div>
 
+            {/* Date Filter */}
+            <Card className="p-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by:</span>
+                        <select
+                            value={dateRange}
+                            onChange={(e) => setDateRange(e.target.value as any)}
+                            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm"
+                        >
+                            <option value="all">All Time</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="60d">Last 60 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    {dateRange === 'custom' && (
+                        <div className="flex gap-2 items-center">
+                            <input
+                                type="date"
+                                value={customStartDate}
+                                onChange={(e) => setCustomStartDate(e.target.value)}
+                                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm"
+                                placeholder="Start date"
+                            />
+                            <span className="text-gray-500">to</span>
+                            <input
+                                type="date"
+                                value={customEndDate}
+                                onChange={(e) => setCustomEndDate(e.target.value)}
+                                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm"
+                                placeholder="End date"
+                            />
+                        </div>
+                    )}
+                    
+                    <div className="text-sm text-gray-500">
+                        Showing: {getDateRangeLabel()} ({filteredTransactions.length} transactions)
+                    </div>
+                </div>
+            </Card>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="p-6">
