@@ -523,7 +523,7 @@ const searchGuest = async (req, res) => {
                 r.tickets.forEach(ticket => {
                     results.push({
                         id: r.id,
-                        ticketId: ticket.id, // SHOW TICKET ID
+                        ticketId: ticket.ticketId || ticket.ticketNumber, // USE UNIQUE TICKET ID
                         attendeeName: ticket.attendeeName || r.attendee_name,
                         attendeeEmail: ticket.attendeeEmail || r.attendee_email,
                         ticketType: ticket.name || 'General Admission',
