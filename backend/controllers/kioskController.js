@@ -528,7 +528,7 @@ const searchGuest = async (req, res) => {
  */
 const checkInGuest = async (req, res) => {
     try {
-        const { registrationId, tokenId, eventId, deviceId } = req.body;
+        const { registrationId, tokenId, eventId, deviceId, ticketId } = req.body;
 
         if (!registrationId || !tokenId || !eventId) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -558,7 +558,75 @@ const checkInGuest = async (req, res) => {
             return res.status(404).json({ error: 'Registration not found' });
         }
 
-        // Check if already checked in
+        const checkedInAt = new Date().toISOString();
+        
+        // If ticketId is provided, check in specific ticket
+        if (ticketId && registration.tickets && Array.isArray(registration.tickets)) {
+            const ticketIndex = registration.tickets.findIndex(t => 
+                t.ticketId === ticketId || 
+                t.ticketNumber === ticketId || 
+                t.qrCodeData === ticketId
+            );
+            
+            if (ticketIndex === -1) {
+                return res.status(404).json({ error: 'Ticket not found in registration' });
+            }
+            
+            const ticket = registration.tickets[ticketIndex];
+            
+            // Check if this specific ticket is already checked in
+            if (ticket.checkedIn) {
+                return res.status(400).json({ 
+                    error: 'Already checked in',
+                    message: `This ticket was already checked in${ticket.checkedInAt ? ' at ' + new Date(ticket.checkedInAt).toLocaleString() : ''}`,
+                    checkedInAt: ticket.checkedInAt
+                });
+            }
+            
+            // Update the specific ticket's check-in status
+            const updatedTickets = [...registration.tickets];
+            updatedTickets[ticketIndex] = {
+                ...ticket,
+                checkedIn: true,
+                checkedInAt: checkedInAt,
+                checkedInBy: 'kiosk',
+                checkedInDevice: deviceId || 'unknown'
+            };
+            
+            const { error: updateError } = await supabase
+                .from('registrations')
+                .update({ tickets: updatedTickets })
+                .eq('id', registrationId);
+            
+            if (updateError) {
+                console.error('[Kiosk] Ticket check-in update error:', updateError);
+                return res.status(500).json({ error: 'Failed to check in ticket' });
+            }
+            
+            // Log action
+            await logKioskAction(tokenId, eventId, 'checkin', {
+                registrationId,
+                ticketId,
+                ticketNumber: ticket.ticketNumber,
+                attendeeName: ticket.attendeeName || registration.attendee_name,
+                ticketType: ticket.name,
+                deviceId,
+                timestamp: checkedInAt
+            });
+            
+            console.log(`[Kiosk] Checked in ticket ${ticket.ticketNumber} for ${ticket.attendeeName || registration.attendee_name}`);
+            
+            return res.json({
+                success: true,
+                message: 'Ticket checked in successfully',
+                attendeeName: ticket.attendeeName || registration.attendee_name,
+                ticketNumber: ticket.ticketNumber,
+                checkedInAt
+            });
+        }
+        
+        // Legacy: Check in entire registration (for registrations without individual tickets)
+        // Check if already checked in at registration level
         if (registration.checked_in) {
             return res.status(400).json({ 
                 error: 'Already checked in',
@@ -567,19 +635,30 @@ const checkInGuest = async (req, res) => {
         }
 
         // Check payment if required
-        if (registration.price > 0 && registration.payment_status !== 'succeeded') {
+        if (registration.total_amount > 0 && registration.payment_status !== 'paid' && registration.payment_status !== 'succeeded') {
             return res.status(400).json({ error: 'Payment required before check-in' });
         }
 
-        // Check in
-        const checkedInAt = new Date().toISOString();
+        // Check in at registration level and all tickets
+        let updatedTickets = registration.tickets;
+        if (registration.tickets && Array.isArray(registration.tickets)) {
+            updatedTickets = registration.tickets.map(t => ({
+                ...t,
+                checkedIn: true,
+                checkedInAt: checkedInAt,
+                checkedInBy: 'kiosk',
+                checkedInDevice: deviceId || 'unknown'
+            }));
+        }
+        
         const { error: updateError } = await supabase
             .from('registrations')
             .update({
                 checked_in: true,
                 checked_in_at: checkedInAt,
                 checked_in_method: 'kiosk',
-                checked_in_device: deviceId || 'unknown'
+                checked_in_device: deviceId || 'unknown',
+                tickets: updatedTickets
             })
             .eq('id', registrationId);
 
