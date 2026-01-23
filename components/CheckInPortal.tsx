@@ -701,9 +701,40 @@ export const CheckInPortal = () => {
 
         // Online - sync immediately
         try {
+            // Also update the individual ticket's checkedIn status in the tickets array
+            let updatedTickets = reg.tickets;
+            if (reg.tickets && Array.isArray(reg.tickets)) {
+                // Parse the ticketKey to find the matching ticket
+                // ticketKey format: "tierId-tIndex-i" or "tierId-i"
+                const keyParts = ticketKey.split('-');
+                updatedTickets = reg.tickets.map((t, tIndex) => {
+                    // Match by either ticketId, ticketNumber, or by tier/index
+                    // Try to match the specific ticket within the array
+                    const tierMatches = t.tierId === keyParts[0] || t.id === keyParts[0];
+                    const indexInKey = parseInt(keyParts[keyParts.length - 1], 10);
+                    
+                    // Check if this ticket matches the uniqueKey pattern
+                    if (tierMatches) {
+                        // For multi-quantity tickets, we need to track individual check-ins
+                        // The ticketKey includes the index within the quantity
+                        const tIndexInKey = keyParts.length >= 3 ? parseInt(keyParts[1], 10) : 0;
+                        if (tIndex === tIndexInKey || keyParts.length < 3) {
+                            return {
+                                ...t,
+                                checkedIn: !currentStatus,
+                                checkedInAt: !currentStatus ? new Date().toISOString() : null,
+                                checkedInBy: !currentStatus ? 'portal' : null
+                            };
+                        }
+                    }
+                    return t;
+                });
+            }
+            
             await StorageService.updateRegistration(regId, {
                 checkInStatuses: newStatuses,
-                checkedIn: anyCheckedIn
+                checkedIn: anyCheckedIn,
+                tickets: updatedTickets
             });
         } catch (err) {
             console.error('[CheckIn] Failed to sync, saving offline:', err);
