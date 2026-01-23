@@ -29,6 +29,7 @@ export const KioskCheckIn: React.FC = () => {
     const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // KIOSK LOCK: Prevent navigation away except via Back button
     useEffect(() => {
@@ -41,6 +42,42 @@ export const KioskCheckIn: React.FC = () => {
         
         return () => {
             window.removeEventListener('beforeunload', blockNavigation);
+        };
+    }, []);
+    
+    // FULLSCREEN MODE: Enter fullscreen on mount
+    useEffect(() => {
+        const enterFullscreen = async () => {
+            try {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    await elem.requestFullscreen();
+                    setIsFullscreen(true);
+                } else if ((elem as any).webkitRequestFullscreen) {
+                    await (elem as any).webkitRequestFullscreen();
+                    setIsFullscreen(true);
+                } else if ((elem as any).msRequestFullscreen) {
+                    await (elem as any).msRequestFullscreen();
+                    setIsFullscreen(true);
+                }
+            } catch (err) {
+                console.log('[KioskCheckIn] Fullscreen not supported:', err);
+            }
+        };
+        
+        enterFullscreen();
+        
+        // Listen for fullscreen changes
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
         };
     }, []);
 
@@ -141,7 +178,16 @@ export const KioskCheckIn: React.FC = () => {
         navigate(`/kiosk/${eventId}/payment/${registrationId}?token=${tokenId}`);
     };
 
-    const handleBack = () => {
+    const handleBack = async () => {
+        // Exit fullscreen before navigating
+        if (document.fullscreenElement) {
+            try {
+                await document.exitFullscreen();
+            } catch (err) {
+                console.log('[KioskCheckIn] Error exiting fullscreen:', err);
+            }
+        }
+        
         if (!tokenId) {
             console.error('[KioskCheckIn] No token found in URL');
             navigate(`/kiosk/${eventId}`);
@@ -176,24 +222,24 @@ export const KioskCheckIn: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white">
-            {/* Header */}
-            <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <Button
-                        variant="ghost"
-                        onClick={handleBack}
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft size={20} />
-                        Back
-                    </Button>
-                    <h1 className="text-2xl font-bold">Check In</h1>
-                    <div className="w-20" /> {/* Spacer */}
+        <div className="min-h-screen bg-zinc-950 text-white relative">
+            {/* Floating Leave Button - Always visible and tappable */}
+            <button
+                onClick={handleBack}
+                className="fixed top-4 left-4 z-50 flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-2xl transition-all active:scale-95"
+            >
+                <ArrowLeft size={20} />
+                Leave Kiosk
+            </button>
+            
+            {/* Fullscreen Indicator */}
+            {!isFullscreen && (
+                <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg font-bold">
+                    Not in fullscreen mode
                 </div>
-            </div>
+            )}
 
-            <div className="max-w-7xl mx-auto p-6">
+            <div className="max-w-7xl mx-auto p-6 pt-20">{/* Added pt-20 for spacing from floating button */}
                 {/* Mode Toggle - Only show if no current scan result */}
                 {!currentScan && (
                     <div className="flex gap-4 mb-6">
