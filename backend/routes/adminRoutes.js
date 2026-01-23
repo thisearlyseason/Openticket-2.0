@@ -532,10 +532,10 @@ router.post('/affiliate-payouts/stripe', verifyToken, requireAdmin, async (req, 
         const { affiliateId, amount } = req.body;
         const supabase = (await import('../services/supabase.js')).default;
         
-        // Get affiliate's Stripe Connect ID
+        // Get affiliate's Stripe Connect ID and current totals
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('stripe_connect_id')
+            .select('stripe_connect_id, total_paid_out')
             .eq('id', affiliateId)
             .single();
         
@@ -553,6 +553,18 @@ router.post('/affiliate-payouts/stripe', verifyToken, requireAdmin, async (req, 
             destination: profile.stripe_connect_id,
             description: `Affiliate payout for ${affiliateId}`
         });
+        
+        // Update affiliate's total_paid_out and reset available_payout
+        const newTotalPaidOut = (profile.total_paid_out || 0) + amount;
+        await supabase
+            .from('profiles')
+            .update({ 
+                total_paid_out: newTotalPaidOut,
+                available_payout: 0 // Reset available payout after payment
+            })
+            .eq('id', affiliateId);
+        
+        console.log(`[Stripe Payout] Processed $${amount} for affiliate ${affiliateId}, new total: $${newTotalPaidOut}`);
         
         res.json({ success: true, transferId: transfer.id });
     } catch (error) {
