@@ -1783,3 +1783,69 @@ Added comprehensive date filtering to all financial screens across SuperAdmin, O
 - `/app/components/EventFinance.tsx` - Added date filtering for organizer financials
 - `/app/components/AffiliateDashboard.tsx` - Added earnings date filter
 - `/app/backend/routes/adminRoutes.js` - Updated payout endpoints to reset available_payout after payment
+
+---
+
+## Check-in System Bug Fix (January 23, 2026)
+
+### Issue Reported
+When scanning a newly purchased ticket's QR code for the first time, the system incorrectly returned:
+"Check-in failed. This ticket was already checked in at [timestamp]."
+
+### Root Causes Identified
+
+#### 1. Incorrect Ticket Matching (CRITICAL)
+**File:** `/app/backend/controllers/kioskController.js` (line 323)
+**Problem:** The kiosk scan was searching for `t.id === qrCode`, but `t.id` is the TIER ID (shared across multiple tickets from the same tier), not the unique ticket ID.
+**Impact:** When a customer purchased 2+ tickets from the same tier:
+- Both tickets shared the same `id` (tier ID)
+- The search always found the first ticket
+- If that first ticket was already checked in, all subsequent scans would fail with "already checked in"
+
+**Fix:** Changed ticket search to only use unique identifiers:
+```javascript
+// Before (WRONG)
+t.id === qrCode || t.ticketNumber === qrCode || t.ticketId === qrCode
+
+// After (CORRECT)
+t.ticketId === qrCode || t.ticketNumber === qrCode || t.qrCodeData === qrCode
+```
+
+#### 2. Inconsistent Check-in State (CRITICAL)
+**Problem:** Two separate check-in tracking systems:
+- Registration-level: `registration.checked_in` (database column)
+- Ticket-level: `ticket.checkedIn` (inside tickets JSON array)
+
+The kiosk `checkInGuest` endpoint only updated registration-level, not ticket-level.
+
+**Fix:** Updated `checkInGuest` to:
+1. Accept optional `ticketId` parameter for individual ticket check-in
+2. Update both registration-level AND ticket-level check-in status
+3. When checking in all tickets, mark each ticket individually
+
+#### 3. Missing Diagnostic Logging
+**Fix:** Added comprehensive logging to track:
+- Full ticket structure when found
+- Check-in status flags (`checkedIn`, `checkedInAt`, `status`)
+- Which QR code was scanned vs which ticket was matched
+
+### Ticket ID Structure (Reference)
+```javascript
+{
+    ticketId: "TKT-1736789012345-a7f3x9",  // UNIQUE per ticket
+    ticketNumber: "TKT-A7F3X9",             // UNIQUE human-readable
+    qrCodeData: "TKT-1736789012345-a7f3x9", // UNIQUE (same as ticketId)
+    id: "tier-uuid-123",                    // SHARED across tier (NOT unique!)
+    tierId: "tier-uuid-123"                 // SHARED across tier (NOT unique!)
+}
+```
+
+### Files Modified
+- `/app/backend/controllers/kioskController.js` - Fixed ticket matching, updated check-in logic
+- `/app/backend/controllers/registrationController.js` - Added diagnostic logging
+
+### Verification Steps
+1. Purchase 2+ tickets from the same tier
+2. Scan the first ticket's QR code → Should check in successfully
+3. Scan the second ticket's QR code → Should check in successfully (was failing before)
+4. Verify each ticket shows correct individual check-in status
