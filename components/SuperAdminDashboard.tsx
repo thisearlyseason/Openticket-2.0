@@ -184,6 +184,12 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [backendDefaultCurrency, setBackendDefaultCurrency] = useState('USD');
     const [globalGeminiKey, setGlobalGeminiKey] = useState('');
 
+    // Finance date range filter - applies to all financial data
+    const [financeDateRange, setFinanceDateRange] = useState<'30d' | '60d' | '90d' | 'all' | 'custom'>('30d');
+    const [financeCustomStart, setFinanceCustomStart] = useState('');
+    const [financeCustomEnd, setFinanceCustomEnd] = useState('');
+    const [financeEventFilter, setFinanceEventFilter] = useState<'current' | 'current_past30' | 'all'>('all');
+
     // Donation analytics date range filter
     const [donationDateRange, setDonationDateRange] = useState<'all' | '7d' | '30d' | '90d' | 'custom'>('all');
     const [donationCustomStart, setDonationCustomStart] = useState('');
