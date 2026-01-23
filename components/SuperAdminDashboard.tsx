@@ -299,6 +299,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setPlatformSecretKey(currentUser?.stripeSecretKey || '');
         // Check if Resend is configured via backend - run async
         checkResendStatus().catch(console.error);
+        // Fetch global Gemini key on initial load
+        fetchGlobalGeminiKey().catch(console.error);
         setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
     }, [navigate, embedded]);
