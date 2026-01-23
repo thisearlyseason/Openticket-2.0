@@ -198,8 +198,14 @@ export const getProfile = async (req, res) => {
 
         // Extract extended settings from subscription.settings and merge into profile response
         const extendedSettings = data.subscription?.settings || {};
+        
+        // SECURITY: Remove sensitive fields before sending to client
+        const { stripe_secret_key, ...safeData } = data;
+        
         const responseProfile = {
-            ...data,
+            ...safeData,
+            // Indicate if user has configured Stripe (without exposing keys)
+            hasStripeSecretKey: !!stripe_secret_key,
             // Map extended settings to top-level for frontend compatibility
             default_currency: extendedSettings.default_currency,
             default_tax_rate: extendedSettings.default_tax_rate,
@@ -208,7 +214,7 @@ export const getProfile = async (req, res) => {
             default_refund_policy: extendedSettings.default_refund_policy,
             default_refund_policy_enabled: extendedSettings.default_refund_policy_enabled,
             default_confirmation_template: extendedSettings.default_confirmation_template,
-            logo_url: extendedSettings.logo_url || data.image_url,
+            logo_url: extendedSettings.logo_url || safeData.image_url,
             header_image_url: extendedSettings.header_image_url,
             primary_color: extendedSettings.primary_color,
             organizer_subtitle: extendedSettings.organizer_subtitle,
@@ -225,7 +231,7 @@ export const getProfile = async (req, res) => {
             use_business_name: extendedSettings.use_business_name,
             show_phone_publicly: extendedSettings.show_phone_publicly,
             // DB column fields
-            socials: data.socials
+            socials: safeData.socials
         };
 
         res.json({ profile: responseProfile });
@@ -373,8 +379,14 @@ export const getProfileById = async (req, res) => {
 
         // Extract extended settings from subscription.settings and merge into profile response
         const extendedSettings = data.subscription?.settings || {};
+        
+        // SECURITY: Remove sensitive fields before sending to client
+        const { stripe_secret_key, ...safeData } = data;
+        
         const responseProfile = {
-            ...data,
+            ...safeData,
+            // Indicate if user has configured Stripe (without exposing keys)
+            hasStripeSecretKey: !!stripe_secret_key,
             // Map extended settings to top-level for frontend compatibility
             default_currency: extendedSettings.default_currency,
             default_tax_rate: extendedSettings.default_tax_rate,
@@ -383,7 +395,7 @@ export const getProfileById = async (req, res) => {
             default_refund_policy: extendedSettings.default_refund_policy,
             default_refund_policy_enabled: extendedSettings.default_refund_policy_enabled,
             default_confirmation_template: extendedSettings.default_confirmation_template,
-            logo_url: extendedSettings.logo_url || data.image_url,
+            logo_url: extendedSettings.logo_url || safeData.image_url,
             header_image_url: extendedSettings.header_image_url,
             primary_color: extendedSettings.primary_color,
             organizer_subtitle: extendedSettings.organizer_subtitle,
@@ -400,7 +412,7 @@ export const getProfileById = async (req, res) => {
             use_business_name: extendedSettings.use_business_name,
             show_phone_publicly: extendedSettings.show_phone_publicly,
             // DB column fields
-            socials: data.socials
+            socials: safeData.socials
         };
 
         res.json({ profile: responseProfile });
