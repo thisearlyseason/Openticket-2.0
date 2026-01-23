@@ -531,7 +531,13 @@ export const CheckInPortal = () => {
                     // FIX: Include tIndex to ensure uniqueness if multiple line items share a tier
                     const uniqueKey = `${t.tierId || 'general'}-${tIndex}-${i}`;
                     const statusEntry = reg.checkInStatuses?.[uniqueKey];
-                    const isCheckedIn = statusEntry ? statusEntry.checkedIn : (reg.checkedIn || false);
+                    
+                    // Check ALL sources of check-in status:
+                    // 1. checkInStatuses[key] (from CheckInPortal manual check-in)
+                    // 2. ticket.checkedIn (from Kiosk/Mobile scanner)
+                    // 3. reg.checkedIn (legacy registration-level)
+                    const isCheckedIn = statusEntry?.checkedIn || t.checkedIn || reg.checkedIn || false;
+                    const checkInTime = statusEntry?.timestamp || (t.checkedInAt ? new Date(t.checkedInAt).getTime() : undefined);
 
                     const guestName = t.attendeeName || reg.attendeeName;
                     const guestEmail = t.attendeeEmail || reg.attendeeEmail;
@@ -548,8 +554,10 @@ export const CheckInPortal = () => {
                         attendeeName: guestName,
                         attendeeEmail: guestEmail,
                         checkedIn: isCheckedIn,
-                        checkInTime: statusEntry?.timestamp,
-                        originalTicketIndex: tIndex
+                        checkInTime: checkInTime,
+                        originalTicketIndex: tIndex,
+                        ticketId: t.ticketId,
+                        ticketNumber: t.ticketNumber
                     };
                 });
             });
