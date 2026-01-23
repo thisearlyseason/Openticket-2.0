@@ -1065,18 +1065,36 @@ export const checkInTicket = async (req, res) => {
             });
         }
         
-        // 5. Update ticket check-in status
+        // 5. Update ticket check-in status in tickets array AND checkInStatuses
         const updatedTickets = [...targetRegistration.tickets];
+        const checkedInAt = new Date().toISOString();
+        
         updatedTickets[ticketIndex] = {
             ...ticket,
             checkedIn: true,
-            checkedInAt: new Date().toISOString(),
+            checkedInAt: checkedInAt,
             checkedInBy: organizerId
         };
         
+        // Also update checkInStatuses for consistency with CheckInPortal
+        const checkInStatuses = targetRegistration.check_in_statuses || {};
+        const ticketKey = `${ticket.tierId || ticket.id}-${ticketIndex}-0`;
+        checkInStatuses[ticketKey] = {
+            checkedIn: true,
+            timestamp: Date.now()
+        };
+        
+        // Determine if any ticket is checked in (for registration-level flag)
+        const anyCheckedIn = updatedTickets.some(t => t.checkedIn);
+        
         const { data: updatedReg, error: updateError } = await supabase
             .from('registrations')
-            .update({ tickets: updatedTickets })
+            .update({ 
+                tickets: updatedTickets,
+                check_in_statuses: checkInStatuses,
+                checked_in: anyCheckedIn,
+                checked_in_at: anyCheckedIn ? checkedInAt : null
+            })
             .eq('id', targetRegistration.id)
             .select()
             .single();
@@ -1098,7 +1116,7 @@ export const checkInTicket = async (req, res) => {
                 attendeeName: ticket.attendeeName,
                 originalAttendeeName: ticket.originalAttendeeName,
                 tierName: ticket.name,
-                checkedInAt: updatedTickets[ticketIndex].checkedInAt,
+                checkedInAt: checkedInAt,
                 transferStatus: ticket.transferStatus,
                 transferredFrom: ticket.transferredFromEmail
             }
