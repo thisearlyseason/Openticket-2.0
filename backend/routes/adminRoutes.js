@@ -475,6 +475,18 @@ router.put('/affiliate-payouts/:id', verifyToken, requireAdmin, async (req, res)
         const { id } = req.params;
         const updates = req.body;
         
+        // Get the current payout to check status change and get affiliate info
+        const { data: currentPayout, error: fetchError } = await supabase
+            .from('affiliate_payouts')
+            .select('*')
+            .eq('id', id)
+            .single();
+        
+        if (fetchError || !currentPayout) {
+            return res.status(404).json({ error: 'Payout not found' });
+        }
+        
+        // Update the payout status
         const { data, error } = await supabase
             .from('affiliate_payouts')
             .update({
@@ -486,6 +498,29 @@ router.put('/affiliate-payouts/:id', verifyToken, requireAdmin, async (req, res)
             .single();
         
         if (error) throw error;
+        
+        // If status changed to 'paid', update the affiliate's total_paid_out
+        if (updates.status === 'paid' && currentPayout.status !== 'paid') {
+            const { data: affiliate, error: affError } = await supabase
+                .from('profiles')
+                .select('total_paid_out')
+                .eq('id', currentPayout.affiliate_id)
+                .single();
+            
+            if (!affError && affiliate) {
+                const newTotalPaidOut = (affiliate.total_paid_out || 0) + currentPayout.amount;
+                await supabase
+                    .from('profiles')
+                    .update({ 
+                        total_paid_out: newTotalPaidOut,
+                        available_payout: 0 // Reset available payout after payment
+                    })
+                    .eq('id', currentPayout.affiliate_id);
+                
+                console.log(`[Affiliate Payout] Updated total_paid_out for ${currentPayout.affiliate_id}: $${newTotalPaidOut}`);
+            }
+        }
+        
         res.json({ payout: data });
     } catch (error) {
         res.status(500).json({ error: error.message });
