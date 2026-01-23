@@ -446,7 +446,8 @@ const scanTicket = async (req, res) => {
 
         // Valid ticket, ready for check-in
         await logKioskAction(tokenId, eventId, 'scan_success', {
-            ticketId: foundTicket.id,
+            ticketId: foundTicket.ticketId || foundTicket.id,
+            ticketNumber: foundTicket.ticketNumber,
             attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
             ticketType: foundTicket.name,
             deviceId
@@ -461,7 +462,8 @@ const scanTicket = async (req, res) => {
             ticketType: foundTicket.name,
             price: foundTicket.pricePerTicket || 0,
             registrationId: foundRegistration.id,
-            ticketId: foundTicket.id
+            ticketId: foundTicket.ticketId || foundTicket.ticketNumber || foundTicket.id,
+            ticketNumber: foundTicket.ticketNumber
         });
     } catch (error) {
         console.error('[Kiosk] Scan ticket error:', error);
