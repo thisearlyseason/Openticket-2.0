@@ -386,11 +386,9 @@ export const CheckInPortal = () => {
     const [allTickets, setAllTickets] = useState<CheckInTicket[]>([]);
     const [stats, setStats] = useState({ total: 0, checkedIn: 0 });
     const [filter, setFilter] = useState<'all' | 'checked-in' | 'unpaid'>('all');
-
-    const [showScanner, setShowScanner] = useState(false);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [scanError, setScanError] = useState('');
-    const [scanResult, setScanResult] = useState('');
+    
+    // Auto-refresh for real-time check-in updates
+    const [lastRefresh, setLastRefresh] = useState(Date.now());
 
     // Offline support state
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -493,6 +491,18 @@ export const CheckInPortal = () => {
         };
         init();
     }, [id, navigate]);
+    
+    // Auto-refresh every 3 seconds for real-time updates from other scanners
+    useEffect(() => {
+        if (!id) return;
+        
+        const interval = setInterval(async () => {
+            await loadRegistrations();
+            setLastRefresh(Date.now());
+        }, 3000);
+        
+        return () => clearInterval(interval);
+    }, [id]);
 
     const loadRegistrations = async () => {
         if (!id) return;
