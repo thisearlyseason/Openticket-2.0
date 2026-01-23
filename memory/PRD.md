@@ -1944,3 +1944,47 @@ After this fix, ALL THREE systems are kept in sync. The definitive check-in stat
 - `/app/components/KioskCheckIn.tsx` - Pass `ticketId` to check-in, proper error handling
 - `/app/backend/controllers/kioskController.js` - Return proper `ticketId` in scan response
 - `/app/backend/controllers/registrationController.js` - Fixed empty eventId search query
+
+---
+
+## Check-in System Synchronization Final Fix (January 23, 2026)
+
+### Issues Fixed
+
+#### 1. CheckInPortal Not Reading ticket.checkedIn
+**Problem:** CheckInPortal read from `checkInStatuses[key]` and `reg.checkedIn`, but NOT from `ticket.checkedIn`. When Kiosk checked someone in (updating `ticket.checkedIn`), CheckInPortal didn't see it.
+
+**Fix:** Updated `loadRegistrations()` in CheckInPortal to check ALL sources:
+```javascript
+const isCheckedIn = statusEntry?.checkedIn || t.checkedIn || reg.checkedIn || false;
+```
+
+#### 2. Mobile Scanner Wrong API Endpoint
+**Problem:** Mobile Scanner called `/api/registrations/checkin/ticket` but actual endpoint is `/api/registrations/checkin`.
+
+**Fix:** Changed to `/api/registrations/checkin` with `eventId` in body.
+
+#### 3. Kiosk Not Updating check_in_statuses
+**Problem:** Kiosk check-in only updated `tickets[].checkedIn`, not `check_in_statuses`. CheckInPortal reads `check_in_statuses` first.
+
+**Fix:** Kiosk check-in now updates BOTH:
+- `tickets[index].checkedIn = true`
+- `check_in_statuses[key] = { checkedIn: true, timestamp: Date.now() }`
+
+### Data Flow Now
+```
+ANY check-in method → Updates ALL THREE:
+├── tickets[].checkedIn (for Kiosk scan, Mobile Scanner)
+├── check_in_statuses (for CheckInPortal display)
+└── checked_in (registration-level for legacy)
+
+ANY read method → Checks ALL THREE:
+├── CheckInPortal: checkInStatuses || ticket.checkedIn || reg.checkedIn
+├── Mobile Scanner: ticket.checkedIn
+└── Kiosk scan: ticket.checkedIn || check_in_statuses
+```
+
+### Files Modified
+- `/app/components/CheckInPortal.tsx` - Read from all check-in sources
+- `/app/components/MobileCheckInScanner.tsx` - Fixed API endpoint
+- `/app/backend/controllers/kioskController.js` - Update check_in_statuses on check-in
