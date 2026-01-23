@@ -6,6 +6,7 @@ export const getAllUsers = async (req, res) => {
         if (error) throw error;
         
         // Map snake_case to camelCase for frontend compatibility
+        // SECURITY: Never expose secret keys in API responses
         const mappedUsers = (data || []).map(user => ({
             id: user.id,
             email: user.email,
@@ -23,7 +24,8 @@ export const getAllUsers = async (req, res) => {
             stripeConnectId: user.stripe_connect_id,
             stripeOnboardingComplete: user.stripe_onboarding_complete,
             stripePublishableKey: user.stripe_publishable_key,
-            stripeSecretKey: user.stripe_secret_key,
+            // stripeSecretKey: REDACTED - Never expose secret keys
+            hasStripeSecretKey: !!user.stripe_secret_key,
             affiliateCode: user.affiliate_code,
             affiliateClicks: user.affiliate_clicks || 0,
             commissionRate: user.commission_rate || 10,
