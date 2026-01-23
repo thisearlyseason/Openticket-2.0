@@ -1849,3 +1849,57 @@ The kiosk `checkInGuest` endpoint only updated registration-level, not ticket-le
 2. Scan the first ticket's QR code → Should check in successfully
 3. Scan the second ticket's QR code → Should check in successfully (was failing before)
 4. Verify each ticket shows correct individual check-in status
+
+---
+
+## Check-in Data Synchronization Fix (January 23, 2026)
+
+### Issue Reported
+Scan results conflicting with check-in screen:
+- Ticket scanned → returned "already checked in"
+- Check-in screen showed ticket as NOT checked in
+- Two different tickets had same conflict
+
+### Root Cause: Three Desynchronized Check-in Tracking Systems
+
+| System | Location | Used By |
+|--------|----------|---------|
+| `ticket.checkedIn` | `registrations.tickets[]` JSON array | Kiosk scan, Mobile scanner |
+| `registration.check_in_statuses` | `registrations.check_in_statuses` JSONB | CheckInPortal.tsx |
+| `registration.checked_in` | `registrations.checked_in` DB column | Legacy code |
+
+**Problem:** Each check-in method only updated ONE system, not all three:
+- CheckInPortal updated `check_in_statuses` and `checked_in`, but NOT `tickets[].checkedIn`
+- Kiosk check-in updated `tickets[].checkedIn`, but NOT `check_in_statuses`
+- Backend API updated `tickets[].checkedIn`, but NOT `check_in_statuses`
+
+### Fixes Applied
+
+#### 1. CheckInPortal.tsx - `handleCheckInToggle`
+Now updates ALL three systems:
+- `checkInStatuses` (for portal display)
+- `checkedIn` (registration-level flag)
+- `tickets[].checkedIn` (for scanner validation)
+
+#### 2. registrationController.js - `checkInTicket`
+Now updates:
+- `tickets[]` array with `checkedIn: true`
+- `check_in_statuses` JSONB
+- `checked_in` and `checked_in_at` columns
+
+#### 3. kioskController.js - `scanTicket`
+Now checks ALL sources before returning "already checked in":
+- `ticket.checkedIn` (array)
+- `ticket.status === 'used'`
+- `registration.check_in_statuses[key].checkedIn`
+
+### Source of Truth
+After this fix, ALL THREE systems are kept in sync. The definitive check-in status can be verified from:
+1. `registration.tickets[index].checkedIn` (most granular)
+2. `registration.check_in_statuses` (for per-ticket status with timestamps)
+3. `registration.checked_in` (registration-level aggregate)
+
+### Files Modified
+- `/app/components/CheckInPortal.tsx` - Updated handleCheckInToggle to sync all systems
+- `/app/backend/controllers/registrationController.js` - Updated checkInTicket to update check_in_statuses
+- `/app/backend/controllers/kioskController.js` - Updated scanTicket to check all status sources
