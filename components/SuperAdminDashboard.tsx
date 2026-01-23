@@ -2240,13 +2240,15 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                         {/* Recent Transactions */}
                         <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                             <div className="p-4 border-b border-zinc-800 font-bold flex justify-between">
-                                <span>Recent Transactions</span>
-                                <span className="text-xs font-mono bg-zinc-800 p-1 rounded text-zinc-400">Source: financial_transactions</span>
+                                <span>Transactions ({financeDateRange === 'all' ? 'All Time' : getDateRangeLabel()})</span>
+                                <span className="text-xs font-mono bg-zinc-800 p-1 rounded text-zinc-400">
+                                    {financeDateRange === 'all' ? safeRecentTransactions.length : filteredTransactions.length} records
+                                </span>
                             </div>
                             <table className="w-full text-left text-sm text-zinc-400">
                                 <thead className="bg-black text-zinc-500 uppercase font-bold text-xs">
                                     <tr>
-                                        <th className="p-4">ID</th>
+                                        <th className="p-4">Date</th>
                                         <th className="p-4">Event</th>
                                         <th className="p-4 text-right">Gross</th>
                                         <th className="p-4 text-right text-[#E0FF20]">Platform Fee</th>
@@ -2255,9 +2257,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {safeRecentTransactions.map((tx: any) => (
+                                    {(financeDateRange === 'all' ? safeRecentTransactions : filteredTransactions).map((tx: any) => (
                                         <tr key={tx.id} className="border-t border-zinc-800">
-                                            <td className="p-4 font-mono text-xs text-white">{tx.id.slice(0, 8)}...</td>
+                                            <td className="p-4 font-mono text-xs text-zinc-400">{new Date(tx.created_at).toLocaleDateString()}</td>
                                             <td className="p-4 text-white">{tx.event?.title || '-'}</td>
                                             <td className="p-4 text-right font-mono text-white">${(tx.gross_amount || 0).toFixed(2)}</td>
                                             <td className="p-4 text-right font-mono text-[#E0FF20]">${(tx.platform_fee || 0).toFixed(2)}</td>
@@ -2265,8 +2267,8 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <td className="p-4 text-right font-mono text-green-500">${(tx.organizer_net || 0).toFixed(2)}</td>
                                         </tr>
                                     ))}
-                                    {safeRecentTransactions.length === 0 && (
-                                        <tr><td colSpan={6} className="p-8 text-center">No financial records found.</td></tr>
+                                    {(financeDateRange === 'all' ? safeRecentTransactions : filteredTransactions).length === 0 && (
+                                        <tr><td colSpan={6} className="p-8 text-center">No transactions found for this period.</td></tr>
                                     )}
                                 </tbody>
                             </table>
