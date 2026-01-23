@@ -376,11 +376,6 @@ export const KioskCheckIn: React.FC = () => {
                                                     <Badge variant="secondary" className="text-xs">
                                                         {guest.ticketType}
                                                     </Badge>
-                                                    {guest.ticketId && (
-                                                        <Badge variant="outline" className="text-xs font-mono">
-                                                            {guest.ticketId}
-                                                        </Badge>
-                                                    )}
                                                     {guest.price > 0 && (
                                                         <span className="text-xs text-zinc-500">
                                                             ${guest.price.toFixed(2)}
@@ -409,7 +404,7 @@ export const KioskCheckIn: React.FC = () => {
                                                 <Button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleCheckIn(guest.id, guest.attendeeName);
+                                                        handleCheckIn(guest.id, guest.attendeeName, guest.ticketId);
                                                     }}
                                                     size="sm"
                                                 >
