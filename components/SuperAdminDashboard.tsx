@@ -1663,24 +1663,98 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 {/* FINANCE TAB */}
                 {activeTab === 'finance' && (
                     <div className="p-8">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                 <DollarSign size={24} className="text-[#E0FF20]" /> Financial Overview
                             </h2>
-                            <Button size="sm" onClick={exportFinancialsCSV}>
-                                <Download size={14} className="mr-2" /> Export CSV
-                            </Button>
+                            
+                            {/* Date Range Filter */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs text-zinc-500 mr-2">Period:</span>
+                                {[
+                                    { value: '30d', label: '30 Days' },
+                                    { value: '60d', label: '60 Days' },
+                                    { value: '90d', label: '90 Days' },
+                                    { value: 'all', label: 'All Time' },
+                                ].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setFinanceDateRange(opt.value as any)}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                            financeDateRange === opt.value
+                                                ? 'bg-[#E0FF20] text-black'
+                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setFinanceDateRange('custom')}
+                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                                        financeDateRange === 'custom'
+                                            ? 'bg-[#E0FF20] text-black'
+                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                    }`}
+                                >
+                                    Custom
+                                </button>
+                                <Button size="sm" onClick={exportFinancialsCSV} className="ml-2">
+                                    <Download size={14} className="mr-2" /> Export CSV
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Custom Date Range Inputs */}
+                        {financeDateRange === 'custom' && (
+                            <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-zinc-800/50 rounded-xl border border-zinc-700">
+                                <div className="flex items-center gap-2">
+                                    <label className="text-xs text-zinc-400">From:</label>
+                                    <input
+                                        type="date"
+                                        value={financeCustomStart}
+                                        onChange={e => setFinanceCustomStart(e.target.value)}
+                                        className="bg-black border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-xs text-zinc-400">To:</label>
+                                    <input
+                                        type="date"
+                                        value={financeCustomEnd}
+                                        onChange={e => setFinanceCustomEnd(e.target.value)}
+                                        className="bg-black border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Date Range Indicator */}
+                        <div className="mb-4 text-sm text-zinc-400">
+                            Showing data for: <span className="text-white font-medium">{getDateRangeLabel()}</span>
+                            {financeDateRange !== 'all' && (
+                                <span className="ml-2 text-zinc-500">({filteredFinanceStats.transactionCount} transactions)</span>
+                            )}
                         </div>
 
                         {/* Financial Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Total Gross Volume</div>
-                                <div className="text-3xl font-black text-white">${stats.totalVolume.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-white">
+                                    ${financeDateRange === 'all' ? stats.totalVolume.toFixed(2) : filteredFinanceStats.totalVolume.toFixed(2)}
+                                </div>
+                                {financeDateRange !== 'all' && stats.totalVolume > 0 && (
+                                    <div className="text-xs text-zinc-500 mt-1">
+                                        {((filteredFinanceStats.totalVolume / stats.totalVolume) * 100).toFixed(1)}% of all time
+                                    </div>
+                                )}
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Platform Fees</div>
-                                <div className="text-3xl font-black text-[#E0FF20]">${stats.platformFees.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-[#E0FF20]">
+                                    ${financeDateRange === 'all' ? stats.platformFees.toFixed(2) : filteredFinanceStats.platformFees.toFixed(2)}
+                                </div>
                                 <div className="text-xs text-zinc-500 mt-1">Revenue to OpenTicket</div>
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-gradient-to-br from-pink-900/30 to-purple-900/30 border-pink-500/30">
@@ -1692,7 +1766,9 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
                                 <div className="text-xs font-bold text-zinc-500 uppercase mb-2">Stripe Fees</div>
-                                <div className="text-3xl font-black text-red-400">${stats.stripeFees.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-red-400">
+                                    ${financeDateRange === 'all' ? stats.stripeFees.toFixed(2) : filteredFinanceStats.stripeFees.toFixed(2)}
+                                </div>
                                 <div className="text-xs text-zinc-500 mt-1">Paid to Stripe</div>
                             </Card>
                             <Card className="p-6 border-zinc-700 bg-zinc-800/30">
