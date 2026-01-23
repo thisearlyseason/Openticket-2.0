@@ -30,6 +30,9 @@ export const AffiliateDashboard = () => {
     const [isEditingStripe, setIsEditingStripe] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Date filter for earnings
+    const [earningsDateRange, setEarningsDateRange] = useState<'30d' | '60d' | '90d' | 'all'>('all');
+
     // Marketing Lab State
     const [selectedPlatform, setSelectedPlatform] = useState<'twitter' | 'linkedin' | 'instagram' | 'facebook' | 'tiktok'>('twitter');
 
@@ -38,6 +41,33 @@ export const AffiliateDashboard = () => {
     const [customCode, setCustomCode] = useState('');
     const [isActivating, setIsActivating] = useState(false);
     const [codeError, setCodeError] = useState('');
+
+    // Filter commissions by date
+    const getFilteredCommissions = () => {
+        if (earningsDateRange === 'all') return stats.recentCommissions;
+        
+        const now = new Date();
+        let startDate: Date;
+
+        switch (earningsDateRange) {
+            case '30d':
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '60d':
+                startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+                break;
+            case '90d':
+                startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                return stats.recentCommissions;
+        }
+
+        return stats.recentCommissions.filter(c => new Date(c.date) >= startDate);
+    };
+
+    const filteredCommissions = getFilteredCommissions();
+    const filteredTotal = filteredCommissions.reduce((sum, c) => sum + (c.amount || 0), 0);
 
     useEffect(() => {
         const init = async () => {
