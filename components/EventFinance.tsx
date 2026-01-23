@@ -672,10 +672,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Gross Sales</span>
                     </div>
                     <div className="text-3xl font-black text-gray-900 dark:text-white">
-                        ${summary.grossSales.toFixed(2)}
+                        ${filteredSummary.grossSales.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        {summary.transactionCount} transaction{summary.transactionCount !== 1 ? 's' : ''}
+                        {filteredSummary.transactionCount} transaction{filteredSummary.transactionCount !== 1 ? 's' : ''}
                     </div>
                 </Card>
 
@@ -687,10 +687,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Total Fees</span>
                     </div>
                     <div className="text-3xl font-black text-gray-900 dark:text-white">
-                        ${(summary.platformFees + summary.stripeFees).toFixed(2)}
+                        ${(filteredSummary.platformFees + filteredSummary.stripeFees).toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        Platform: ${summary.platformFees.toFixed(2)} | Stripe: ${summary.stripeFees.toFixed(2)}
+                        Platform: ${filteredSummary.platformFees.toFixed(2)} | Stripe: ${filteredSummary.stripeFees.toFixed(2)}
                     </div>
                 </Card>
 
@@ -702,7 +702,7 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Net Earnings</span>
                     </div>
                     <div className="text-3xl font-black text-green-600">
-                        ${summary.netEarnings.toFixed(2)}
+                        ${filteredSummary.netEarnings.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
                         After all fees
@@ -717,10 +717,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Refunded</span>
                     </div>
                     <div className="text-3xl font-black text-red-600">
-                        ${summary.refundedAmount.toFixed(2)}
+                        ${filteredSummary.refundedAmount.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        {summary.refundCount} refund{summary.refundCount !== 1 ? 's' : ''}
+                        {filteredSummary.refundCount} refund{filteredSummary.refundCount !== 1 ? 's' : ''}
                     </div>
                 </Card>
             </div>
