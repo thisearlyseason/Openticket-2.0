@@ -1903,3 +1903,44 @@ After this fix, ALL THREE systems are kept in sync. The definitive check-in stat
 - `/app/components/CheckInPortal.tsx` - Updated handleCheckInToggle to sync all systems
 - `/app/backend/controllers/registrationController.js` - Updated checkInTicket to update check_in_statuses
 - `/app/backend/controllers/kioskController.js` - Updated scanTicket to check all status sources
+
+---
+
+## Check-in Flow Fix (January 23, 2026)
+
+### Issues Fixed
+
+#### 1. Kiosk Mode Not Passing ticketId
+**Problem:** Kiosk scan returned `ticketId` but `checkIn()` method didn't pass it to the backend, causing the backend to try to check in the entire registration instead of the specific ticket.
+
+**Fix:** 
+- Updated `kioskService.checkIn()` to accept optional `ticketId` parameter
+- Updated `KioskCheckIn.tsx` to pass `ticketId` from scan result to check-in call
+- Updated `handleCheckIn()` to properly handle errors and only show success when backend confirms
+
+#### 2. Kiosk Showing Success on Failure
+**Problem:** UI showed "Checked in" even when the backend returned an error.
+
+**Fix:** `handleCheckIn()` now:
+- Logs the check-in result
+- Only shows success message if `result.success === true`
+- Shows error message with actual error from backend
+- Updates `currentScan` state to reflect actual outcome
+
+#### 3. Backend Check-in Search Failing
+**Problem:** When `eventId` was missing or empty, the query `.eq('event_id', '')` returned no results.
+
+**Fix:** Updated `/api/registrations/checkin` endpoint to:
+- If `eventId` provided: search only that event
+- If `eventId` missing: find all events owned by organizer, then search those registrations
+
+#### 4. Scan Response Missing ticketId
+**Problem:** Kiosk scan response returned `ticketId: foundTicket.id` which was the TIER ID, not the unique ticket ID.
+
+**Fix:** Changed to return `ticketId: foundTicket.ticketId || foundTicket.ticketNumber || foundTicket.id`
+
+### Files Modified
+- `/app/services/kioskService.ts` - Added `ticketId` param to `checkIn()`, added to `ScanResult` interface
+- `/app/components/KioskCheckIn.tsx` - Pass `ticketId` to check-in, proper error handling
+- `/app/backend/controllers/kioskController.js` - Return proper `ticketId` in scan response
+- `/app/backend/controllers/registrationController.js` - Fixed empty eventId search query
