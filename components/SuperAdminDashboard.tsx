@@ -288,6 +288,24 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         }
     };
 
+    // Fetch global Gemini key - defined before useEffect that uses it
+    const fetchGlobalGeminiKey = async () => {
+        try {
+            console.log('[SuperAdmin] Fetching global Gemini key...');
+            const response = await fetch('/api/settings/admin-gemini-key');
+            const data = await response.json();
+            console.log('[SuperAdmin] Gemini key response:', data);
+            if (data.globalGeminiKey) {
+                setGlobalGeminiKey(data.globalGeminiKey);
+                console.log('[SuperAdmin] Global Gemini key loaded successfully');
+            } else {
+                console.log('[SuperAdmin] No global Gemini key found');
+            }
+        } catch (error) {
+            console.error('[SuperAdmin] Failed to fetch global Gemini key:', error);
+        }
+    };
+
     useEffect(() => {
         // When embedded, the parent component already verified admin access
         if (!embedded && (!currentUser || !currentUser.isAdmin)) {
@@ -304,19 +322,6 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setBackendDefaultCurrency(localStorage.getItem('openticket_backend_default_currency') || 'USD');
         refreshData();
     }, [navigate, embedded]);
-
-    // Fetch global Gemini key
-    const fetchGlobalGeminiKey = async () => {
-        try {
-            const response = await fetch('/api/settings/admin-gemini-key');
-            const data = await response.json();
-            if (data.globalGeminiKey) {
-                setGlobalGeminiKey(data.globalGeminiKey);
-            }
-        } catch (error) {
-            console.error('Failed to fetch global Gemini key:', error);
-        }
-    };
 
     // Re-check Resend status and load Gemini key when switching to settings tab
     useEffect(() => {
