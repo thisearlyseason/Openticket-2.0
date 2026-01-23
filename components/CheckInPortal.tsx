@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Camera, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { isPaidStatus, isRefundedStatus, getPaymentStatusLabel } from '../services/paymentUtils';
 import { Registration, Event, PurchasedTicket } from '../types';
 import { Input, Button, Card, Badge } from './UI';
-import { QRScanner } from './QRScanner';
 import { OfflineService } from '../services/offlineService';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import stripePromise from '../services/stripe';
@@ -665,7 +664,6 @@ export const CheckInPortal = () => {
             setCashTendered('');
             setCardDetails({ number: '', expiry: '', cvc: '', zip: '' });
             setPaymentStatus('input');
-            if (showScanner) stopScanner();
             return;
         }
 
@@ -1270,9 +1268,6 @@ export const CheckInPortal = () => {
                                 </button>
                             )}
                         </div>
-                        <Button onClick={() => setShowScanner(true)} className="h-14 w-20 p-0 flex items-center justify-center rounded-2xl shadow-lg bg-[#E0FF20] text-black hover:bg-[#d4f542] border-none">
-                            <Camera size={28} strokeWidth={2.5} />
-                        </Button>
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
@@ -1321,15 +1316,6 @@ export const CheckInPortal = () => {
                     )}
                 </div>
             </div>
-
-            {/* New QR Scanner Component */}
-            <QRScanner
-                isOpen={showScanner}
-                onClose={() => setShowScanner(false)}
-                onScan={(result) => {
-                    handleScanInput(result);
-                }}
-            />
 
             {ticketToDelete && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
