@@ -218,6 +218,78 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const safeOrganizerBreakdown = useMemo(() => ensureArray(stats.organizerBreakdown), [stats.organizerBreakdown]);
     const safeDonationRecent = useMemo(() => ensureArray(stats.donationBreakdown?.recent), [stats.donationBreakdown?.recent]);
 
+    // Helper function to get date range boundaries
+    const getDateRange = (range: string, customStart?: string, customEnd?: string) => {
+        const now = new Date();
+        let startDate: Date | null = null;
+        let endDate: Date = now;
+
+        switch (range) {
+            case '30d':
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '60d':
+                startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+                break;
+            case '90d':
+                startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                break;
+            case '7d':
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'custom':
+                if (customStart) startDate = new Date(customStart);
+                if (customEnd) endDate = new Date(customEnd);
+                break;
+            case 'all':
+            default:
+                startDate = null;
+                break;
+        }
+        return { startDate, endDate };
+    };
+
+    // Filter transactions by date range
+    const filteredTransactions = useMemo(() => {
+        if (financeDateRange === 'all') return safeRecentTransactions;
+        
+        const { startDate, endDate } = getDateRange(financeDateRange, financeCustomStart, financeCustomEnd);
+        if (!startDate) return safeRecentTransactions;
+
+        return safeRecentTransactions.filter((tx: any) => {
+            const txDate = new Date(tx.created_at);
+            return txDate >= startDate && txDate <= endDate;
+        });
+    }, [safeRecentTransactions, financeDateRange, financeCustomStart, financeCustomEnd]);
+
+    // Calculate filtered financial stats
+    const filteredFinanceStats = useMemo(() => {
+        const txs = filteredTransactions;
+        return {
+            totalVolume: txs.reduce((sum: number, tx: any) => sum + (Number(tx.gross_amount) || 0), 0),
+            platformFees: txs.reduce((sum: number, tx: any) => sum + (Number(tx.platform_fee) || 0), 0),
+            stripeFees: txs.reduce((sum: number, tx: any) => sum + (Number(tx.stripe_fee) || 0), 0),
+            organizerNet: txs.reduce((sum: number, tx: any) => sum + (Number(tx.organizer_net) || 0), 0),
+            transactionCount: txs.length
+        };
+    }, [filteredTransactions]);
+
+    // Get date range label for display
+    const getDateRangeLabel = () => {
+        switch (financeDateRange) {
+            case '30d': return 'Last 30 Days';
+            case '60d': return 'Last 60 Days';
+            case '90d': return 'Last 90 Days';
+            case 'custom': 
+                if (financeCustomStart && financeCustomEnd) {
+                    return `${new Date(financeCustomStart).toLocaleDateString()} - ${new Date(financeCustomEnd).toLocaleDateString()}`;
+                }
+                return 'Custom Range';
+            case 'all': 
+            default: return 'All Time';
+        }
+    };
+
     // Check Resend status from backend API
     const checkResendStatus = async () => {
         console.log('[SuperAdmin] checkResendStatus called');
