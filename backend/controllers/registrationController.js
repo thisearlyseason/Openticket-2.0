@@ -1029,6 +1029,15 @@ export const checkInTicket = async (req, res) => {
         
         const ticket = targetRegistration.tickets[ticketIndex];
         
+        console.log(`[CheckIn] Found ticket:`, {
+            ticketId: ticket.ticketId,
+            ticketNumber: ticket.ticketNumber,
+            checkedIn: ticket.checkedIn,
+            checkedInAt: ticket.checkedInAt,
+            status: ticket.status,
+            fullTicket: JSON.stringify(ticket)
+        });
+        
         // 4. Validate ticket status
         if (ticket.status === 'refunded') {
             return res.status(400).json({ 
