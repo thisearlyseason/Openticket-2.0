@@ -140,27 +140,65 @@ export const KioskCheckIn: React.FC = () => {
     const handleCheckIn = async (registrationId: string, attendeeName: string, ticketId?: string) => {
         try {
             console.log('[KioskCheckIn] Checking in:', { registrationId, attendeeName, ticketId });
-            const result = await kioskService.checkIn(registrationId, ticketId);
-            console.log('[KioskCheckIn] Check-in result:', result);
+            
+            // Use the universal check-in endpoint for consistency
+            // This ensures all three check-in fields are updated
+            if (!ticketId) {
+                // If no specific ticketId, fall back to kiosk endpoint
+                const result = await kioskService.checkIn(registrationId, ticketId);
+                console.log('[KioskCheckIn] Check-in result:', result);
 
-            // Show success only if backend confirms success
-            if (result.success) {
-                setCurrentScan({
-                    success: true,
-                    status: 'valid',
-                    message: `${attendeeName} checked in successfully!`,
-                    attendeeName
+                if (result.success) {
+                    setCurrentScan({
+                        success: true,
+                        status: 'valid',
+                        message: `${attendeeName} checked in successfully!`,
+                        attendeeName
+                    });
+
+                    setTimeout(() => {
+                        setCurrentScan(null);
+                        setSelectedGuest(null);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                    }, 3000);
+                } else {
+                    throw new Error(result.message || 'Check-in failed');
+                }
+            } else {
+                // Use the universal /api/registrations/checkin endpoint
+                const response = await fetch('/api/registrations/checkin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${tokenId}` // Use kiosk token for auth
+                    },
+                    body: JSON.stringify({
+                        ticketId: ticketId,
+                        eventId: eventId
+                    })
                 });
 
-                // Clear after 3 seconds
-                setTimeout(() => {
-                    setCurrentScan(null);
-                    setSelectedGuest(null);
-                    setSearchQuery('');
-                    setSearchResults([]);
-                }, 3000);
-            } else {
-                throw new Error(result.message || 'Check-in failed');
+                const result = await response.json();
+                console.log('[KioskCheckIn] Check-in API result:', result);
+
+                if (response.ok && result.success) {
+                    setCurrentScan({
+                        success: true,
+                        status: 'valid',
+                        message: `${attendeeName} checked in successfully!`,
+                        attendeeName
+                    });
+
+                    setTimeout(() => {
+                        setCurrentScan(null);
+                        setSelectedGuest(null);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || result.message || 'Check-in failed');
+                }
             }
 
         } catch (error: any) {
