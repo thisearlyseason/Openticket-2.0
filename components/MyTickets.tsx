@@ -154,9 +154,10 @@ export const MyTickets = () => {
 
             // Safely parse event date - handle null/undefined/invalid dates
             let isPastEvent = false;
+            let eventDateStr = 'No date';
             if (event.date) {
                 // Try to parse the date - handle both ISO format and YYYY-MM-DD
-                const eventDateStr = event.date.includes('T') 
+                eventDateStr = event.date.includes('T') 
                     ? event.date 
                     : `${event.date}T${event.time || '23:59'}`;
                 const eventTimestamp = new Date(eventDateStr).getTime();
