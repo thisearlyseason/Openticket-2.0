@@ -86,11 +86,12 @@ export const KioskCheckIn: React.FC = () => {
 
         setIsProcessing(true);
         setCurrentScan(null);
-        setShowScanner(false); // STOP scanning after successful scan
+        setShowScanner(false);
 
         try {
             console.log('[KioskCheckIn] Scanning QR:', qrData);
             const result = await kioskService.scanTicket(qrData);
+            console.log('[KioskCheckIn] Scan result:', JSON.stringify(result, null, 2));
 
             setCurrentScan(result);
 
@@ -104,9 +105,22 @@ export const KioskCheckIn: React.FC = () => {
             }, ...prev.slice(0, 9)]);
 
             // Auto check-in if valid and paid
-            if (result.success && result.status === 'valid' && result.registrationId) {
-                // Pass both registrationId AND ticketId for specific ticket check-in
-                await handleCheckIn(result.registrationId, result.attendeeName!, result.ticketId);
+            if (result.success && result.status === 'valid') {
+                console.log('[KioskCheckIn] Valid ticket, proceeding to check-in');
+                console.log('[KioskCheckIn] TicketId from scan:', result.ticketId);
+                console.log('[KioskCheckIn] RegistrationId from scan:', result.registrationId);
+                
+                // MUST pass ticketId for proper check-in
+                if (result.ticketId) {
+                    await handleCheckIn(result.registrationId || '', result.attendeeName || 'Guest', result.ticketId);
+                } else {
+                    console.error('[KioskCheckIn] No ticketId in scan result!');
+                    setCurrentScan({
+                        success: false,
+                        status: 'invalid',
+                        message: 'Ticket ID missing from scan result'
+                    });
+                }
             }
 
         } catch (error: any) {
