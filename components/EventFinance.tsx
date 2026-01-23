@@ -529,10 +529,14 @@ export const EventFinance = () => {
     };
 
     const exportFinancials = () => {
-        if (!event || !summary) return;
+        if (!event) return;
+
+        // Use filtered transactions for export
+        const txToExport = filteredTransactions;
+        const summaryToExport = dateRange === 'all' && summary ? summary : filteredSummary;
 
         const headers = ['Date', 'Transaction ID', 'Attendee', 'Email', 'Type', 'Gross', 'Platform Fee', 'Stripe Fee', 'Net', 'Status', 'Payout Status'];
-        const rows = transactions.map(tx => [
+        const rows = txToExport.map(tx => [
             new Date(tx.created_at).toLocaleDateString(),
             tx.id,
             tx.registration?.attendee_name || 'N/A',
@@ -549,16 +553,18 @@ export const EventFinance = () => {
         // Add summary row
         rows.push([]);
         rows.push(['SUMMARY']);
-        rows.push(['Gross Sales', '', '', '', '', summary.grossSales.toFixed(2)]);
-        rows.push(['Platform Fees', '', '', '', '', '', summary.platformFees.toFixed(2)]);
-        rows.push(['Stripe Fees', '', '', '', '', '', '', summary.stripeFees.toFixed(2)]);
-        rows.push(['Net Earnings', '', '', '', '', '', '', '', summary.netEarnings.toFixed(2)]);
-        rows.push(['Refunded', '', '', '', '', summary.refundedAmount.toFixed(2)]);
+        rows.push(['Date Range', getDateRangeLabel()]);
+        rows.push(['Total Transactions', txToExport.length.toString()]);
+        rows.push(['Gross Sales', '', '', '', '', summaryToExport.grossSales.toFixed(2)]);
+        rows.push(['Platform Fees', '', '', '', '', '', summaryToExport.platformFees.toFixed(2)]);
+        rows.push(['Stripe Fees', '', '', '', '', '', '', summaryToExport.stripeFees.toFixed(2)]);
+        rows.push(['Net Earnings', '', '', '', '', '', '', '', summaryToExport.netEarnings.toFixed(2)]);
+        rows.push(['Refunded', '', '', '', '', summaryToExport.refundedAmount.toFixed(2)]);
 
         const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].map(r => r.join(",")).join("\n");
         const link = document.createElement("a");
         link.setAttribute("href", encodeURI(csvContent));
-        link.setAttribute("download", `${event.title}_financials_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `${event.title}_financials_${getDateRangeLabel().replace(/\s/g, '-').toLowerCase()}_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
