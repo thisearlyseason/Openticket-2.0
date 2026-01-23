@@ -832,7 +832,7 @@ export const EventFinance = () => {
                 <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
                     <div className="p-6">
                         <DataTable
-                            data={transactions}
+                            data={filteredTransactions}
                             columns={transactionColumns}
                             searchPlaceholder="Search transactions by attendee name or email..."
                             emptyMessage="No transactions yet."
