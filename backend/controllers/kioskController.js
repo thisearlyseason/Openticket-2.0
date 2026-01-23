@@ -627,9 +627,20 @@ const checkInGuest = async (req, res) => {
                 checkedInDevice: deviceId || 'unknown'
             };
             
+            // Also update check_in_statuses for CheckInPortal compatibility
+            const checkInStatuses = registration.check_in_statuses || {};
+            const ticketKey = `${ticket.tierId || ticket.id}-${ticketIndex}-0`;
+            checkInStatuses[ticketKey] = {
+                checkedIn: true,
+                timestamp: Date.now()
+            };
+            
             const { error: updateError } = await supabase
                 .from('registrations')
-                .update({ tickets: updatedTickets })
+                .update({ 
+                    tickets: updatedTickets,
+                    check_in_statuses: checkInStatuses
+                })
                 .eq('id', registrationId);
             
             if (updateError) {
