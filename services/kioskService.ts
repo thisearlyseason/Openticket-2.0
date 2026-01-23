@@ -144,7 +144,10 @@ class KioskService {
     /**
      * Check in a guest
      */
-    async checkIn(registrationId: string): Promise<{ success: boolean; attendeeName: string; checkedInAt: string }> {
+    /**
+     * Check in a guest
+     */
+    async checkIn(registrationId: string, ticketId?: string): Promise<{ success: boolean; attendeeName: string; checkedInAt: string }> {
         if (!this.tokenId || !this.eventId) {
             throw new Error('Kiosk not initialized');
         }
@@ -155,6 +158,7 @@ class KioskService {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     registrationId,
+                    ticketId,  // Pass specific ticket ID for individual ticket check-in
                     tokenId: this.tokenId,
                     eventId: this.eventId,
                     deviceId: this.deviceId
