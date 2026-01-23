@@ -64,6 +64,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     const isEmbed = window.location.hash.includes('embed=true');
     const isLanding = location.pathname === '/';
     const isAffiliateAuth = location.pathname === '/affiliate-login';
+    const isKioskMode = location.pathname.startsWith('/kiosk/');
 
     const [isDark, setIsDark] = useState(() => {
         const savedTheme = localStorage.getItem('openticket_theme');
@@ -197,7 +198,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
     return (
         <div className={`min-h-screen bg-background text-zinc-900 dark:text-white flex flex-col font-sans selection:bg-secondary selection:text-black relative overflow-x-hidden transition-colors duration-300 ${isEmbed ? 'bg-transparent' : ''}`}>
 
-            {!isLanding && !isEmbed && !isAffiliateAuth && (
+            {!isLanding && !isEmbed && !isAffiliateAuth && !isKioskMode && (
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob"></div>
                     <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
@@ -217,7 +218,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                 </div>
             )}
 
-            {!isLanding && !isEmbed && !isAffiliateAuth && (
+            {!isLanding && !isEmbed && !isAffiliateAuth && !isKioskMode && (
                 <nav className={`fixed left-0 right-0 z-50 glass ${isOffline || isDemoMode ? 'top-6' : 'top-0'}`}>
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex justify-between items-center h-16">
@@ -446,7 +447,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                 {children}
             </main>
 
-            {!isLanding && !isEmbed && !isAffiliateAuth && (
+            {!isLanding && !isEmbed && !isAffiliateAuth && !isKioskMode && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-white/5 z-50 pb-safe">
                     <div className="flex justify-around items-center h-16 text-xs font-medium">
                         <Link to="/browse" className={`flex flex-col items-center justify-center w-full h-full ${location.pathname === '/browse' ? 'text-secondary' : 'text-zinc-500 dark:text-zinc-400'}`}>
