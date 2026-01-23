@@ -272,7 +272,7 @@ export const MobileCheckInScanner: React.FC = () => {
                 // Error
                 const scanResult: ScanResult = {
                     success: false,
-                    message: result.error || 'Check-in failed',
+                    message: result.error || result.message || 'Check-in failed',
                     timestamp: Date.now()
                 };
                 
@@ -283,7 +283,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     eventId: id,
                     ticketId,
                     success: false,
-                    errorMessage: result.error,
+                    errorMessage: result.error || result.message,
                     duration: scanDuration,
                     timestamp: Date.now(),
                     scanMethod: 'camera'
@@ -294,6 +294,9 @@ export const MobileCheckInScanner: React.FC = () => {
                 }
                 
                 playErrorSound();
+                
+                // Close scanner to show error message
+                setShowScanner(false);
             }
         } catch (error: any) {
             console.error('Check-in error:', error);
