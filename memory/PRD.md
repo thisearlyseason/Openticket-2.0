@@ -1745,3 +1745,41 @@ Applied conversion ratio (`chargedAmount / usdTotal`) to ALL displayed amounts a
 - Frontend Routes: 100% render correctly
 - Security: All admin routes protected
 - Feature Completeness: All documented features functional
+
+---
+
+## Financial Date Filtering Feature (January 23, 2026)
+
+### Feature Overview
+Added comprehensive date filtering to all financial screens across SuperAdmin, Organizers, and Affiliates.
+
+### SuperAdmin Finance Tab (`SuperAdminDashboard.tsx`)
+- **Date Filter Options**: 30 Days, 60 Days, 90 Days, All Time, Custom Range
+- **Custom Date Picker**: Appears when "Custom" is selected with start/end date inputs
+- **Filtered Stats**: Total Volume, Platform Fees, Stripe Fees update based on selected date range
+- **Percentage Context**: Shows filtered amount as % of all-time total
+- **Transactions Table**: Displays only transactions within selected date range
+- **CSV Export**: Exports only filtered data with date range in filename and summary
+
+### Organizer Event Finance (`EventFinance.tsx`)
+- **Date Filter Dropdown**: All Time, Last 30/60/90 Days, Custom Range
+- **Custom Date Inputs**: Start and end date pickers
+- **Filtered Summary Cards**: Gross Sales, Fees, Net Earnings, Refunds filtered by date
+- **Transaction Count**: Shows number of transactions in selected period
+- **DataTable**: Displays filtered transactions
+- **CSV Export**: Includes date range label and filtered data
+
+### Affiliate Dashboard (`AffiliateDashboard.tsx`)
+- **Earnings Date Filter**: 30 Days, 60 Days, 90 Days, All Time
+- **Filtered Commission List**: Shows only commissions within selected period
+- **Filtered Total**: Displays sum of commissions in selected period
+
+### Payout Reset Logic
+- **Manual Payout** (`PUT /api/admin/affiliate-payouts/:id`): When status changes to 'paid', updates `total_paid_out` and resets `available_payout` to 0
+- **Stripe Payout** (`POST /api/admin/affiliate-payouts/stripe`): After successful transfer, updates `total_paid_out` and resets `available_payout` to 0
+
+### Files Modified
+- `/app/components/SuperAdminDashboard.tsx` - Added finance date filter state, filtering logic, and UI
+- `/app/components/EventFinance.tsx` - Added date filtering for organizer financials
+- `/app/components/AffiliateDashboard.tsx` - Added earnings date filter
+- `/app/backend/routes/adminRoutes.js` - Updated payout endpoints to reset available_payout after payment
