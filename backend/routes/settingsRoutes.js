@@ -53,22 +53,33 @@ router.post('/admin-gemini-key', verifyFirebaseToken, async (req, res) => {
         const { globalGeminiKey } = req.body;
         const userId = req.user.uid;
 
+        console.log('[Settings] Saving global Gemini key for user:', userId);
+        console.log('[Settings] Key provided:', globalGeminiKey ? 'Yes (length: ' + globalGeminiKey.length + ')' : 'No (removing key)');
+
         // Verify user is super admin
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('is_admin')
             .eq('id', userId)
             .single();
 
+        console.log('[Settings] User profile:', profile);
+        console.log('[Settings] Profile error:', profileError);
+
         if (!profile?.is_admin) {
+            console.log('[Settings] User is not admin, rejecting');
             return res.status(403).json({ error: 'Unauthorized: Admin access required' });
         }
 
         // Update the admin's profile with global key
-        const { error } = await supabase
+        const { data: updateData, error } = await supabase
             .from('profiles')
             .update({ global_gemini_key: globalGeminiKey || null })
-            .eq('id', userId);
+            .eq('id', userId)
+            .select();
+
+        console.log('[Settings] Update result:', updateData);
+        console.log('[Settings] Update error:', error);
 
         if (error) throw error;
 
@@ -78,7 +89,7 @@ router.post('/admin-gemini-key', verifyFirebaseToken, async (req, res) => {
             hasGlobalKey: !!globalGeminiKey
         });
     } catch (error) {
-        console.error('Error setting admin Gemini key:', error);
+        console.error('[Settings] Error setting admin Gemini key:', error);
         res.status(500).json({ error: error.message });
     }
 });
