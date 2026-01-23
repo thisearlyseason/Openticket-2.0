@@ -7,24 +7,28 @@ import verifyFirebaseToken from '../middlewares/authMiddleware.js';
  * Get global admin Gemini API key
  * GET /api/settings/admin-gemini-key
  * Returns the global Gemini key set by super admin (if available)
+ * Searches ALL admin profiles for a non-null global_gemini_key
  */
 router.get('/admin-gemini-key', async (req, res) => {
     try {
-        // Fetch global settings from super admin profile
-        const { data: adminProfile, error } = await supabase
+        // Fetch global settings from any super admin profile that has a key set
+        const { data: adminProfiles, error } = await supabase
             .from('profiles')
             .select('global_gemini_key')
             .eq('is_admin', true)
-            .single();
+            .not('global_gemini_key', 'is', null);
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        if (error) {
             throw error;
         }
 
+        // Find the first admin with a key set
+        const adminWithKey = adminProfiles?.find(p => p.global_gemini_key);
+        
         // Return key if exists, otherwise return null
         res.json({ 
-            globalGeminiKey: adminProfile?.global_gemini_key || null,
-            hasGlobalKey: !!adminProfile?.global_gemini_key
+            globalGeminiKey: adminWithKey?.global_gemini_key || null,
+            hasGlobalKey: !!adminWithKey?.global_gemini_key
         });
     } catch (error) {
         console.error('Error fetching admin Gemini key:', error);
