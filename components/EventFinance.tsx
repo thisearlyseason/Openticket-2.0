@@ -51,6 +51,72 @@ export const EventFinance = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
+    // Date range filter state
+    const [dateRange, setDateRange] = useState<'30d' | '60d' | '90d' | 'all' | 'custom'>('all');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
+
+    // Filter transactions by date range
+    const getFilteredTransactions = () => {
+        if (dateRange === 'all') return transactions;
+        
+        const now = new Date();
+        let startDate: Date | null = null;
+        let endDate: Date = now;
+
+        switch (dateRange) {
+            case '30d':
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '60d':
+                startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+                break;
+            case '90d':
+                startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                break;
+            case 'custom':
+                if (customStartDate) startDate = new Date(customStartDate);
+                if (customEndDate) endDate = new Date(customEndDate);
+                break;
+        }
+
+        if (!startDate) return transactions;
+
+        return transactions.filter(tx => {
+            const txDate = new Date(tx.created_at);
+            return txDate >= startDate! && txDate <= endDate;
+        });
+    };
+
+    const filteredTransactions = getFilteredTransactions();
+
+    // Calculate filtered summary
+    const filteredSummary = {
+        grossSales: filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + (tx.gross_amount || 0), 0),
+        platformFees: filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + (tx.platform_fee || 0), 0),
+        stripeFees: filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + (tx.stripe_fee || 0), 0),
+        taxCollected: filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + (tx.tax_amount || 0), 0),
+        netEarnings: filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + (tx.organizer_net || 0), 0),
+        refundedAmount: filteredTransactions.filter(tx => tx.status === 'refunded').reduce((sum, tx) => sum + (tx.gross_amount || 0), 0),
+        transactionCount: filteredTransactions.filter(tx => tx.status === 'completed').length,
+        refundCount: filteredTransactions.filter(tx => tx.status === 'refunded').length
+    };
+
+    const getDateRangeLabel = () => {
+        switch (dateRange) {
+            case '30d': return 'Last 30 Days';
+            case '60d': return 'Last 60 Days';
+            case '90d': return 'Last 90 Days';
+            case 'custom': 
+                if (customStartDate && customEndDate) {
+                    return `${new Date(customStartDate).toLocaleDateString()} - ${new Date(customEndDate).toLocaleDateString()}`;
+                }
+                return 'Custom Range';
+            case 'all': 
+            default: return 'All Time';
+        }
+    };
+
     // DataTable columns for transactions
     const transactionColumns: Column<FinancialTransaction>[] = [
         {
