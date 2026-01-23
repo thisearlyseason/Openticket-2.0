@@ -1,0 +1,87 @@
+[
+  {
+    "test": "Backend Connectivity",
+    "success": true,
+    "details": "\u2705 Backend is accessible and responding",
+    "response_data": {
+      "status": 200
+    },
+    "timestamp": "2026-01-23 17:13:43"
+  },
+  {
+    "test": "Check-In Endpoint Availability",
+    "success": true,
+    "details": "\u2705 /api/registrations/checkin endpoint exists (HTTP 401)",
+    "response_data": {
+      "endpoint_exists": true
+    },
+    "timestamp": "2026-01-23 17:13:43"
+  },
+  {
+    "test": "User Authentication",
+    "success": true,
+    "details": "\u2705 Successfully authenticated as test+openticket@gmail.com",
+    "response_data": {
+      "authenticated": true,
+      "token_length": 737
+    },
+    "timestamp": "2026-01-23 17:13:44"
+  },
+  {
+    "test": "Get Test Event",
+    "success": true,
+    "details": "\u2705 Found test event: sdfsfsdf (ID: 264fbc93-0b28-45cf-9a52-605d2b00d25e)",
+    "response_data": {
+      "event_id": "264fbc93-0b28-45cf-9a52-605d2b00d25e",
+      "event_title": "sdfsfsdf",
+      "total_events": 3
+    },
+    "timestamp": "2026-01-23 17:13:44"
+  },
+  {
+    "test": "Get Registrations",
+    "success": false,
+    "details": "\u274c Failed to get registrations: HTTP 403",
+    "response_data": "{\"error\":\"Unauthorized to view registrations for this event\"}",
+    "timestamp": "2026-01-23 17:13:44"
+  },
+  {
+    "test": "Auto-Refresh Simulation",
+    "success": false,
+    "details": "\u274c Auto-refresh failed: only 0/3 successful",
+    "response_data": {
+      "successful_refreshes": 0,
+      "total_attempts": 3,
+      "average_response_time_ms": 0.0,
+      "refresh_results": [
+        {
+          "iteration": 1,
+          "success": false,
+          "status": 403
+        },
+        {
+          "iteration": 2,
+          "success": false,
+          "status": 403
+        },
+        {
+          "iteration": 3,
+          "success": false,
+          "status": 403
+        }
+      ]
+    },
+    "timestamp": "2026-01-23 17:13:51"
+  },
+  {
+    "test": "Check-In Portal QR Scanner Separation",
+    "success": true,
+    "details": "\u2705 Kiosk scan endpoint and Portal check-in endpoint are properly separated",
+    "response_data": {
+      "kiosk_scan_endpoint": "HTTP 400",
+      "portal_checkin_endpoint": "HTTP 400",
+      "endpoints_separated": true
+    },
+    "timestamp": "2026-01-23 17:13:51"
+  }
+]
