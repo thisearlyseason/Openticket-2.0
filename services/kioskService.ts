@@ -26,13 +26,15 @@ export interface KioskEvent {
 
 export interface ScanResult {
     success: boolean;
-    status: 'valid' | 'invalid' | 'already_checked_in' | 'payment_required';
+    status: 'valid' | 'invalid' | 'already_checked_in' | 'payment_required' | 'error';
     message: string;
     attendeeName?: string;
     attendeeEmail?: string;
     ticketType?: string;
     price?: number;
     registrationId?: string;
+    ticketId?: string;
+    ticketNumber?: string;
     checkedInAt?: string;
 }
 
