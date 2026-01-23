@@ -68,7 +68,8 @@ export const KioskCheckIn: React.FC = () => {
 
             // Auto check-in if valid and paid
             if (result.success && result.status === 'valid' && result.registrationId) {
-                await handleCheckIn(result.registrationId, result.attendeeName!);
+                // Pass both registrationId AND ticketId for specific ticket check-in
+                await handleCheckIn(result.registrationId, result.attendeeName!, result.ticketId);
             }
 
         } catch (error: any) {
