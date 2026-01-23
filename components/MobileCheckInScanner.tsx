@@ -164,8 +164,12 @@ export const MobileCheckInScanner: React.FC = () => {
 
     // Handle QR scan
     const handleScan = useCallback(async (qrData: string) => {
-        if (isProcessing || !id) return;
+        if (isProcessing || !id) {
+            console.log('[MobileScanner] Skipping scan - processing:', isProcessing, 'id:', id);
+            return;
+        }
         
+        console.log('[MobileScanner] Starting scan process for:', qrData);
         setIsProcessing(true);
         const scanStartTime = Date.now();
         
@@ -179,8 +183,11 @@ export const MobileCheckInScanner: React.FC = () => {
                 ticketId = qrData;
             }
 
+            console.log('[MobileScanner] Extracted ticketId:', ticketId);
+
             // Check if online
             if (!navigator.onLine) {
+                console.log('[MobileScanner] Offline mode - queueing for sync');
                 // Queue for offline sync
                 const token = await getAuthToken();
                 await offlineSyncService.queueCheckIn(ticketId, id, token);
@@ -212,12 +219,16 @@ export const MobileCheckInScanner: React.FC = () => {
                 
                 playSuccessSound();
                 setIsProcessing(false);
+                setShowScanner(false);
+                console.log('[MobileScanner] Offline scan complete');
                 return;
             }
 
             // Online - process immediately
+            console.log('[MobileScanner] Online mode - calling API');
             const token = await getAuthToken();
-            console.log('[MobileScanner] Checking in ticket:', ticketId);
+            console.log('[MobileScanner] Got auth token, calling check-in API');
+            
             const response = await fetch('/api/registrations/checkin', {
                 method: 'POST',
                 headers: {
@@ -230,10 +241,14 @@ export const MobileCheckInScanner: React.FC = () => {
                 })
             });
 
+            console.log('[MobileScanner] API response status:', response.status);
             const result = await response.json();
+            console.log('[MobileScanner] API response data:', result);
+            
             const scanDuration = Date.now() - scanStartTime;
 
             if (response.ok) {
+                console.log('[MobileScanner] Check-in SUCCESS');
                 // Success
                 const scanResult: ScanResult = {
                     success: true,
@@ -268,7 +283,9 @@ export const MobileCheckInScanner: React.FC = () => {
                 
                 // Close scanner after successful check-in
                 setShowScanner(false);
+                console.log('[MobileScanner] Scanner closed after success');
             } else {
+                console.log('[MobileScanner] Check-in FAILED:', result.error || result.message);
                 // Error
                 const scanResult: ScanResult = {
                     success: false,
@@ -297,9 +314,10 @@ export const MobileCheckInScanner: React.FC = () => {
                 
                 // Close scanner to show error message
                 setShowScanner(false);
+                console.log('[MobileScanner] Scanner closed after error');
             }
         } catch (error: any) {
-            console.error('Check-in error:', error);
+            console.error('[MobileScanner] Exception during scan:', error);
             
             const scanResult: ScanResult = {
                 success: false,
@@ -324,7 +342,12 @@ export const MobileCheckInScanner: React.FC = () => {
             if (navigator.vibrate) {
                 navigator.vibrate([100, 50, 100, 50, 100]);
             }
+            
+            playErrorSound();
+            setShowScanner(false);
+            console.log('[MobileScanner] Scanner closed after exception');
         } finally {
+            console.log('[MobileScanner] Setting isProcessing to false');
             setIsProcessing(false);
         }
     }, [isProcessing, id]);
