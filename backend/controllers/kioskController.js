@@ -373,16 +373,48 @@ const scanTicket = async (req, res) => {
             });
         }
 
-        // Check if already checked in
+        // Check if already checked in - check ALL sources of check-in status
+        // Source 1: ticket.checkedIn (in tickets JSON array)
+        // Source 2: ticket.status === 'used'
+        // Source 3: registration.check_in_statuses (JSONB)
+        // Source 4: registration.checked_in (legacy registration-level)
+        
+        const ticketCheckedIn = foundTicket.checkedIn || foundTicket.status === 'used';
+        
+        // Also check checkInStatuses if it exists
+        let statusCheckedIn = false;
+        let statusTimestamp = null;
+        if (foundRegistration.check_in_statuses) {
+            // Try to find matching status entry
+            const statuses = foundRegistration.check_in_statuses;
+            for (const key of Object.keys(statuses)) {
+                // Check if this status matches our ticket
+                if (statuses[key]?.checkedIn) {
+                    // Keys can be: "tierId-tIndex-i" or "tierId-i"
+                    const keyParts = key.split('-');
+                    const tierMatches = keyParts[0] === foundTicket.tierId || keyParts[0] === foundTicket.id;
+                    if (tierMatches) {
+                        statusCheckedIn = true;
+                        statusTimestamp = statuses[key].timestamp;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        const isCheckedIn = ticketCheckedIn || statusCheckedIn;
+        const checkedInTime = foundTicket.checkedInAt || (statusTimestamp ? new Date(statusTimestamp).toISOString() : null);
+        
         console.log('[Kiosk Scan] Checking ticket status:', {
             ticketId: foundTicket.id || foundTicket.ticketId,
-            checkedIn: foundTicket.checkedIn,
-            checkedInAt: foundTicket.checkedInAt,
-            status: foundTicket.status,
-            ticketStructure: JSON.stringify(foundTicket)
+            ticketCheckedIn: foundTicket.checkedIn,
+            ticketStatus: foundTicket.status,
+            statusCheckedIn,
+            isCheckedIn,
+            checkedInAt: checkedInTime
         });
         
-        if (foundTicket.checkedIn || foundTicket.status === 'used') {
+        if (isCheckedIn) {
             await logKioskAction(tokenId, eventId, 'scan_duplicate', {
                 ticketId: foundTicket.id,
                 attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
@@ -395,7 +427,7 @@ const scanTicket = async (req, res) => {
                 message: 'Already checked in',
                 attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
                 ticketType: foundTicket.name,
-                checkedInAt: foundTicket.checkedInAt
+                checkedInAt: checkedInTime
             });
         }
 
