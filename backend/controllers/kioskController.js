@@ -362,6 +362,14 @@ const scanTicket = async (req, res) => {
         }
 
         // Check if already checked in
+        console.log('[Kiosk Scan] Checking ticket status:', {
+            ticketId: foundTicket.id || foundTicket.ticketId,
+            checkedIn: foundTicket.checkedIn,
+            checkedInAt: foundTicket.checkedInAt,
+            status: foundTicket.status,
+            ticketStructure: JSON.stringify(foundTicket)
+        });
+        
         if (foundTicket.checkedIn || foundTicket.status === 'used') {
             await logKioskAction(tokenId, eventId, 'scan_duplicate', {
                 ticketId: foundTicket.id,
