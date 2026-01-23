@@ -217,13 +217,17 @@ export const MobileCheckInScanner: React.FC = () => {
 
             // Online - process immediately
             const token = await getAuthToken();
-            const response = await fetch('/api/registrations/checkin/ticket', {
+            console.log('[MobileScanner] Checking in ticket:', ticketId);
+            const response = await fetch('/api/registrations/checkin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ ticketId })
+                body: JSON.stringify({ 
+                    ticketId,
+                    eventId: id 
+                })
             });
 
             const result = await response.json();
