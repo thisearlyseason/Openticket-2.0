@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Search, X, QrCode, User, RotateCcw, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Search, X, User, RotateCcw, Filter, Users, Clock, AlertTriangle, Phone, Mail, ShoppingBag, CreditCard, Banknote, Smartphone, DollarSign, ChevronRight, ArrowLeftCircle, Trash2, Loader2, Ticket, MoreVertical, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 import { isPaidStatus, isRefundedStatus, getPaymentStatusLabel } from '../services/paymentUtils';
 import { Registration, Event, PurchasedTicket } from '../types';
