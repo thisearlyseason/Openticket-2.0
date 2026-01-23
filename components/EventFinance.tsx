@@ -751,14 +751,14 @@ export const EventFinance = () => {
             </div>
 
             {/* Tax Collected */}
-            {summary.taxCollected > 0 && (
+            {filteredSummary.taxCollected > 0 && (
                 <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Receipt className="text-blue-600" size={20} />
                             <span className="font-medium">Tax Collected</span>
                         </div>
-                        <span className="text-xl font-bold">${summary.taxCollected.toFixed(2)}</span>
+                        <span className="text-xl font-bold">${filteredSummary.taxCollected.toFixed(2)}</span>
                     </div>
                     <p className="text-xs text-zinc-500 mt-1">
                         Note: Tax is collected on behalf of the organizer and should be remitted to the appropriate tax authority.
