@@ -438,10 +438,41 @@ export const AffiliateDashboard = () => {
 
                     {/* Recent Earnings Table */}
                     <Card className="p-6 border-zinc-200 dark:border-zinc-800">
-                        <h3 className="font-bold text-lg mb-4 text-zinc-900 dark:text-white">Recent Earnings</h3>
-                        {stats.recentCommissions.length > 0 ? (
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                            <h3 className="font-bold text-lg text-zinc-900 dark:text-white">Earnings History</h3>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-zinc-500">Period:</span>
+                                {[
+                                    { value: '30d', label: '30 Days' },
+                                    { value: '60d', label: '60 Days' },
+                                    { value: '90d', label: '90 Days' },
+                                    { value: 'all', label: 'All Time' }
+                                ].map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setEarningsDateRange(opt.value as any)}
+                                        className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${
+                                            earningsDateRange === opt.value
+                                                ? 'bg-[#E0FF20] text-black'
+                                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        {earningsDateRange !== 'all' && (
+                            <div className="text-sm text-zinc-500 mb-3">
+                                Showing {filteredCommissions.length} commission{filteredCommissions.length !== 1 ? 's' : ''} 
+                                {' '}totaling <span className="text-green-600 font-bold">${filteredTotal.toFixed(2)}</span>
+                            </div>
+                        )}
+                        
+                        {filteredCommissions.length > 0 ? (
                             <div className="space-y-3">
-                                {stats.recentCommissions.map(inv => (
+                                {filteredCommissions.map(inv => (
                                     <div key={inv.id} className="flex justify-between items-center p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl">
                                         <div>
                                             <div className="font-bold text-sm text-zinc-900 dark:text-white">{inv.description}</div>
@@ -455,7 +486,10 @@ export const AffiliateDashboard = () => {
                             </div>
                         ) : (
                             <div className="text-center py-8 text-zinc-500 text-sm italic">
-                                No commissions yet. Start sharing your link!
+                                {earningsDateRange === 'all' 
+                                    ? 'No commissions yet. Start sharing your link!'
+                                    : `No commissions in the last ${earningsDateRange === '30d' ? '30' : earningsDateRange === '60d' ? '60' : '90'} days.`
+                                }
                             </div>
                         )}
                     </Card>
