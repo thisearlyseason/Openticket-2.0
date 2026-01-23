@@ -315,16 +315,28 @@ const scanTicket = async (req, res) => {
         console.log('[Kiosk Scan] Found', registrations?.length || 0, 'registrations for event');
 
         // Search for the ticket ID within the tickets array
+        // CRITICAL: Must match on unique identifiers (ticketId, ticketNumber, qrCodeData)
+        // NOT on tier id (id) which is shared across multiple tickets from the same tier
         let foundRegistration = null;
         let foundTicket = null;
 
         for (const reg of registrations || []) {
             if (reg.tickets && Array.isArray(reg.tickets)) {
-                const ticket = reg.tickets.find(t => t.id === qrCode || t.ticketNumber === qrCode || t.ticketId === qrCode);
+                // Search by unique ticket identifiers only
+                const ticket = reg.tickets.find(t => 
+                    t.ticketId === qrCode || 
+                    t.ticketNumber === qrCode || 
+                    t.qrCodeData === qrCode
+                );
                 if (ticket) {
                     foundRegistration = reg;
                     foundTicket = ticket;
-                    console.log('[Kiosk Scan] ✅ Found matching ticket:', ticket.id);
+                    console.log('[Kiosk Scan] ✅ Found matching ticket:', {
+                        ticketId: ticket.ticketId,
+                        ticketNumber: ticket.ticketNumber,
+                        qrCodeData: ticket.qrCodeData,
+                        scannedQR: qrCode
+                    });
                     break;
                 }
             }
