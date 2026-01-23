@@ -1016,8 +1016,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     };
 
     const exportFinancialsCSV = () => {
+        // Use filtered transactions based on date range
+        const transactionsToExport = financeDateRange === 'all' ? ensureArray(stats.recentTransactions) : filteredTransactions;
+        
         const headers = ['Date', 'Transaction ID', 'Event', 'Organizer', 'Gross', 'Platform Fee', 'Stripe Fee', 'Organizer Net'];
-        const rows = ensureArray(stats.recentTransactions).map(tx => {
+        const rows = transactionsToExport.map((tx: any) => {
             const event = safeEvents.find(e => e.id === tx.event_id);
             return [
                 new Date(tx.created_at).toLocaleDateString(),
@@ -1031,22 +1034,33 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             ];
         });
 
-        // Add summary
+        // Add summary based on filtered or all data
+        const summaryStats = financeDateRange === 'all' ? stats : {
+            totalVolume: filteredFinanceStats.totalVolume,
+            platformFees: filteredFinanceStats.platformFees,
+            stripeFees: filteredFinanceStats.stripeFees,
+            organizerNet: filteredFinanceStats.organizerNet,
+            refundTotal: stats.refundTotal,
+            subscriptionRevenue: stats.subscriptionRevenue
+        };
+
         rows.push([]);
         rows.push(['SUMMARY']);
-        rows.push(['Total Volume', '', '', '', stats.totalVolume.toFixed(2)]);
-        rows.push(['Platform Fees', '', '', '', stats.platformFees.toFixed(2)]);
-        rows.push(['Stripe Fees', '', '', '', stats.stripeFees.toFixed(2)]);
-        rows.push(['Organizer Net', '', '', '', stats.organizerNet.toFixed(2)]);
-        rows.push(['Refunds', '', '', '', stats.refundTotal.toFixed(2)]);
-        rows.push(['Subscription Revenue', '', '', '', stats.subscriptionRevenue.toFixed(2)]);
+        rows.push(['Date Range', getDateRangeLabel()]);
+        rows.push(['Total Transactions', transactionsToExport.length.toString()]);
+        rows.push(['Total Volume', '', '', '', summaryStats.totalVolume.toFixed(2)]);
+        rows.push(['Platform Fees', '', '', '', summaryStats.platformFees.toFixed(2)]);
+        rows.push(['Stripe Fees', '', '', '', summaryStats.stripeFees.toFixed(2)]);
+        rows.push(['Organizer Net', '', '', '', (summaryStats.organizerNet || 0).toFixed(2)]);
+        rows.push(['Refunds', '', '', '', (summaryStats.refundTotal || 0).toFixed(2)]);
+        rows.push(['Subscription Revenue', '', '', '', summaryStats.subscriptionRevenue.toFixed(2)]);
 
         const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `platform-financials-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `platform-financials-${getDateRangeLabel().replace(/\s/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
