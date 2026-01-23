@@ -238,8 +238,8 @@ export const MobileCheckInScanner: React.FC = () => {
                 const scanResult: ScanResult = {
                     success: true,
                     message: 'Check-in successful!',
-                    attendeeName: result.attendeeName || 'Guest',
-                    ticketType: result.ticketType || 'Ticket',
+                    attendeeName: result.ticket?.attendeeName || result.attendeeName || 'Guest',
+                    ticketType: result.ticket?.tierName || result.ticketType || 'Ticket',
                     timestamp: Date.now()
                 };
                 
@@ -265,6 +265,9 @@ export const MobileCheckInScanner: React.FC = () => {
                 }
                 
                 playSuccessSound();
+                
+                // Close scanner after successful check-in
+                setShowScanner(false);
             } else {
                 // Error
                 const scanResult: ScanResult = {
