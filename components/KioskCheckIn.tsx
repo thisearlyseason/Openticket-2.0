@@ -100,29 +100,40 @@ export const KioskCheckIn: React.FC = () => {
         }
     };
 
-    const handleCheckIn = async (registrationId: string, attendeeName: string) => {
+    const handleCheckIn = async (registrationId: string, attendeeName: string, ticketId?: string) => {
         try {
-            await kioskService.checkIn(registrationId);
+            console.log('[KioskCheckIn] Checking in:', { registrationId, attendeeName, ticketId });
+            const result = await kioskService.checkIn(registrationId, ticketId);
+            console.log('[KioskCheckIn] Check-in result:', result);
 
-            // Show success
-            setCurrentScan({
-                success: true,
-                status: 'valid',
-                message: `${attendeeName} checked in successfully!`,
-                attendeeName
-            });
+            // Show success only if backend confirms success
+            if (result.success) {
+                setCurrentScan({
+                    success: true,
+                    status: 'valid',
+                    message: `${attendeeName} checked in successfully!`,
+                    attendeeName
+                });
 
-            // Clear after 3 seconds
-            setTimeout(() => {
-                setCurrentScan(null);
-                setSelectedGuest(null);
-                setSearchQuery('');
-                setSearchResults([]);
-            }, 3000);
+                // Clear after 3 seconds
+                setTimeout(() => {
+                    setCurrentScan(null);
+                    setSelectedGuest(null);
+                    setSearchQuery('');
+                    setSearchResults([]);
+                }, 3000);
+            } else {
+                throw new Error(result.message || 'Check-in failed');
+            }
 
         } catch (error: any) {
             console.error('[KioskCheckIn] Check-in error:', error);
-            alert(error.message || 'Failed to check in');
+            setCurrentScan({
+                success: false,
+                status: 'error',
+                message: error.message || 'Failed to check in',
+                attendeeName
+            });
         }
     };
 
