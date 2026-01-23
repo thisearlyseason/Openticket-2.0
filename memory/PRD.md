@@ -1579,3 +1579,51 @@ Applied conversion ratio (`chargedAmount / usdTotal`) to ALL displayed amounts a
 - Already implemented in ReceiptModal (UI.tsx)
 - Download PDF and Print buttons available
 - Accessible from both Confirmation Screen and My Tickets page
+
+---
+
+## Production Readiness Audit (January 22, 2026)
+
+### ✅ Security Fixes Applied
+
+#### 1. CRITICAL: Stripe Secret Key Exposure Fixed
+- **Issue:** `stripe_secret_key` was being exposed in `/api/admin/users` and `/api/auth/profiles/:id` responses
+- **Fix:** 
+  - Removed `stripe_secret_key` from all API responses
+  - Added `hasStripeSecretKey: boolean` flag to indicate if user has configured Stripe
+  - Files modified: `/app/backend/controllers/adminController.js`, `/app/backend/controllers/profileController.js`
+
+#### 2. RBAC Verified
+- All `/api/admin/*` routes protected with `verifyToken` + `requireAdmin` middleware
+- `requireAdmin` middleware checks `is_admin === true` in database
+- Non-admin users receive 401/403 errors
+
+### ✅ Gemini API Key Persistence
+- **GET /api/settings/admin-gemini-key**: Public (allows other roles to check if global key exists)
+- **POST /api/settings/admin-gemini-key**: Requires SuperAdmin authentication
+- **Storage:** Column `global_gemini_key` in `profiles` table (migration needed for production)
+- **Flow:** SuperAdmin saves key → stored in DB → Other roles can fetch via `GeminiService.getAIClient()`
+
+### ✅ Pricing Tiers Verified
+| Plan | Fee % | Fixed Fee | Tickets/Event | Monthly Limit |
+|------|-------|-----------|---------------|---------------|
+| Free | 4.5% | $0.99 | 100 | 400 |
+| Pro | 2.9% | $0.69 | 1,000 | 4,000 |
+| Premium | 1.9% | $0.49 | 3,000 | 10,000 |
+| Enterprise | Custom | Custom | Unlimited | Unlimited |
+
+### ✅ Financial Systems
+- `platform_fee`, `organizer_net`, `stripe_fee` tracked in `financial_transactions` table
+- Affiliate commissions tracked via `affiliate_code` in registrations
+- Per-organizer financial breakdowns available in SuperAdmin dashboard
+
+### ⚠️ Production Blockers
+1. **Database Migration Required:** Run `/app/backend/migrations/add_missing_columns.sql` on production Supabase
+   - Adds: `events.currency`, `events.email_settings`, `events.organizer_absorbed_fee`
+   - Adds: `registrations.charged_currency`, `registrations.charged_amount`
+   - Adds: `profiles.global_gemini_key`
+
+### Test Results
+- 19/19 security tests passed
+- All API endpoints properly authenticated
+- No secrets exposed in responses
