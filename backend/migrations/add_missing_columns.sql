@@ -143,3 +143,22 @@ WHERE charged_amount IS NULL
 -- FROM information_schema.columns 
 -- WHERE table_name = 'registrations' 
 --   AND column_name IN ('charged_currency', 'charged_amount');
+
+-- ============================================
+-- PROFILES TABLE COLUMNS (for SuperAdmin settings)
+-- ============================================
+
+-- Add global_gemini_key column to profiles for SuperAdmin
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'profiles' AND column_name = 'global_gemini_key'
+    ) THEN
+        ALTER TABLE profiles ADD COLUMN global_gemini_key TEXT;
+        COMMENT ON COLUMN profiles.global_gemini_key IS 'Global Gemini API key set by SuperAdmin for all users';
+        RAISE NOTICE 'Added profiles.global_gemini_key column';
+    ELSE
+        RAISE NOTICE 'profiles.global_gemini_key already exists';
+    END IF;
+END $$;
