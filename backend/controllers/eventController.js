@@ -203,9 +203,10 @@ export const getEventStats = async (req, res) => {
         }
 
         // Get all registrations for this event (EXCLUDE REFUNDED)
+        // Only select 'tickets' and 'payment_status' which are guaranteed to exist
         const { data: registrations, error: regError } = await supabase
             .from('registrations')
-            .select('tickets, checked_in, check_in_statuses, payment_status')
+            .select('tickets, payment_status')
             .eq('event_id', id)
             .not('payment_status', 'eq', 'refunded');
 
@@ -214,7 +215,7 @@ export const getEventStats = async (req, res) => {
             throw regError;
         }
 
-        // Calculate stats
+        // Calculate stats from tickets array (which stores checkedIn status)
         let total = 0;
         let checkedIn = 0;
 
@@ -231,11 +232,8 @@ export const getEventStats = async (req, res) => {
                     }
                 }
             } else {
-                // Legacy registration without tickets array
+                // Legacy registration without tickets array - count as 1 ticket, not checked in
                 total++;
-                if (reg.checked_in) {
-                    checkedIn++;
-                }
             }
         }
 
