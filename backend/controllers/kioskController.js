@@ -419,41 +419,41 @@ const scanTicket = async (req, res) => {
         }
 
         // Check if already checked in - check ALL sources of check-in status
-        // Source 1: ticket.checkedIn (in tickets JSON array)
-        // Source 2: ticket.status === 'used'
-        // Source 3: registration.check_in_statuses (JSONB)
-        // Source 4: registration.checked_in (legacy registration-level)
+        // Primary Source: ticket.checkedIn (stored directly in ticket object in tickets JSON array)
+        // Secondary Source: ticket.status === 'used'
+        // NOTE: check_in_statuses was too ambiguous for multi-ticket orders, so we rely on ticket.checkedIn
         
-        const ticketCheckedIn = foundTicket.checkedIn || foundTicket.status === 'used';
+        const ticketCheckedIn = foundTicket.checkedIn === true;
+        const ticketUsed = foundTicket.status === 'used';
         
-        // Also check checkInStatuses if it exists
+        // Find the ticket index for more precise status lookup
+        const ticketIndex = foundRegistration.tickets?.findIndex(t => 
+            t.ticketId === foundTicket.ticketId || 
+            t.ticketNumber === foundTicket.ticketNumber
+        ) ?? -1;
+        
+        // Only check checkInStatuses if we have a precise key match
         let statusCheckedIn = false;
         let statusTimestamp = null;
-        if (foundRegistration.check_in_statuses) {
-            // Try to find matching status entry
+        if (foundRegistration.check_in_statuses && ticketIndex !== -1) {
             const statuses = foundRegistration.check_in_statuses;
-            for (const key of Object.keys(statuses)) {
-                // Check if this status matches our ticket
-                if (statuses[key]?.checkedIn) {
-                    // Keys can be: "tierId-tIndex-i" or "tierId-i"
-                    const keyParts = key.split('-');
-                    const tierMatches = keyParts[0] === foundTicket.tierId || keyParts[0] === foundTicket.id;
-                    if (tierMatches) {
-                        statusCheckedIn = true;
-                        statusTimestamp = statuses[key].timestamp;
-                        break;
-                    }
-                }
+            // Use precise key format: "tierId-ticketIndex-0"
+            const preciseKey = `${foundTicket.tierId || foundTicket.id}-${ticketIndex}-0`;
+            if (statuses[preciseKey]?.checkedIn) {
+                statusCheckedIn = true;
+                statusTimestamp = statuses[preciseKey].timestamp;
             }
         }
         
-        const isCheckedIn = ticketCheckedIn || statusCheckedIn;
+        const isCheckedIn = ticketCheckedIn || ticketUsed || statusCheckedIn;
         const checkedInTime = foundTicket.checkedInAt || (statusTimestamp ? new Date(statusTimestamp).toISOString() : null);
         
         console.log('[Kiosk Scan] Checking ticket status:', {
-            ticketId: foundTicket.id || foundTicket.ticketId,
-            ticketCheckedIn: foundTicket.checkedIn,
-            ticketStatus: foundTicket.status,
+            ticketId: foundTicket.ticketId || foundTicket.id,
+            ticketNumber: foundTicket.ticketNumber,
+            ticketIndex,
+            ticketCheckedIn,
+            ticketUsed,
             statusCheckedIn,
             isCheckedIn,
             checkedInAt: checkedInTime
@@ -461,7 +461,7 @@ const scanTicket = async (req, res) => {
         
         if (isCheckedIn) {
             await logKioskAction(tokenId, eventId, 'scan_duplicate', {
-                ticketId: foundTicket.id,
+                ticketId: foundTicket.ticketId || foundTicket.id,
                 attendeeName: foundTicket.attendeeName || foundRegistration.attendee_name,
                 deviceId
             });
