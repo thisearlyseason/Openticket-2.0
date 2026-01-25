@@ -300,11 +300,10 @@ export const MobileCheckInScanner: React.FC = () => {
                 }
                 
                 playSuccessSound();
-                setShowScanner(false);
-                console.log('[MobileScanner] Scanner closed after success');
+                console.log('[MobileScanner] Check-in success recorded');
             } else {
                 console.log('[MobileScanner] Check-in FAILED:', result.error || result.message);
-                // Error
+                // Error (but not 500 - those are handled above)
                 const scanResult: ScanResult = {
                     success: false,
                     message: result.error || result.message || 'Check-in failed',
@@ -320,8 +319,7 @@ export const MobileCheckInScanner: React.FC = () => {
                 }
                 
                 playErrorSound();
-                setShowScanner(false);
-                console.log('[MobileScanner] Scanner closed after error');
+                console.log('[MobileScanner] Check-in error recorded');
             }
         } catch (error: any) {
             console.error('[MobileScanner] Exception during scan:', error);
@@ -343,8 +341,7 @@ export const MobileCheckInScanner: React.FC = () => {
             }
             
             playErrorSound();
-            setShowScanner(false);
-            console.log('[MobileScanner] Scanner closed after exception');
+            console.log('[MobileScanner] Exception handled');
         } finally {
             console.log('[MobileScanner] Setting isProcessing to false');
             setIsProcessing(false);
