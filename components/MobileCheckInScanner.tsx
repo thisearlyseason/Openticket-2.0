@@ -67,7 +67,7 @@ export const MobileCheckInScanner: React.FC = () => {
     const loadStats = async () => {
         try {
             const token = await getAuthToken();
-            const response = await fetch(`/api/events/${id}/stats`, {
+            const response = await fetch(`${API_URL}/api/events/${id}/stats`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -209,7 +209,7 @@ export const MobileCheckInScanner: React.FC = () => {
             const token = await getAuthToken();
             console.log('[MobileScanner] Got auth token, calling check-in API');
             
-            const response = await fetch('/api/registrations/checkin', {
+            const response = await fetch(`${API_URL}/api/registrations/checkin`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
