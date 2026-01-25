@@ -40,13 +40,32 @@ export const MobileCheckInScanner: React.FC = () => {
     const navigate = useNavigate();
     const [showScanner, setShowScanner] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+    const [scanResults, setScanResults] = useState<ScanResult[]>(() => {
+        // Load history from localStorage on init
+        try {
+            const saved = localStorage.getItem(`mobile_scan_history_${id}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
     const [stats, setStats] = useState<Stats>({ total: 0, checkedIn: 0, pending: 0 });
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
     const lastScannedRef = useRef<{code: string; time: number} | null>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
+
+    // Persist scan history to localStorage
+    useEffect(() => {
+        if (id && scanResults.length > 0) {
+            try {
+                localStorage.setItem(`mobile_scan_history_${id}`, JSON.stringify(scanResults.slice(0, 50)));
+            } catch (e) {
+                console.error('[MobileScanner] Failed to save history:', e);
+            }
+        }
+    }, [scanResults, id]);
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
