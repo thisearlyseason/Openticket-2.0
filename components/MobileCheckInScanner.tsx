@@ -597,7 +597,7 @@ async function handleStripePayment(paymentInfo: PaymentInfo) {
         const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
         
         // Call backend to create Stripe checkout session
-        const response = await fetch(`${API_URL}/api/payments/create-door-session`, {
+        const response = await fetch(`${API_URL}/api/stripe/create-door-session`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -607,13 +607,13 @@ async function handleStripePayment(paymentInfo: PaymentInfo) {
                 registrationId: paymentInfo.registrationId,
                 ticketId: paymentInfo.ticketId,
                 amount: paymentInfo.price,
-                returnUrl: window.location.href
+                returnUrl: window.location.origin + window.location.pathname
             })
         });
         
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.message || 'Failed to create payment session');
+            throw new Error(error.error || 'Failed to create payment session');
         }
         
         const { url } = await response.json();
