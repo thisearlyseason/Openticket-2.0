@@ -7,6 +7,9 @@ import { getAuthToken } from '../services/firebaseConfig';
 import { offlineSyncService } from '../services/offlineSyncService';
 import { scanAnalyticsService } from '../services/scanAnalyticsService';
 
+// Get API URL from environment
+const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
+
 interface ScanResult {
     success: boolean;
     message: string;
