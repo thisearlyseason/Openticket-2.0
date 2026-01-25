@@ -563,19 +563,30 @@ const searchGuest = async (req, res) => {
                 return;
             }
 
+            // Get registration-level name/email as fallback
+            const regName = r.attendee_name || r.name || 'Unknown';
+            const regEmail = r.attendee_email || r.email || '';
+
             if (r.tickets && Array.isArray(r.tickets) && r.tickets.length > 0) {
                 // Add each ticket as a separate result
-                r.tickets.forEach(ticket => {
+                r.tickets.forEach((ticket, index) => {
+                    // Skip refunded/cancelled tickets
+                    if (ticket.status === 'refunded' || ticket.status === 'cancelled') {
+                        return;
+                    }
+                    
                     results.push({
                         id: r.id,
-                        ticketId: ticket.ticketId || ticket.ticketNumber, // USE UNIQUE TICKET ID
-                        attendeeName: ticket.attendeeName || r.attendee_name,
-                        attendeeEmail: ticket.attendeeEmail || r.attendee_email,
-                        ticketType: ticket.name || 'General Admission',
-                        checkedIn: ticket.checkedIn || ticket.status === 'used' || false,
+                        ticketId: ticket.ticketId || ticket.ticketNumber || `${r.id}-${index}`,
+                        attendeeName: ticket.attendeeName || ticket.name || regName,
+                        attendeeEmail: ticket.attendeeEmail || ticket.email || regEmail,
+                        ticketType: ticket.name || ticket.tierName || 'General Admission',
+                        ticketNumber: ticket.ticketNumber || '',
+                        checkedIn: ticket.checkedIn === true || ticket.status === 'used',
                         checkedInAt: ticket.checkedInAt || null,
                         paymentStatus: r.payment_status,
-                        price: ticket.pricePerTicket || 0
+                        price: ticket.pricePerTicket || ticket.price || 0,
+                        needsPayment: r.payment_status !== 'paid' && r.payment_status !== 'succeeded' && (r.total_amount > 0 || ticket.pricePerTicket > 0)
                     });
                 });
             } else {
@@ -583,16 +594,20 @@ const searchGuest = async (req, res) => {
                 results.push({
                     id: r.id,
                     ticketId: null,
-                    attendeeName: r.attendee_name,
-                    attendeeEmail: r.attendee_email,
-                    ticketType: 'General Admission',
-                    checkedIn: false,
-                    checkedInAt: null,
+                    attendeeName: regName,
+                    attendeeEmail: regEmail,
+                    ticketType: r.ticket_type || 'General Admission',
+                    ticketNumber: '',
+                    checkedIn: r.checked_in || false,
+                    checkedInAt: r.checked_in_at || null,
                     paymentStatus: r.payment_status,
-                    price: r.total_amount || 0
+                    price: r.total_amount || 0,
+                    needsPayment: r.payment_status !== 'paid' && r.payment_status !== 'succeeded' && r.total_amount > 0
                 });
             }
         });
+
+        console.log('[Kiosk Search] Found', results.length, 'results for query:', query);
 
         res.json({ success: true, results });
     } catch (error) {
