@@ -5,53 +5,54 @@
  */
 
 // ============== PREDEFINED TEMPLATES ==============
+// These MUST match the templates in EventBuilder.tsx for consistency
 
 const TEMPLATE_THEMES = {
     modern: {
-        headerGradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
-        accentColor: '#374151',
+        headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+        accentColor: '#8b5cf6',
         bgColor: '#ffffff',
-        textColor: '#1f2937',
+        textColor: '#111827',
         mutedColor: '#6b7280'
     },
     classic: {
-        headerGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)',
-        accentColor: '#1e3a5f',
-        bgColor: '#ffffff',
-        textColor: '#1f2937',
-        mutedColor: '#6b7280'
+        headerGradient: 'linear-gradient(135deg, #27272a 0%, #18181b 100%)',
+        accentColor: '#fbbf24',
+        bgColor: '#1a1a1a',
+        textColor: '#ffffff',
+        mutedColor: '#a1a1aa'
     },
     minimal: {
-        headerGradient: 'linear-gradient(135deg, #374151 0%, #1f2937 100%)',
-        accentColor: '#374151',
+        headerGradient: 'linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%)',
+        accentColor: '#000000',
         bgColor: '#ffffff',
-        textColor: '#1f2937',
-        mutedColor: '#6b7280'
+        textColor: '#000000',
+        mutedColor: '#71717a'
     },
     festive: {
-        headerGradient: 'linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%)',
-        accentColor: '#991b1b',
-        bgColor: '#ffffff',
-        textColor: '#1f2937',
+        headerGradient: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)',
+        accentColor: '#ec4899',
+        bgColor: '#fff5f5',
+        textColor: '#111827',
         mutedColor: '#6b7280'
     },
     purple: {
-        headerGradient: 'linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%)',
-        accentColor: '#5b21b6',
+        headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+        accentColor: '#8b5cf6',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     blue: {
-        headerGradient: 'linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%)',
-        accentColor: '#1e40af',
+        headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+        accentColor: '#3b82f6',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
     },
     orange: {
-        headerGradient: 'linear-gradient(135deg, #c2410c 0%, #9a3412 100%)',
-        accentColor: '#c2410c',
+        headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+        accentColor: '#f97316',
         bgColor: '#ffffff',
         textColor: '#1f2937',
         mutedColor: '#6b7280'
