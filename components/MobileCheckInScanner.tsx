@@ -249,7 +249,39 @@ export const MobileCheckInScanner: React.FC = () => {
 
             console.log('[MobileScanner] API response status:', response.status);
             
-            // FIX: Handle 500 errors gracefully - NO recursive retry (causes infinite loops)
+            // Handle 402 Payment Required - Show payment modal
+            if (response.status === 402) {
+                const result = await response.json();
+                console.log('[MobileScanner] Payment required:', result);
+                
+                setPaymentInfo({
+                    registrationId: result.registration?.id || '',
+                    ticketId: ticketId,
+                    attendeeName: result.ticket?.attendeeName || 'Guest',
+                    ticketType: result.ticket?.ticketType || 'Ticket',
+                    price: result.ticket?.price || result.registration?.totalAmount || 0
+                });
+                setShowPaymentModal(true);
+                
+                const scanResult: ScanResult = {
+                    success: false,
+                    message: `Payment required - $${(result.ticket?.price || 0).toFixed(2)}`,
+                    attendeeName: result.ticket?.attendeeName,
+                    ticketType: result.ticket?.ticketType,
+                    timestamp: Date.now()
+                };
+                
+                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 100, 100]);
+                }
+                
+                setIsProcessing(false);
+                return;
+            }
+            
+            // Handle 500 errors gracefully - NO recursive retry (causes infinite loops)
             if (response.status === 500) {
                 console.error('[MobileScanner] 500 Error - Server error');
                 
