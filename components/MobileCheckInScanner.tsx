@@ -36,9 +36,7 @@ export const MobileCheckInScanner: React.FC = () => {
     const [stats, setStats] = useState<Stats>({ total: 0, checkedIn: 0, pending: 0 });
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
-    const retryAttemptsRef = useRef<number>(0);
     const lastScannedRef = useRef<{code: string; time: number} | null>(null);
-    const MAX_RETRY_ATTEMPTS = 3;
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
