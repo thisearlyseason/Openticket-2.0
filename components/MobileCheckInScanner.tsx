@@ -241,49 +241,30 @@ export const MobileCheckInScanner: React.FC = () => {
 
             console.log('[MobileScanner] API response status:', response.status);
             
-            // FIX: Handle 500 errors gracefully without infinite retry
+            // FIX: Handle 500 errors gracefully - NO recursive retry (causes infinite loops)
             if (response.status === 500) {
-                retryAttemptsRef.current += 1;
-                console.error(`[MobileScanner] 500 Error - Retry attempt ${retryAttemptsRef.current}/${MAX_RETRY_ATTEMPTS}`);
+                console.error('[MobileScanner] 500 Error - Server error');
                 
-                if (retryAttemptsRef.current >= MAX_RETRY_ATTEMPTS) {
-                    // Max retries reached - show error and stop
-                    const scanResult: ScanResult = {
-                        success: false,
-                        message: 'Server error - please try again later',
-                        timestamp: Date.now()
-                    };
-                    
-                    setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
-                    
-                    await trackScanAnalytics(false, ticketId, Date.now() - scanStartTime, 'Server error (500) - max retries exceeded');
-                    
-                    if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100, 50, 100]);
-                    }
-                    
-                    playErrorSound();
-                    setShowScanner(false);
-                    setIsProcessing(false);
-                    
-                    // Reset retry counter for next scan
-                    setTimeout(() => {
-                        retryAttemptsRef.current = 0;
-                    }, 5000);
-                    
-                    console.log('[MobileScanner] Max retries exceeded, stopping');
-                    return;
+                // Show error immediately - don't retry (server issue, not network issue)
+                const scanResult: ScanResult = {
+                    success: false,
+                    message: 'Server error - please try again',
+                    timestamp: Date.now()
+                };
+                
+                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                
+                await trackScanAnalytics(false, ticketId, Date.now() - scanStartTime, 'Server error (500)');
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100, 50, 100]);
                 }
                 
-                // Retry with exponential backoff
-                const retryDelay = 1000 * Math.pow(2, retryAttemptsRef.current - 1);
-                console.log(`[MobileScanner] Retrying in ${retryDelay}ms...`);
-                
-                await new Promise(resolve => setTimeout(resolve, retryDelay));
-                
-                // Recursive retry
+                playErrorSound();
                 setIsProcessing(false);
-                return handleScan(qrData);
+                
+                console.log('[MobileScanner] Server error handled, scanner closed');
+                return;
             }
             
             // Reset retry counter on successful request (even if not 200)
