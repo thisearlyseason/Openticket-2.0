@@ -1,6 +1,6 @@
 import express from 'express';
 import * as eventController from '../controllers/eventController.js';
-import { verifyToken, requireOrganizer } from '../middlewares/authMiddleware.js';
+import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
@@ -13,9 +13,9 @@ router.get('/:eventId/registrations/:registrationId/tickets/:ticketId', eventCon
 // Protected routes
 router.get('/', verifyToken, eventController.getEvents);
 router.get('/:id', verifyToken, eventController.getEvent);
-router.post('/', verifyToken, requireOrganizer, eventController.createEvent);
-router.put('/:id', verifyToken, requireOrganizer, eventController.updateEvent);
-router.delete('/:id', verifyToken, requireOrganizer, eventController.deleteEvent);
+router.post('/', verifyToken, eventController.createEvent);
+router.put('/:id', verifyToken, eventController.updateEvent);
+router.delete('/:id', verifyToken, eventController.deleteEvent);
 
 // NEW: Event stats for check-in
 router.get('/:id/stats', verifyToken, eventController.getEventStats);
