@@ -175,3 +175,78 @@ export const getPublicEvents = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+
+/**
+ * Get event statistics (check-in status counts)
+ * Used by mobile scanner and check-in interfaces
+ * GET /api/events/:id/stats
+ */
+export const getEventStats = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const organizerId = req.user.uid;
+
+        // Verify ownership
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('owner_id')
+            .eq('id', id)
+            .single();
+
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        if (event.owner_id !== organizerId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        // Get all registrations for this event (EXCLUDE REFUNDED)
+        const { data: registrations, error: regError } = await supabase
+            .from('registrations')
+            .select('tickets, checked_in, check_in_statuses, payment_status')
+            .eq('event_id', id)
+            .not('payment_status', 'eq', 'refunded');
+
+        if (regError) {
+            console.error('[getEventStats] Query error:', regError);
+            throw regError;
+        }
+
+        // Calculate stats
+        let total = 0;
+        let checkedIn = 0;
+
+        for (const reg of registrations || []) {
+            if (reg.tickets && Array.isArray(reg.tickets)) {
+                for (const ticket of reg.tickets) {
+                    // Skip refunded/cancelled tickets
+                    if (ticket.status === 'refunded' || ticket.status === 'cancelled') {
+                        continue;
+                    }
+                    total++;
+                    if (ticket.checkedIn || ticket.status === 'used') {
+                        checkedIn++;
+                    }
+                }
+            } else {
+                // Legacy registration without tickets array
+                total++;
+                if (reg.checked_in) {
+                    checkedIn++;
+                }
+            }
+        }
+
+        res.json({
+            total,
+            checkedIn,
+            pending: total - checkedIn
+        });
+
+    } catch (error) {
+        console.error('[getEventStats] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
