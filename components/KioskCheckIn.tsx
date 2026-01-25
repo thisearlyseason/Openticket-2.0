@@ -160,6 +160,15 @@ export const KioskCheckIn: React.FC = () => {
             console.log('[KioskCheckIn] Check-in result:', result);
 
             if (result.success) {
+                // Add successful check-in to history
+                setScanHistory(prev => [{
+                    success: true,
+                    message: `Checked in successfully`,
+                    attendeeName,
+                    ticketType: selectedGuest?.ticketType || currentScan?.ticketType || 'Ticket',
+                    timestamp: Date.now()
+                }, ...prev.slice(0, 19)]); // Keep last 20 entries
+                
                 setCurrentScan({
                     success: true,
                     status: 'valid',
@@ -174,6 +183,15 @@ export const KioskCheckIn: React.FC = () => {
                     setSearchResults([]);
                 }, 3000);
             } else {
+                // Add failed check-in to history
+                setScanHistory(prev => [{
+                    success: false,
+                    message: result.message || 'Check-in failed',
+                    attendeeName,
+                    ticketType: selectedGuest?.ticketType || currentScan?.ticketType || 'Ticket',
+                    timestamp: Date.now()
+                }, ...prev.slice(0, 19)]);
+                
                 throw new Error(result.message || 'Check-in failed');
             }
 
