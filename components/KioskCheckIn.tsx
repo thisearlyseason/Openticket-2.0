@@ -227,13 +227,37 @@ export const KioskCheckIn: React.FC = () => {
     };
 
     // Check if payment is actually required (not just unpaid)
+    // COMPREHENSIVE CHECK: Include ALL possible Stripe payment status values
     const needsPayment = (guest: GuestSearchResult) => {
-        // Only show "Pay Now" if payment_status is NOT completed/paid/succeeded
-        // AND price > 0
-        return guest.price > 0 && 
-               guest.paymentStatus !== 'paid' && 
-               guest.paymentStatus !== 'succeeded' &&
-               guest.paymentStatus !== 'completed';
+        // Only show "Pay Now" if payment is NOT in a successful state
+        // Stripe and our system use various status values for successful payments:
+        // - 'paid' (legacy/manual)
+        // - 'succeeded' (Stripe PaymentIntent)
+        // - 'completed' (our internal status)
+        // - 'charge.succeeded' (Stripe webhook event)
+        // - 'payment_intent.succeeded' (Stripe webhook event)
+        
+        if (guest.price <= 0) {
+            // Free tickets never need payment
+            return false;
+        }
+        
+        const successfulStatuses = [
+            'paid',
+            'succeeded',
+            'completed',
+            'charge.succeeded',
+            'payment_intent.succeeded',
+            'success', // Sometimes used
+            'confirmed' // Stripe confirmation status
+        ];
+        
+        // Check if payment status matches any successful status
+        const isPaid = successfulStatuses.some(status => 
+            guest.paymentStatus?.toLowerCase().includes(status.toLowerCase())
+        );
+        
+        return !isPaid;
     };
 
     return (
