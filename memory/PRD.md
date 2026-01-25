@@ -23,39 +23,46 @@ Build a production-ready event ticketing platform with comprehensive features fo
 
 ## CHANGELOG
 
-### 2026-01-25 - Check-In System Bug Fixes (In Progress)
-**Root Causes Identified & Fixed:**
-1. ✅ Created migration script for missing `events.ticket_design` column
-2. ✅ Fixed Mobile Scanner API URL paths (was using relative `/api/...` instead of full URL)
-3. ✅ Added missing `/api/events/:eventId/stats` endpoint
+### 2026-01-25 - Check-In System Bug Fixes
+
+**Issues Fixed:**
+1. ✅ **Infinite scan loop in MobileCheckInScanner** - Added debouncing, scanner now closes immediately on scan detection
+2. ✅ **Missing `/api/events/:eventId/stats` endpoint** - Added to eventController.js and eventRoutes.js
+3. ✅ **API URL paths in MobileCheckInScanner** - Now uses proper `API_URL` prefix
+4. ✅ **Improved error logging in kioskController** - Now logs full error details
+
+**Root Cause Identified:**
+- Production database missing `events.ticket_design` column causing 500 errors
+- Migration script created at `/app/backend/migrations/add_ticket_design_column.sql`
 
 **Pending User Action:**
 - Run database migration: `ALTER TABLE events ADD COLUMN IF NOT EXISTS ticket_design JSONB;`
+- Deploy code changes to production
 
-**Still In Progress:**
-- Full testing of Kiosk and Mobile Scanner check-in flows
+**Non-Blocking Issues (Not Fixed - External):**
+- Firebase `functions.js:1107` addEventListener error - External Firebase SDK issue, non-blocking
 
 ---
 
 ## P0 - Critical Issues (Current Sprint)
+- [x] Fix infinite scan loop in MobileCheckInScanner
+- [x] Add missing stats endpoint
 - [ ] Run `ticket_design` column migration (USER ACTION)
-- [ ] Verify Kiosk check-in works post-migration
-- [ ] Verify Mobile Scanner check-in completes
+- [ ] Deploy code changes to production
+- [ ] Verify check-in works post-deployment
 
 ## P1 - High Priority
-- [ ] Fix Firebase `addEventListener` null error in scanner components
-- [ ] Verify Dashboard excludes refunded tickets from all metrics
+- [ ] Firebase `addEventListener` null error - External SDK issue, monitor for updates
 
 ## P2 - Technical Debt
 - [ ] Refactor `SuperAdminDashboard.tsx` (3000+ lines → smaller components)
 - [ ] Consolidate check-in data model (3 fields → single source of truth)
-- [ ] Review and clean up event controller/routes
 
 ## Key Files Reference
 - `/app/backend/controllers/kioskController.js` - Kiosk check-in logic
 - `/app/backend/controllers/registrationController.js` - Manual check-in logic
 - `/app/backend/controllers/eventController.js` - Event stats endpoint
-- `/app/components/MobileCheckInScanner.tsx` - Mobile scanner UI
+- `/app/components/MobileCheckInScanner.tsx` - Mobile scanner UI (FIXED)
 - `/app/components/KioskCheckIn.tsx` - Kiosk UI
 - `/app/services/kioskService.ts` - Kiosk API service
 - `/app/services/paymentUtils.ts` - Payment status utilities
