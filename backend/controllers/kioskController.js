@@ -741,16 +741,32 @@ const checkInGuest = async (req, res) => {
             }));
         }
         
-        const { error: updateError } = await supabase
+        // Try full update first, fallback if columns don't exist
+        let updateData = {
+            checked_in: true,
+            checked_in_at: checkedInAt,
+            checked_in_method: 'kiosk',
+            checked_in_device: deviceId || 'unknown',
+            tickets: updatedTickets
+        };
+        
+        let { error: updateError } = await supabase
             .from('registrations')
-            .update({
-                checked_in: true,
-                checked_in_at: checkedInAt,
-                checked_in_method: 'kiosk',
-                checked_in_device: deviceId || 'unknown',
-                tickets: updatedTickets
-            })
+            .update(updateData)
             .eq('id', registrationId);
+
+        // If update failed due to missing columns, try simpler update
+        if (updateError && (updateError.code === '42703' || updateError.message?.includes('does not exist'))) {
+            console.log('[Kiosk] Schema mismatch detected, falling back to simple update');
+            
+            // Fallback: Only update tickets array
+            const fallbackResult = await supabase
+                .from('registrations')
+                .update({ tickets: updatedTickets })
+                .eq('id', registrationId);
+                
+            updateError = fallbackResult.error;
+        }
 
         if (updateError) {
             console.error('[Kiosk] Check-in update error:', updateError);
