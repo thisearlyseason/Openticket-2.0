@@ -28,10 +28,22 @@ export const createEvent = async (req, res) => {
             if (eventData[field] !== undefined) safeData[field] = eventData[field];
         });
 
-        const { data, error } = await supabase
+        let { data, error } = await supabase
             .from('events')
             .upsert([{ ...safeData, owner_id }])
             .select();
+
+        // Handle missing column errors gracefully (until migration is run)
+        if (error && error.code === '42703') {
+            console.warn('[Event] Schema column missing, retrying without ticket_design/email_settings...');
+            const { ticket_design, email_settings, ...fallbackData } = safeData;
+            const fallbackResult = await supabase
+                .from('events')
+                .upsert([{ ...fallbackData, owner_id }])
+                .select();
+            data = fallbackResult.data;
+            error = fallbackResult.error;
+        }
 
         if (error) throw error;
         res.status(201).json({ event: data[0] });
