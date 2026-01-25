@@ -1115,17 +1115,37 @@ export const checkInTicket = async (req, res) => {
         // Determine if any ticket is checked in (for registration-level flag)
         const anyCheckedIn = updatedTickets.some(t => t.checkedIn);
         
-        const { data: updatedReg, error: updateError } = await supabase
+        // First, try to update with all columns (newer schema)
+        // If that fails due to missing columns, fall back to just updating tickets
+        let updateData = { 
+            tickets: updatedTickets,
+            check_in_statuses: checkInStatuses,
+            checked_in: anyCheckedIn,
+            checked_in_at: anyCheckedIn ? checkedInAt : null
+        };
+        
+        let { data: updatedReg, error: updateError } = await supabase
             .from('registrations')
-            .update({ 
-                tickets: updatedTickets,
-                check_in_statuses: checkInStatuses,
-                checked_in: anyCheckedIn,
-                checked_in_at: anyCheckedIn ? checkedInAt : null
-            })
+            .update(updateData)
             .eq('id', targetRegistration.id)
             .select()
             .single();
+        
+        // If update failed due to missing columns, try simpler update
+        if (updateError && (updateError.code === '42703' || updateError.message?.includes('does not exist'))) {
+            console.log('[CheckIn] Schema mismatch detected, falling back to simple update');
+            
+            // Fallback: Only update tickets array (checkedIn is stored inside each ticket)
+            const fallbackResult = await supabase
+                .from('registrations')
+                .update({ tickets: updatedTickets })
+                .eq('id', targetRegistration.id)
+                .select()
+                .single();
+                
+            updatedReg = fallbackResult.data;
+            updateError = fallbackResult.error;
+        }
         
         if (updateError) {
             // FIX #4: ENHANCED ERROR LOGGING - Log actual Supabase error details
