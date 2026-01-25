@@ -834,7 +834,8 @@ const processPayment = async (req, res) => {
                 amount: amount || registration.price
             };
 
-            await supabase
+            // Update payment status
+            const { error: paymentError } = await supabase
                 .from('registrations')
                 .update({
                     payment_status: 'succeeded',
@@ -844,6 +845,70 @@ const processPayment = async (req, res) => {
                     kiosk_device_id: deviceId
                 })
                 .eq('id', registrationId);
+            
+            if (paymentError) {
+                console.error('[Kiosk] Payment update error:', paymentError);
+                return res.status(500).json({ error: 'Failed to process payment' });
+            }
+            
+            // FIX #3: AUTO CHECK-IN AFTER CASH PAYMENT
+            // Automatically check in the guest after successful cash payment
+            console.log('[Kiosk] Cash payment successful, auto-checking in guest');
+            
+            const checkedInAt = new Date().toISOString();
+            
+            // Update all tickets as checked in
+            let updatedTickets = registration.tickets;
+            if (registration.tickets && Array.isArray(registration.tickets)) {
+                updatedTickets = registration.tickets.map(t => ({
+                    ...t,
+                    checkedIn: true,
+                    checkedInAt: checkedInAt,
+                    checkedInBy: 'kiosk_payment',
+                    checkedInDevice: deviceId || 'unknown'
+                }));
+            }
+            
+            // Also update check_in_statuses for compatibility
+            const checkInStatuses = registration.check_in_statuses || {};
+            if (registration.tickets && Array.isArray(registration.tickets)) {
+                registration.tickets.forEach((ticket, index) => {
+                    const ticketKey = `${ticket.tierId || ticket.id}-${index}-0`;
+                    checkInStatuses[ticketKey] = {
+                        checkedIn: true,
+                        timestamp: Date.now()
+                    };
+                });
+            }
+            
+            // Update registration with check-in status
+            const { error: checkInError } = await supabase
+                .from('registrations')
+                .update({
+                    checked_in: true,
+                    checked_in_at: checkedInAt,
+                    checked_in_method: 'kiosk_payment',
+                    checked_in_device: deviceId || 'unknown',
+                    tickets: updatedTickets,
+                    check_in_statuses: checkInStatuses
+                })
+                .eq('id', registrationId);
+            
+            if (checkInError) {
+                console.error('[Kiosk] Auto check-in error:', checkInError);
+                // Don't fail the payment, just log the error
+            } else {
+                console.log('[Kiosk] ✅ Auto check-in successful after cash payment');
+            }
+            
+            // Log payment and check-in actions
+            await logKioskAction(tokenId, eventId, 'cash_payment', {
+                registrationId,
+                amount: amount || registration.price,
+                attendeeName: registration.attendee_name,
+                deviceId,
+                autoCheckedIn: !checkInError
+            });
         } else if (paymentMethod === 'card' || paymentMethod === 'stripe') {
             // Generate Stripe Payment Link
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
