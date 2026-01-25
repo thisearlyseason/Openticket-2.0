@@ -154,15 +154,29 @@ export const MobileCheckInScanner: React.FC = () => {
         }
     };
 
-    // FIX: Enhanced error handling with retry limit
+    // FIX: Enhanced error handling with retry limit and scan deduplication
     const handleScan = useCallback(async (qrData: string) => {
+        // Debounce duplicate scans of the same code
+        const now = Date.now();
+        if (lastScannedRef.current && 
+            lastScannedRef.current.code === qrData && 
+            now - lastScannedRef.current.time < SCAN_DEBOUNCE_MS) {
+            console.log('[MobileScanner] Ignoring duplicate scan within debounce window');
+            return;
+        }
+        
         if (isProcessing || !id) {
             console.log('[MobileScanner] Skipping scan - processing:', isProcessing, 'id:', id);
             return;
         }
         
+        // Record this scan for debouncing
+        lastScannedRef.current = { code: qrData, time: now };
+        
         console.log('[MobileScanner] Starting scan process for:', qrData);
         setIsProcessing(true);
+        // Close scanner immediately to prevent library's foreverScan from continuing
+        setShowScanner(false);
         const scanStartTime = Date.now();
         
         try {
