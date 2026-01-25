@@ -333,6 +333,8 @@ export const getEventFinancials = async (req, res) => {
         const { eventId } = req.params;
         const userId = req.user.uid;
 
+        console.log(`[Financials] Request for event ${eventId} by user ${userId}`);
+
         // Verify ownership
         const { data: event, error: eventError } = await supabase
             .from('events')
@@ -341,6 +343,7 @@ export const getEventFinancials = async (req, res) => {
             .single();
 
         if (eventError || !event) {
+            console.error('[Financials] Event not found:', eventError);
             return res.status(404).json({ error: 'Event not found' });
         }
 
@@ -352,6 +355,7 @@ export const getEventFinancials = async (req, res) => {
             .single();
 
         if (event.owner_id !== userId && !profile?.is_admin) {
+            console.warn('[Financials] Unauthorized access attempt');
             return res.status(403).json({ error: 'Unauthorized' });
         }
 
@@ -363,17 +367,27 @@ export const getEventFinancials = async (req, res) => {
             });
             if (!rpcError && rpcData) {
                 financials = rpcData;
+                console.log('[Financials] Loaded from RPC:', financials);
+            } else if (rpcError) {
+                console.warn('[Financials] RPC error:', rpcError);
             }
         } catch (e) {
-            console.warn('RPC not available, falling back');
+            console.warn('[Financials] RPC not available, falling back:', e.message);
         }
 
-        // Fallback to manual calculation
+        // Fallback to manual calculation from financial_transactions table
         if (!financials) {
-            const { data: transactions } = await supabase
+            console.log('[Financials] Using fallback calculation from financial_transactions');
+            const { data: transactions, error: txError } = await supabase
                 .from('financial_transactions')
                 .select('*')
                 .eq('event_id', eventId);
+
+            if (txError) {
+                console.error('[Financials] Error fetching transactions:', txError);
+            }
+
+            console.log(`[Financials] Found ${transactions?.length || 0} financial transactions`);
 
             financials = {
                 grossSales: 0,
@@ -386,7 +400,7 @@ export const getEventFinancials = async (req, res) => {
                 refundCount: 0,
             };
 
-            if (transactions) {
+            if (transactions && transactions.length > 0) {
                 transactions.forEach(tx => {
                     if (tx.gross_amount > 0) {
                         // Positive amounts are sales
@@ -411,6 +425,43 @@ export const getEventFinancials = async (req, res) => {
                         financials.netEarnings -= Math.abs(Number(tx.organizer_net) || 0);
                     }
                 });
+                console.log('[Financials] Calculated from transactions:', financials);
+            } else {
+                console.warn('[Financials] No transactions found, checking registrations as last resort');
+                
+                // FIX #5: LAST RESORT FALLBACK - Calculate from registrations if no transactions exist
+                const { data: registrations } = await supabase
+                    .from('registrations')
+                    .select('*')
+                    .eq('event_id', eventId);
+                
+                console.log(`[Financials] Found ${registrations?.length || 0} registrations for fallback calculation`);
+                
+                if (registrations && registrations.length > 0) {
+                    registrations.forEach(reg => {
+                        // Only count paid/completed registrations
+                        const isPaid = ['paid', 'completed', 'succeeded'].includes(reg.payment_status);
+                        const isRefunded = reg.payment_status === 'refunded';
+                        
+                        if (isPaid) {
+                            const amount = Number(reg.total_amount) || 0;
+                            financials.grossSales += amount;
+                            financials.platformFees += Number(reg.service_fee) || 0;
+                            financials.stripeFees += Number(amount * 0.029 + 0.30).toFixed(2);
+                            financials.taxCollected += Number(reg.tax_amount) || 0;
+                            financials.netEarnings += amount - (Number(reg.service_fee) || 0) - Number((amount * 0.029 + 0.30).toFixed(2));
+                            financials.transactionCount += 1;
+                        }
+                        
+                        if (isRefunded) {
+                            const refundAmount = Number(reg.refunded_amount) || Number(reg.total_amount) || 0;
+                            financials.refundedAmount += refundAmount;
+                            financials.refundCount += 1;
+                            financials.grossSales -= refundAmount;
+                        }
+                    });
+                    console.log('[Financials] Calculated from registrations:', financials);
+                }
             }
         }
 
