@@ -1093,6 +1093,36 @@ export const checkInTicket = async (req, res) => {
             });
         }
         
+        // 4.5 Check payment status - require payment before check-in for unpaid tickets
+        const ticketPrice = ticket.pricePerTicket || ticket.price || 0;
+        const isPaid = ['paid', 'succeeded', 'completed', 'free'].includes(targetRegistration.payment_status?.toLowerCase());
+        const isFreeTicket = ticketPrice === 0 && targetRegistration.total_amount === 0;
+        
+        if (!isPaid && !isFreeTicket && ticketPrice > 0) {
+            console.log(`[CheckIn] Payment required for ticket ${ticket.ticketId}:`, {
+                paymentStatus: targetRegistration.payment_status,
+                ticketPrice,
+                totalAmount: targetRegistration.total_amount
+            });
+            
+            return res.status(402).json({ 
+                error: 'Payment required',
+                message: 'This ticket requires payment before check-in',
+                status: 'payment_required',
+                ticket: {
+                    ticketNumber: ticket.ticketNumber,
+                    attendeeName: ticket.attendeeName || targetRegistration.attendee_name,
+                    ticketType: ticket.name || ticket.tierName,
+                    price: ticketPrice
+                },
+                registration: {
+                    id: targetRegistration.id,
+                    totalAmount: targetRegistration.total_amount,
+                    paymentStatus: targetRegistration.payment_status
+                }
+            });
+        }
+        
         // 5. Update ticket check-in status in tickets array AND checkInStatuses
         const updatedTickets = [...targetRegistration.tickets];
         const checkedInAt = new Date().toISOString();
