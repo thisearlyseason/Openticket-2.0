@@ -10,6 +10,9 @@ import { scanAnalyticsService } from '../services/scanAnalyticsService';
 // Get API URL from environment
 const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
 
+// Debounce time to prevent duplicate scans (ms)
+const SCAN_DEBOUNCE_MS = 3000;
+
 interface ScanResult {
     success: boolean;
     message: string;
