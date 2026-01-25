@@ -11,7 +11,7 @@ import time
 from typing import Dict, Any
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://eventready.preview.emergentagent.com"
+BACKEND_URL = "https://checkin-dashboard-5.preview.emergentagent.com"
 
 class GeminiAPIInfrastructureTester:
     def __init__(self):
