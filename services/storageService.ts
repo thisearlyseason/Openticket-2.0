@@ -1424,7 +1424,9 @@ export const StorageService = {
             ticket_tiers: clean.ticketTiers,
             add_ons: clean.addOns,
             custom_fees: clean.customFees,
-            absorb_fees: clean.absorbFees
+            absorb_fees: clean.absorbFees,
+            ticket_design: clean.ticketDesign,
+            email_settings: clean.emailSettings
         };
 
         // Determine if update or create.
