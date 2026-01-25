@@ -132,12 +132,26 @@ export const updateEvent = async (req, res) => {
         // Ensure we don't accidentally wipe out the whole record if safeUpdates is empty, 
         // though typically that just does nothing.
 
-        const { data, error } = await supabase
+        let { data, error } = await supabase
             .from('events')
             .update(safeUpdates)
             .eq('id', id)
             .eq('owner_id', owner_id)
             .select();
+
+        // Handle missing column errors gracefully (until migration is run)
+        if (error && error.code === '42703') {
+            console.warn('[Event Update] Schema column missing, retrying without ticket_design/email_settings...');
+            const { ticket_design, email_settings, ...fallbackUpdates } = safeUpdates;
+            const fallbackResult = await supabase
+                .from('events')
+                .update(fallbackUpdates)
+                .eq('id', id)
+                .eq('owner_id', owner_id)
+                .select();
+            data = fallbackResult.data;
+            error = fallbackResult.error;
+        }
 
         if (error) throw error;
 
