@@ -175,26 +175,62 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
 
     // Theme helper (matches backend logic)
     const getThemeFromDesign = (ticketDesign: any) => {
+        // These MUST match the templates in EventBuilder.tsx
         const TEMPLATE_THEMES: any = {
-            modern: { headerGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', accentColor: '#10b981', textColor: '#111827', mutedColor: '#6b7280' },
-            classic: { headerGradient: 'linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%)', accentColor: '#1e3a5f', textColor: '#0f172a', mutedColor: '#475569' },
-            minimal: { headerGradient: 'linear-gradient(135deg, #18181b 0%, #27272a 100%)', accentColor: '#18181b', textColor: '#18181b', mutedColor: '#71717a' },
-            festive: { headerGradient: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', accentColor: '#dc2626', textColor: '#1f2937', mutedColor: '#6b7280' },
-            purple: { headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', accentColor: '#8b5cf6', textColor: '#1f2937', mutedColor: '#6b7280' },
-            blue: { headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', accentColor: '#3b82f6', textColor: '#1f2937', mutedColor: '#6b7280' },
-            orange: { headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', accentColor: '#f97316', textColor: '#1f2937', mutedColor: '#6b7280' }
+            modern: { 
+                headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', 
+                accentColor: '#8b5cf6', 
+                textColor: '#111827', 
+                mutedColor: '#6b7280',
+                backgroundColor: '#ffffff'
+            },
+            classic: { 
+                headerGradient: 'linear-gradient(135deg, #27272a 0%, #18181b 100%)', 
+                accentColor: '#fbbf24', 
+                textColor: '#ffffff', 
+                mutedColor: '#a1a1aa',
+                backgroundColor: '#1a1a1a'
+            },
+            minimal: { 
+                headerGradient: 'linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%)', 
+                accentColor: '#000000', 
+                textColor: '#000000', 
+                mutedColor: '#71717a',
+                backgroundColor: '#ffffff'
+            },
+            festive: { 
+                headerGradient: 'linear-gradient(135deg, #ec4899 0%, #f97316 100%)', 
+                accentColor: '#ec4899', 
+                textColor: '#111827', 
+                mutedColor: '#6b7280',
+                backgroundColor: '#fff5f5'
+            },
+            // Additional templates for saved user templates
+            purple: { headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', accentColor: '#8b5cf6', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
+            blue: { headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', accentColor: '#3b82f6', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
+            orange: { headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', accentColor: '#f97316', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' }
         };
 
         const templateId = ticketDesign.template || 'modern';
         let theme = TEMPLATE_THEMES[templateId] || TEMPLATE_THEMES.modern;
 
-        // Apply custom accent color override
+        // Apply custom accent color override if specified
         if (ticketDesign.accentColor) {
             theme = {
                 ...theme,
                 headerGradient: `linear-gradient(135deg, ${ticketDesign.accentColor} 0%, ${adjustBrightness(ticketDesign.accentColor, -20)} 100%)`,
                 accentColor: ticketDesign.accentColor
             };
+        }
+
+        // Apply custom background color if specified
+        if (ticketDesign.backgroundColor) {
+            theme = { ...theme, backgroundColor: ticketDesign.backgroundColor };
+        }
+
+        // Apply custom text color if specified
+        if (ticketDesign.textColor) {
+            theme = { ...theme, textColor: ticketDesign.textColor };
         }
 
         return theme;
