@@ -174,6 +174,21 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     };
 
     // Theme helper (matches backend logic)
+    // Helper to determine if background is dark
+    const isBackgroundDark = (hex: string) => {
+        if (!hex) return false;
+        hex = hex.replace(/^#/, '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance < 0.5;
+    };
+
+    const getContrastingTextColor = (bgColor: string) => {
+        return isBackgroundDark(bgColor) ? '#ffffff' : '#111827';
+    };
+
     const getThemeFromDesign = (ticketDesign: any) => {
         // These MUST match the templates in EventBuilder.tsx
         const TEMPLATE_THEMES: any = {
@@ -206,13 +221,21 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                 backgroundColor: '#fff5f5'
             },
             // Additional templates for saved user templates
-            purple: { headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', accentColor: '#8b5cf6', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
-            blue: { headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', accentColor: '#3b82f6', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
-            orange: { headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', accentColor: '#f97316', textColor: '#1f2937', mutedColor: '#6b7280', backgroundColor: '#ffffff' }
+            purple: { headerGradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', accentColor: '#8b5cf6', textColor: '#111827', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
+            blue: { headerGradient: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', accentColor: '#3b82f6', textColor: '#111827', mutedColor: '#6b7280', backgroundColor: '#ffffff' },
+            orange: { headerGradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', accentColor: '#f97316', textColor: '#111827', mutedColor: '#6b7280', backgroundColor: '#ffffff' }
         };
 
         const templateId = ticketDesign.template || 'modern';
-        let theme = TEMPLATE_THEMES[templateId] || TEMPLATE_THEMES.modern;
+        let theme = { ...(TEMPLATE_THEMES[templateId] || TEMPLATE_THEMES.modern) };
+
+        // Apply custom background color if specified
+        if (ticketDesign.backgroundColor) {
+            theme.backgroundColor = ticketDesign.backgroundColor;
+            // Auto-adjust text color for contrast
+            theme.textColor = getContrastingTextColor(ticketDesign.backgroundColor);
+            theme.mutedColor = isBackgroundDark(ticketDesign.backgroundColor) ? '#a1a1aa' : '#6b7280';
+        }
 
         // Apply custom accent color override if specified
         if (ticketDesign.accentColor) {
@@ -223,14 +246,9 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
             };
         }
 
-        // Apply custom background color if specified
-        if (ticketDesign.backgroundColor) {
-            theme = { ...theme, backgroundColor: ticketDesign.backgroundColor };
-        }
-
-        // Apply custom text color if specified
+        // Apply custom text color if explicitly specified
         if (ticketDesign.textColor) {
-            theme = { ...theme, textColor: ticketDesign.textColor };
+            theme.textColor = ticketDesign.textColor;
         }
 
         return theme;
