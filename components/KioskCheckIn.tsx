@@ -535,23 +535,50 @@ export const KioskCheckIn: React.FC = () => {
                 {/* Scan History */}
                 {scanHistory.length > 0 && (
                     <Card className="p-6 bg-zinc-900 border-zinc-800">
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Users size={20} />
-                            Recent Activity
-                        </h3>
-                        <div className="space-y-2">
-                            {scanHistory.slice(0, 5).map((scan, i) => (
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <Users size={20} />
+                                Recent Check-ins ({scanHistory.length})
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setScanHistory([]);
+                                    localStorage.removeItem(`kiosk_history_${eventId}`);
+                                }}
+                                className="text-zinc-500 hover:text-red-400"
+                            >
+                                Clear History
+                            </Button>
+                        </div>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {scanHistory.slice(0, 20).map((scan, i) => (
                                 <div
                                     key={i}
-                                    className="flex items-center justify-between p-3 bg-zinc-800 rounded-lg"
+                                    className={`flex items-center justify-between p-3 rounded-lg ${
+                                        scan.success ? 'bg-green-900/20 border border-green-800/30' : 'bg-red-900/20 border border-red-800/30'
+                                    }`}
                                 >
-                                    <div className="flex-1">
-                                        <p className="font-semibold">{scan.attendeeName || 'Unknown'}</p>
-                                        <p className="text-sm text-zinc-400">{scan.ticketType}</p>
+                                    <div className="flex items-center gap-3 flex-1">
+                                        {scan.success ? (
+                                            <CheckCircle2 size={18} className="text-green-400 flex-shrink-0" />
+                                        ) : (
+                                            <XCircle size={18} className="text-red-400 flex-shrink-0" />
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="font-semibold truncate">{scan.attendeeName || 'Unknown'}</p>
+                                            <p className="text-xs text-zinc-400">{scan.ticketType}</p>
+                                        </div>
                                     </div>
-                                    <Badge variant={scan.success ? 'success' : 'destructive'} className="text-xs">
-                                        {scan.success ? 'Checked In' : scan.message}
-                                    </Badge>
+                                    <div className="text-right flex-shrink-0 ml-2">
+                                        <Badge variant={scan.success ? 'success' : 'destructive'} className="text-xs">
+                                            {scan.success ? 'Checked In' : 'Failed'}
+                                        </Badge>
+                                        <p className="text-xs text-zinc-500 mt-1">
+                                            {new Date(scan.timestamp).toLocaleTimeString()}
+                                        </p>
+                                    </div>
                                 </div>
                             ))}
                         </div>
