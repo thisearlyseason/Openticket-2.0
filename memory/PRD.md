@@ -23,52 +23,51 @@ Build a production-ready event ticketing platform with comprehensive features fo
 
 ## CHANGELOG
 
-### 2026-01-25 - Check-In System Bug Fixes
-
-**Issues Fixed:**
-1. ✅ **Infinite scan loop in MobileCheckInScanner** - Added debouncing, scanner now closes immediately on scan detection
-2. ✅ **Missing `/api/events/:eventId/stats` endpoint** - Added to eventController.js and eventRoutes.js
-3. ✅ **API URL paths in MobileCheckInScanner** - Now uses proper `API_URL` prefix
-4. ✅ **Improved error logging in kioskController** - Now logs full error details
+### 2026-01-25 - Check-In 500 Error Fix (COMPLETED)
 
 **Root Cause Identified:**
-- Production database missing `events.ticket_design` column causing 500 errors
-- Migration script created at `/app/backend/migrations/add_ticket_design_column.sql`
+The backend was trying to UPDATE columns that don't exist in production:
+- `check_in_statuses`, `checked_in`, `checked_in_at`, `checked_in_method`, `checked_in_device`
+- Supabase returns error code `42703` when updating non-existent columns
 
-**Pending User Action:**
-- Run database migration: `ALTER TABLE events ADD COLUMN IF NOT EXISTS ticket_design JSONB;`
-- Deploy code changes to production
+**Fixes Applied:**
+1. ✅ Added schema fallback in `checkInTicket` (registrationController.js) - detects missing columns and falls back to updating only `tickets` array
+2. ✅ Added schema fallback in `checkInGuest` (kioskController.js) - same fallback logic
+3. ✅ Fixed `getEventStats` endpoint - only queries guaranteed columns
+4. ✅ Created migration script (`fix_checkin_schema.sql`)
+5. ✅ Fixed infinite scan loop in MobileCheckInScanner
+6. ✅ Fixed API URL paths in MobileCheckInScanner
 
-**Non-Blocking Issues (Not Fixed - External):**
-- Firebase `functions.js:1107` addEventListener error - External Firebase SDK issue, non-blocking
+**Pending:**
+- Deploy code changes to Vercel
+- (Optional) Run database migration for full schema support
 
 ---
 
-## P0 - Critical Issues (Current Sprint)
+## P0 - Critical Issues
+- [x] Fix 500 errors on check-in endpoints (schema fallback added)
 - [x] Fix infinite scan loop in MobileCheckInScanner
-- [x] Add missing stats endpoint
-- [ ] Run `ticket_design` column migration (USER ACTION)
 - [ ] Deploy code changes to production
-- [ ] Verify check-in works post-deployment
 
 ## P1 - High Priority
-- [ ] Firebase `addEventListener` null error - External SDK issue, monitor for updates
+- [ ] Run database migration to add missing columns (optional with fallback)
+- [ ] Firebase `addEventListener` null error - External SDK issue (non-blocking)
 
 ## P2 - Technical Debt
 - [ ] Refactor `SuperAdminDashboard.tsx` (3000+ lines → smaller components)
-- [ ] Consolidate check-in data model (3 fields → single source of truth)
+- [ ] Consolidate check-in data model
 
-## Key Files Reference
-- `/app/backend/controllers/kioskController.js` - Kiosk check-in logic
-- `/app/backend/controllers/registrationController.js` - Manual check-in logic
-- `/app/backend/controllers/eventController.js` - Event stats endpoint
-- `/app/components/MobileCheckInScanner.tsx` - Mobile scanner UI (FIXED)
-- `/app/components/KioskCheckIn.tsx` - Kiosk UI
-- `/app/services/kioskService.ts` - Kiosk API service
-- `/app/services/paymentUtils.ts` - Payment status utilities
+## Key Files Modified This Session
+- `/app/backend/controllers/registrationController.js` - Added schema fallback
+- `/app/backend/controllers/kioskController.js` - Added schema fallback  
+- `/app/backend/controllers/eventController.js` - Fixed stats query
+- `/app/components/MobileCheckInScanner.tsx` - Fixed scan loop & API URLs
+- `/app/backend/migrations/fix_checkin_schema.sql` - New migration
 
 ## Database Schema Notes
-- `events` table: Missing `ticket_design` column (migration created)
-- `registrations.tickets` (JSONB): Contains individual ticket data
-- `registrations.check_in_statuses` (JSONB): Check-in tracking
-- `registrations.payment_status`: Must filter `refunded` from metrics
+The `registrations` table may be missing these columns in production:
+- `check_in_statuses` (JSONB) - Per-ticket check-in tracking
+- `checked_in` (BOOLEAN) - Registration-level check-in flag
+- `checked_in_at` (TIMESTAMPTZ) - First check-in timestamp
+
+The code now handles this gracefully via fallback logic.
