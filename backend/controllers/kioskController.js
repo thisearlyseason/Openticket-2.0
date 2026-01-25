@@ -315,19 +315,59 @@ const scanTicket = async (req, res) => {
         console.log('[Kiosk Scan] Found', registrations?.length || 0, 'registrations for event');
 
         // Search for the ticket ID within the tickets array
-        // CRITICAL: Must match on unique identifiers (ticketId, ticketNumber, qrCodeData)
-        // NOT on tier id (id) which is shared across multiple tickets from the same tier
+        // EXPANDED MATCHING: Check ALL possible ticket identifier fields
+        // Including: ticketId, ticketNumber, qrCodeData, id, and JSON parsed formats
         let foundRegistration = null;
         let foundTicket = null;
 
+        // Try to parse QR code as JSON in case it contains nested data
+        let qrCodeParsed = null;
+        try {
+            qrCodeParsed = JSON.parse(qrCode);
+            console.log('[Kiosk Scan] QR code is JSON:', qrCodeParsed);
+        } catch (e) {
+            // Not JSON, treat as plain string
+            console.log('[Kiosk Scan] QR code is plain string:', qrCode);
+        }
+
         for (const reg of registrations || []) {
             if (reg.tickets && Array.isArray(reg.tickets)) {
-                // Search by unique ticket identifiers only
-                const ticket = reg.tickets.find(t => 
-                    t.ticketId === qrCode || 
-                    t.ticketNumber === qrCode || 
-                    t.qrCodeData === qrCode
-                );
+                // COMPREHENSIVE MATCHING: Check all possible identifier fields
+                const ticket = reg.tickets.find(t => {
+                    // Direct matches on all known fields
+                    if (t.ticketId === qrCode) return true;
+                    if (t.ticketNumber === qrCode) return true;
+                    if (t.qrCodeData === qrCode) return true;
+                    if (t.id === qrCode) return true; // Added: tier ID can sometimes be used
+                    
+                    // If QR code is JSON, check against nested values
+                    if (qrCodeParsed) {
+                        if (qrCodeParsed.ticketId === t.ticketId) return true;
+                        if (qrCodeParsed.ticketNumber === t.ticketNumber) return true;
+                        if (qrCodeParsed.id === t.ticketId || qrCodeParsed.id === t.id) return true;
+                    }
+                    
+                    // Check for legacy TICKET:regId:tierId:index format
+                    if (qrCode.startsWith('TICKET:')) {
+                        const parts = qrCode.split(':');
+                        if (parts.length >= 4) {
+                            const qrRegId = parts[1];
+                            const qrTierId = parts[2];
+                            const qrIndex = parseInt(parts[3], 10);
+                            
+                            if (reg.id === qrRegId && t.id === qrTierId) {
+                                // Additional check: verify index matches if available
+                                const ticketIndex = reg.tickets.indexOf(t);
+                                if (ticketIndex === qrIndex || qrIndex === 0) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return false;
+                });
+                
                 if (ticket) {
                     foundRegistration = reg;
                     foundTicket = ticket;
@@ -335,7 +375,12 @@ const scanTicket = async (req, res) => {
                         ticketId: ticket.ticketId,
                         ticketNumber: ticket.ticketNumber,
                         qrCodeData: ticket.qrCodeData,
-                        scannedQR: qrCode
+                        id: ticket.id,
+                        scannedQR: qrCode,
+                        matchedField: qrCode === ticket.ticketId ? 'ticketId' : 
+                                    qrCode === ticket.ticketNumber ? 'ticketNumber' :
+                                    qrCode === ticket.qrCodeData ? 'qrCodeData' :
+                                    qrCode === ticket.id ? 'id' : 'complex_match'
                     });
                     break;
                 }
