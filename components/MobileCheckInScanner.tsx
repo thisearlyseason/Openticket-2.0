@@ -514,11 +514,24 @@ export const MobileCheckInScanner: React.FC = () => {
                 {/* Recent Activity */}
                 {scanResults.length > 0 && (
                     <div>
-                        <h3 className="text-sm font-bold text-zinc-500 uppercase mb-4 flex items-center gap-2">
-                            <Users size={16} /> Recent Activity
-                        </h3>
-                        <div className="space-y-3">
-                            {scanResults.map((result, idx) => (
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-zinc-500 uppercase flex items-center gap-2">
+                                <Users size={16} /> Recent Check-ins ({scanResults.length})
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setScanResults([]);
+                                    localStorage.removeItem(`mobile_scan_history_${id}`);
+                                }}
+                                className="text-zinc-500 hover:text-red-400 text-xs"
+                            >
+                                Clear
+                            </Button>
+                        </div>
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                            {scanResults.slice(0, 20).map((result, idx) => (
                                 <Card
                                     key={idx}
                                     className={`p-4 border-2 ${
