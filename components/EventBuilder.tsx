@@ -1369,18 +1369,32 @@ export const EventBuilder = () => {
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         {/* Left: Customization Options */}
-                                        <div className="space-y-4">
+                                        <div className="space-y-4 relative z-10">
                                             {/* A. Add Image to Ticket */}
                                             <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
                                                 <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2 block flex items-center gap-2">
                                                     <ImageIcon size={16} className="text-purple-500" />
                                                     Ticket Image <span className="text-xs font-normal text-zinc-400">(optional)</span>
                                                 </label>
-                                                <p className="text-xs text-zinc-500 mb-3">Logo or banner for the ticket header. 400x200px recommended.</p>
-                                                <div className="h-24">
+                                                <p className="text-xs text-zinc-500 mb-3">Logo or banner for the ticket header. Use a URL or upload (400x200px recommended).</p>
+                                                
+                                                {/* URL Input Option */}
+                                                <div className="mb-3">
+                                                    <input
+                                                        type="url"
+                                                        className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
+                                                        placeholder="https://example.com/logo.png"
+                                                        value={formData.ticketDesign?.logoUrl?.startsWith('http') ? formData.ticketDesign.logoUrl : ''}
+                                                        onChange={(e) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: e.target.value } })}
+                                                    />
+                                                </div>
+                                                
+                                                <div className="text-xs text-zinc-400 text-center mb-2">— or upload —</div>
+                                                
+                                                <div className="h-20">
                                                     <FileDropZone
                                                         label="Upload Image"
-                                                        currentImage={formData.ticketDesign?.logoUrl}
+                                                        currentImage={formData.ticketDesign?.logoUrl?.startsWith('data:') ? formData.ticketDesign.logoUrl : undefined}
                                                         onFileSelect={(b64) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } })}
                                                         onClear={() => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: '' } })}
                                                     />
