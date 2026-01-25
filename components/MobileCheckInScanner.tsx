@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRScanner } from './QRScanner';
-import { StorageService } from '../services/storageService';
+import { Button, Badge, Card } from './UI';
+import { ArrowLeft, Camera, CheckCircle, XCircle, AlertCircle, Users, Clock, Loader2, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
+import { getAuthToken } from '../services/firebaseConfig';
 import { offlineSyncService } from '../services/offlineSyncService';
 import { scanAnalyticsService } from '../services/scanAnalyticsService';
-import { Event, Registration } from '../types';
-import { Button, Card, Badge } from './UI';
-import { QrCode, CheckCircle2, XCircle, Users, Clock, Zap, AlertTriangle, Smartphone, WifiOff, ArrowLeft, BarChart3, RotateCw, Ticket, UserCheck, Database, TrendingUp } from 'lucide-react';
-import { getAuthToken } from '../services/firebaseConfig';
 
 interface ScanResult {
     success: boolean;
@@ -17,152 +15,139 @@ interface ScanResult {
     timestamp: number;
 }
 
+interface Stats {
+    total: number;
+    checkedIn: number;
+    pending: number;
+}
+
 export const MobileCheckInScanner: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [event, setEvent] = useState<Event | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [showScanner, setShowScanner] = useState(false);
-    const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-    const [stats, setStats] = useState({
-        total: 0,
-        checkedIn: 0,
-        pending: 0
-    });
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [scanResults, setScanResults] = useState<ScanResult[]>([]);
+    const [stats, setStats] = useState<Stats>({ total: 0, checkedIn: 0, pending: 0 });
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
-    const [showAnalytics, setShowAnalytics] = useState(false);
-    const [analytics, setAnalytics] = useState<any>(null);
+    const retryAttemptsRef = useRef<number>(0);
+    const MAX_RETRY_ATTEMPTS = 3;
 
-    // Monitor online status
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
         const handleOffline = () => setIsOnline(false);
-        
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
-        
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
 
-    // Load event and stats
+    // Load initial stats
     useEffect(() => {
-        loadEventData();
-        loadPendingSync();
-        
-        // Initialize offline sync
-        offlineSyncService.init().catch(console.error);
+        loadStats();
     }, [id]);
 
-    // Listen for sync completion
+    // Listen for offline sync completion
     useEffect(() => {
-        const handleSyncComplete = (event: any) => {
-            console.log('[Scanner] Sync complete:', event.detail);
-            loadPendingSync();
-            loadEventData(); // Refresh stats
+        const handleSyncComplete = async () => {
+            await loadStats();
+            const queue = await offlineSyncService.getQueuedCheckIns();
+            setPendingSync(queue.length);
         };
 
         window.addEventListener('pwa-sync-complete', handleSyncComplete);
         return () => window.removeEventListener('pwa-sync-complete', handleSyncComplete);
     }, []);
 
-    const loadEventData = async () => {
-        if (!id) return;
-        
-        setIsLoading(true);
+    const loadStats = async () => {
         try {
-            let eventData: Event | null = null;
-            
-            // Try online first
-            if (navigator.onLine) {
-                eventData = await StorageService.getEventById(id);
-                if (eventData) {
-                    // Cache for offline use
-                    await offlineSyncService.cacheEvent(id, eventData);
+            const token = await getAuthToken();
+            const response = await fetch(`/api/events/${id}/stats`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
                 }
-            } else {
-                // Use cached data if offline
-                eventData = await offlineSyncService.getCachedEvent(id);
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
             }
-            
-            if (!eventData) {
-                throw new Error('Event not found');
-            }
-            setEvent(eventData);
-            
-            // Load registrations to calculate stats
-            let registrations: any[] = [];
-            if (navigator.onLine) {
-                registrations = await StorageService.getRegistrations(id);
-                await offlineSyncService.cacheRegistrations(id, registrations);
-            } else {
-                registrations = await offlineSyncService.getCachedRegistrations(id);
-            }
-            
-            const tickets = registrations.flatMap(r => r.tickets || []);
-            
-            setStats({
-                total: tickets.length,
-                checkedIn: tickets.filter(t => t.checkedIn).length,
-                pending: tickets.filter(t => !t.checkedIn).length
+        } catch (error) {
+            console.error('Failed to load stats:', error);
+        }
+    };
+
+    const playSuccessSound = () => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    };
+
+    const playErrorSound = () => {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 400;
+        oscillator.type = 'sawtooth';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+    };
+
+    const trackScanAnalytics = async (success: boolean, ticketId: string, duration: number, errorMessage?: string) => {
+        try {
+            await scanAnalyticsService.trackScan({
+                eventId: id!,
+                ticketId,
+                success,
+                errorMessage,
+                duration,
+                timestamp: Date.now(),
+                scanMethod: 'camera'
             });
         } catch (error) {
-            console.error('Error loading event:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const loadPendingSync = async () => {
-        try {
-            const pending = await offlineSyncService.getPendingCheckIns();
-            setPendingSync(pending.length);
-        } catch (error) {
-            console.error('Error loading pending sync:', error);
-        }
-    };
-
-    const loadAnalytics = async () => {
-        if (!id) return;
-        
-        try {
-            // Try to get from backend first (if online)
-            if (navigator.onLine) {
-                const token = await getAuthToken();
-                const response = await fetch(`/api/analytics/scan-summary/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setAnalytics(data.analytics);
-                    return;
-                }
-            }
-
-            // Fallback to IndexedDB
-            const analyticsData = await scanAnalyticsService.getAnalytics(id);
-            setAnalytics(analyticsData);
-        } catch (error) {
-            console.error('Error loading analytics:', error);
-            
-            // Fallback to IndexedDB on error
+            console.error('Analytics tracking failed:', error);
+            // Fallback: Try to log locally
             try {
-                const analyticsData = await scanAnalyticsService.getAnalytics(id);
-                setAnalytics(analyticsData);
+                const fallbackLog = {
+                    eventId: id,
+                    ticketId,
+                    success,
+                    errorMessage,
+                    duration,
+                    timestamp: Date.now(),
+                    method: 'camera',
+                    synced: false
+                };
+                localStorage.setItem(`scan_log_${Date.now()}`, JSON.stringify(fallbackLog));
             } catch (fallbackError) {
                 console.error('Fallback analytics failed:', fallbackError);
             }
         }
     };
 
-    // Handle QR scan
+    // FIX: Enhanced error handling with retry limit
     const handleScan = useCallback(async (qrData: string) => {
         if (isProcessing || !id) {
             console.log('[MobileScanner] Skipping scan - processing:', isProcessing, 'id:', id);
@@ -203,15 +188,7 @@ export const MobileCheckInScanner: React.FC = () => {
                 setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
                 setPendingSync(prev => prev + 1);
                 
-                // Track analytics
-                await scanAnalyticsService.trackScan({
-                    eventId: id,
-                    ticketId,
-                    success: true,
-                    duration: Date.now() - scanStartTime,
-                    timestamp: Date.now(),
-                    scanMethod: 'camera'
-                });
+                await trackScanAnalytics(true, ticketId, Date.now() - scanStartTime);
                 
                 if (navigator.vibrate) {
                     navigator.vibrate([150, 50, 150]);
@@ -242,6 +219,55 @@ export const MobileCheckInScanner: React.FC = () => {
             });
 
             console.log('[MobileScanner] API response status:', response.status);
+            
+            // FIX: Handle 500 errors gracefully without infinite retry
+            if (response.status === 500) {
+                retryAttemptsRef.current += 1;
+                console.error(`[MobileScanner] 500 Error - Retry attempt ${retryAttemptsRef.current}/${MAX_RETRY_ATTEMPTS}`);
+                
+                if (retryAttemptsRef.current >= MAX_RETRY_ATTEMPTS) {
+                    // Max retries reached - show error and stop
+                    const scanResult: ScanResult = {
+                        success: false,
+                        message: 'Server error - please try again later',
+                        timestamp: Date.now()
+                    };
+                    
+                    setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                    
+                    await trackScanAnalytics(false, ticketId, Date.now() - scanStartTime, 'Server error (500) - max retries exceeded');
+                    
+                    if (navigator.vibrate) {
+                        navigator.vibrate([100, 50, 100, 50, 100]);
+                    }
+                    
+                    playErrorSound();
+                    setShowScanner(false);
+                    setIsProcessing(false);
+                    
+                    // Reset retry counter for next scan
+                    setTimeout(() => {
+                        retryAttemptsRef.current = 0;
+                    }, 5000);
+                    
+                    console.log('[MobileScanner] Max retries exceeded, stopping');
+                    return;
+                }
+                
+                // Retry with exponential backoff
+                const retryDelay = 1000 * Math.pow(2, retryAttemptsRef.current - 1);
+                console.log(`[MobileScanner] Retrying in ${retryDelay}ms...`);
+                
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+                
+                // Recursive retry
+                setIsProcessing(false);
+                return handleScan(qrData);
+            }
+            
+            // Reset retry counter on successful request (even if not 200)
+            retryAttemptsRef.current = 0;
+            
             const result = await response.json();
             console.log('[MobileScanner] API response data:', result);
             
@@ -265,23 +291,13 @@ export const MobileCheckInScanner: React.FC = () => {
                     pending: Math.max(0, prev.pending - 1)
                 }));
                 
-                // Track analytics
-                await scanAnalyticsService.trackScan({
-                    eventId: id,
-                    ticketId,
-                    success: true,
-                    duration: scanDuration,
-                    timestamp: Date.now(),
-                    scanMethod: 'camera'
-                });
+                await trackScanAnalytics(true, ticketId, scanDuration);
                 
                 if (navigator.vibrate) {
                     navigator.vibrate([200, 100, 200]);
                 }
                 
                 playSuccessSound();
-                
-                // Close scanner after successful check-in
                 setShowScanner(false);
                 console.log('[MobileScanner] Scanner closed after success');
             } else {
@@ -295,24 +311,13 @@ export const MobileCheckInScanner: React.FC = () => {
                 
                 setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
                 
-                // Track analytics
-                await scanAnalyticsService.trackScan({
-                    eventId: id,
-                    ticketId,
-                    success: false,
-                    errorMessage: result.error || result.message,
-                    duration: scanDuration,
-                    timestamp: Date.now(),
-                    scanMethod: 'camera'
-                });
+                await trackScanAnalytics(false, ticketId, scanDuration, result.error || result.message);
                 
                 if (navigator.vibrate) {
                     navigator.vibrate([100, 50, 100, 50, 100]);
                 }
                 
                 playErrorSound();
-                
-                // Close scanner to show error message
                 setShowScanner(false);
                 console.log('[MobileScanner] Scanner closed after error');
             }
@@ -327,16 +332,8 @@ export const MobileCheckInScanner: React.FC = () => {
             
             setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
             
-            // Track analytics
             if (id) {
-                await scanAnalyticsService.trackScan({
-                    eventId: id,
-                    success: false,
-                    errorMessage: error.message,
-                    duration: Date.now() - scanStartTime,
-                    timestamp: Date.now(),
-                    scanMethod: 'camera'
-                });
+                await trackScanAnalytics(false, 'unknown', Date.now() - scanStartTime, error.message);
             }
             
             if (navigator.vibrate) {
@@ -352,176 +349,146 @@ export const MobileCheckInScanner: React.FC = () => {
         }
     }, [isProcessing, id]);
 
-    // Audio feedback
-    const playSuccessSound = () => {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        gainNode.gain.value = 0.3;
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
+    const handleSyncNow = async () => {
+        try {
+            await offlineSyncService.syncAll();
+            await loadStats();
+            const queue = await offlineSyncService.getQueuedCheckIns();
+            setPendingSync(queue.length);
+        } catch (error) {
+            console.error('Manual sync failed:', error);
+        }
     };
-
-    const playErrorSound = () => {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 300;
-        oscillator.type = 'square';
-        gainNode.gain.value = 0.2;
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.2);
-    };
-
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ec4899] border-t-transparent mx-auto mb-4" />
-                    <p className="text-white/60">Loading event...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (!event) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center p-4">
-                <Card className="p-8 text-center bg-zinc-900 border-zinc-800">
-                    <XCircle className="mx-auto mb-4 text-red-500" size={48} />
-                    <h2 className="text-xl font-bold text-white mb-2">Event Not Found</h2>
-                    <p className="text-zinc-400 mb-4">Unable to load event details</p>
-                    <Button onClick={() => navigate('/dashboard')}>
-                        <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
-                    </Button>
-                </Card>
-            </div>
-        );
-    }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900">
+        <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-white">
             {/* Header */}
-            <div className="bg-black/50 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-10">
-                <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                        <button
-                            onClick={() => navigate(`/manage/${id}`)}
-                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            <div className="bg-zinc-900/50 backdrop-blur-sm border-b border-zinc-800 sticky top-0 z-10">
+                <div className="max-w-4xl mx-auto px-4 py-4">
+                    <div className="flex items-center justify-between">
+                        <Button
+                            variant="ghost"
+                            onClick={() => navigate(`/checkin/${id}`)}
+                            className="flex items-center gap-2 text-zinc-400 hover:text-white"
                         >
-                            <ArrowLeft size={20} className="text-white" />
-                        </button>
+                            <ArrowLeft size={16} className="mr-2" /> Back to Dashboard
+                        </Button>
                         
                         <div className="flex items-center gap-2">
                             {!isOnline && (
-                                <Badge className="bg-orange-600 text-white border-none flex items-center gap-1">
-                                    <WifiOff size={12} /> Offline
+                                <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+                                    <WifiOff size={14} className="mr-1" /> Offline
                                 </Badge>
                             )}
                             {pendingSync > 0 && (
-                                <Badge className="bg-blue-600 text-white border-none flex items-center gap-1">
-                                    <Database size={12} /> {pendingSync} Pending
-                                </Badge>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleSyncNow}
+                                    className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                                >
+                                    <RefreshCw size={14} className="mr-1" />
+                                    Sync {pendingSync}
+                                </Button>
                             )}
-                            <button
-                                onClick={() => {
-                                    loadEventData();
-                                    loadPendingSync();
-                                }}
-                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                            >
-                                <RotateCw size={20} className="text-white" />
-                            </button>
                         </div>
-                    </div>
-                    
-                    <h1 className="text-xl font-black text-white mb-1 line-clamp-1">{event.title}</h1>
-                    <p className="text-sm text-zinc-400 flex items-center gap-2">
-                        <Smartphone size={14} /> Mobile Check-In Scanner
-                    </p>
-                </div>
-
-                {/* Stats Bar */}
-                <div className="grid grid-cols-3 divide-x divide-zinc-800 bg-black/30">
-                    <div className="p-3 text-center">
-                        <div className="text-2xl font-black text-white">{stats.total}</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold">Total</div>
-                    </div>
-                    <div className="p-3 text-center">
-                        <div className="text-2xl font-black text-[#ec4899]">{stats.checkedIn}</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold">Checked In</div>
-                    </div>
-                    <div className="p-3 text-center">
-                        <div className="text-2xl font-black text-orange-500">{stats.pending}</div>
-                        <div className="text-xs text-zinc-500 uppercase font-bold">Pending</div>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="p-4 pb-24">
-                {/* Scan Button */}
-                <button
-                    onClick={() => setShowScanner(true)}
-                    className="w-full bg-gradient-to-r from-[#ec4899] to-[#8b5cf6] text-white rounded-2xl p-8 shadow-lg shadow-[#ec4899]/30 hover:shadow-xl hover:shadow-[#ec4899]/40 transition-all active:scale-95 mb-6"
-                >
-                    <QrCode size={64} className="mx-auto mb-4" />
-                    <div className="text-2xl font-black mb-2">Scan Ticket</div>
-                    <div className="text-sm opacity-90">Tap to open camera scanner</div>
-                </button>
+            <div className="max-w-4xl mx-auto px-4 py-8">
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                    <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm">
+                        <div className="p-6 text-center">
+                            <Users size={24} className="mx-auto mb-2 text-zinc-500" />
+                            <div className="text-3xl font-black text-white mb-1">{stats.total}</div>
+                            <div className="text-xs text-zinc-500 uppercase font-bold">Total</div>
+                        </div>
+                    </Card>
+                    <Card className="bg-green-500/10 border-green-500/30 backdrop-blur-sm">
+                        <div className="p-6 text-center">
+                            <CheckCircle size={24} className="mx-auto mb-2 text-green-400" />
+                            <div className="text-3xl font-black text-green-400 mb-1">{stats.checkedIn}</div>
+                            <div className="text-xs text-zinc-500 uppercase font-bold">Checked In</div>
+                        </div>
+                    </Card>
+                    <Card className="bg-amber-500/10 border-amber-500/30 backdrop-blur-sm">
+                        <div className="p-6 text-center">
+                            <Clock size={24} className="mx-auto mb-2 text-amber-400" />
+                            <div className="text-3xl font-black text-amber-400 mb-1">{stats.pending}</div>
+                            <div className="text-xs text-zinc-500 uppercase font-bold">Pending</div>
+                        </div>
+                    </Card>
+                </div>
 
-                {/* Recent Scans */}
-                <div className="mb-6">
-                    <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                        <Clock size={20} className="text-[#ec4899]" /> Recent Activity
-                    </h2>
-                    
-                    {scanResults.length === 0 ? (
-                        <Card className="p-8 text-center bg-zinc-900/50 border-zinc-800">
-                            <Ticket size={48} className="mx-auto mb-3 text-zinc-700" />
-                            <p className="text-zinc-500 text-sm">No scans yet</p>
-                            <p className="text-zinc-600 text-xs mt-1">Scan your first ticket to get started</p>
-                        </Card>
-                    ) : (
+                {/* Scan Button */}
+                {!showScanner && (
+                    <div className="text-center mb-8">
+                        <button
+                            onClick={() => setShowScanner(true)}
+                            disabled={isProcessing}
+                            className="w-full max-w-md mx-auto bg-gradient-to-r from-[#E0FF20] to-[#c4e01a] text-black font-black text-xl py-6 rounded-2xl shadow-2xl hover:scale-105 transition-transform duration-200 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 size={28} className="animate-spin" />
+                                    Processing...
+                                </>
+                            ) : (
+                                <>
+                                    <Camera size={28} />
+                                    Scan Ticket
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+
+                {/* Scanner */}
+                {showScanner && !isProcessing && (
+                    <div className="mb-8">
+                        <QRScanner
+                            isOpen={showScanner}
+                            onClose={() => setShowScanner(false)}
+                            onScan={handleScan}
+                        />
+                    </div>
+                )}
+
+                {/* Recent Activity */}
+                {scanResults.length > 0 && (
+                    <div>
+                        <h3 className="text-sm font-bold text-zinc-500 uppercase mb-4 flex items-center gap-2">
+                            <Users size={16} /> Recent Activity
+                        </h3>
                         <div className="space-y-3">
-                            {scanResults.map((result, index) => (
+                            {scanResults.map((result, idx) => (
                                 <Card
-                                    key={index}
-                                    className={`p-4 border-l-4 ${
+                                    key={idx}
+                                    className={`p-4 border-2 ${
                                         result.success
-                                            ? 'bg-green-900/20 border-green-500'
-                                            : 'bg-red-900/20 border-red-500'
-                                    } border-r border-t border-b border-zinc-800`}
+                                            ? 'bg-green-500/10 border-green-500/30'
+                                            : 'bg-red-500/10 border-red-500/30'
+                                    }`}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className={`p-2 rounded-lg ${
-                                            result.success ? 'bg-green-600' : 'bg-red-600'
-                                        }`}>
-                                            {result.success ? (
-                                                <CheckCircle2 size={20} className="text-white" />
-                                            ) : (
-                                                <XCircle size={20} className="text-white" />
-                                            )}
-                                        </div>
+                                        {result.success ? (
+                                            <CheckCircle size={24} className="text-green-400 flex-shrink-0 mt-0.5" />
+                                        ) : (
+                                            <XCircle size={24} className="text-red-400 flex-shrink-0 mt-0.5" />
+                                        )}
                                         <div className="flex-1 min-w-0">
                                             <div className="font-bold text-white mb-1">
-                                                {result.success ? result.attendeeName : result.message}
+                                                {result.attendeeName || result.message}
                                             </div>
-                                            {result.success && result.ticketType && (
-                                                <div className="text-sm text-zinc-400 mb-1">{result.ticketType}</div>
+                                            {result.ticketType && (
+                                                <div className="text-sm text-zinc-400">{result.ticketType}</div>
                                             )}
-                                            <div className="text-xs text-zinc-500">
+                                            {!result.attendeeName && (
+                                                <div className="text-sm text-zinc-400">{result.message}</div>
+                                            )}
+                                            <div className="text-xs text-zinc-600 mt-1">
                                                 {new Date(result.timestamp).toLocaleTimeString()}
                                             </div>
                                         </div>
@@ -529,151 +496,9 @@ export const MobileCheckInScanner: React.FC = () => {
                                 </Card>
                             ))}
                         </div>
-                    )}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-3">
-                    <button
-                        onClick={() => {
-                            loadAnalytics();
-                            setShowAnalytics(true);
-                        }}
-                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
-                    >
-                        <TrendingUp size={24} className="text-[#ec4899] mb-2" />
-                        <div className="text-sm font-bold text-white">Scan Analytics</div>
-                        <div className="text-xs text-zinc-500">View performance</div>
-                    </button>
-                    
-                    <button
-                        onClick={() => navigate(`/manage/${id}/analytics`)}
-                        className="p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left"
-                    >
-                        <BarChart3 size={24} className="text-blue-500 mb-2" />
-                        <div className="text-sm font-bold text-white">Event Analytics</div>
-                        <div className="text-xs text-zinc-500">Full insights</div>
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
-
-            {/* QR Scanner Modal */}
-            <QRScanner
-                isOpen={showScanner}
-                onClose={() => setShowScanner(false)}
-                onScan={handleScan}
-            />
-
-            {/* Processing Overlay */}
-            {isProcessing && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#ec4899] border-t-transparent mx-auto mb-4" />
-                        <p className="text-white font-bold">Processing...</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Analytics Modal */}
-            {showAnalytics && analytics && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto">
-                    <div className="min-h-screen p-4">
-                        <div className="max-w-2xl mx-auto">
-                            {/* Header */}
-                            <div className="flex justify-between items-center mb-6 pt-4">
-                                <h2 className="text-2xl font-black text-white flex items-center gap-2">
-                                    <TrendingUp size={28} className="text-[#ec4899]" />
-                                    Scan Analytics
-                                </h2>
-                                <button
-                                    onClick={() => setShowAnalytics(false)}
-                                    className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                <Card className="p-4 bg-zinc-900 border-zinc-800">
-                                    <div className="text-3xl font-black text-white mb-1">{analytics.totalScans}</div>
-                                    <div className="text-xs text-zinc-500 uppercase font-bold">Total Scans</div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-900 border-zinc-800">
-                                    <div className="text-3xl font-black text-green-500 mb-1">{analytics.successRate}%</div>
-                                    <div className="text-xs text-zinc-500 uppercase font-bold">Success Rate</div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-900 border-zinc-800">
-                                    <div className="text-3xl font-black text-blue-500 mb-1">{analytics.averageScanTime}ms</div>
-                                    <div className="text-xs text-zinc-500 uppercase font-bold">Avg Scan Time</div>
-                                </Card>
-                                <Card className="p-4 bg-zinc-900 border-zinc-800">
-                                    <div className="text-3xl font-black text-orange-500 mb-1">{analytics.scansPerMinute}</div>
-                                    <div className="text-xs text-zinc-500 uppercase font-bold">Scans/Min</div>
-                                </Card>
-                            </div>
-
-                            {/* Performance */}
-                            <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
-                                <h3 className="font-bold text-white mb-3">Performance</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-400">Fastest Scan:</span>
-                                        <span className="text-green-500 font-bold">{analytics.fastestScan}ms</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-400">Slowest Scan:</span>
-                                        <span className="text-red-500 font-bold">{analytics.slowestScan}ms</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-zinc-400">Peak Time:</span>
-                                        <span className="text-white font-bold">{analytics.peakScanTime}</span>
-                                    </div>
-                                </div>
-                            </Card>
-
-                            {/* Scan Methods */}
-                            {Object.keys(analytics.scansByMethod).length > 0 && (
-                                <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
-                                    <h3 className="font-bold text-white mb-3">Scan Methods</h3>
-                                    <div className="space-y-2">
-                                        {Object.entries(analytics.scansByMethod).map(([method, count]: [string, any]) => (
-                                            <div key={method} className="flex justify-between items-center">
-                                                <span className="text-zinc-400 capitalize">{method}:</span>
-                                                <span className="text-white font-bold">{count}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
-                            )}
-
-                            {/* Error Breakdown */}
-                            {Object.keys(analytics.errorBreakdown).length > 0 && (
-                                <Card className="p-4 bg-zinc-900 border-zinc-800 mb-4">
-                                    <h3 className="font-bold text-white mb-3">Error Breakdown</h3>
-                                    <div className="space-y-2">
-                                        {Object.entries(analytics.errorBreakdown).map(([error, count]: [string, any]) => (
-                                            <div key={error} className="flex justify-between items-center text-sm">
-                                                <span className="text-zinc-400 flex-1 truncate">{error}:</span>
-                                                <span className="text-red-500 font-bold ml-2">{count}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </Card>
-                            )}
-
-                            <Button
-                                onClick={() => setShowAnalytics(false)}
-                                className="w-full bg-zinc-800 hover:bg-zinc-700 border-zinc-700"
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
-
-export default MobileCheckInScanner;
