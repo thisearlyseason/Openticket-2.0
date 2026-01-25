@@ -1128,8 +1128,33 @@ export const checkInTicket = async (req, res) => {
             .single();
         
         if (updateError) {
-            console.error('[CheckIn] Update error:', updateError);
-            return res.status(500).json({ error: 'Failed to update ticket status' });
+            // FIX #4: ENHANCED ERROR LOGGING - Log actual Supabase error details
+            console.error('[CheckIn] ❌ SUPABASE UPDATE ERROR - Full details:', {
+                error: updateError,
+                errorMessage: updateError.message,
+                errorCode: updateError.code,
+                errorDetails: updateError.details,
+                errorHint: updateError.hint,
+                registrationId: targetRegistration.id,
+                ticketId: ticket.ticketId,
+                ticketNumber: ticket.ticketNumber,
+                ticketIndex: ticketIndex,
+                updateAttempt: {
+                    ticketsArrayLength: updatedTickets.length,
+                    checkInStatusesKeys: Object.keys(checkInStatuses),
+                    anyCheckedIn: anyCheckedIn
+                }
+            });
+            
+            // Return detailed error message with actual Supabase error
+            return res.status(500).json({ 
+                error: 'Failed to update ticket status',
+                message: updateError.message || 'Database update failed',
+                details: process.env.NODE_ENV === 'development' ? {
+                    code: updateError.code,
+                    hint: updateError.hint
+                } : undefined
+            });
         }
         
         console.log(`[CheckIn] Success: ${ticket.ticketNumber} for ${ticket.attendeeName}`);
