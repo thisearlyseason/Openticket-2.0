@@ -1369,3 +1369,121 @@ export const confirmAtDoorPayment = async (req, res) => {
     }
 };
 
+
+
+/**
+ * Create Stripe Checkout Session for at-door payments
+ * This creates a hosted checkout page that redirects back after payment
+ * POST /api/stripe/create-door-session
+ */
+export const createDoorCheckoutSession = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { registrationId, ticketId, amount, returnUrl } = req.body;
+        
+        if (!registrationId || !amount) {
+            return res.status(400).json({ error: 'Registration ID and amount are required' });
+        }
+        
+        // Validate amount
+        const amountInCents = Math.round(parseFloat(amount) * 100);
+        if (amountInCents < 50) {
+            return res.status(400).json({ error: 'Amount must be at least $0.50' });
+        }
+        
+        // Get registration with event details
+        const { data: registration, error: regError } = await supabase
+            .from('registrations')
+            .select(`
+                *,
+                event:events (
+                    id,
+                    title,
+                    owner_id,
+                    owner:profiles!events_owner_id_fkey (
+                        id,
+                        stripe_connect_id,
+                        stripe_onboarding_complete
+                    )
+                )
+            `)
+            .eq('id', registrationId)
+            .single();
+        
+        if (regError || !registration) {
+            console.error('[Stripe] Registration not found:', regError);
+            return res.status(404).json({ error: 'Registration not found' });
+        }
+        
+        // Prevent duplicate payments
+        if (registration.payment_status === 'completed' || registration.payment_status === 'paid' || registration.payment_status === 'succeeded') {
+            return res.status(400).json({ error: 'This registration is already paid' });
+        }
+        
+        // Get organizer's Stripe Connect ID
+        const organizerStripeId = registration.event?.owner?.stripe_connect_id;
+        const isRealStripeAccount = organizerStripeId && 
+            !organizerStripeId.startsWith('mock_') &&
+            registration.event?.owner?.stripe_onboarding_complete;
+        
+        // Build success and cancel URLs
+        const baseUrl = returnUrl || process.env.FRONTEND_URL || 'https://www.openticket.events';
+        const successUrl = `${baseUrl}?payment=success&registration=${registrationId}`;
+        const cancelUrl = `${baseUrl}?payment=cancelled`;
+        
+        // Calculate platform fee
+        const platformFeePercent = 0.029;
+        const platformFeeAmount = Math.round(amountInCents * platformFeePercent);
+        
+        // Build checkout session options
+        const sessionOptions = {
+            mode: 'payment',
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `Ticket for ${registration.event?.title || 'Event'}`,
+                        description: `At-door payment for ${registration.attendee_name || 'Guest'}`,
+                    },
+                    unit_amount: amountInCents,
+                },
+                quantity: 1,
+            }],
+            success_url: successUrl,
+            cancel_url: cancelUrl,
+            customer_email: registration.attendee_email,
+            metadata: {
+                registrationId,
+                ticketId: ticketId || '',
+                eventId: registration.event_id,
+                paymentType: 'at_door_checkout',
+            },
+        };
+        
+        // Add Connect destination if organizer has connected account
+        if (isRealStripeAccount) {
+            sessionOptions.payment_intent_data = {
+                application_fee_amount: platformFeeAmount,
+                transfer_data: {
+                    destination: organizerStripeId,
+                },
+            };
+            console.log(`[Stripe] Door checkout with Connect: ${organizerStripeId}`);
+        }
+        
+        // Create checkout session
+        const session = await stripe.checkout.sessions.create(sessionOptions);
+        
+        console.log(`[Stripe] Created door checkout session: ${session.id} for reg: ${registrationId}`);
+        
+        res.json({
+            url: session.url,
+            sessionId: session.id,
+        });
+        
+    } catch (error) {
+        console.error('[Stripe] Door checkout session error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create checkout session' });
+    }
+};
+
