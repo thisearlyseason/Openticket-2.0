@@ -265,9 +265,6 @@ export const MobileCheckInScanner: React.FC = () => {
                 return;
             }
             
-            // Reset retry counter on successful request (even if not 200)
-            retryAttemptsRef.current = 0;
-            
             const result = await response.json();
             console.log('[MobileScanner] API response data:', result);
             
