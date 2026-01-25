@@ -26,10 +26,29 @@ export const KioskCheckIn: React.FC = () => {
     const [searchResults, setSearchResults] = useState<GuestSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedGuest, setSelectedGuest] = useState<GuestSearchResult | null>(null);
-    const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
+    const [scanHistory, setScanHistory] = useState<ScanHistory[]>(() => {
+        // Load history from localStorage on init
+        try {
+            const saved = localStorage.getItem(`kiosk_history_${eventId}`);
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentScan, setCurrentScan] = useState<ScanResult | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Persist history to localStorage
+    useEffect(() => {
+        if (eventId && scanHistory.length > 0) {
+            try {
+                localStorage.setItem(`kiosk_history_${eventId}`, JSON.stringify(scanHistory.slice(0, 50)));
+            } catch (e) {
+                console.error('[Kiosk] Failed to save history:', e);
+            }
+        }
+    }, [scanHistory, eventId]);
 
     // KIOSK LOCK: Prevent navigation away except via Back button
     useEffect(() => {
