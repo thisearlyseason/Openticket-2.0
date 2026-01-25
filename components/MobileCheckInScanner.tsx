@@ -535,6 +535,95 @@ export const MobileCheckInScanner: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Payment Required Modal */}
+            {showPaymentModal && paymentInfo && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <Card className="w-full max-w-md bg-zinc-900 border-orange-500/50 p-6">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <DollarSign size={32} className="text-orange-400" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-2">Payment Required</h2>
+                            <p className="text-zinc-400">This ticket must be paid before check-in</p>
+                        </div>
+                        
+                        <div className="bg-zinc-800 rounded-xl p-4 mb-6">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-zinc-400">Guest</span>
+                                <span className="text-white font-bold">{paymentInfo.attendeeName}</span>
+                            </div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-zinc-400">Ticket</span>
+                                <span className="text-white">{paymentInfo.ticketType}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-zinc-700">
+                                <span className="text-zinc-400">Amount Due</span>
+                                <span className="text-2xl font-black text-orange-400">${paymentInfo.price.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            <Button
+                                onClick={() => handleStripePayment(paymentInfo)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 py-4 text-lg font-bold"
+                            >
+                                <CreditCard size={20} className="mr-2" />
+                                Pay with Card (Stripe)
+                            </Button>
+                            
+                            <Button
+                                onClick={() => {
+                                    setShowPaymentModal(false);
+                                    setPaymentInfo(null);
+                                }}
+                                variant="outline"
+                                className="w-full py-3"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };
+
+// Helper function to create Stripe payment session
+async function handleStripePayment(paymentInfo: PaymentInfo) {
+    try {
+        const token = await getAuthToken();
+        const API_URL = import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || '';
+        
+        // Call backend to create Stripe checkout session
+        const response = await fetch(`${API_URL}/api/payments/create-door-session`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                registrationId: paymentInfo.registrationId,
+                ticketId: paymentInfo.ticketId,
+                amount: paymentInfo.price,
+                returnUrl: window.location.href
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to create payment session');
+        }
+        
+        const { url } = await response.json();
+        
+        // Redirect to Stripe checkout
+        if (url) {
+            window.location.href = url;
+        }
+    } catch (error: any) {
+        console.error('[MobileScanner] Payment error:', error);
+        alert(error.message || 'Failed to process payment');
+    }
+}
