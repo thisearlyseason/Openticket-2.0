@@ -774,7 +774,15 @@ const checkInGuest = async (req, res) => {
         });
     } catch (error) {
         console.error('[Kiosk] Check-in error:', error);
-        res.status(500).json({ error: 'Failed to check in guest' });
+        console.error('[Kiosk] Check-in error details:', {
+            message: error.message,
+            stack: error.stack,
+            code: error.code
+        });
+        res.status(500).json({ 
+            error: 'Failed to check in guest',
+            message: error.message || 'Unknown error occurred'
+        });
     }
 };
 
