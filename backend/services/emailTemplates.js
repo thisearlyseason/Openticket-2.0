@@ -60,6 +60,28 @@ const TEMPLATE_THEMES = {
 };
 
 /**
+ * Determine if text should be light or dark based on background color
+ * Returns true if background is dark (needs light text)
+ */
+const isBackgroundDark = (hex) => {
+    if (!hex) return false;
+    hex = hex.replace(/^#/, '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
+};
+
+/**
+ * Get appropriate text color for a background
+ */
+const getContrastingTextColor = (bgColor) => {
+    return isBackgroundDark(bgColor) ? '#ffffff' : '#111827';
+};
+
+/**
  * Get theme from ticketDesign settings
  * Falls back to 'modern' if no design specified
  */
@@ -69,7 +91,10 @@ const getThemeFromDesign = (ticketDesign) => {
     // If using a predefined template
     const templateId = ticketDesign.template || 'modern';
     if (TEMPLATE_THEMES[templateId]) {
-        const baseTheme = TEMPLATE_THEMES[templateId];
+        const baseTheme = { ...TEMPLATE_THEMES[templateId] };
+        
+        // Always ensure text color contrasts with background
+        baseTheme.textColor = getContrastingTextColor(baseTheme.bgColor);
         
         // Allow custom accent color override
         if (ticketDesign.accentColor) {
@@ -85,14 +110,15 @@ const getThemeFromDesign = (ticketDesign) => {
     // Custom template with custom colors
     const accentColor = ticketDesign.accentColor || '#10b981';
     const bgColor = ticketDesign.backgroundColor || '#ffffff';
-    const textColor = ticketDesign.textColor || '#111827';
+    // Automatically determine text color based on background brightness
+    const textColor = ticketDesign.textColor || getContrastingTextColor(bgColor);
     
     return {
         headerGradient: `linear-gradient(135deg, ${accentColor} 0%, ${adjustBrightness(accentColor, -20)} 100%)`,
         accentColor,
         bgColor,
         textColor,
-        mutedColor: adjustBrightness(textColor, 40)
+        mutedColor: isBackgroundDark(bgColor) ? '#a1a1aa' : '#6b7280'
     };
 };
 
