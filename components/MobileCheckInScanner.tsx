@@ -233,7 +233,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     timestamp: Date.now()
                 };
                 
-                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
                 setPendingSync(prev => prev + 1);
                 
                 await trackScanAnalytics(true, ticketId, Date.now() - scanStartTime);
@@ -290,7 +290,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     timestamp: Date.now()
                 };
                 
-                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
                 
                 if (navigator.vibrate) {
                     navigator.vibrate([100, 100, 100]);
@@ -311,7 +311,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     timestamp: Date.now()
                 };
                 
-                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
                 
                 await trackScanAnalytics(false, ticketId, Date.now() - scanStartTime, 'Server error (500)');
                 
@@ -342,7 +342,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     timestamp: Date.now()
                 };
                 
-                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
                 setStats(prev => ({
                     ...prev,
                     checkedIn: prev.checkedIn + 1,
@@ -366,7 +366,7 @@ export const MobileCheckInScanner: React.FC = () => {
                     timestamp: Date.now()
                 };
                 
-                setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+                setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
                 
                 await trackScanAnalytics(false, ticketId, scanDuration, result.error || result.message);
                 
@@ -386,7 +386,7 @@ export const MobileCheckInScanner: React.FC = () => {
                 timestamp: Date.now()
             };
             
-            setScanResults(prev => [scanResult, ...prev.slice(0, 9)]);
+            setScanResults(prev => [scanResult, ...prev.slice(0, 49)]);
             
             if (id) {
                 await trackScanAnalytics(false, 'unknown', Date.now() - scanStartTime, error.message);
