@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRScanner } from './QRScanner';
 import { Button, Badge, Card } from './UI';
-import { ArrowLeft, Camera, CheckCircle, XCircle, AlertCircle, Users, Clock, Loader2, WifiOff, CloudOff, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle, XCircle, AlertCircle, Users, Clock, Loader2, WifiOff, CloudOff, RefreshCw, DollarSign, CreditCard } from 'lucide-react';
 import { getAuthToken } from '../services/firebaseConfig';
 import { offlineSyncService } from '../services/offlineSyncService';
 import { scanAnalyticsService } from '../services/scanAnalyticsService';
@@ -27,6 +27,14 @@ interface Stats {
     pending: number;
 }
 
+interface PaymentInfo {
+    registrationId: string;
+    ticketId: string;
+    attendeeName: string;
+    ticketType: string;
+    price: number;
+}
+
 export const MobileCheckInScanner: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -37,6 +45,8 @@ export const MobileCheckInScanner: React.FC = () => {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
     const lastScannedRef = useRef<{code: string; time: number} | null>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
