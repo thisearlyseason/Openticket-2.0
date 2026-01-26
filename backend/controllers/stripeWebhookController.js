@@ -538,6 +538,50 @@ async function handlePaymentIntentSucceeded(stripe, paymentIntent) {
     });
 
     console.log(`[Webhook] At-door payment processed for registration: ${registrationId}`);
+
+    // Send push notification to organizer about at-door sale
+    try {
+        const organizerId = reg.event?.created_by;
+        if (organizerId) {
+            const ticketCount = reg.tickets?.length || 1;
+            const currency = (paymentIntent.currency || 'usd').toUpperCase();
+            
+            const notification = {
+                title: '💰 At-Door Payment Received!',
+                body: `${reg.attendee_name} paid at the door for ${reg.event?.title} • ${currency} ${grossAmount.toFixed(2)}`,
+                tag: `door_sale_${registrationId}`,
+                data: {
+                    type: 'door_sale',
+                    eventId: reg.event_id,
+                    registrationId: registrationId,
+                    attendeeName: reg.attendee_name,
+                    ticketCount,
+                    amount: grossAmount,
+                    currency,
+                    url: `/#/manage/${reg.event_id}/attendees`
+                }
+            };
+            
+            // Send browser push notification
+            await PushService.sendNotification(organizerId, notification);
+            
+            // Save to in-app notifications
+            await supabase
+                .from('notifications')
+                .insert({
+                    user_id: organizerId,
+                    type: 'door_sale',
+                    title: notification.title,
+                    message: notification.body,
+                    read: false,
+                    data: notification.data,
+                    created_at: new Date().toISOString()
+                });
+            console.log('[Webhook] At-door sale notification sent to organizer');
+        }
+    } catch (pushError) {
+        console.error("[Push] Failed to send at-door sale notification:", pushError.message);
+    }
 }
 
 /**
