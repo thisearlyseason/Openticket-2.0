@@ -2009,8 +2009,8 @@ export const EventView = () => {
                                             <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
                                         </div>
                                     </div>
-                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all text-ellipsis whitespace-nowrap overflow-hidden">
-                                        Checkout <ArrowRight size={18} className="md:w-6 md:h-6" />
+                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all shrink-0 min-w-fit">
+                                        Checkout <ArrowRight size={18} className="md:w-6 md:h-6 shrink-0" />
                                     </Button>
                                 </Card>
                             </div>
