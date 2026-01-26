@@ -53,8 +53,8 @@ export const Settings = () => {
     const [nonprofitStatus, setNonprofitStatus] = useState<string | null>(null);
     const [nonprofitName, setNonprofitName] = useState('');
 
-    // Branding State - Default to pink, ensure text contrast
-    const [primaryColor, setPrimaryColor] = useState('#ec4899');
+    // Branding State - Default to teal, ensure text contrast
+    const [primaryColor, setPrimaryColor] = useState('#00c9cc');
 
     // Organizer Defaults
     const [defaultRefundPolicy, setDefaultRefundPolicy] = useState('');
