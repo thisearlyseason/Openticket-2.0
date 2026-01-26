@@ -16,7 +16,7 @@ import os
 import json
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://checkin-dashboard-5.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ticketfix-5.preview.emergentagent.com')
 
 class TestHealthAndBasicEndpoints:
     """Basic health and connectivity tests"""
