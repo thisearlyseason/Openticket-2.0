@@ -445,8 +445,9 @@ export const Settings = () => {
                 setHeaderImageUrl(updatedUser.headerImageUrl || '');
             }
 
-            // Update CSS Variable immediately for preview
+            // Update CSS Variables immediately for preview
             document.documentElement.style.setProperty('--color-primary', primaryColor);
+            document.documentElement.style.setProperty('--color-primary-fg', getContrastingFg(primaryColor));
 
             // Save local preferences
             localStorage.setItem('openticket_desktop_camera', String(desktopCamera));
