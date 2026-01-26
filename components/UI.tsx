@@ -131,12 +131,14 @@ const getButtonStyles = (variant: string = 'primary', className: string = '') =>
         outline: "bg-transparent border-2 border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white hover:border-primary hover:bg-primary/10 hover:text-primary",
         ghost: "text-zinc-600 dark:text-zinc-400 hover:text-primary hover:bg-zinc-200 dark:hover:bg-zinc-800/50",
         danger: "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/50",
-        white: "bg-white text-black hover:bg-zinc-200 border border-transparent shadow-lg"
+        destructive: "bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 border border-transparent",
+        white: "bg-white text-black hover:bg-zinc-200 border border-transparent shadow-lg",
+        accent: "bg-accent text-black hover:opacity-90 shadow-lg shadow-accent/20 border border-transparent"
     };
     return `${baseStyle} ${variants[variant] || variants.primary} ${className}`;
 };
 
-export const Button = ({ children, variant = 'primary', className = '', isLoading, type = "button", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'white', isLoading?: boolean, size?: 'sm' | 'md' | 'lg' }) => {
+export const Button = ({ children, variant = 'primary', className = '', isLoading, type = "button", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'destructive' | 'white' | 'accent', isLoading?: boolean, size?: 'sm' | 'md' | 'lg' }) => {
     let sizeClasses = "";
     if (props.size === 'sm') sizeClasses = "!px-4 !py-2 !text-xs";
 
