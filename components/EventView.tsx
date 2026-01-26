@@ -165,16 +165,30 @@ export const EventView = () => {
         }
     }, [id]);
 
+    // Helper to determine contrasting foreground color
+    const getContrastingFg = (bgColor: string): string => {
+        if (!bgColor) return '#ffffff';
+        const hex = bgColor.replace(/^#/, '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#000000' : '#ffffff';
+    };
+
     useEffect(() => {
         if (organizerUser?.primaryColor) {
             document.documentElement.style.setProperty('--color-primary', organizerUser.primaryColor);
+            document.documentElement.style.setProperty('--color-primary-fg', getContrastingFg(organizerUser.primaryColor));
         } else {
             document.documentElement.style.removeProperty('--color-primary');
+            document.documentElement.style.removeProperty('--color-primary-fg');
         }
 
         return () => {
             // Clean up branding when leaving the event page to restore global site branding
             document.documentElement.style.removeProperty('--color-primary');
+            document.documentElement.style.removeProperty('--color-primary-fg');
         };
     }, [organizerUser?.primaryColor]);
 
