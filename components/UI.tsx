@@ -133,7 +133,7 @@ const getButtonStyles = (variant: string = 'primary', className: string = '') =>
         danger: "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/50",
         destructive: "bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 border border-transparent",
         white: "bg-white text-black hover:bg-zinc-200 border border-transparent shadow-lg",
-        accent: "bg-accent text-black hover:opacity-90 shadow-lg shadow-accent/20 border border-transparent"
+        accent: "bg-accent text-accent-fg hover:opacity-90 shadow-lg shadow-accent/20 border border-transparent"
     };
     return `${baseStyle} ${variants[variant] || variants.primary} ${className}`;
 };
@@ -162,21 +162,16 @@ export const Badge = ({ children, color = 'blue', className = '' }: { children?:
     const colors: Record<string, string> = {
         blue: 'bg-blue-600 text-white border-blue-400',
         green: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
-        purple: 'bg-accent border-transparent',
+        purple: 'bg-accent text-accent-fg border-transparent',
         red: 'bg-red-500 text-white border-transparent',
-        primary: 'bg-primary border-transparent',
+        primary: 'bg-primary text-primary-fg border-transparent',
         secondary: 'bg-secondary text-secondary-fg border-black/10 dark:border-transparent',
-        orange: 'bg-orange-500 border-transparent',
+        orange: 'bg-orange-500 text-black border-transparent',
         gray: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-700',
-        yellow: 'bg-[#E0FF20] border-transparent'
+        yellow: 'bg-[#E0FF20] text-black border-transparent'
     };
     
-    // Force black text color for light/bright badges using inline style
-    // This includes: yellow, orange, purple (accent - neon green), primary (pink in dark)
-    const lightColors = ['yellow', 'orange', 'purple', 'primary', 'green', 'secondary'];
-    const style = lightColors.includes(color) ? { color: '#000000' } : undefined;
-    
-    return <span style={style} className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
+    return <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${colors[color] || colors.blue} ${className}`}>{children}</span>;
 };
 
 export const Input = ({ label, error, required, className = '', containerClassName = '', icon: Icon, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string, error?: string, containerClassName?: string, icon?: React.ElementType }) => {
