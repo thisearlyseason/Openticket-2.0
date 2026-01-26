@@ -295,7 +295,7 @@ class TestWebhookIntegration:
         """Test webhook endpoint exists and responds"""
         # Webhook endpoint should reject requests without proper signature
         response = requests.post(
-            f"{BASE_URL}/api/stripe/webhook",
+            f"{BASE_URL}/api/webhook",
             headers={"Content-Type": "application/json"},
             data="{}"
         )
