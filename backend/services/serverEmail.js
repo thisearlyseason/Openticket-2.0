@@ -88,6 +88,7 @@ class EmailService {
             console.log(`[EmailService] Event ticket_design:`, JSON.stringify(eventDetails?.ticket_design));
             const { subject, html } = purchaseConfirmation({
                 attendeeName: tickets[0]?.attendeeName || orderDetails.attendeeName || 'Guest',
+                attendeeEmail: to, // Pass the recipient email for the account reminder
                 eventTitle: eventDetails?.title || 'Event',
                 eventDate,
                 eventTime: eventDetails?.time || 'TBD',
