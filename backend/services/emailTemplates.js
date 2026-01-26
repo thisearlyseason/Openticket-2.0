@@ -500,6 +500,14 @@ export const purchaseConfirmation = ({
         <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0; text-align: center;">
             📱 Save this email for check-in. Show your QR code at the event.
         </p>
+        
+        <!-- View Tickets Button -->
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/my-tickets" 
+               style="display: inline-block; background: ${theme.accentColor}; color: ${isBackgroundDark(theme.accentColor) ? '#ffffff' : '#000000'}; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                View Your Tickets
+            </a>
+        </div>
     `;
 
     return {
