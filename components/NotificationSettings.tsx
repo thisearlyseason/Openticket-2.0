@@ -234,12 +234,12 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         {[
-                            { icon: '🎟️', label: 'Ticket purchases' },
-                            { icon: '⏰', label: 'Event reminders' },
+                            { icon: '🎟️', label: 'New ticket sales' },
+                            { icon: '💰', label: 'At-door payments' },
                             { icon: '✅', label: 'Check-in confirmations' },
+                            { icon: '⏰', label: 'Event reminders' },
                             { icon: '📢', label: 'Event updates' },
-                            { icon: '💰', label: 'Payment notifications' },
-                            { icon: '👥', label: 'New registrations (organizers)' }
+                            { icon: '💳', label: 'Refund notifications' }
                         ].map((item, i) => (
                             <div key={i} className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
                                 <span>{item.icon}</span>
