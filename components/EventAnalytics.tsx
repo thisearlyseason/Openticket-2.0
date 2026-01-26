@@ -27,7 +27,7 @@ export const EventAnalytics = () => {
 
         const freshUser = await StorageService.getUserById(user.id);
         const plan = freshUser?.subscription?.plan || 'free';
-        setIsPro(plan === 'pro' || plan === 'premium' || freshUser?.isAdmin === true);
+        setIsPro(plan === 'pro' || plan === 'premium' || plan === 'enterprise' || freshUser?.isAdmin === true);
         const e = await StorageService.getEventFull(id);
         const r = await StorageService.getRegistrations(id);
 
