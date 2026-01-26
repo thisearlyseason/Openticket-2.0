@@ -1395,7 +1395,18 @@ export const EventBuilder = () => {
                                                     <FileDropZone
                                                         label="Upload Image"
                                                         currentImage={formData.ticketDesign?.logoUrl?.startsWith('data:') ? formData.ticketDesign.logoUrl : undefined}
-                                                        onFileSelect={(b64) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } })}
+                                                        onFileSelect={async (b64) => {
+                                                            // Upload to storage and get public URL
+                                                            try {
+                                                                const path = `events/${formData.id || 'new'}/ticket-logo-${Date.now()}.png`;
+                                                                const publicUrl = await StorageService.uploadFile(b64 as string, path);
+                                                                setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: publicUrl } });
+                                                            } catch (e) {
+                                                                console.error('Logo upload failed:', e);
+                                                                // Fallback to base64 if upload fails
+                                                                setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } });
+                                                            }
+                                                        }}
                                                         onClear={() => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: '' } })}
                                                     />
                                                 </div>
