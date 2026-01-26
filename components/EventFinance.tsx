@@ -590,6 +590,34 @@ export const EventFinance = () => {
 
     const paidRegistrations = registrations.filter(r => r.paymentStatus === 'paid' || r.paymentStatus === 'completed').length;
     const pendingRegistrations = registrations.filter(r => r.paymentStatus === 'pending').length;
+    const refundedRegistrations = registrations.filter(r => r.paymentStatus === 'refunded').length;
+    
+    // Calculate ticket counts (excluding refunded)
+    const paidTickets = registrations
+        .filter(r => r.paymentStatus === 'paid' || r.paymentStatus === 'completed')
+        .reduce((sum, r) => {
+            const ticketCount = r.tickets?.reduce((tSum, t) => {
+                // Only count non-refunded tickets
+                if (t.status !== 'refunded') {
+                    return tSum + (t.quantity || 1);
+                }
+                return tSum;
+            }, 0) || 0;
+            return sum + ticketCount;
+        }, 0);
+    
+    const pendingTickets = registrations
+        .filter(r => r.paymentStatus === 'pending')
+        .reduce((sum, r) => sum + (r.tickets?.reduce((tSum, t) => tSum + (t.quantity || 1), 0) || 0), 0);
+    
+    const refundedTickets = registrations.reduce((sum, r) => {
+        // Count tickets explicitly marked as refunded OR all tickets from refunded registrations
+        if (r.paymentStatus === 'refunded') {
+            return sum + (r.tickets?.reduce((tSum, t) => tSum + (t.quantity || 1), 0) || 0);
+        }
+        // Also count individual refunded tickets from paid orders (partial refunds)
+        return sum + (r.tickets?.filter(t => t.status === 'refunded').reduce((tSum, t) => tSum + (t.quantity || 1), 0) || 0);
+    }, 0);
 
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 space-y-8">
