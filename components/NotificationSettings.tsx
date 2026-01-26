@@ -160,8 +160,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                     
                     <p className="text-zinc-500 text-sm mb-4">
                         {isSubscribed 
-                            ? 'You\'ll receive notifications for event reminders, ticket confirmations, and updates.'
-                            : 'Get notified about event reminders, ticket purchases, check-ins, and important updates.'}
+                            ? 'You\'ll receive instant notifications when tickets are sold for your events.'
+                            : 'Get notified instantly about new ticket sales, check-ins, and important event updates.'}
                     </p>
                     
                     {permission === 'denied' && (
