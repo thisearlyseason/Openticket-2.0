@@ -2098,6 +2098,7 @@ export const resendConfirmationEmail = async (req, res) => {
         // Generate email with the event's ticket design for theming
         const { subject, html } = purchaseConfirmation({
             attendeeName: reg.attendee_name || 'Guest',
+            attendeeEmail: reg.attendee_email, // Pass the recipient email for the account reminder
             eventTitle: reg.event.title,
             eventDate,
             eventTime: reg.event.time || 'TBD',
