@@ -279,6 +279,7 @@ const infoRow = (label, value, borderBottom = true) => `
  */
 export const purchaseConfirmation = ({ 
     attendeeName, 
+    attendeeEmail,
     eventTitle, 
     eventDate, 
     eventTime, 
