@@ -2015,16 +2015,29 @@ export const EventView = () => {
                     getTotalTickets() > 0 && !isSuccess && (
                         <div className="fixed bottom-0 left-0 w-full p-4 z-[100] animate-in slide-in-from-bottom-20 duration-500 pb-24 md:pb-4">
                             <div className="max-w-4xl mx-auto">
-                                <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-2 border-2">
-                                    <div className="pl-4 shrink-0">
-                                        <div className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500 mb-1">Total</div>
-                                        <div className="text-2xl md:text-3xl font-black flex items-center gap-2 tracking-tighter">
-                                            <EventPriceDisplay amount={calculateTotal()} currency={eventCurrency} />
-                                            <Badge className="bg-primary text-black font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()}</Badge>
+                                <Card className="p-4 bg-black/90 backdrop-blur-3xl text-white border-white/20 shadow-2xl rounded-[2.5rem] flex flex-row justify-between items-center gap-4 border-2">
+                                    <div className="pl-4 flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[2px] text-zinc-500">Total</span>
+                                            <Badge className="bg-primary text-primary-fg font-black border-none text-[10px] py-0 px-1.5 h-5">{getTotalTickets()} {getTotalTickets() === 1 ? 'ticket' : 'tickets'}</Badge>
                                         </div>
+                                        <div className="text-xl md:text-2xl font-black tracking-tight">
+                                            <EventPriceDisplay amount={calculateTotal()} currency={eventCurrency} />
+                                        </div>
+                                        {currentUser?.defaultCurrency && currentUser.defaultCurrency !== eventCurrency && (
+                                            <div className="text-xs text-zinc-400 mt-0.5">
+                                                ≈ <EventPriceDisplay amount={calculateTotal()} currency={currentUser.defaultCurrency} /> {currentUser.defaultCurrency}
+                                            </div>
+                                        )}
                                     </div>
-                                    <Button variant="secondary" onClick={handleRegister} isLoading={isRegistering} className="h-14 md:h-16 px-6 md:px-10 rounded-2xl font-black uppercase tracking-tighter text-sm md:text-xl shadow-2xl flex items-center gap-2 md:gap-3 active:scale-95 transition-all shrink-0 min-w-fit">
-                                        Checkout <ArrowRight size={18} className="md:w-6 md:h-6 shrink-0" />
+                                    <Button 
+                                        variant="secondary" 
+                                        onClick={handleRegister} 
+                                        isLoading={isRegistering} 
+                                        className="h-14 md:h-16 px-8 md:px-12 rounded-2xl font-black uppercase tracking-wider text-base md:text-lg shadow-2xl flex items-center justify-center gap-2 active:scale-95 transition-all flex-shrink-0 whitespace-nowrap"
+                                    >
+                                        Checkout
+                                        <ArrowRight size={20} className="flex-shrink-0" />
                                     </Button>
                                 </Card>
                             </div>
