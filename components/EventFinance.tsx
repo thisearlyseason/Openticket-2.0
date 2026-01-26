@@ -753,28 +753,31 @@ export const EventFinance = () => {
                 </Card>
             </div>
 
-            {/* Registration Stats */}
+            {/* Ticket Stats */}
             <div className="grid grid-cols-3 gap-4">
-                <Card className="p-4 flex items-center gap-3">
-                    <CheckCircle className="text-green-500" size={24} />
-                    <div>
-                        <div className="text-2xl font-bold">{paidRegistrations}</div>
-                        <div className="text-xs text-zinc-500">Paid</div>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                        <CheckCircle className="text-green-500" size={24} />
+                        <span className="text-sm font-medium text-zinc-500">Paid Tickets</span>
                     </div>
+                    <div className="text-3xl font-bold text-green-600">{paidTickets}</div>
+                    <div className="text-xs text-zinc-500 mt-1">{paidRegistrations} order{paidRegistrations !== 1 ? 's' : ''}</div>
                 </Card>
-                <Card className="p-4 flex items-center gap-3">
-                    <Clock className="text-yellow-500" size={24} />
-                    <div>
-                        <div className="text-2xl font-bold">{pendingRegistrations}</div>
-                        <div className="text-xs text-zinc-500">Pending</div>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                        <Clock className="text-yellow-500" size={24} />
+                        <span className="text-sm font-medium text-zinc-500">Pending (Pay at Door)</span>
                     </div>
+                    <div className="text-3xl font-bold text-yellow-600">{pendingTickets}</div>
+                    <div className="text-xs text-zinc-500 mt-1">{pendingRegistrations} order{pendingRegistrations !== 1 ? 's' : ''}</div>
                 </Card>
-                <Card className="p-4 flex items-center gap-3">
-                    <Ban className="text-red-500" size={24} />
-                    <div>
-                        <div className="text-2xl font-bold">{summary.refundCount}</div>
-                        <div className="text-xs text-zinc-500">Refunded</div>
+                <Card className="p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                        <Ban className="text-red-500" size={24} />
+                        <span className="text-sm font-medium text-zinc-500">Refunded Tickets</span>
                     </div>
+                    <div className="text-3xl font-bold text-red-600">{refundedTickets}</div>
+                    <div className="text-xs text-zinc-500 mt-1">{refundedRegistrations} order{refundedRegistrations !== 1 ? 's' : ''}</div>
                 </Card>
             </div>
 
