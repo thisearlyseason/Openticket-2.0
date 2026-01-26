@@ -409,6 +409,56 @@ async function handleCheckoutCompleted(stripe, session) {
             console.error("[Email] Failed to send affiliate notification:", affEmailError.message);
         }
     }
+
+    // 12. Send push notification to organizer about new sale
+    try {
+        const organizerId = reg.event?.created_by;
+        if (organizerId) {
+            const ticketCount = finalizedTickets.length;
+            const currency = (session.currency || 'usd').toUpperCase();
+            
+            // Create notification payload
+            const notification = {
+                title: '🎟️ New Ticket Sale!',
+                body: `${reg.attendee_name} purchased ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} for ${reg.event?.title} • ${currency} ${grossAmount.toFixed(2)}`,
+                tag: `sale_${reg.id}`,
+                data: {
+                    type: 'new_sale',
+                    eventId: reg.event_id,
+                    registrationId: reg.id,
+                    attendeeName: reg.attendee_name,
+                    ticketCount,
+                    amount: grossAmount,
+                    currency,
+                    url: `/#/manage/${reg.event_id}/attendees`
+                }
+            };
+            
+            // Send browser push notification
+            const pushSent = await PushService.sendNotification(organizerId, notification);
+            console.log(`[Webhook] Push notification ${pushSent ? 'sent' : 'skipped'} to organizer: ${organizerId}`);
+            
+            // Also save to in-app notifications database
+            try {
+                await supabase
+                    .from('notifications')
+                    .insert({
+                        user_id: organizerId,
+                        type: 'new_sale',
+                        title: notification.title,
+                        message: notification.body,
+                        read: false,
+                        data: notification.data,
+                        created_at: new Date().toISOString()
+                    });
+                console.log('[Webhook] Sale notification saved to database');
+            } catch (dbError) {
+                console.warn('[Webhook] Could not save notification to database:', dbError.message);
+            }
+        }
+    } catch (pushError) {
+        console.error("[Push] Failed to send sale notification:", pushError.message);
+    }
 }
 
 /**
