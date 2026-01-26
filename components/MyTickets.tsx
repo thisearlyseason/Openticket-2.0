@@ -53,10 +53,42 @@ export const MyTickets = () => {
         registrationId: string | null 
     }>({ isOpen: false, transferId: null, countdown: 5, registrationId: null });
     
+    // Share state
+    const [copiedEventId, setCopiedEventId] = useState<string | null>(null);
+    
     const navigate = useNavigate();
 
     // Derived State
     const selectedGroup = eventGroups.find(g => g.eventId === selectedGroupId) || null;
+    
+    // Share event link handler
+    const handleShareEvent = async (event: Event) => {
+        const shareUrl = `${window.location.origin}/#/event/${event.id}`;
+        const shareText = `Check out ${event.title}! 🎟️`;
+        
+        // Try native share first (mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: event.title,
+                    text: shareText,
+                    url: shareUrl
+                });
+                return;
+            } catch (err) {
+                // User cancelled or share failed, fall through to clipboard
+            }
+        }
+        
+        // Fallback to clipboard
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopiedEventId(event.id);
+            setTimeout(() => setCopiedEventId(null), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
 
     // Show undo modal with countdown
     const showUndoModal = (transferId: string, undoExpiresAt: string) => {
