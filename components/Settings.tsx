@@ -9,6 +9,23 @@ import { Button, Input, Card, Switch, FileDropZone, Badge, RichTextarea } from '
 import { User as UserIcon, Settings as SettingsIcon, LogOut, Camera, Bell, ChevronRight, Palette, CreditCard, Shield, Mail, CheckCircle, XCircle, Plus, Trash2, LayoutTemplate, Globe, Instagram, Facebook, Twitter, Youtube, Gift, DollarSign, AlertCircle, Eye, Send, Briefcase, Smartphone } from 'lucide-react';
 import { NotificationSettings } from './NotificationSettings';
 
+// Helper to determine if a color is bright (needs dark text)
+const isColorBright = (hex: string): boolean => {
+    if (!hex) return false;
+    hex = hex.replace(/^#/, '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5;
+};
+
+// Get contrasting foreground color
+const getContrastingFg = (bgColor: string): string => {
+    return isColorBright(bgColor) ? '#000000' : '#ffffff';
+};
+
 export const Settings = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<User | null>(null);
