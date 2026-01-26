@@ -216,6 +216,101 @@ router.get('/organizer/financial-summary', verifyToken, async (req, res) => {
     }
 });
 
+// Live Revenue Dashboard - Recent sales, today's revenue, sales velocity
+router.get('/organizer/live-sales', verifyToken, async (req, res) => {
+    try {
+        const supabase = (await import('../services/supabase.js')).default;
+        const userId = req.user.uid;
+        
+        // Get organizer's events
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title')
+            .eq('created_by', userId);
+        
+        if (eventsError) throw eventsError;
+        
+        const eventIds = events?.map(e => e.id) || [];
+        const eventMap = {};
+        events?.forEach(e => { eventMap[e.id] = e.title; });
+        
+        if (eventIds.length === 0) {
+            return res.json({
+                recentSales: [],
+                todayRevenue: 0,
+                todayTickets: 0,
+                salesVelocity: 0,
+                lastHourSales: 0
+            });
+        }
+        
+        // Get today's start (UTC)
+        const now = new Date();
+        const todayStart = new Date(now);
+        todayStart.setUTCHours(0, 0, 0, 0);
+        
+        // Get last hour start
+        const lastHourStart = new Date(now.getTime() - 60 * 60 * 1000);
+        
+        // Get recent registrations (last 24 hours, paid only)
+        const { data: recentRegs, error: regsError } = await supabase
+            .from('registrations')
+            .select('id, event_id, attendee_name, total_amount, tickets, timestamp, payment_status')
+            .in('event_id', eventIds)
+            .in('payment_status', ['paid', 'completed'])
+            .gte('timestamp', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+            .order('timestamp', { ascending: false })
+            .limit(50);
+        
+        if (regsError) throw regsError;
+        
+        // Calculate metrics
+        let todayRevenue = 0;
+        let todayTickets = 0;
+        let lastHourSales = 0;
+        
+        const recentSales = (recentRegs || []).map(reg => {
+            const regTime = new Date(reg.timestamp);
+            const ticketCount = reg.tickets?.reduce((sum, t) => sum + (t.quantity || 1), 0) || 1;
+            
+            // Today's stats
+            if (regTime >= todayStart) {
+                todayRevenue += reg.total_amount || 0;
+                todayTickets += ticketCount;
+            }
+            
+            // Last hour
+            if (regTime >= lastHourStart) {
+                lastHourSales++;
+            }
+            
+            return {
+                id: reg.id,
+                eventTitle: eventMap[reg.event_id] || 'Unknown Event',
+                attendeeName: reg.attendee_name || 'Guest',
+                amount: reg.total_amount || 0,
+                ticketCount,
+                timestamp: reg.timestamp
+            };
+        });
+        
+        // Sales velocity (sales per hour, based on last hour)
+        const salesVelocity = lastHourSales;
+        
+        res.json({
+            recentSales: recentSales.slice(0, 10), // Top 10 most recent
+            todayRevenue,
+            todayTickets,
+            salesVelocity,
+            lastHourSales
+        });
+        
+    } catch (error) {
+        console.error('[LiveSales] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Send Weekly Affiliate Summary Emails (Admin only)
 router.post('/affiliate/send-weekly-summaries', verifyToken, requireAdmin, async (req, res) => {
     try {
