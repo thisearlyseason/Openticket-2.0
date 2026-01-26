@@ -85,6 +85,7 @@ class EmailService {
             
             // CRITICAL: Pass tickets as-is (each ticket is already unique)
             // DO NOT transform or group them!
+            console.log(`[EmailService] Event ticket_design:`, JSON.stringify(eventDetails?.ticket_design));
             const { subject, html } = purchaseConfirmation({
                 attendeeName: tickets[0]?.attendeeName || orderDetails.attendeeName || 'Guest',
                 eventTitle: eventDetails?.title || 'Event',
