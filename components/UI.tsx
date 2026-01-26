@@ -150,7 +150,7 @@ export const Button = ({ children, variant = 'primary', className = '', isLoadin
     );
 };
 
-export const AnchorButton = ({ children, variant = 'primary', className = '', href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'white' }) => (
+export const AnchorButton = ({ children, variant = 'primary', className = '', href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'destructive' | 'white' | 'accent' }) => (
     <a href={href} className={getButtonStyles(variant, className)} {...props}>{children}</a>
 );
 
