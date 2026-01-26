@@ -139,7 +139,7 @@ export const Settings = () => {
                 setBusinessPhone(currentUser.businessPhone || '');
                 setShowPhonePublicly(currentUser.showPhonePublicly || false);
                 setBio(currentUser.bio || '');
-                setPrimaryColor(currentUser.primaryColor || '#E0FF20');
+                setPrimaryColor(currentUser.primaryColor || '#ec4899');
                 setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
                 setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
                 setDefaultWaiver(currentUser.defaultWaiver || {});
