@@ -513,7 +513,7 @@ export const purchaseConfirmation = ({
         <!-- Account Reminder -->
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
             <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0;">
-                💡 <strong>Tip:</strong> To view your tickets online, make sure to sign up or log in using this email address (<strong>${attendeeName ? attendeeName.split('@')[0] + '...' : 'your purchase email'}</strong>). If you used a different email to create your account, please sign up with the email you used to purchase these tickets.
+                💡 <strong>Tip:</strong> To view your tickets online, make sure to sign up or log in using this email address${attendeeEmail ? ` (<strong>${attendeeEmail}</strong>)` : ''}. If you already have an account with a different email, please sign up with the email you used to purchase these tickets.
             </p>
         </div>
     `;
