@@ -278,8 +278,8 @@ export const Home = () => {
 
                                         {/* Price Tag Sticker */}
                                         <div className={`absolute top-4 right-4 px-3 py-1 rounded-full font-black text-sm uppercase transform rotate-3 shadow-lg ${event.priceType === 'free' ? 'bg-secondary text-black' :
-                                            event.priceType === 'donation' ? 'bg-accent text-white' :
-                                                'bg-primary text-white'
+                                            event.priceType === 'donation' ? 'bg-accent text-accent-fg' :
+                                                'bg-primary text-primary-fg'
                                             }`}>
                                             {event.priceType === 'free' ? 'FREE' : event.priceType === 'donation' ? 'DONATE' : `$${event.price}`}
                                         </div>
