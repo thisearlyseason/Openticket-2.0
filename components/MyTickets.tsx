@@ -580,8 +580,21 @@ export const MyTickets = () => {
                                             This order has been fully refunded
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-1 text-primary font-bold text-sm mt-auto">
-                                        View Tickets <ArrowLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+                                    <div className="flex items-center justify-between mt-auto">
+                                        <div className="flex items-center gap-1 text-primary font-bold text-sm">
+                                            View Tickets <ArrowLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+                                        </div>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleShareEvent(group.event); }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-full text-xs font-bold text-zinc-600 dark:text-zinc-300 transition-colors"
+                                            data-testid={`share-event-${group.eventId}`}
+                                        >
+                                            {copiedEventId === group.eventId ? (
+                                                <><Check size={14} className="text-green-500" /> Copied!</>
+                                            ) : (
+                                                <><Share2 size={14} /> Share Event</>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
