@@ -1394,7 +1394,7 @@ export const EventBuilder = () => {
                                                 <div className="h-20">
                                                     <FileDropZone
                                                         label="Upload Image"
-                                                        currentImage={formData.ticketDesign?.logoUrl?.startsWith('data:') ? formData.ticketDesign.logoUrl : undefined}
+                                                        currentImage={formData.ticketDesign?.logoUrl || undefined}
                                                         onFileSelect={async (b64) => {
                                                             // Upload to storage and get public URL
                                                             try {
