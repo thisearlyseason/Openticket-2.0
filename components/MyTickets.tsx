@@ -604,16 +604,30 @@ export const MyTickets = () => {
             ) : (
                 // --- DETAILED TICKET VIEW ---
                 <div className="animate-in fade-in slide-in-from-right-4">
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
                         <Button variant="ghost" onClick={() => setSelectedGroupId(null)} className="pl-0 text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
                             <ArrowLeft size={18} className="mr-2" /> Back to Events
                         </Button>
-                        <Button onClick={() => handlePrint()} variant="outline" size="sm">
-                            <Printer size={16} className="mr-2" /> Print All
-                        </Button>
-                        <Button onClick={() => setReceiptModal({ isOpen: true, reg: selectedGroup.tickets[0].reg, event: selectedGroup.event })} variant="secondary" size="sm" className="ml-2 font-black shadow-lg shadow-primary/10">
-                            <Printer size={16} className="mr-2" /> View Receipt
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                onClick={() => handleShareEvent(selectedGroup.event)} 
+                                variant="outline" 
+                                size="sm"
+                                data-testid="share-event-detail"
+                            >
+                                {copiedEventId === selectedGroup.event.id ? (
+                                    <><Check size={16} className="mr-2 text-green-500" /> Copied!</>
+                                ) : (
+                                    <><Share2 size={16} className="mr-2" /> Share Event</>
+                                )}
+                            </Button>
+                            <Button onClick={() => handlePrint()} variant="outline" size="sm">
+                                <Printer size={16} className="mr-2" /> Print All
+                            </Button>
+                            <Button onClick={() => setReceiptModal({ isOpen: true, reg: selectedGroup.tickets[0].reg, event: selectedGroup.event })} variant="secondary" size="sm" className="font-black shadow-lg shadow-primary/10">
+                                <Printer size={16} className="mr-2" /> View Receipt
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="space-y-6">
