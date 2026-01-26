@@ -97,7 +97,7 @@ export const Settings = () => {
                         setBusinessType(freshUser.businessType || '');
                         setNonprofitStatus(freshUser.nonProfitStatus || null);
                         setNonprofitName(freshUser.nonProfitName || '');
-                        setPrimaryColor(freshUser.primaryColor || '#E0FF20');
+                        setPrimaryColor(freshUser.primaryColor || '#ec4899');
                         setDefaultRefundPolicy(freshUser.defaultRefundPolicy || '');
                         setDefaultRefundPolicyEnabled(freshUser.defaultRefundPolicyEnabled || false);
                         setDefaultWaiver(freshUser.defaultWaiver || {});
