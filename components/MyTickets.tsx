@@ -4,7 +4,7 @@ import { StorageService } from '../services/storageService';
 import { Registration, Event, User } from '../types';
 import { Badge, formatTime, Button, Input, ReceiptModal } from './UI';
 import { useConfirm } from './ConfirmContext';
-import { Calendar, MapPin, Clock, Ticket as TicketIcon, Printer, ArrowLeft, Send, Archive, RotateCcw, Trash2, Ghost, ShoppingBag } from 'lucide-react';
+import { Calendar, MapPin, Clock, Ticket as TicketIcon, Printer, ArrowLeft, Send, Archive, RotateCcw, Trash2, Ghost, ShoppingBag, Share2, Copy, Check } from 'lucide-react';
 
 export const MyTickets = () => {
     const { confirm } = useConfirm();
