@@ -2,12 +2,17 @@
 Test cases for new features:
 1. Live Revenue Dashboard Widget - /api/admin/organizer/live-sales endpoint
 2. Share Event functionality (frontend only - no backend endpoint needed)
+
+Note: External URL (www.openticket.events) has Vercel routing issues for new endpoints.
+Testing against localhost:8001 which works correctly.
 """
 import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://www.openticket.events')
+# Use localhost for backend testing (Vercel routing issue with external URL)
+BASE_URL = 'http://localhost:8001'
+EXTERNAL_URL = os.environ.get('VITE_BACKEND_URL', 'https://www.openticket.events')
 
 class TestLiveSalesEndpoint:
     """Tests for /api/admin/organizer/live-sales endpoint"""
