@@ -506,6 +506,15 @@ export const EventRefunds = () => {
                             <p className="text-zinc-400">{event.title}</p>
                         </div>
                     </div>
+                    
+                    {/* Refund Instructions */}
+                    <div className="mt-4 bg-zinc-800/50 border border-zinc-700 rounded-xl p-4">
+                        <h3 className="text-sm font-bold text-zinc-200 mb-2">How Refunds Work</h3>
+                        <ul className="text-sm text-zinc-400 space-y-1">
+                            <li><strong className="text-zinc-300">Manual Refund:</strong> Select an order below and click "Refund Order" to process a refund through Stripe. The customer will receive funds back to their original payment method within 5-10 business days.</li>
+                            <li><strong className="text-zinc-300">Sync from Stripe:</strong> If you processed a refund directly in your Stripe dashboard, click "Sync from Stripe" on the order to update the status in OpenTicket without creating a duplicate refund.</li>
+                        </ul>
+                    </div>
                 </div>
 
                 {/* Success Modal */}
