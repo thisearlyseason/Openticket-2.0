@@ -156,7 +156,7 @@ export const Settings = () => {
                 setBusinessPhone(currentUser.businessPhone || '');
                 setShowPhonePublicly(currentUser.showPhonePublicly || false);
                 setBio(currentUser.bio || '');
-                setPrimaryColor(currentUser.primaryColor || '#ec4899');
+                setPrimaryColor(currentUser.primaryColor || '#00c9cc');
                 setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
                 setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
                 setDefaultWaiver(currentUser.defaultWaiver || {});
