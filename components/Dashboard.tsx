@@ -389,6 +389,9 @@ export const Dashboard = () => {
                 </div>
             </div>
 
+            {/* Live Revenue Widget */}
+            <LiveRevenueWidget />
+
             {/* SMM Signup Card */}
             <div className="my-6">
                 <SMMSignupCard userType="organizer" />
