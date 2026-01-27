@@ -1,78 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="15" skipped="2" tests="18" time="4.235" timestamp="2026-01-27T03:51:25.787100+00:00" hostname="agent-env-a673ac01-e0e7-4e70-963c-8e71519bb477"><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_nonexistent_event" time="0.391"><failure message="requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">/root/.venv/lib/python3.11/site-packages/requests/models.py:976: in json
-    return complexjson.loads(self.text, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/__init__.py:346: in loads
-    return _default_decoder.decode(s)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/decoder.py:337: in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/decoder.py:355: in raw_decode
-    raise JSONDecodeError("Expecting value", s, err.value) from None
-E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-
-During handling of the above exception, another exception occurred:
-backend/tests/test_presale_system.py:25: in test_validate_presale_nonexistent_event
-    data = response.json()
-           ^^^^^^^^^^^^^^^
-/root/.venv/lib/python3.11/site-packages/requests/models.py:980: in json
-    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
-E   requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_no_presale_enabled" time="0.196"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:33: in test_validate_presale_no_presale_enabled
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="2" tests="18" time="0.715" timestamp="2026-01-27T03:53:28.851647+00:00" hostname="agent-env-a673ac01-e0e7-4e70-963c-8e71519bb477"><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_nonexistent_event" time="0.220" /><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_no_presale_enabled" time="0.003"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:33: in test_validate_presale_no_presale_enabled
     assert events_response.status_code == 200
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_with_invalid_code" time="0.196"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:63: in test_validate_presale_with_invalid_code
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_with_invalid_code" time="0.003"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:63: in test_validate_presale_with_invalid_code
     assert events_response.status_code == 200
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_with_invalid_token" time="0.192"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:85: in test_validate_presale_with_invalid_token
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidation" name="test_validate_presale_with_invalid_token" time="0.002"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:85: in test_validate_presale_with_invalid_token
     assert events_response.status_code == 200
 E   assert 401 == 200
-E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_get_codes_unauthorized" time="0.271"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:115: in test_get_codes_unauthorized
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_create_codes_unauthorized" time="0.204"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:125: in test_create_codes_unauthorized
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_generate_codes_unauthorized" time="0.198"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:135: in test_generate_codes_unauthorized
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_delete_code_unauthorized" time="0.190"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:145: in test_delete_code_unauthorized
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodeValidation" name="test_create_codes_empty_array" time="0.203"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:162: in test_create_codes_empty_array
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodeValidation" name="test_generate_codes_invalid_count" time="0.230"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:174: in test_generate_codes_invalid_count
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_validate_endpoint_exists" time="0.197"><failure message="requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">/root/.venv/lib/python3.11/site-packages/requests/models.py:976: in json
-    return complexjson.loads(self.text, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/__init__.py:346: in loads
-    return _default_decoder.decode(s)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/decoder.py:337: in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-/usr/local/lib/python3.11/json/decoder.py:355: in raw_decode
-    raise JSONDecodeError("Expecting value", s, err.value) from None
-E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-
-During handling of the above exception, another exception occurred:
-backend/tests/test_presale_system.py:190: in test_validate_endpoint_exists
-    assert 'error' in response.json()
-                      ^^^^^^^^^^^^^^^
-/root/.venv/lib/python3.11/site-packages/requests/models.py:980: in json
-    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
-E   requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_codes_endpoint_exists" time="0.205"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:200: in test_codes_endpoint_exists
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_generate_endpoint_exists" time="0.250"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:211: in test_generate_endpoint_exists
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_delete_endpoint_exists" time="0.195"><failure message="assert 404 == 401&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_presale_system.py:222: in test_delete_endpoint_exists
-    assert response.status_code == 401
-E   assert 404 == 401
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_use_code_endpoint_exists" time="0.203" /><testcase classname="backend.tests.test_presale_system.TestPresaleValidationLogic" name="test_validate_response_structure" time="0.193"><skipped type="pytest.skip" message="No events available for testing">/app/backend/tests/test_presale_system.py:244: No events available for testing</skipped></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidationLogic" name="test_validate_with_code_and_token" time="0.197"><skipped type="pytest.skip" message="No events available for testing">/app/backend/tests/test_presale_system.py:270: No events available for testing</skipped></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleIntegration" name="test_events_include_presale_config" time="0.203"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:293: in test_events_include_presale_config
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_get_codes_unauthorized" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_create_codes_unauthorized" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_generate_codes_unauthorized" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleCodesUnauthorized" name="test_delete_code_unauthorized" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleCodeValidation" name="test_create_codes_empty_array" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleCodeValidation" name="test_generate_codes_invalid_count" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_validate_endpoint_exists" time="0.107" /><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_codes_endpoint_exists" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_generate_endpoint_exists" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_delete_endpoint_exists" time="0.002" /><testcase classname="backend.tests.test_presale_system.TestPresaleEndpointStructure" name="test_use_code_endpoint_exists" time="0.252" /><testcase classname="backend.tests.test_presale_system.TestPresaleValidationLogic" name="test_validate_response_structure" time="0.002"><skipped type="pytest.skip" message="No events available for testing">/app/backend/tests/test_presale_system.py:244: No events available for testing</skipped></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleValidationLogic" name="test_validate_with_code_and_token" time="0.002"><skipped type="pytest.skip" message="No events available for testing">/app/backend/tests/test_presale_system.py:270: No events available for testing</skipped></testcase><testcase classname="backend.tests.test_presale_system.TestPresaleIntegration" name="test_events_include_presale_config" time="0.002"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">backend/tests/test_presale_system.py:293: in test_events_include_presale_config
     assert response.status_code == 200
 E   assert 401 == 200
 E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase></testsuite></testsuites>
