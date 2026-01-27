@@ -575,7 +575,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                         <div className="flex items-center gap-4">
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate(`/dashboard/events/${id}`)}
+                                onClick={() => navigate(`/manage/${id}`)}
                                 className="flex items-center gap-2"
                             >
                                 <ArrowLeft size={20} />
