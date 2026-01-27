@@ -477,21 +477,21 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
 
     const generatePostEventEmail = (data: any, theme: any, ticketDesign: any) => {
         const content = `
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 Hi <strong>${data.attendeeName}</strong>,
             </p>
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
                 Thank you for attending <strong>${data.eventTitle}</strong>! We hope you had an amazing experience.
             </p>
-            <div style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
-                <p style="color: ${theme.textColor}; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">🙏 Thank You!</p>
-                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">
+            <div style="background-color: #f9fafb; border: 2px solid ${theme.accentColor}; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: center;">
+                <p style="color: #111827; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">🙏 Thank You!</p>
+                <p style="color: #4b5563; font-size: 14px; margin: 0;">
                     Your attendance made the event special.
                 </p>
             </div>
             ${data.feedbackUrl ? `
             <div style="text-align: center; margin: 30px 0;">
-                <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 15px 0;">
+                <p style="color: #6b7280; font-size: 14px; margin: 0 0 15px 0;">
                     Have a moment? We'd love to hear your thoughts.
                 </p>
                 <a href="${data.feedbackUrl}" style="display: inline-block; background: ${theme.headerGradient}; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
@@ -499,7 +499,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                 </a>
             </div>
             ` : ''}
-            <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
                 Stay tuned for more events from ${data.organizerName}!
             </p>
         `;
