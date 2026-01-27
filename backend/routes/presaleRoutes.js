@@ -53,6 +53,8 @@ router.post('/:eventId/validate', async (req, res) => {
                     .eq('id', eventId)
                     .single();
                 
+                console.log('[Presale] Basic query result:', { eventBasic, basicError: basicError?.message });
+                
                 if (basicError || !eventBasic) {
                     return res.status(404).json({ error: 'Event not found' });
                 }
