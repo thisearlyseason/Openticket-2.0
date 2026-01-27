@@ -2185,6 +2185,439 @@ export const EventBuilder = () => {
                         )
                     }
 
+                    {/* STEP 7: PRESALE */}
+                    {
+                        currentStep === 7 && (
+                            <div className="animate-in fade-in space-y-6">
+                                <Card className="p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-3 bg-primary/10 rounded-xl">
+                                            <Lock className="text-primary" size={24} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl font-black">Presale Settings</h2>
+                                            <p className="text-sm text-zinc-500">Give early access to select users before general sale</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Enable Presale Toggle */}
+                                    <div className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-6">
+                                        <div>
+                                            <h3 className="font-bold">Enable Presale</h3>
+                                            <p className="text-sm text-zinc-500">Allow early access before general sale opens</p>
+                                        </div>
+                                        <Switch
+                                            checked={formData.presale?.enabled || false}
+                                            onChange={(checked) => setFormData(prev => ({
+                                                ...prev,
+                                                presale: {
+                                                    ...prev.presale!,
+                                                    enabled: checked,
+                                                    privateToken: checked && !prev.presale?.privateToken 
+                                                        ? crypto.randomUUID() 
+                                                        : prev.presale?.privateToken || ''
+                                                }
+                                            }))}
+                                        />
+                                    </div>
+
+                                    {formData.presale?.enabled && (
+                                        <div className="space-y-6">
+                                            {/* Presale Window */}
+                                            <div>
+                                                <h3 className="font-bold text-sm uppercase text-zinc-500 mb-3">Presale Window</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-bold mb-2">Start Date & Time</label>
+                                                        <Input
+                                                            type="datetime-local"
+                                                            value={formData.presale?.startDate || ''}
+                                                            onChange={(e) => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: { ...prev.presale!, startDate: e.target.value }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-bold mb-2">End Date & Time</label>
+                                                        <Input
+                                                            type="datetime-local"
+                                                            value={formData.presale?.endDate || ''}
+                                                            onChange={(e) => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: { ...prev.presale!, endDate: e.target.value }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-zinc-500 mt-2">General sale begins automatically when presale ends</p>
+                                            </div>
+
+                                            {/* Access Methods */}
+                                            <div>
+                                                <h3 className="font-bold text-sm uppercase text-zinc-500 mb-3">Access Methods</h3>
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between p-3 border rounded-xl">
+                                                        <div className="flex items-center gap-3">
+                                                            <Key size={18} className="text-zinc-400" />
+                                                            <div>
+                                                                <span className="font-medium">Presale Codes</span>
+                                                                <p className="text-xs text-zinc-500">Users enter a code to access presale</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.presale?.accessMethods?.codes || false}
+                                                            onChange={(checked) => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: {
+                                                                    ...prev.presale!,
+                                                                    accessMethods: { ...prev.presale!.accessMethods, codes: checked }
+                                                                }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center justify-between p-3 border rounded-xl">
+                                                        <div className="flex items-center gap-3">
+                                                            <LinkIcon size={18} className="text-zinc-400" />
+                                                            <div>
+                                                                <span className="font-medium">Private Link</span>
+                                                                <p className="text-xs text-zinc-500">Share a secret link for presale access</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.presale?.accessMethods?.privateLink || false}
+                                                            onChange={(checked) => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: {
+                                                                    ...prev.presale!,
+                                                                    accessMethods: { ...prev.presale!.accessMethods, privateLink: checked }
+                                                                }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center justify-between p-3 border rounded-xl">
+                                                        <div className="flex items-center gap-3">
+                                                            <Users size={18} className="text-zinc-400" />
+                                                            <div>
+                                                                <span className="font-medium">Account Eligibility</span>
+                                                                <p className="text-xs text-zinc-500">Users with presale flag on their account</p>
+                                                            </div>
+                                                        </div>
+                                                        <Switch
+                                                            checked={formData.presale?.accessMethods?.accountFlag || false}
+                                                            onChange={(checked) => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: {
+                                                                    ...prev.presale!,
+                                                                    accessMethods: { ...prev.presale!.accessMethods, accountFlag: checked }
+                                                                }
+                                                            }))}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Private Link Section */}
+                                            {formData.presale?.accessMethods?.privateLink && (
+                                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                                    <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
+                                                        <LinkIcon size={16} />
+                                                        Private Presale Link
+                                                    </h4>
+                                                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                                                        Share this link with your presale audience. Anyone with this link can access the presale.
+                                                    </p>
+                                                    <div className="flex gap-2">
+                                                        <Input
+                                                            value={id ? `${window.location.origin}/#/event/${id}?presale=${formData.presale?.privateToken || ''}` : 'Save event first to generate link'}
+                                                            readOnly
+                                                            className="font-mono text-sm bg-white dark:bg-zinc-900"
+                                                        />
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                if (id && formData.presale?.privateToken) {
+                                                                    navigator.clipboard.writeText(`${window.location.origin}/#/event/${id}?presale=${formData.presale.privateToken}`);
+                                                                    showToast('Presale link copied!', 'success');
+                                                                }
+                                                            }}
+                                                            disabled={!id}
+                                                        >
+                                                            <Copy size={16} />
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => setFormData(prev => ({
+                                                                ...prev,
+                                                                presale: { ...prev.presale!, privateToken: crypto.randomUUID() }
+                                                            }))}
+                                                            title="Generate new token (invalidates old link)"
+                                                        >
+                                                            <RefreshCw size={16} />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Presale Codes Section */}
+                                            {formData.presale?.accessMethods?.codes && id && (
+                                                <div className="border rounded-xl p-4">
+                                                    <h4 className="font-bold mb-4 flex items-center gap-2">
+                                                        <Key size={16} />
+                                                        Presale Codes
+                                                    </h4>
+
+                                                    {/* Add Manual Code */}
+                                                    <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-4">
+                                                        <h5 className="font-medium text-sm mb-3">Add Code Manually</h5>
+                                                        <div className="grid grid-cols-4 gap-3">
+                                                            <Input
+                                                                placeholder="CODE123"
+                                                                value={newPresaleCode.code}
+                                                                onChange={(e) => setNewPresaleCode(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                                                                className="uppercase"
+                                                            />
+                                                            <Select
+                                                                value={newPresaleCode.limitType}
+                                                                onChange={(e) => setNewPresaleCode(prev => ({ ...prev, limitType: e.target.value as any }))}
+                                                            >
+                                                                <option value="single">Single Use</option>
+                                                                <option value="multi">Multi-Use</option>
+                                                                <option value="unlimited">Unlimited</option>
+                                                            </Select>
+                                                            {newPresaleCode.limitType === 'multi' && (
+                                                                <Input
+                                                                    type="number"
+                                                                    min={2}
+                                                                    placeholder="Max uses"
+                                                                    value={newPresaleCode.maxUses}
+                                                                    onChange={(e) => setNewPresaleCode(prev => ({ ...prev, maxUses: parseInt(e.target.value) || 1 }))}
+                                                                />
+                                                            )}
+                                                            <Button
+                                                                onClick={async () => {
+                                                                    if (!newPresaleCode.code.trim()) {
+                                                                        showToast('Please enter a code', 'error');
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        const response = await fetch(`/api/presale/${id}/codes`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                                                            },
+                                                                            body: JSON.stringify({
+                                                                                codes: [{
+                                                                                    code: newPresaleCode.code,
+                                                                                    limitType: newPresaleCode.limitType,
+                                                                                    maxUses: newPresaleCode.limitType === 'multi' ? newPresaleCode.maxUses : undefined
+                                                                                }]
+                                                                            })
+                                                                        });
+                                                                        if (response.ok) {
+                                                                            const data = await response.json();
+                                                                            setPresaleCodes(prev => [...data.codes, ...prev]);
+                                                                            setNewPresaleCode({ code: '', limitType: 'single', maxUses: 1, name: '' });
+                                                                            showToast('Code added!', 'success');
+                                                                        } else {
+                                                                            const err = await response.json();
+                                                                            showToast(err.error || 'Failed to add code', 'error');
+                                                                        }
+                                                                    } catch (err) {
+                                                                        showToast('Failed to add code', 'error');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Plus size={16} /> Add
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Auto-Generate Codes */}
+                                                    <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-4">
+                                                        <h5 className="font-medium text-sm mb-3">Auto-Generate Codes</h5>
+                                                        <div className="grid grid-cols-5 gap-3">
+                                                            <Input
+                                                                type="number"
+                                                                min={1}
+                                                                max={100}
+                                                                placeholder="Count"
+                                                                value={generateCodeSettings.count}
+                                                                onChange={(e) => setGenerateCodeSettings(prev => ({ ...prev, count: parseInt(e.target.value) || 10 }))}
+                                                            />
+                                                            <Input
+                                                                placeholder="Prefix (optional)"
+                                                                value={generateCodeSettings.prefix}
+                                                                onChange={(e) => setGenerateCodeSettings(prev => ({ ...prev, prefix: e.target.value.toUpperCase() }))}
+                                                                className="uppercase"
+                                                            />
+                                                            <Select
+                                                                value={generateCodeSettings.limitType}
+                                                                onChange={(e) => setGenerateCodeSettings(prev => ({ ...prev, limitType: e.target.value as any }))}
+                                                            >
+                                                                <option value="single">Single Use</option>
+                                                                <option value="multi">Multi-Use</option>
+                                                                <option value="unlimited">Unlimited</option>
+                                                            </Select>
+                                                            {generateCodeSettings.limitType === 'multi' && (
+                                                                <Input
+                                                                    type="number"
+                                                                    min={2}
+                                                                    placeholder="Max uses"
+                                                                    value={generateCodeSettings.maxUses}
+                                                                    onChange={(e) => setGenerateCodeSettings(prev => ({ ...prev, maxUses: parseInt(e.target.value) || 1 }))}
+                                                                />
+                                                            )}
+                                                            <Button
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        setIsLoadingCodes(true);
+                                                                        const response = await fetch(`/api/presale/${id}/codes/generate`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'Content-Type': 'application/json',
+                                                                                'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                                                            },
+                                                                            body: JSON.stringify({
+                                                                                count: generateCodeSettings.count,
+                                                                                limitType: generateCodeSettings.limitType,
+                                                                                maxUses: generateCodeSettings.limitType === 'multi' ? generateCodeSettings.maxUses : undefined,
+                                                                                prefix: generateCodeSettings.prefix
+                                                                            })
+                                                                        });
+                                                                        if (response.ok) {
+                                                                            const data = await response.json();
+                                                                            setPresaleCodes(prev => [...data.codes, ...prev]);
+                                                                            showToast(`${data.codes.length} codes generated!`, 'success');
+                                                                        } else {
+                                                                            const err = await response.json();
+                                                                            showToast(err.error || 'Failed to generate codes', 'error');
+                                                                        }
+                                                                    } catch (err) {
+                                                                        showToast('Failed to generate codes', 'error');
+                                                                    } finally {
+                                                                        setIsLoadingCodes(false);
+                                                                    }
+                                                                }}
+                                                                isLoading={isLoadingCodes}
+                                                            >
+                                                                <Sparkles size={16} /> Generate
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Codes List */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h5 className="font-medium text-sm">Existing Codes ({presaleCodes.length})</h5>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        setIsLoadingCodes(true);
+                                                                        const response = await fetch(`/api/presale/${id}/codes`, {
+                                                                            headers: {
+                                                                                'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                                                            }
+                                                                        });
+                                                                        if (response.ok) {
+                                                                            const data = await response.json();
+                                                                            setPresaleCodes(data.codes || []);
+                                                                        }
+                                                                    } catch (err) {
+                                                                        console.error('Failed to load codes', err);
+                                                                    } finally {
+                                                                        setIsLoadingCodes(false);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <RefreshCw size={14} className={isLoadingCodes ? 'animate-spin' : ''} />
+                                                            </Button>
+                                                        </div>
+                                                        {presaleCodes.length === 0 ? (
+                                                            <p className="text-sm text-zinc-500 text-center py-4">No presale codes yet. Add or generate codes above.</p>
+                                                        ) : (
+                                                            <div className="max-h-48 overflow-y-auto space-y-2">
+                                                                {presaleCodes.map((code) => (
+                                                                    <div key={code.id} className="flex items-center justify-between p-2 bg-white dark:bg-zinc-800 rounded-lg border">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className="font-mono font-bold">{code.code}</span>
+                                                                            <Badge color={code.limitType === 'single' ? 'blue' : code.limitType === 'multi' ? 'orange' : 'green'}>
+                                                                                {code.limitType === 'single' ? '1 use' : code.limitType === 'multi' ? `${code.currentUses}/${code.maxUses}` : '∞'}
+                                                                            </Badge>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={() => {
+                                                                                    navigator.clipboard.writeText(code.code);
+                                                                                    showToast('Code copied!', 'success');
+                                                                                }}
+                                                                            >
+                                                                                <Copy size={14} />
+                                                                            </Button>
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                onClick={async () => {
+                                                                                    try {
+                                                                                        const response = await fetch(`/api/presale/${id}/codes/${code.id}`, {
+                                                                                            method: 'DELETE',
+                                                                                            headers: {
+                                                                                                'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                                                                            }
+                                                                                        });
+                                                                                        if (response.ok) {
+                                                                                            setPresaleCodes(prev => prev.filter(c => c.id !== code.id));
+                                                                                            showToast('Code deleted', 'success');
+                                                                                        }
+                                                                                    } catch (err) {
+                                                                                        showToast('Failed to delete code', 'error');
+                                                                                    }
+                                                                                }}
+                                                                                className="text-red-500 hover:text-red-700"
+                                                                            >
+                                                                                <Trash2 size={14} />
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* General Sale Message */}
+                                            <div>
+                                                <label className="block text-sm font-bold mb-2">Message for Non-Presale Users</label>
+                                                <Input
+                                                    value={formData.presale?.generalSaleMessage || ''}
+                                                    onChange={(e) => setFormData(prev => ({
+                                                        ...prev,
+                                                        presale: { ...prev.presale!, generalSaleMessage: e.target.value }
+                                                    }))}
+                                                    placeholder="Presale in progress. General sale starts soon!"
+                                                />
+                                                <p className="text-xs text-zinc-500 mt-1">Shown to users without presale access during the presale window</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!formData.presale?.enabled && (
+                                        <div className="text-center py-8 text-zinc-500">
+                                            <Lock size={48} className="mx-auto mb-4 opacity-30" />
+                                            <p>Enable presale to give early access to select users</p>
+                                        </div>
+                                    )}
+                                </Card>
+                            </div>
+                        )
+                    }
+
                     {/* STEP 8: PUBLISH */}
                     {
                         currentStep === 8 && (
