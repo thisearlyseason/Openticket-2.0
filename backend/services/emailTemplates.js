@@ -361,15 +361,15 @@ export const purchaseConfirmation = ({
         </div>
     `}).join('');
 
-    // Event details box with modern design
+    // Event details box with modern design - using white background for readability
     const themedEventBox = `
-    <table width="100%" style="background: linear-gradient(135deg, ${adjustBrightness(theme.accentColor, 85)} 0%, ${adjustBrightness(theme.accentColor, 95)} 100%); border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 12px; margin-bottom: 30px;">
+    <table width="100%" style="background: #ffffff; border: 2px solid ${theme.accentColor}; border-radius: 12px; margin-bottom: 30px;">
         <tr>
             <td style="padding: 24px;">
-                <h2 style="color: ${theme.textColor}; font-size: 22px; font-weight: 700; margin: 0 0 16px 0;">${eventTitle}</h2>
-                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0 0 8px 0;">📅 ${eventDate}</p>
-                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0 0 8px 0;">🕐 ${eventTime}</p>
-                <p style="color: ${theme.mutedColor}; font-size: 15px; margin: 0;">📍 ${eventLocation}</p>
+                <h2 style="color: #111827; font-size: 22px; font-weight: 700; margin: 0 0 16px 0;">${eventTitle}</h2>
+                <p style="color: #374151; font-size: 15px; margin: 0 0 8px 0;">📅 ${eventDate}</p>
+                <p style="color: #374151; font-size: 15px; margin: 0 0 8px 0;">🕐 ${eventTime}</p>
+                <p style="color: #374151; font-size: 15px; margin: 0;">📍 ${eventLocation}</p>
             </td>
         </tr>
     </table>`;
