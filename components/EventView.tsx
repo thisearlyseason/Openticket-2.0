@@ -69,6 +69,12 @@ export const EventView = () => {
     const [waitlistData, setWaitlistData] = useState({ name: '', email: '' });
     const { showToast, showAlert, showConfirm } = useGlobalUI();
 
+    // Presale State
+    const [presaleAccess, setPresaleAccess] = useState<{ hasAccess: boolean; reason: string; presaleActive: boolean; presaleEndDate?: string } | null>(null);
+    const [isCheckingPresale, setIsCheckingPresale] = useState(false);
+    const [presaleCode, setPresaleCode] = useState('');
+    const [showPresaleCodeInput, setShowPresaleCodeInput] = useState(false);
+
     // Lightbox state for gallery
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
     const [lightboxCaption, setLightboxCaption] = useState<string>('');
