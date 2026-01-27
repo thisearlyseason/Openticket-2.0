@@ -239,7 +239,7 @@ class TestPresaleValidationLogic:
     
     def test_validate_response_structure(self):
         """Test that validation response has correct structure"""
-        events_response = requests.get(f"{BASE_URL}/api/events")
+        events_response = requests.get(f"{BASE_URL}/api/events/public")
         if events_response.status_code != 200 or not events_response.json():
             pytest.skip("No events available for testing")
         
