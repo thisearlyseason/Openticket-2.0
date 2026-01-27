@@ -28,8 +28,8 @@ class TestPresaleValidation:
     
     def test_validate_presale_no_presale_enabled(self):
         """Test validation when presale is not enabled returns hasAccess=true"""
-        # First, get a real event ID from the system
-        events_response = requests.get(f"{BASE_URL}/api/events")
+        # First, get a real event ID from the system (use public endpoint)
+        events_response = requests.get(f"{BASE_URL}/api/events/public")
         assert events_response.status_code == 200
         events = events_response.json()
         
