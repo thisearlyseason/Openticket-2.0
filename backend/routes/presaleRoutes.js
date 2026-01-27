@@ -40,7 +40,31 @@ router.post('/:eventId/validate', async (req, res) => {
             .eq('id', eventId)
             .single();
         
-        if (eventError || !event) {
+        if (eventError) {
+            // If error is about missing column, treat as no presale
+            if (eventError.message && eventError.message.includes('presale')) {
+                // Try fetching without presale column
+                const { data: eventBasic, error: basicError } = await supabase
+                    .from('events')
+                    .select('id, title, created_by')
+                    .eq('id', eventId)
+                    .single();
+                
+                if (basicError || !eventBasic) {
+                    return res.status(404).json({ error: 'Event not found' });
+                }
+                
+                // No presale column means presale not enabled
+                return res.json({
+                    hasAccess: true,
+                    reason: 'Presale not enabled - general sale active',
+                    presaleActive: false
+                });
+            }
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        
+        if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
         
