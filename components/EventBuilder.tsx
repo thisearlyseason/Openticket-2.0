@@ -7,7 +7,7 @@ import { Info, Image as ImageIcon, MapPin, Calendar, Clock, DollarSign, Plus, Tr
 import { Button, Input, RichTextarea, Select, Card, FileDropZone, DatePicker, TimePicker, Switch, Tooltip, formatTime, ErrorModal } from './UI';
 import { StorageService, PLANS } from '../services/storageService';
 import { GeminiService } from '../services/geminiService';
-import { Event, User, TicketTier, AddOn, AffiliateLink, GalleryItem, PromoCode, PaymentConfig, Question } from '../types';
+import { Event, User, TicketTier, AddOn, AffiliateLink, GalleryItem, PromoCode, PaymentConfig, Question, PresaleConfig, PresaleCode } from '../types';
 import { EmailPreview } from './EmailPreview';
 
 const STEPS = [
@@ -17,7 +17,8 @@ const STEPS = [
     { id: 4, label: 'Payment', icon: CreditCard },
     { id: 5, label: 'Policies', icon: Shield },
     { id: 6, label: 'Marketing', icon: Megaphone },
-    { id: 7, label: 'Publish', icon: CheckCircle2 },
+    { id: 7, label: 'Presale', icon: Lock },
+    { id: 8, label: 'Publish', icon: CheckCircle2 },
 ];
 
 const CATEGORIES = [
