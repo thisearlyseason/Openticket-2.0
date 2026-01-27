@@ -36,7 +36,7 @@ router.post('/:eventId/validate', async (req, res) => {
         // Get event with presale config
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, title, presale, created_by')
+            .select('id, title, presale, owner_id')
             .eq('id', eventId)
             .single();
         
@@ -49,7 +49,7 @@ router.post('/:eventId/validate', async (req, res) => {
                 // Try fetching without presale column
                 const { data: eventBasic, error: basicError } = await supabase
                     .from('events')
-                    .select('id, title, created_by')
+                    .select('id, title, owner_id')
                     .eq('id', eventId)
                     .single();
                 
