@@ -31,7 +31,8 @@ class TestPresaleValidation:
         # First, get a real event ID from the system (use public endpoint)
         events_response = requests.get(f"{BASE_URL}/api/events/public")
         assert events_response.status_code == 200
-        events = events_response.json()
+        data = events_response.json()
+        events = data.get('events', [])
         
         if not events or len(events) == 0:
             pytest.skip("No events available for testing")
