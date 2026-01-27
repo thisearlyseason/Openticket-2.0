@@ -434,23 +434,24 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     };
 
     const generateReminderEmail = (data: any, theme: any, ticketDesign: any, timeLabel: string) => {
+        // Use white background for event box with dark text for readability
         const eventBox = `
-            <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+            <table width="100%" style="background-color: #ffffff; border: 2px solid ${theme.accentColor}; border-radius: 8px; margin-bottom: 30px;">
                 <tr>
                     <td style="padding: 20px;">
-                        <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${data.eventTitle}</h2>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${data.eventDate}</p>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${data.eventTime}</p>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${data.eventLocation}</p>
+                        <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${data.eventTitle}</h2>
+                        <p style="color: #374151; font-size: 14px; margin: 0 0 5px 0;">📅 ${data.eventDate}</p>
+                        <p style="color: #374151; font-size: 14px; margin: 0 0 5px 0;">🕐 ${data.eventTime}</p>
+                        <p style="color: #374151; font-size: 14px; margin: 0;">📍 ${data.eventLocation}</p>
                     </td>
                 </tr>
             </table>`;
 
         const content = `
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 Hi <strong>${data.attendeeName}</strong>,
             </p>
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
                 Just a friendly reminder that <strong>${data.eventTitle}</strong> starts in <strong>${timeLabel}</strong>! 🎉
             </p>
             ${eventBox}
@@ -459,7 +460,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                     View Your Ticket
                 </a>
             </div>
-            <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
                 Make sure to have your ticket ready for check-in. See you there!
             </p>
         `;
