@@ -209,11 +209,9 @@ app.use('/api/waitlist', waitlistRoutes);
 // Enterprise contact routes
 app.use('/api/enterprise', enterpriseRoutes);
 
-// Waitlist routes
-app.use('/api/waitlist', waitlistRoutes);
-
-// Enterprise contact routes
-app.use('/api/enterprise', enterpriseRoutes);
+// Presale routes
+import presaleRoutes from '../backend/routes/presaleRoutes.js';
+app.use('/api/presale', presaleRoutes);
 
 // Onboarding routes
 app.use('/api/onboarding', onboardingRoutes);
