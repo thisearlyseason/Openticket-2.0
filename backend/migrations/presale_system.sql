@@ -1,15 +1,15 @@
--- Presale System Migration
+-- Presale System Migration (Fixed for text-type event IDs)
 -- Creates the presale_codes table and adds presale_eligible column to profiles
 
--- Create presale_codes table
+-- Create presale_codes table with TEXT type for event_id (matching events.id)
 CREATE TABLE IF NOT EXISTS presale_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     code VARCHAR(50) NOT NULL,
     limit_type VARCHAR(20) NOT NULL DEFAULT 'single' CHECK (limit_type IN ('single', 'multi', 'unlimited')),
     max_uses INTEGER,
     current_uses INTEGER NOT NULL DEFAULT 0,
-    created_by UUID NOT NULL,
+    created_by TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ,
     name VARCHAR(100),
