@@ -332,40 +332,41 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
     const generatePurchaseEmail = (data: any, theme: any, ticketDesign: any) => {
         const ticketList = data.tickets.map((t: any) => `
             <div style="border: 1px solid #e5e7eb; padding: 16px; margin-bottom: 12px; border-radius: 8px; background: #f9fafb;">
-                <h4 style="margin: 0 0 8px 0; color: ${theme.textColor};">🎫 ${t.name}</h4>
-                <p style="margin: 0; color: ${theme.mutedColor}; font-size: 14px;">Qty: ${t.quantity} × $${t.price.toFixed(2)}</p>
+                <h4 style="margin: 0 0 8px 0; color: #111827;">🎫 ${t.name}</h4>
+                <p style="margin: 0; color: #4b5563; font-size: 14px;">Qty: ${t.quantity} × $${t.price.toFixed(2)}</p>
             </div>
         `).join('');
 
+        // Use white background for event box with dark text for readability
         const eventBox = `
-            <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border: 1px solid ${adjustBrightness(theme.accentColor, 70)}; border-radius: 8px; margin-bottom: 30px;">
+            <table width="100%" style="background-color: #ffffff; border: 2px solid ${theme.accentColor}; border-radius: 8px; margin-bottom: 30px;">
                 <tr>
                     <td style="padding: 20px;">
-                        <h2 style="color: ${theme.textColor}; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${data.eventTitle}</h2>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">📅 ${data.eventDate}</p>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0 0 5px 0;">🕐 ${data.eventTime}</p>
-                        <p style="color: ${theme.mutedColor}; font-size: 14px; margin: 0;">📍 ${data.eventLocation}</p>
+                        <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 15px 0;">${data.eventTitle}</h2>
+                        <p style="color: #374151; font-size: 14px; margin: 0 0 5px 0;">📅 ${data.eventDate}</p>
+                        <p style="color: #374151; font-size: 14px; margin: 0 0 5px 0;">🕐 ${data.eventTime}</p>
+                        <p style="color: #374151; font-size: 14px; margin: 0;">📍 ${data.eventLocation}</p>
                     </td>
                 </tr>
             </table>`;
 
         const content = `
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
                 Hi <strong>${data.attendeeName}</strong>,
             </p>
-            <p style="color: ${theme.textColor}; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+            <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
                 Your purchase is confirmed! Here are your ticket details:
             </p>
             ${eventBox}
-            <h3 style="color: ${theme.textColor}; font-size: 16px; margin: 0 0 15px 0;">Your Tickets</h3>
+            <h3 style="color: #111827; font-size: 16px; margin: 0 0 15px 0;">Your Tickets</h3>
             ${ticketList}
-            <table width="100%" style="background-color: ${adjustBrightness(theme.accentColor, 90)}; border-radius: 8px; margin: 20px 0;">
+            <table width="100%" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin: 20px 0;">
                 <tr>
                     <td style="padding: 15px;">
                         <table width="100%">
                             <tr>
                                 <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                                    <span style="color: ${theme.mutedColor}; font-size: 14px;">Total Paid</span>
+                                    <span style="color: #4b5563; font-size: 14px;">Total Paid</span>
                                 </td>
                                 <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
                                     <strong style="color: ${theme.accentColor}; font-size: 18px;">$${data.totalPaid.toFixed(2)}</strong>
@@ -373,17 +374,17 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({ event: propEvent, em
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0;">
-                                    <span style="color: ${theme.mutedColor}; font-size: 14px;">Order ID</span>
+                                    <span style="color: #4b5563; font-size: 14px;">Order ID</span>
                                 </td>
                                 <td style="padding: 8px 0; text-align: right;">
-                                    <strong style="color: ${theme.textColor}; font-family: monospace;">${data.orderId}</strong>
+                                    <strong style="color: #111827; font-family: monospace;">${data.orderId}</strong>
                                 </td>
                             </tr>
                         </table>
                     </td>
                 </tr>
             </table>
-            <p style="color: ${theme.mutedColor}; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
                 Save this email for your records. You may need to show it at check-in.
             </p>
         `;
