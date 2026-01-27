@@ -212,7 +212,7 @@ router.get('/:eventId/codes', verifyToken, async (req, res) => {
         // Verify user owns this event
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, created_by')
+            .select('id, owner_id')
             .eq('id', eventId)
             .single();
         
@@ -220,7 +220,7 @@ router.get('/:eventId/codes', verifyToken, async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.created_by !== userId) {
+        if (event.owner_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to view presale codes for this event' });
         }
         
@@ -261,7 +261,7 @@ router.post('/:eventId/codes', verifyToken, async (req, res) => {
         // Verify user owns this event
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, created_by')
+            .select('id, owner_id')
             .eq('id', eventId)
             .single();
         
@@ -269,7 +269,7 @@ router.post('/:eventId/codes', verifyToken, async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.created_by !== userId) {
+        if (event.owner_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to create presale codes for this event' });
         }
         
@@ -332,7 +332,7 @@ router.post('/:eventId/codes/generate', verifyToken, async (req, res) => {
         // Verify user owns this event
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, created_by')
+            .select('id, owner_id')
             .eq('id', eventId)
             .single();
         
@@ -340,7 +340,7 @@ router.post('/:eventId/codes/generate', verifyToken, async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.created_by !== userId) {
+        if (event.owner_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to generate presale codes for this event' });
         }
         
@@ -398,7 +398,7 @@ router.delete('/:eventId/codes/:codeId', verifyToken, async (req, res) => {
         // Verify user owns this event
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, created_by')
+            .select('id, owner_id')
             .eq('id', eventId)
             .single();
         
@@ -406,7 +406,7 @@ router.delete('/:eventId/codes/:codeId', verifyToken, async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
         
-        if (event.created_by !== userId) {
+        if (event.owner_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to delete presale codes for this event' });
         }
         
