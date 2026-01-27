@@ -24,33 +24,28 @@ Build a production-ready event ticketing platform with comprehensive features fo
 
 ## CHANGELOG
 
+### 2026-01-27 - Email Template Readability Fix (COMPLETED)
+**Issues Fixed:**
+1. Email preview text was hard to read (light pink text on pink background)
+   - Changed event detail boxes to white background with dark text (#111827, #374151)
+   - Added 2px colored border using accent color for visual interest
+   - Fixed both frontend preview (EmailPreview.tsx) and backend templates (emailTemplates.js)
+
+2. Back button in Email Preview didn't navigate correctly
+   - Fixed navigation from `/dashboard/events/${id}` to `/manage/${id}`
+
 ### 2026-01-26 - Push Notifications for Sales (COMPLETED)
-**Feature:**
 - Organizers receive instant push notifications when tickets are sold
-- Notifications include: Attendee name, Event title, Sale amount, Ticket count
-- Two notification triggers:
-  - `checkout.session.completed` - Regular ticket sales
-  - `payment_intent.succeeded` - At-door payments
+- Includes: Attendee name, Event title, Sale amount, Ticket count
 - Notifications saved to database for in-app notification center
-- Enable/disable toggle in Settings page
-- Files modified: `backend/controllers/stripeWebhookController.js`, `components/NotificationSettings.tsx`
 
 ### 2026-01-26 - Share Your Tickets & Live Revenue Widget (COMPLETED)
-**Share Your Tickets:**
-- "Share Event" button on My Tickets page (event group cards and detail view)
-- Uses native share API on mobile, clipboard fallback on desktop
-- Shares event page URL (not ticket QR) for security
-
-**Live Revenue Widget:**
+- "Share Event" button on My Tickets page
 - Real-time dashboard showing today's revenue, tickets, sales velocity
-- Feed of 10 most recent sales (24 hours)
-- Auto-refreshes every 60 seconds
-- **Note:** Requires Vercel redeployment for production
 
-### 2026-01-26 - UI Color Contrast & Analytics/Financials Fix (COMPLETED)
+### 2026-01-26 - UI Color Contrast & Analytics Fix (COMPLETED)
 - All yellow (#E0FF20) backgrounds have black text
 - EventFinance shows accurate ticket counts
-- EventRefunds page has description section
 - EventAnalytics gates Deep Dive for Pro/Premium/Enterprise
 
 ---
@@ -69,7 +64,9 @@ Build a production-ready event ticketing platform with comprehensive features fo
 - [x] EventAnalytics Deep Dive gating
 - [x] Share Your Tickets feature
 - [x] Live Revenue Dashboard Widget
-- [x] **Push Notifications for Sales**
+- [x] Push Notifications for Sales
+- [x] **Email template readability fix**
+- [x] **Email Preview back button fix**
 
 ### 🔄 REQUIRES DEPLOYMENT
 - [ ] Live Revenue Widget requires Vercel redeployment
@@ -79,7 +76,6 @@ Build a production-ready event ticketing platform with comprehensive features fo
 
 ## P1 - High Priority
 - [ ] Redeploy to Vercel for new endpoints
-- [ ] Verify email templates working
 
 ## P2 - Technical Debt
 - [ ] Refactor `SuperAdminDashboard.tsx` (3000+ lines)
@@ -87,41 +83,26 @@ Build a production-ready event ticketing platform with comprehensive features fo
 
 ---
 
-## Push Notification System
+## Email Template Color Scheme
+All email templates now use:
+- **Background**: White (#ffffff)
+- **Border**: 2px solid with accent color
+- **Heading text**: #111827 (dark gray)
+- **Body text**: #374151 (medium gray)
+- **Muted text**: #6b7280 (gray)
 
-### Triggers
-1. **New Ticket Sale** (`checkout.session.completed`)
-   - Title: "🎟️ New Ticket Sale!"
-   - Body: "{attendee} purchased {count} ticket(s) for {event} • {currency} {amount}"
-   
-2. **At-Door Payment** (`payment_intent.succeeded`)
-   - Title: "💰 At-Door Payment Received!"
-   - Body: "{attendee} paid at the door for {event} • {currency} {amount}"
-
-### Storage
-- Push subscriptions: `push_subscriptions` table (or in-memory fallback)
-- In-app notifications: `notifications` table
-
-### Configuration
-Required environment variables:
-- `VAPID_PUBLIC_KEY`
-- `VAPID_PRIVATE_KEY`
-- `VAPID_SUBJECT`
+This ensures readability regardless of the theme's accent color.
 
 ---
 
 ## Key Files Modified This Session
-- `/app/backend/controllers/stripeWebhookController.js` - Push notifications on sale
-- `/app/components/NotificationSettings.tsx` - Updated notification types
-- `/app/components/MyTickets.tsx` - Share Event button
-- `/app/components/LiveRevenueWidget.tsx` - New component
-- `/app/components/Dashboard.tsx` - Live Revenue Widget integration
-- `/app/backend/routes/adminRoutes.js` - Live sales endpoint
+- `/app/components/EmailPreview.tsx` - Fixed text colors and back button navigation
+- `/app/backend/services/emailTemplates.js` - Fixed event box text colors
 
 ## 3rd Party Integrations
 - **Supabase**: PostgreSQL Database, Auth, Storage
 - **Firebase**: Authentication (UI)
 - **Stripe**: Payment Processing & Webhooks
 - **Resend**: Transactional Emails
-- **Web Push**: Browser push notifications (web-push library)
+- **Web Push**: Browser push notifications
 - **Vercel**: Deployment platform
