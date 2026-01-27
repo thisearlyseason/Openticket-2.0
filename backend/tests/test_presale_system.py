@@ -274,10 +274,15 @@ class TestPresaleValidationLogic:
     def test_validate_with_code_and_token(self):
         """Test validation with both code and token provided"""
         events_response = requests.get(f"{BASE_URL}/api/events/public")
-        if events_response.status_code != 200 or not events_response.json():
+        if events_response.status_code != 200:
             pytest.skip("No events available for testing")
         
-        test_event = events_response.json()[0]
+        data = events_response.json()
+        events = data.get('events', [])
+        if not events:
+            pytest.skip("No events available for testing")
+        
+        test_event = events[0]
         
         response = requests.post(
             f"{BASE_URL}/api/presale/{test_event['id']}/validate",
