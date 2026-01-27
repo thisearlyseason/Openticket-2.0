@@ -81,7 +81,7 @@ class TestPresaleValidation:
     
     def test_validate_presale_with_invalid_token(self):
         """Test validation with invalid private link token"""
-        events_response = requests.get(f"{BASE_URL}/api/events")
+        events_response = requests.get(f"{BASE_URL}/api/events/public")
         assert events_response.status_code == 200
         events = events_response.json()
         
