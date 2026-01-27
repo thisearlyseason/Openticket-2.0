@@ -1431,50 +1431,48 @@ export const EventView = () => {
                                                     </div>
                                                 )}
 
-                                                {/* Waitlist Option */}
-                                                {event?.waitlistConfig?.enabled && (
-                                                    <div className="max-w-md mx-auto mt-8">
-                                                        <div className="text-center mb-4">
-                                                            <p className="text-zinc-500 text-sm">Don't have presale access?</p>
-                                                        </div>
-                                                        {waitlistSuccess ? (
-                                                            <div className="text-center py-8 animate-in zoom-in-95 duration-500">
-                                                                <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                                    <CheckCircle size={32} />
-                                                                </div>
-                                                                <h3 className="text-xl font-black mb-2">You're on the waitlist!</h3>
-                                                                <p className="text-zinc-500 text-sm">We'll notify you when general sale begins.</p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
-                                                                <h3 className="font-bold text-sm mb-4 text-center">Join the Waitlist</h3>
-                                                                <div className="space-y-3">
-                                                                    <Input
-                                                                        placeholder="Your name"
-                                                                        value={waitlistData.name}
-                                                                        onChange={e => setWaitlistData({ ...waitlistData, name: e.target.value })}
-                                                                        className="bg-white dark:bg-black rounded-xl h-11"
-                                                                    />
-                                                                    <Input
-                                                                        type="email"
-                                                                        placeholder="Your email"
-                                                                        value={waitlistData.email}
-                                                                        onChange={e => setWaitlistData({ ...waitlistData, email: e.target.value })}
-                                                                        className="bg-white dark:bg-black rounded-xl h-11"
-                                                                    />
-                                                                    <Button
-                                                                        onClick={handleJoinWaitlist}
-                                                                        isLoading={isJoiningWaitlist}
-                                                                        variant="outline"
-                                                                        className="w-full h-12 rounded-xl"
-                                                                    >
-                                                                        Join Waitlist
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                {/* Waitlist Option - Always show during presale */}
+                                                <div className="max-w-md mx-auto mt-8">
+                                                    <div className="text-center mb-4">
+                                                        <p className="text-zinc-500 text-sm">Don't have presale access?</p>
                                                     </div>
-                                                )}
+                                                    {waitlistSuccess ? (
+                                                        <div className="text-center py-8 animate-in zoom-in-95 duration-500">
+                                                            <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                <CheckCircle size={32} />
+                                                            </div>
+                                                            <h3 className="text-xl font-black mb-2">You're on the waitlist!</h3>
+                                                            <p className="text-zinc-500 text-sm">We'll notify you when general sale begins.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
+                                                            <h3 className="font-bold text-sm mb-4 text-center">Join the Waitlist</h3>
+                                                            <div className="space-y-3">
+                                                                <Input
+                                                                    placeholder="Your name"
+                                                                    value={waitlistData.name}
+                                                                    onChange={e => setWaitlistData({ ...waitlistData, name: e.target.value })}
+                                                                    className="bg-white dark:bg-black rounded-xl h-11"
+                                                                />
+                                                                <Input
+                                                                    type="email"
+                                                                    placeholder="Your email"
+                                                                    value={waitlistData.email}
+                                                                    onChange={e => setWaitlistData({ ...waitlistData, email: e.target.value })}
+                                                                    className="bg-white dark:bg-black rounded-xl h-11"
+                                                                />
+                                                                <Button
+                                                                    onClick={handleJoinWaitlist}
+                                                                    isLoading={isJoiningWaitlist}
+                                                                    variant="outline"
+                                                                    className="w-full h-12 rounded-xl"
+                                                                >
+                                                                    Join Waitlist
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         ) : isSoldOut ? (
                                             event.waitlistConfig?.enabled ? (
