@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-BASE_URL = os.environ.get('VITE_BACKEND_URL', 'https://www.openticket.events')
+BASE_URL = os.environ.get('TEST_BACKEND_URL', 'http://localhost:8001')
 
 class TestPresaleValidation:
     """Tests for POST /api/presale/:eventId/validate endpoint"""
