@@ -2239,7 +2239,7 @@ export const EventBuilder = () => {
                             >
                                 Back
                             </Button>
-                            {currentStep < 7 && (
+                            {currentStep < 8 && (
                                 <Button onClick={handleNext} className="flex-1">
                                     Next <ChevronRight size={16} className="ml-1" />
                                 </Button>
