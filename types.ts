@@ -596,3 +596,38 @@ export interface WaitlistEntry {
   status: 'pending' | 'promoted' | 'expired';
   promotedAt?: number;
 }
+
+// Presale Configuration
+export interface PresaleConfig {
+  enabled: boolean;
+  startDate: string;  // ISO date string
+  endDate: string;    // ISO date string
+  accessMethods: {
+    accountFlag: boolean;    // Check user's presale_eligible flag
+    codes: boolean;          // Allow presale codes
+    privateLink: boolean;    // Allow tokenized private link
+  };
+  privateToken?: string;     // UUID for private link access
+  generalSaleMessage?: string;  // Custom message for non-presale users
+}
+
+export interface PresaleCode {
+  id: string;
+  eventId: string;
+  code: string;
+  limitType: 'single' | 'multi' | 'unlimited';
+  maxUses?: number;        // For multi-use codes
+  currentUses: number;
+  createdBy: string;
+  createdAt: string;       // ISO timestamp
+  expiresAt?: string;      // Optional expiry
+  name?: string;           // Optional label for the code
+}
+
+export interface PresaleAccessResult {
+  hasAccess: boolean;
+  reason: string;
+  method?: 'account' | 'code' | 'privateLink';
+  codeId?: string;  // If access was granted via code
+}
+
