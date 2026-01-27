@@ -304,7 +304,8 @@ class TestPresaleIntegration:
         """Test that events API returns presale configuration"""
         response = requests.get(f"{BASE_URL}/api/events/public")
         assert response.status_code == 200
-        events = response.json()
+        data = response.json()
+        events = data.get('events', [])
         
         if not events:
             pytest.skip("No events available")
