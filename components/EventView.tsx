@@ -171,6 +171,104 @@ export const EventView = () => {
         }
     }, [id]);
 
+    // Check presale access when event loads
+    useEffect(() => {
+        const checkPresaleAccess = async () => {
+            if (!event?.presale?.enabled) {
+                setPresaleAccess({ hasAccess: true, reason: 'No presale configured', presaleActive: false });
+                return;
+            }
+
+            setIsCheckingPresale(true);
+            try {
+                const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                
+                // Check for presale token in URL
+                const presaleToken = searchParams.get('presale');
+                
+                // Get auth token if user is logged in
+                let authHeader = {};
+                try {
+                    const token = await StorageService.getAuthToken();
+                    if (token) {
+                        authHeader = { 'Authorization': `Bearer ${token}` };
+                    }
+                } catch (e) {
+                    // Not logged in, continue without auth
+                }
+
+                const response = await fetch(`${API_URL}/api/presale/${event.id}/validate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeader
+                    },
+                    body: JSON.stringify({
+                        token: presaleToken || undefined
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    setPresaleAccess(result);
+                    
+                    // If access granted via private link, remove token from URL for cleaner sharing
+                    if (result.hasAccess && presaleToken) {
+                        const newUrl = window.location.href.replace(/[?&]presale=[^&]+/, '');
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                } else {
+                    // Default to allowing access if presale check fails
+                    setPresaleAccess({ hasAccess: true, reason: 'Presale check failed - defaulting to access', presaleActive: false });
+                }
+            } catch (error) {
+                console.error('[Presale] Check failed:', error);
+                // Default to allowing access if presale check fails
+                setPresaleAccess({ hasAccess: true, reason: 'Presale check error - defaulting to access', presaleActive: false });
+            } finally {
+                setIsCheckingPresale(false);
+            }
+        };
+
+        if (event) {
+            checkPresaleAccess();
+        }
+    }, [event, searchParams]);
+
+    // Function to validate presale code
+    const validatePresaleCode = async () => {
+        if (!presaleCode.trim() || !event) return;
+
+        setIsCheckingPresale(true);
+        try {
+            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+            const response = await fetch(`${API_URL}/api/presale/${event.id}/validate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: presaleCode.trim() })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setPresaleAccess(result);
+                if (result.hasAccess) {
+                    showToast('Presale code accepted!', 'success');
+                    setShowPresaleCodeInput(false);
+                    // Store the code for checkout
+                    sessionStorage.setItem(`presale_code_${event.id}`, presaleCode.trim());
+                } else {
+                    showToast(result.reason || 'Invalid presale code', 'error');
+                }
+            } else {
+                showToast('Failed to validate code', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to validate code', 'error');
+        } finally {
+            setIsCheckingPresale(false);
+        }
+    };
+
     // Helper to determine contrasting foreground color
     const getContrastingFg = (bgColor: string): string => {
         if (!bgColor) return '#ffffff';
