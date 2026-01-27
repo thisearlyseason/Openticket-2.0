@@ -2185,9 +2185,9 @@ export const EventBuilder = () => {
                         )
                     }
 
-                    {/* STEP 7: PUBLISH */}
+                    {/* STEP 8: PUBLISH */}
                     {
-                        currentStep === 7 && (
+                        currentStep === 8 && (
                             <div className="animate-in fade-in space-y-6">
                                 <Card className="p-8 text-center border-2 border-primary/20 bg-primary/5">
                                     <Sparkles className="mx-auto text-primary mb-4" size={48} />
