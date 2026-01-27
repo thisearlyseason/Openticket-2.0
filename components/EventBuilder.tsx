@@ -90,6 +90,12 @@ export const EventBuilder = () => {
     // Tag Input State
     const [tagInput, setTagInput] = useState('');
 
+    // Presale State
+    const [presaleCodes, setPresaleCodes] = useState<PresaleCode[]>([]);
+    const [isLoadingCodes, setIsLoadingCodes] = useState(false);
+    const [newPresaleCode, setNewPresaleCode] = useState({ code: '', limitType: 'single' as const, maxUses: 1, name: '' });
+    const [generateCodeSettings, setGenerateCodeSettings] = useState({ count: 10, limitType: 'single' as const, maxUses: 1, prefix: '' });
+
     const [formData, setFormData] = useState<Partial<Event>>({
         title: '', subtitle: '', description: '', timeline: '', venueName: '', location: '',
         eventType: 'in_person', onlineUrl: '', category: '',
@@ -113,7 +119,20 @@ export const EventBuilder = () => {
         notifications: { reminder: true, newOrder: true },
         trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' },
         waitlistConfig: { enabled: false, startDate: '', endDate: '' },
-        collectGuestInfo: true
+        collectGuestInfo: true,
+        // Presale defaults
+        presale: {
+            enabled: false,
+            startDate: '',
+            endDate: '',
+            accessMethods: {
+                accountFlag: false,
+                codes: true,
+                privateLink: true
+            },
+            privateToken: '',
+            generalSaleMessage: 'Presale in progress. General sale starts soon!'
+        }
     });
 
     useEffect(() => {
