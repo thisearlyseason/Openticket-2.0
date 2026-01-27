@@ -59,7 +59,7 @@ class TestPresaleValidation:
     
     def test_validate_presale_with_invalid_code(self):
         """Test validation with invalid presale code"""
-        events_response = requests.get(f"{BASE_URL}/api/events")
+        events_response = requests.get(f"{BASE_URL}/api/events/public")
         assert events_response.status_code == 200
         events = events_response.json()
         
