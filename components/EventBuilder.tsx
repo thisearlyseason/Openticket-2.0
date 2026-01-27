@@ -171,6 +171,23 @@ export const EventBuilder = () => {
                         organizer: organizerName,
                         organizerEmail: organizerEmail
                     });
+                    
+                    // Load presale codes if event has presale enabled
+                    if (event.presale?.enabled && event.presale?.accessMethods?.codes) {
+                        try {
+                            const response = await fetch(`/api/presale/${id}/codes`, {
+                                headers: {
+                                    'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                }
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                setPresaleCodes(data.codes || []);
+                            }
+                        } catch (err) {
+                            console.error('Failed to load presale codes:', err);
+                        }
+                    }
                 }
             } else {
                 // New event - inherit defaults from user settings
