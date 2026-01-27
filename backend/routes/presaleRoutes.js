@@ -40,20 +40,15 @@ router.post('/:eventId/validate', async (req, res) => {
             .eq('id', eventId)
             .single();
         
-        console.log('[Presale] Event query result:', { event, eventError: eventError?.message });
-        
         if (eventError) {
             // If error is about missing column, treat as no presale
             if (eventError.message && eventError.message.includes('presale')) {
-                console.log('[Presale] Presale column missing, trying basic query');
                 // Try fetching without presale column
                 const { data: eventBasic, error: basicError } = await supabase
                     .from('events')
                     .select('id, title, owner_id')
                     .eq('id', eventId)
                     .single();
-                
-                console.log('[Presale] Basic query result:', { eventBasic, basicError: basicError?.message });
                 
                 if (basicError || !eventBasic) {
                     return res.status(404).json({ error: 'Event not found' });
@@ -66,7 +61,6 @@ router.post('/:eventId/validate', async (req, res) => {
                     presaleActive: false
                 });
             }
-            console.log('[Presale] Event error:', eventError);
             return res.status(404).json({ error: 'Event not found' });
         }
         
