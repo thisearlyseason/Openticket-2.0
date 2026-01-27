@@ -402,6 +402,9 @@ export interface Event {
   rsvpMode?: boolean;
   collectGuestInfo?: boolean;
 
+  // Presale Configuration
+  presale?: PresaleConfig;
+
   // Marketing & Tools
   tags?: string[];
   affiliates?: AffiliateLink[];
