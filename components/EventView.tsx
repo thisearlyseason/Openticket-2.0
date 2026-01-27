@@ -1369,7 +1369,114 @@ export const EventView = () => {
                                     </div>
 
                                     <Card className="p-8 border-zinc-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/50 rounded-[2.5rem]">
-                                        {isSoldOut ? (
+                                        {/* Presale Blocking UI - Show when presale is active and user doesn't have access */}
+                                        {presaleAccess?.presaleActive && !presaleAccess?.hasAccess ? (
+                                            <div className="space-y-8">
+                                                <div className="text-center mb-6">
+                                                    <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 text-purple-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                                        <Lock size={40} />
+                                                    </div>
+                                                    <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Presale in Progress</h2>
+                                                    <p className="text-zinc-500 text-lg font-medium max-w-md mx-auto">
+                                                        {presaleAccess?.reason || 'Early access is available for select users.'}
+                                                    </p>
+                                                    {presaleAccess?.presaleEndDate && (
+                                                        <p className="text-sm text-purple-600 dark:text-purple-400 mt-3 font-bold">
+                                                            General sale begins: {new Date(presaleAccess.presaleEndDate).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Presale Code Input */}
+                                                {event?.presale?.accessMethods?.codes && (
+                                                    <div className="max-w-md mx-auto">
+                                                        {showPresaleCodeInput ? (
+                                                            <div className="p-6 bg-purple-50 dark:bg-purple-900/20 rounded-[2rem] border border-purple-200 dark:border-purple-800">
+                                                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                                                    <Key size={20} className="text-purple-500" />
+                                                                    Enter Presale Code
+                                                                </h3>
+                                                                <div className="flex gap-3">
+                                                                    <Input
+                                                                        placeholder="PRESALE123"
+                                                                        value={presaleCode}
+                                                                        onChange={(e) => setPresaleCode(e.target.value.toUpperCase())}
+                                                                        className="flex-1 uppercase font-mono"
+                                                                    />
+                                                                    <Button
+                                                                        onClick={validatePresaleCode}
+                                                                        isLoading={isCheckingPresale}
+                                                                        className="px-6"
+                                                                    >
+                                                                        Unlock
+                                                                    </Button>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => setShowPresaleCodeInput(false)}
+                                                                    className="text-sm text-zinc-500 hover:text-zinc-700 mt-3"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <Button
+                                                                variant="outline"
+                                                                onClick={() => setShowPresaleCodeInput(true)}
+                                                                className="w-full h-14 rounded-2xl border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400"
+                                                            >
+                                                                <Key size={18} className="mr-2" />
+                                                                Have a Presale Code?
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Waitlist Option */}
+                                                {event?.waitlistConfig?.enabled && (
+                                                    <div className="max-w-md mx-auto mt-8">
+                                                        <div className="text-center mb-4">
+                                                            <p className="text-zinc-500 text-sm">Don't have presale access?</p>
+                                                        </div>
+                                                        {waitlistSuccess ? (
+                                                            <div className="text-center py-8 animate-in zoom-in-95 duration-500">
+                                                                <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                    <CheckCircle size={32} />
+                                                                </div>
+                                                                <h3 className="text-xl font-black mb-2">You're on the waitlist!</h3>
+                                                                <p className="text-zinc-500 text-sm">We'll notify you when general sale begins.</p>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="p-6 bg-zinc-50 dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
+                                                                <h3 className="font-bold text-sm mb-4 text-center">Join the Waitlist</h3>
+                                                                <div className="space-y-3">
+                                                                    <Input
+                                                                        placeholder="Your name"
+                                                                        value={waitlistData.name}
+                                                                        onChange={e => setWaitlistData({ ...waitlistData, name: e.target.value })}
+                                                                        className="bg-white dark:bg-black rounded-xl h-11"
+                                                                    />
+                                                                    <Input
+                                                                        type="email"
+                                                                        placeholder="Your email"
+                                                                        value={waitlistData.email}
+                                                                        onChange={e => setWaitlistData({ ...waitlistData, email: e.target.value })}
+                                                                        className="bg-white dark:bg-black rounded-xl h-11"
+                                                                    />
+                                                                    <Button
+                                                                        onClick={handleJoinWaitlist}
+                                                                        isLoading={isJoiningWaitlist}
+                                                                        variant="outline"
+                                                                        className="w-full h-12 rounded-xl"
+                                                                    >
+                                                                        Join Waitlist
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : isSoldOut ? (
                                             event.waitlistConfig?.enabled ? (
                                                 waitlistSuccess ? (
                                                     <div className="text-center py-12 animate-in zoom-in-95 duration-500">
