@@ -289,7 +289,7 @@ class TestPresaleIntegration:
     
     def test_events_include_presale_config(self):
         """Test that events API returns presale configuration"""
-        response = requests.get(f"{BASE_URL}/api/events")
+        response = requests.get(f"{BASE_URL}/api/events/public")
         assert response.status_code == 200
         events = response.json()
         
