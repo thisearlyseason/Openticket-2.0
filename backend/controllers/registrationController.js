@@ -2070,8 +2070,8 @@ export const resendConfirmationEmail = async (req, res) => {
             return res.status(400).json({ error: 'Confirmation emails are disabled for this event. Enable them in event settings.' });
         }
 
-        // Import email services
-        const { purchaseConfirmation } = await import('../services/emailTemplates.js');
+        // Import email services (using unified templates)
+        const { purchaseConfirmation } = await import('../services/unifiedEmailTemplates.js');
         const emailAudit = await import('../services/emailAuditService.js');
         const { sendEmailWithProvider } = await import('../services/cronService.js');
 
