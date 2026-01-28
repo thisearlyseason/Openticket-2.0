@@ -1433,7 +1433,10 @@ export const StorageService = {
             custom_fees: clean.customFees,
             absorb_fees: clean.absorbFees,
             ticket_design: clean.ticketDesign,
-            email_settings: clean.emailSettings
+            email_settings: clean.emailSettings,
+            // Presale and waitlist config
+            presale: clean.presale,
+            waitlist_config: clean.waitlistConfig
         };
 
         // Determine if update or create.
