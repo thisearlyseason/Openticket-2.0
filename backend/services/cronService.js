@@ -90,7 +90,7 @@ const sendEventReminders = async () => {
     console.log('[CRON] Starting event reminder job (primary - 24h before)...');
     
     try {
-        const { eventReminderPrimary } = await import('./emailTemplates.js');
+        const { eventReminderPrimary } = await import('./unifiedEmailTemplates.js');
         const emailAudit = await import('./emailAuditService.js');
         
         // Find events starting in 23-25 hours (to catch within the hourly window)
