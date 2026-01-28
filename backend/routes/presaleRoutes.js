@@ -1,12 +1,231 @@
 /**
  * Presale Routes
- * Handles presale validation, code management, and access control
+ * Handles presale validation, code management, signups, and access control
  */
 import express from 'express';
 const router = express.Router();
 import supabase from '../services/supabase.js';
 import verifyToken from '../middlewares/authMiddleware.js';
 import crypto from 'crypto';
+import { EmailService } from '../services/serverEmail.js';
+
+/**
+ * Sign up for presale notifications
+ * POST /api/presale/:eventId/signup
+ * Body: { name: string, email: string }
+ */
+router.post('/:eventId/signup', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { name, email } = req.body;
+        
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ error: 'Valid email is required' });
+        }
+        
+        // Get event details
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('id, title, date, time, location, venue_name, presale, image_url, owner_id')
+            .eq('id', eventId)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        
+        // Check if already signed up
+        const { data: existing } = await supabase
+            .from('presale_signups')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('email', email.toLowerCase())
+            .single();
+        
+        if (existing) {
+            return res.json({ success: true, message: 'Already signed up for presale' });
+        }
+        
+        // Create signup
+        const { error: insertError } = await supabase
+            .from('presale_signups')
+            .insert({
+                event_id: eventId,
+                name: name || '',
+                email: email.toLowerCase(),
+                created_at: new Date().toISOString(),
+                notified: false
+            });
+        
+        if (insertError) {
+            console.error('[Presale] Signup error:', insertError);
+            throw insertError;
+        }
+        
+        // Send confirmation email
+        try {
+            const presaleConfig = event.presale || {};
+            const presaleDate = presaleConfig.startDate ? new Date(presaleConfig.startDate).toLocaleDateString() : 'TBD';
+            const presaleTime = presaleConfig.startDate ? new Date(presaleConfig.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD';
+            
+            // Import unified email templates
+            const UnifiedEmailTemplates = (await import('../services/unifiedEmailTemplates.js')).default;
+            
+            const { subject, html } = UnifiedEmailTemplates.presaleSignupConfirmation({
+                attendeeName: name,
+                eventTitle: event.title,
+                eventDate: event.date,
+                eventTime: event.time || 'TBD',
+                eventLocation: event.location || event.venue_name || 'TBD',
+                presaleDate,
+                presaleTime,
+                eventImageUrl: event.image_url,
+                logoUrl: event.ticket_design?.logoUrl,
+                eventUrl: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/event/${eventId}`
+            });
+            
+            await EmailService.send({
+                to: email,
+                subject,
+                html
+            });
+            
+            console.log(`[Presale] Confirmation email sent to ${email}`);
+        } catch (emailError) {
+            console.error('[Presale] Email error:', emailError);
+            // Don't fail the signup if email fails
+        }
+        
+        res.json({ success: true, message: 'Successfully signed up for presale' });
+        
+    } catch (error) {
+        console.error('[Presale] Signup error:', error);
+        res.status(500).json({ error: 'Failed to sign up for presale' });
+    }
+});
+
+/**
+ * Get presale signups for an event (organizer only)
+ * GET /api/presale/:eventId/signups
+ */
+router.get('/:eventId/signups', verifyToken, async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user.uid;
+        
+        // Verify user owns this event
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('id, owner_id')
+            .eq('id', eventId)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        
+        if (event.owner_id !== userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        
+        // Get signups
+        const { data: signups, error: signupsError } = await supabase
+            .from('presale_signups')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false });
+        
+        if (signupsError) throw signupsError;
+        
+        res.json({ signups: signups || [] });
+        
+    } catch (error) {
+        console.error('[Presale] Get signups error:', error);
+        res.status(500).json({ error: 'Failed to get presale signups' });
+    }
+});
+
+/**
+ * Notify presale signups that presale is now open (organizer only)
+ * POST /api/presale/:eventId/notify-signups
+ */
+router.post('/:eventId/notify-signups', verifyToken, async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const userId = req.user.uid;
+        
+        // Verify user owns this event
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('id, title, presale, image_url, ticket_design, owner_id')
+            .eq('id', eventId)
+            .single();
+        
+        if (eventError || !event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+        
+        if (event.owner_id !== userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        
+        // Get un-notified signups
+        const { data: signups, error: signupsError } = await supabase
+            .from('presale_signups')
+            .select('*')
+            .eq('event_id', eventId)
+            .eq('notified', false);
+        
+        if (signupsError) throw signupsError;
+        
+        if (!signups || signups.length === 0) {
+            return res.json({ success: true, notified: 0, message: 'No pending signups to notify' });
+        }
+        
+        // Send emails
+        const UnifiedEmailTemplates = (await import('../services/unifiedEmailTemplates.js')).default;
+        const presaleConfig = event.presale || {};
+        const presaleEndDate = presaleConfig.endDate ? new Date(presaleConfig.endDate).toLocaleDateString() : 'TBD';
+        const presaleEndTime = presaleConfig.endDate ? new Date(presaleConfig.endDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD';
+        
+        let notifiedCount = 0;
+        for (const signup of signups) {
+            try {
+                const { subject, html } = UnifiedEmailTemplates.presaleNowOpen({
+                    attendeeName: signup.name,
+                    eventTitle: event.title,
+                    eventImageUrl: event.image_url,
+                    logoUrl: event.ticket_design?.logoUrl,
+                    eventUrl: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/event/${eventId}`,
+                    presaleEndDate,
+                    presaleEndTime
+                });
+                
+                await EmailService.send({
+                    to: signup.email,
+                    subject,
+                    html
+                });
+                
+                // Mark as notified
+                await supabase
+                    .from('presale_signups')
+                    .update({ notified: true, notified_at: new Date().toISOString() })
+                    .eq('id', signup.id);
+                
+                notifiedCount++;
+            } catch (err) {
+                console.error(`[Presale] Failed to notify ${signup.email}:`, err);
+            }
+        }
+        
+        res.json({ success: true, notified: notifiedCount, total: signups.length });
+        
+    } catch (error) {
+        console.error('[Presale] Notify signups error:', error);
+        res.status(500).json({ error: 'Failed to notify presale signups' });
+    }
+});
 
 /**
  * Validate presale access for an event
