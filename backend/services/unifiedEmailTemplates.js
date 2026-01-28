@@ -408,48 +408,78 @@ export const presaleSignupConfirmation = ({
 
 /**
  * Presale Now Open Email
+ * Sent 15 minutes before presale starts to all subscribers
  */
 export const presaleNowOpen = ({
     attendeeName,
     eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
     eventImageUrl,
     logoUrl,
     eventUrl,
+    presaleCode,
+    presaleStartTime,
     presaleEndDate,
     presaleEndTime
 }) => {
     const content = `
         <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
             Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
-            The presale you signed up for is <strong>NOW OPEN!</strong> Get your tickets before they're gone.
+            The presale for <strong>${eventTitle}</strong> is about to start! Get ready to grab your tickets.
         </p>
         
-        <!-- Urgency Box -->
-        <table width="100%" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+        <!-- Presale Start Time Box -->
+        <table width="100%" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 12px; margin-bottom: 24px;">
             <tr>
-                <td style="padding: 20px; text-align: center;">
-                    <p style="color: #92400e; font-size: 14px; font-weight: 700; margin: 0;">
-                        ⏰ Presale ends ${presaleEndDate} at ${presaleEndTime}
-                    </p>
+                <td style="padding: 24px; text-align: center;">
+                    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Presale Starts</p>
+                    <h2 style="color: #ffffff; font-size: 28px; font-weight: 800; margin: 0;">${presaleStartTime || 'Soon!'}</h2>
+                </td>
+            </tr>
+        </table>
+        
+        ${presaleCode ? `
+        <!-- Presale Code Box -->
+        <table width="100%" style="background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 24px; text-align: center;">
+                    <p style="color: #166534; font-size: 12px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Your Presale Code</p>
+                    <p style="color: #15803d; font-size: 28px; font-weight: 900; font-family: monospace; margin: 0; letter-spacing: 2px;">${presaleCode}</p>
+                    <p style="color: #166534; font-size: 12px; margin: 8px 0 0 0;">Enter this code when prompted to access presale tickets</p>
+                </td>
+            </tr>
+        </table>
+        ` : ''}
+        
+        <!-- Event Details -->
+        <table width="100%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px;">
+                    <h3 style="color: #111827; font-size: 18px; font-weight: 700; margin: 0 0 12px 0;">${eventTitle}</h3>
+                    ${eventDate ? `<p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">📅 ${eventDate}</p>` : ''}
+                    ${eventTime ? `<p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">🕐 ${eventTime}</p>` : ''}
+                    ${eventLocation ? `<p style="color: #374151; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>` : ''}
                 </td>
             </tr>
         </table>
         
         <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
-            Click the button below to purchase your tickets now.
+            Click the button below to purchase your tickets as soon as presale begins!
         </p>
     `;
 
     return {
-        subject: `🚨 Presale NOW OPEN for ${eventTitle}!`,
+        subject: `🎫 Your Presale Access for ${eventTitle} - Starting Soon!`,
         html: universalEmailWrapper({
             eventImageUrl,
             logoUrl,
-            title: 'Presale Is Live! 🎉',
-            subtitle: 'Get your tickets now',
+            title: 'Presale Starting Soon! 🎉',
+            subtitle: 'Your exclusive early access is here',
             content,
             ctaButtons: [
-                { label: 'Buy Tickets Now', url: eventUrl || '#', primary: true }
+                { label: 'Get Your Tickets', url: eventUrl || '#', primary: true }
             ],
             footer: 'Powered by OpenTicket'
         })
