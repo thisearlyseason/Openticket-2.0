@@ -266,7 +266,7 @@ const sendSecondaryEventReminders = async () => {
     console.log('[CRON] Starting event reminder job (secondary - configurable time)...');
     
     try {
-        const { eventReminderSecondary } = await import('./emailTemplates.js');
+        const { eventReminderSecondary } = await import('./unifiedEmailTemplates.js');
         const emailAudit = await import('./emailAuditService.js');
         
         const now = new Date();
