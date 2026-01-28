@@ -248,6 +248,40 @@ export const EventView = () => {
             checkPresaleAccess();
         }
     }, [event, searchParams]);
+    
+    // Presale Countdown Timer Effect
+    useEffect(() => {
+        if (!presaleAccess?.presaleStartDate || presaleAccess?.presaleActive || presaleAccess?.hasAccess) {
+            setCountdown(null);
+            return;
+        }
+        
+        const targetDate = new Date(presaleAccess.presaleStartDate).getTime();
+        
+        const updateCountdown = () => {
+            const now = Date.now();
+            const diff = targetDate - now;
+            
+            if (diff <= 0) {
+                setCountdown(null);
+                // Refresh presale access when countdown ends
+                window.location.reload();
+                return;
+            }
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            setCountdown({ days, hours, minutes, seconds });
+        };
+        
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
+        
+        return () => clearInterval(interval);
+    }, [presaleAccess?.presaleStartDate, presaleAccess?.presaleActive, presaleAccess?.hasAccess]);
 
     // Function to validate presale code
     const validatePresaleCode = async () => {
