@@ -90,6 +90,26 @@ Pre-launch signup page for events with presale enabled but not yet started. Matc
 
 **Note:** Routes renamed from `/signup` to `/subscribe` to avoid potential WAF/ingress blocking.
 
+### 2026-01-28 - Automatic Presale Notifications (COMPLETED)
+**Feature:**
+Automatically sends presale access emails to subscribers 15 minutes before presale starts.
+
+**How it works:**
+- Cron job runs every 5 minutes checking for presales starting in 15-20 minutes
+- Finds all un-notified subscribers for matching events
+- Auto-generates a shared presale code for subscribers (if event uses codes)
+- Sends `presaleNowOpen` email with:
+  - Presale start time
+  - Presale code (prominent display)
+  - Event details
+  - Direct link to event page
+- Marks subscribers as notified to prevent duplicate sends
+
+**Files:**
+- `cronService.js` - New `sendPresaleNotifications()` function
+- `unifiedEmailTemplates.js` - Updated `presaleNowOpen` template
+- `emailAuditService.js` - New trigger/email types for presale
+
 ### 2026-01-28 - Email Template Unification (COMPLETED)
 **Feature:**
 Unified all email templates into a single system for consistent branding.
