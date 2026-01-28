@@ -1,0 +1,591 @@
+/**
+ * UNIFIED EMAIL TEMPLATE SERVICE
+ * Single global email layout for all system-generated emails
+ * 
+ * Structure:
+ * 1. Event image at top (fixed position)
+ * 2. Editable text content block
+ * 3. Context-specific CTA buttons
+ * 4. For confirmations: Ticket details + QR codes
+ */
+
+// ============== GLOBAL STYLES ==============
+const GLOBAL_STYLES = {
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    containerBg: '#f5f5f5',
+    cardBg: '#ffffff',
+    primaryColor: '#00c9cc', // Teal - OpenTicket brand
+    textDark: '#111827',
+    textMuted: '#6b7280',
+    borderColor: '#e5e7eb',
+};
+
+/**
+ * Universal email wrapper - used by ALL email types
+ */
+const universalEmailWrapper = ({
+    eventImageUrl,
+    logoUrl,
+    title,
+    subtitle,
+    content,
+    ctaButtons = [],
+    footer,
+    ticketSection = null // Only for confirmation emails
+}) => {
+    const styles = GLOBAL_STYLES;
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: ${styles.fontFamily}; background-color: ${styles.containerBg}; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: ${styles.containerBg};">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="100%" style="max-width: 600px; background-color: ${styles.cardBg}; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- EVENT IMAGE (Fixed Position at Top) -->
+                    ${eventImageUrl ? `
+                    <tr>
+                        <td>
+                            <img src="${eventImageUrl}" alt="Event" style="width: 100%; height: 200px; object-fit: cover; display: block;" />
+                        </td>
+                    </tr>
+                    ` : ''}
+                    
+                    <!-- LOGO (Optional) -->
+                    ${logoUrl ? `
+                    <tr>
+                        <td align="center" style="padding: 24px 24px 0 24px;">
+                            <img src="${logoUrl}" alt="Logo" style="max-height: 60px; max-width: 200px; object-fit: contain;" />
+                        </td>
+                    </tr>
+                    ` : ''}
+                    
+                    <!-- HEADER -->
+                    <tr>
+                        <td align="center" style="padding: 24px 24px 16px 24px;">
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: ${styles.textDark}; line-height: 1.2;">
+                                ${title}
+                            </h1>
+                            ${subtitle ? `
+                            <p style="margin: 8px 0 0 0; font-size: 16px; color: ${styles.textMuted};">
+                                ${subtitle}
+                            </p>
+                            ` : ''}
+                        </td>
+                    </tr>
+                    
+                    <!-- MAIN CONTENT -->
+                    <tr>
+                        <td style="padding: 0 24px 24px 24px;">
+                            ${content}
+                        </td>
+                    </tr>
+                    
+                    <!-- CTA BUTTONS -->
+                    ${ctaButtons.length > 0 ? `
+                    <tr>
+                        <td align="center" style="padding: 0 24px 24px 24px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    ${ctaButtons.map((btn, i) => `
+                                    <td style="padding: ${i > 0 ? '0 0 0 12px' : '0'};">
+                                        <a href="${btn.url}" style="display: inline-block; padding: 14px 28px; background: ${btn.primary ? styles.primaryColor : 'transparent'}; color: ${btn.primary ? '#000000' : styles.textDark}; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px; border: 2px solid ${btn.primary ? styles.primaryColor : styles.borderColor};">
+                                            ${btn.label}
+                                        </a>
+                                    </td>
+                                    `).join('')}
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    ` : ''}
+                    
+                    <!-- TICKET SECTION (For Confirmation Emails Only) -->
+                    ${ticketSection ? `
+                    <tr>
+                        <td style="padding: 0 24px 24px 24px;">
+                            ${ticketSection}
+                        </td>
+                    </tr>
+                    ` : ''}
+                    
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid ${styles.borderColor};">
+                            <p style="margin: 0; font-size: 12px; color: ${styles.textMuted}; text-align: center;">
+                                ${footer || 'Powered by OpenTicket'}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+    `.trim();
+};
+
+/**
+ * Generate event details box (reusable)
+ */
+const generateEventDetailsBox = (eventTitle, eventDate, eventTime, eventLocation) => {
+    return `
+        <table width="100%" style="background: #ffffff; border: 2px solid ${GLOBAL_STYLES.primaryColor}; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px;">
+                    <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">${eventTitle}</h2>
+                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">📅 ${eventDate}</p>
+                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">🕐 ${eventTime}</p>
+                    <p style="color: #374151; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+                </td>
+            </tr>
+        </table>
+    `;
+};
+
+/**
+ * Generate QR code section for tickets
+ */
+const generateQRCodeSection = (tickets, qrCodeBaseUrl) => {
+    if (!tickets || tickets.length === 0) return '';
+    
+    return tickets.map((ticket, index) => `
+        <table width="100%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px; overflow: hidden;">
+            <tr>
+                <td style="padding: 20px;">
+                    <table width="100%">
+                        <tr>
+                            <td style="vertical-align: top; width: 60%;">
+                                <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 16px; font-weight: 700;">
+                                    🎟️ ${ticket.name || 'Ticket'} ${tickets.length > 1 ? `#${index + 1}` : ''}
+                                </h3>
+                                ${ticket.attendeeName ? `<p style="margin: 0 0 4px 0; color: #374151; font-size: 14px;">Attendee: ${ticket.attendeeName}</p>` : ''}
+                                <p style="margin: 0; color: #6b7280; font-size: 12px; font-family: monospace;">
+                                    ${ticket.id ? ticket.id.substring(0, 8).toUpperCase() : ''}
+                                </p>
+                            </td>
+                            <td style="vertical-align: top; text-align: right; width: 40%;">
+                                ${qrCodeBaseUrl ? `
+                                <img src="${qrCodeBaseUrl}?data=${encodeURIComponent(ticket.id || '')}" alt="QR Code" style="width: 80px; height: 80px; border-radius: 8px;" />
+                                ` : `
+                                <div style="width: 80px; height: 80px; background: #e5e7eb; border-radius: 8px; display: inline-block;"></div>
+                                `}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `).join('');
+};
+
+// ============== EMAIL GENERATORS ==============
+
+/**
+ * Purchase Confirmation Email
+ */
+export const purchaseConfirmation = ({
+    attendeeName,
+    attendeeEmail,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    tickets,
+    totalPaid,
+    orderId,
+    organizerName,
+    eventImageUrl,
+    logoUrl,
+    currency = 'USD'
+}) => {
+    const eventDetails = generateEventDetailsBox(eventTitle, eventDate, eventTime, eventLocation);
+    
+    const ticketsList = (tickets || []).map(t => `
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                <span style="font-weight: 600; color: #111827;">🎫 ${t.name || 'Ticket'}</span>
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #6b7280;">
+                × ${t.quantity || 1}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600; color: #111827;">
+                $${((t.price || 0) * (t.quantity || 1)).toFixed(2)}
+            </td>
+        </tr>
+    `).join('');
+
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName}</strong>,<br><br>
+            Your purchase is confirmed! Here are your ticket details:
+        </p>
+        
+        ${eventDetails}
+        
+        <!-- Tickets Table -->
+        <table width="100%" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+            <thead>
+                <tr style="background: #f9fafb;">
+                    <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Ticket</th>
+                    <th style="padding: 12px; text-align: center; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Qty</th>
+                    <th style="padding: 12px; text-align: right; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${ticketsList}
+                <tr style="background: #f9fafb;">
+                    <td colspan="2" style="padding: 12px; font-weight: 700; color: #111827;">Total Paid</td>
+                    <td style="padding: 12px; text-align: right; font-weight: 700; font-size: 18px; color: ${GLOBAL_STYLES.primaryColor};">
+                        $${(totalPaid || 0).toFixed(2)}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p style="color: #6b7280; font-size: 13px; text-align: center; margin: 0;">
+            Order ID: <strong style="font-family: monospace;">${orderId}</strong>
+        </p>
+        
+        <!-- Account Reminder -->
+        <div style="background-color: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
+            <p style="color: #0f766e; font-size: 13px; line-height: 1.5; margin: 0;">
+                💡 <strong>Tip:</strong> To view your tickets online, make sure to sign up or log in using this email address${attendeeEmail ? ` (<strong>${attendeeEmail}</strong>)` : ''}.
+            </p>
+        </div>
+    `;
+
+    const ticketSection = generateQRCodeSection(tickets, null);
+
+    return {
+        subject: `🎟️ Your tickets for ${eventTitle}`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: "You're In! 🎉",
+            subtitle: 'Your purchase is confirmed',
+            content,
+            ctaButtons: [
+                { label: 'View Your Tickets', url: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/my-tickets`, primary: true }
+            ],
+            footer: `Organized by ${organizerName} • Powered by OpenTicket`,
+            ticketSection
+        })
+    };
+};
+
+/**
+ * Presale Signup Confirmation Email
+ */
+export const presaleSignupConfirmation = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    presaleDate,
+    presaleTime,
+    eventImageUrl,
+    logoUrl,
+    eventUrl
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
+            You're signed up for presale access! We'll notify you when tickets become available.
+        </p>
+        
+        <!-- Presale Info Box -->
+        <table width="100%" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 24px; text-align: center;">
+                    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Presale Starts</p>
+                    <h2 style="color: #ffffff; font-size: 28px; font-weight: 800; margin: 0 0 4px 0;">${presaleDate}</h2>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 18px; margin: 0;">${presaleTime}</p>
+                </td>
+            </tr>
+        </table>
+        
+        <!-- Event Details -->
+        <table width="100%" style="background: #ffffff; border: 2px solid ${GLOBAL_STYLES.primaryColor}; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px;">
+                    <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">${eventTitle}</h2>
+                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">📅 ${eventDate}</p>
+                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">🕐 ${eventTime}</p>
+                    <p style="color: #374151; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+                </td>
+            </tr>
+        </table>
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            We'll send you another email when presale tickets are available for purchase.
+        </p>
+    `;
+
+    return {
+        subject: `✅ You're signed up for ${eventTitle} presale!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: "You're Signed Up!",
+            subtitle: 'Presale access confirmed',
+            content,
+            ctaButtons: [
+                { label: 'Buy Presale Tickets', url: eventUrl || '#', primary: true },
+                { label: 'Set Reminder', url: eventUrl || '#', primary: false }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * Presale Now Open Email
+ */
+export const presaleNowOpen = ({
+    attendeeName,
+    eventTitle,
+    eventImageUrl,
+    logoUrl,
+    eventUrl,
+    presaleEndDate,
+    presaleEndTime
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
+            The presale you signed up for is <strong>NOW OPEN!</strong> Get your tickets before they're gone.
+        </p>
+        
+        <!-- Urgency Box -->
+        <table width="100%" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px; text-align: center;">
+                    <p style="color: #92400e; font-size: 14px; font-weight: 700; margin: 0;">
+                        ⏰ Presale ends ${presaleEndDate} at ${presaleEndTime}
+                    </p>
+                </td>
+            </tr>
+        </table>
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            Click the button below to purchase your tickets now.
+        </p>
+    `;
+
+    return {
+        subject: `🚨 Presale NOW OPEN for ${eventTitle}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Presale Is Live! 🎉',
+            subtitle: 'Get your tickets now',
+            content,
+            ctaButtons: [
+                { label: 'Buy Tickets Now', url: eventUrl || '#', primary: true }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * Event Reminder Email
+ */
+export const eventReminder = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    ticketUrl,
+    timeUntil // e.g., "24 hours", "1 hour"
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName}</strong>,<br><br>
+            Just a friendly reminder that <strong>${eventTitle}</strong> starts in <strong>${timeUntil}</strong>!
+        </p>
+        
+        ${generateEventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            Make sure to have your ticket ready for check-in. See you there! 🎉
+        </p>
+    `;
+
+    return {
+        subject: `⏰ Reminder: ${eventTitle} starts in ${timeUntil}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Event Starting Soon! 📅',
+            subtitle: `Starts in ${timeUntil}`,
+            content,
+            ctaButtons: [
+                { label: 'View Your Ticket', url: ticketUrl || '#', primary: true }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * Refund Confirmation Email
+ */
+export const refundConfirmation = ({
+    attendeeName,
+    eventTitle,
+    refundAmount,
+    currency = 'USD',
+    eventImageUrl,
+    logoUrl
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName}</strong>,<br><br>
+            Your refund has been processed. Here are the details:
+        </p>
+        
+        <table width="100%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px;">
+                    <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px 0;">Event</p>
+                    <p style="color: #111827; font-size: 16px; font-weight: 600; margin: 0 0 16px 0;">${eventTitle}</p>
+                    <p style="color: #6b7280; font-size: 14px; margin: 0 0 8px 0;">Refund Amount</p>
+                    <p style="color: #10b981; font-size: 24px; font-weight: 800; margin: 0;">$${(refundAmount || 0).toFixed(2)} ${currency}</p>
+                </td>
+            </tr>
+        </table>
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            The refund will appear on your original payment method within 5-10 business days.
+        </p>
+    `;
+
+    return {
+        subject: `💰 Refund confirmed for ${eventTitle}`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Refund Processed',
+            subtitle: 'Your refund is on its way',
+            content,
+            ctaButtons: [],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * Waitlist Notification Email
+ */
+export const waitlistNotification = ({
+    attendeeName,
+    eventTitle,
+    eventImageUrl,
+    logoUrl,
+    eventUrl,
+    message
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
+            ${message || `Great news! Tickets are now available for <strong>${eventTitle}</strong>.`}
+        </p>
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            Act fast - tickets may sell out quickly!
+        </p>
+    `;
+
+    return {
+        subject: `🎟️ Tickets available for ${eventTitle}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Tickets Available!',
+            subtitle: 'Your waitlist spot is ready',
+            content,
+            ctaButtons: [
+                { label: 'Get Tickets Now', url: eventUrl || '#', primary: true }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * General Admission Now Open Email
+ */
+export const generalAdmissionOpen = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    eventUrl
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
+            General admission tickets for <strong>${eventTitle}</strong> are now available!
+        </p>
+        
+        ${generateEventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            Don't miss out - get your tickets today!
+        </p>
+    `;
+
+    return {
+        subject: `🎫 General admission now open for ${eventTitle}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Tickets On Sale Now!',
+            subtitle: 'General admission is open',
+            content,
+            ctaButtons: [
+                { label: 'Buy Tickets', url: eventUrl || '#', primary: true }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+export default {
+    purchaseConfirmation,
+    presaleSignupConfirmation,
+    presaleNowOpen,
+    eventReminder,
+    refundConfirmation,
+    waitlistNotification,
+    generalAdmissionOpen,
+    // Helper for custom emails using unified layout
+    universalEmailWrapper
+};
