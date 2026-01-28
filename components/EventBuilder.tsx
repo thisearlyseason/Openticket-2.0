@@ -1291,9 +1291,12 @@ export const EventBuilder = () => {
                                                     label="Drop Logo Here"
                                                     onFileSelect={async (b64, fileName, file) => {
                                                         if (file && id) {
-                                                            const publicUrl = await StorageService.uploadEventLogo(id, file);
-                                                            if (publicUrl) {
+                                                            try {
+                                                                const publicUrl = await StorageService.uploadFile(b64 as string, `events/${id}/logo`);
                                                                 setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: publicUrl } });
+                                                            } catch (e) {
+                                                                console.error('Logo upload failed:', e);
+                                                                setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } });
                                                             }
                                                         } else {
                                                             setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } });
