@@ -700,7 +700,7 @@ const sendPostEventFollowups = async () => {
             return;
         }
         
-        const { postEventThankYou } = await import('./emailTemplates.js');
+        const { postEventThankYou } = await import('./unifiedEmailTemplates.js');
         const emailAudit = await import('./emailAuditService.js');
         
         let sent = 0, failed = 0, skipped = 0;
