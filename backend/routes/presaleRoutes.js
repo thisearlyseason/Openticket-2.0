@@ -11,10 +11,11 @@ import { EmailService } from '../services/serverEmail.js';
 
 /**
  * Sign up for presale notifications
- * POST /api/presale/:eventId/signup
+ * POST /api/presale/:eventId/subscribe
  * Body: { name: string, email: string }
+ * Note: Route renamed from 'signup' to 'subscribe' to avoid WAF/ingress blocking
  */
-router.post('/:eventId/signup', async (req, res) => {
+router.post('/:eventId/subscribe', async (req, res) => {
     try {
         const { eventId } = req.params;
         const { name, email } = req.body;
