@@ -1483,6 +1483,33 @@ export const EventView = () => {
                                                         {new Date(presaleAccess.presaleStartDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(presaleAccess.presaleStartDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                                     </p>
                                                     
+                                                    {/* Countdown Timer */}
+                                                    {countdown && (
+                                                        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 mb-6" data-testid="presale-countdown">
+                                                            <p className="text-white/80 text-xs uppercase tracking-wider mb-3 text-center font-semibold">Presale starts in</p>
+                                                            <div className="flex justify-center gap-3">
+                                                                {countdown.days > 0 && (
+                                                                    <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-3 min-w-[70px] text-center">
+                                                                        <span className="text-3xl font-black text-white block">{countdown.days}</span>
+                                                                        <span className="text-white/70 text-xs uppercase">Days</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-3 min-w-[70px] text-center">
+                                                                    <span className="text-3xl font-black text-white block">{countdown.hours.toString().padStart(2, '0')}</span>
+                                                                    <span className="text-white/70 text-xs uppercase">Hours</span>
+                                                                </div>
+                                                                <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-3 min-w-[70px] text-center">
+                                                                    <span className="text-3xl font-black text-white block">{countdown.minutes.toString().padStart(2, '0')}</span>
+                                                                    <span className="text-white/70 text-xs uppercase">Min</span>
+                                                                </div>
+                                                                <div className="bg-white/20 backdrop-blur rounded-xl px-4 py-3 min-w-[70px] text-center">
+                                                                    <span className="text-3xl font-black text-white block">{countdown.seconds.toString().padStart(2, '0')}</span>
+                                                                    <span className="text-white/70 text-xs uppercase">Sec</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    
                                                     {presaleSignupSuccess ? (
                                                         <div className="text-center py-6 animate-in zoom-in-95 duration-500" data-testid="presale-signup-success">
                                                             <div className="w-16 h-16 bg-teal-500/10 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
