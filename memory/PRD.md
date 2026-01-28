@@ -114,16 +114,20 @@ Pre-launch signup page for events with presale enabled but not yet started. Matc
 - [x] Live Revenue Dashboard Widget
 - [x] Push Notifications for Sales
 - [x] **Presale System** (requires DB migration)
+- [x] **Presale Signup Flow** (requires DB migration)
 
 ### 🔴 REQUIRES ACTION
 - [ ] **Run Database Migration**: `/app/backend/migrations/presale_system.sql`
+  - Creates `presale_codes` and `presale_signups` tables
 - [ ] **Redeploy to Vercel**: New presale endpoints need deployment
 
 ## P1 - High Priority
 - [ ] Test presale flow end-to-end after migration
+- [ ] Investigate Firebase TypeError (intermittent console error)
 
 ## P2 - Technical Debt
 - [ ] Refactor `SuperAdminDashboard.tsx` (3000+ lines)
+- [ ] Complete email template unification (migrate all emails to unifiedEmailTemplates.js)
 
 ---
 
