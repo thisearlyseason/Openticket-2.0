@@ -820,6 +820,181 @@ const generatePostEventHtml = (eventTitle, attendeeName) => `
 </html>`;
 
 /**
+ * Send presale notification emails to subscribers
+ * Runs every 5 minutes, sends notifications 15 minutes before presale starts
+ */
+const sendPresaleNotifications = async () => {
+    console.log('[CRON] Starting presale notification job...');
+    
+    try {
+        const now = new Date();
+        // Find presale start times within the next 15-20 minutes (5-minute buffer for cron timing)
+        const in15Minutes = new Date(now.getTime() + 15 * 60 * 1000);
+        const in20Minutes = new Date(now.getTime() + 20 * 60 * 1000);
+        
+        // Get events with presale starting in the next 15-20 minutes
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title, date, time, location, venue_name, image_url, presale, owner_id, ticket_design')
+            .not('presale', 'is', null);
+        
+        if (eventsError) {
+            console.error('[CRON] Error fetching events:', eventsError);
+            return;
+        }
+        
+        // Filter events whose presale starts in the target window
+        const eventsStartingSoon = (events || []).filter(event => {
+            const presaleStart = event.presale?.startDate ? new Date(event.presale.startDate) : null;
+            if (!presaleStart) return false;
+            return presaleStart >= in15Minutes && presaleStart <= in20Minutes;
+        });
+        
+        if (eventsStartingSoon.length === 0) {
+            console.log('[CRON] No presales starting in the next 15-20 minutes');
+            return;
+        }
+        
+        console.log(`[CRON] Found ${eventsStartingSoon.length} events with presale starting soon`);
+        
+        const { presaleNowOpen } = await import('./unifiedEmailTemplates.js');
+        const emailAudit = await import('./emailAuditService.js');
+        
+        let totalSent = 0;
+        let totalFailed = 0;
+        let totalSkipped = 0;
+        
+        for (const event of eventsStartingSoon) {
+            // Get all subscribers who haven't been notified yet
+            const { data: subscribers, error: subsError } = await supabase
+                .from('presale_signups')
+                .select('*')
+                .eq('event_id', event.id)
+                .eq('notified', false);
+            
+            if (subsError) {
+                console.error(`[CRON] Error fetching subscribers for ${event.title}:`, subsError);
+                continue;
+            }
+            
+            if (!subscribers || subscribers.length === 0) {
+                console.log(`[CRON] No un-notified subscribers for ${event.title}`);
+                continue;
+            }
+            
+            console.log(`[CRON] Notifying ${subscribers.length} subscribers for ${event.title}`);
+            
+            // Generate a presale code for this batch (or use existing codes)
+            let presaleCode = null;
+            
+            // Check if event uses presale codes
+            if (event.presale?.accessMethods?.codes) {
+                // Generate a shared subscriber code
+                const codeString = `PRESALE-${event.id.substring(0, 4).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+                
+                // Create the code in the database
+                const { data: newCode, error: codeError } = await supabase
+                    .from('presale_codes')
+                    .insert({
+                        event_id: event.id,
+                        code: codeString,
+                        limit_type: 'multi',
+                        max_uses: subscribers.length + 10, // Buffer for extra uses
+                        name: 'Subscriber Auto-Generated Code',
+                        created_by: event.owner_id
+                    })
+                    .select()
+                    .single();
+                
+                if (!codeError && newCode) {
+                    presaleCode = codeString;
+                    console.log(`[CRON] Generated presale code ${presaleCode} for ${event.title}`);
+                }
+            }
+            
+            // Get organizer email settings
+            const emailSettings = await getOrganizerEmailSettings(event.owner_id);
+            
+            // Format dates
+            const presaleStartDate = new Date(event.presale.startDate);
+            const eventDate = event.date ? new Date(event.date).toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            }) : 'TBD';
+            
+            // Send to each subscriber
+            for (const subscriber of subscribers) {
+                try {
+                    // Check for duplicate sends
+                    const alreadySent = await emailAudit.wasEmailSent(
+                        emailAudit.TRIGGER_TYPES.CRON_PRESALE_NOTIFY || 'cron_presale_notify',
+                        emailAudit.EMAIL_TYPES.PRESALE_NOW_OPEN || 'presale_now_open',
+                        `${event.id}-${subscriber.email}`
+                    );
+                    
+                    if (alreadySent) {
+                        totalSkipped++;
+                        continue;
+                    }
+                    
+                    // Generate email
+                    const { subject, html } = presaleNowOpen({
+                        attendeeName: subscriber.name || 'there',
+                        eventTitle: event.title,
+                        eventDate,
+                        eventTime: event.time || '',
+                        eventLocation: event.location || event.venue_name || 'TBD',
+                        presaleCode: presaleCode,
+                        presaleStartTime: presaleStartDate.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', minute: '2-digit', hour12: true 
+                        }),
+                        eventImageUrl: event.image_url,
+                        logoUrl: event.ticket_design?.logoUrl,
+                        eventUrl: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/event/${event.id}`
+                    });
+                    
+                    // Send email
+                    const result = await sendEmailWithProvider(
+                        emailSettings.provider,
+                        emailSettings.gmailConfig,
+                        subscriber.email,
+                        subject,
+                        html,
+                        emailSettings.organizerEmail,
+                        emailSettings.organizerName
+                    );
+                    
+                    if (result.sent || result.simulated) {
+                        // Mark as notified
+                        await supabase
+                            .from('presale_signups')
+                            .update({ notified: true, notified_at: new Date().toISOString() })
+                            .eq('id', subscriber.id);
+                        
+                        // Record in audit log
+                        emailAudit.markEmailSent(
+                            emailAudit.TRIGGER_TYPES.CRON_PRESALE_NOTIFY || 'cron_presale_notify',
+                            emailAudit.EMAIL_TYPES.PRESALE_NOW_OPEN || 'presale_now_open',
+                            `${event.id}-${subscriber.email}`
+                        );
+                        
+                        totalSent++;
+                    } else {
+                        totalFailed++;
+                    }
+                } catch (e) {
+                    console.error(`[CRON] Failed to notify ${subscriber.email}:`, e);
+                    totalFailed++;
+                }
+            }
+        }
+        
+        console.log(`[CRON] Presale notifications complete: ${totalSent} sent, ${totalFailed} failed, ${totalSkipped} skipped`);
+    } catch (error) {
+        console.error('[CRON] Presale notification job failed:', error);
+    }
+};
+
+/**
  * Send weekly affiliate summary emails
  * Runs every Monday at 9:00 AM UTC
  */
