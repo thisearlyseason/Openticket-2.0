@@ -279,6 +279,43 @@ export const EventView = () => {
             setIsCheckingPresale(false);
         }
     };
+    
+    // Handle presale signup (for pre-launch notifications)
+    const handlePresaleSignup = async () => {
+        if (!presaleSignupData.email.trim() || !event) return;
+        
+        if (!presaleSignupData.email.includes('@')) {
+            showToast('Please enter a valid email address', 'error');
+            return;
+        }
+        
+        setIsSigningUpPresale(true);
+        try {
+            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+            const response = await fetch(`${API_URL}/api/presale/${event.id}/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: presaleSignupData.name.trim() || 'Guest',
+                    email: presaleSignupData.email.trim().toLowerCase()
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                setPresaleSignupSuccess(true);
+                showToast(result.message || 'Successfully signed up for presale!', 'success');
+            } else {
+                const error = await response.json();
+                showToast(error.error || 'Failed to sign up', 'error');
+            }
+        } catch (error) {
+            console.error('[Presale] Signup error:', error);
+            showToast('Failed to sign up for presale', 'error');
+        } finally {
+            setIsSigningUpPresale(false);
+        }
+    };
 
     // Helper to determine contrasting foreground color
     const getContrastingFg = (bgColor: string): string => {
