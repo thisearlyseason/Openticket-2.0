@@ -13,7 +13,8 @@ const ALLOWED_EVENT_FIELDS = [
     'tags', 'tracking_pixels', 'remarketing', 'seo',
     'ticket_design', 'email_settings', 'notifications', 'reminders',
     'payment_config', 'organizer', 'organizer_email', 'organizer_phone', 'organizer_website',
-    'visibility', 'is_draft', 'broadcasts' // Broadcasts are usually appended via a separate flow, but saving the array is sometimes done
+    'visibility', 'is_draft', 'broadcasts', // Broadcasts are usually appended via a separate flow, but saving the array is sometimes done
+    'presale', 'waitlist_config' // Presale and waitlist configuration
 ];
 
 export const createEvent = async (req, res) => {
