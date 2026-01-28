@@ -1,0 +1,93 @@
+{
+  "summary": "Tested presale signup feature. Found CRITICAL issues: 1) /api/presale/:eventId/signup endpoint returns 404 from public URL (works on localhost) - likely Kubernetes ingress blocking routes with 'signup' in path, 2) presale_signups table doesn't exist in database - migration needed. Frontend UI code exists but can't be tested without presale-enabled events.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/presale/:eventId/signup",
+        "issue": "Returns 404 from public URL (https://www.openticket.events) but works on localhost:8001. Other presale routes like /validate and /codes work fine. Likely Kubernetes ingress or WAF blocking routes containing 'signup' in path.",
+        "priority": "CRITICAL"
+      },
+      {
+        "endpoint": "POST /api/presale/:eventId/signup",
+        "issue": "Database table 'presale_signups' does not exist. Error: Could not find the table 'public.presale_signups' in the schema cache. Migration file exists at /app/backend/migrations/presale_system.sql but hasn't been run.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Presale signup form submission",
+        "issue": "Cannot test because backend endpoint returns 404 from public URL",
+        "affected_selectors": ["[data-testid='presale-signup-btn']", "[data-testid='presale-signup-form']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_presale_system.py",
+    "/app/test_reports/pytest/pytest_presale_signup.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Run database migration /app/backend/migrations/presale_system.sql to create presale_signups table",
+    "CRITICAL: Investigate Kubernetes ingress/WAF rules blocking routes with 'signup' in path - /api/presale/:eventId/signup returns 404 from public URL but works on localhost",
+    "Create test event with presale enabled to verify frontend UI",
+    "Consider renaming endpoint from /signup to /register or /subscribe to avoid potential WAF blocking"
+  ],
+  "critical_code_review_comments": [
+    "presaleRoutes.js correctly defines POST /:eventId/signup route at line 17",
+    "server.js correctly mounts presale routes at /api/presale (line 214)",
+    "Route works on localhost but not on public URL - infrastructure issue",
+    "presale_signups table migration exists but not applied to database",
+    "Frontend presale signup UI code exists in EventView.tsx lines 1419-1550 with proper data-testid attributes"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_presale_system.py"
+  ],
+  "success_rate": {
+    "backend": "86% (19/22 tests passed - 3 signup tests failed due to 404)",
+    "frontend": "N/A - cannot test presale UI without presale-enabled events"
+  },
+  "test_credentials": {},
+  "seed_data_creation": "None - no presale-enabled events exist in database",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Presale signup feature has two CRITICAL blockers: 1) Database migration needed for presale_signups table, 2) Public URL routing issue blocking /signup endpoints. The /api/presale/:eventId/validate endpoint works correctly. Frontend UI code exists but needs presale-enabled event to test.",
+  "rca_of_the_issue": {
+    "issue_1": {
+      "description": "presale_signups table does not exist",
+      "root_cause": "Database migration /app/backend/migrations/presale_system.sql has not been executed",
+      "reproduction_steps": [
+        "POST to /api/presale/:eventId/signup on localhost:8001",
+        "Observe error: Could not find the table 'public.presale_signups'"
+      ],
+      "mitigation": "Run the SQL migration: psql -f /app/backend/migrations/presale_system.sql or execute via Supabase dashboard"
+    },
+    "issue_2": {
+      "description": "/api/presale/:eventId/signup returns 404 from public URL",
+      "root_cause": "Kubernetes ingress or WAF rule appears to be blocking routes containing 'signup' in the path. Other routes like /validate and /codes work fine.",
+      "reproduction_steps": [
+        "curl -X POST https://www.openticket.events/api/presale/EVENT_ID/signup - returns 404",
+        "curl -X POST http://localhost:8001/api/presale/EVENT_ID/signup - works (returns error about missing table)",
+        "curl -X POST https://www.openticket.events/api/presale/EVENT_ID/validate - works"
+      ],
+      "mitigation": "Check Kubernetes ingress configuration or WAF rules for patterns blocking 'signup' routes. Alternative: rename endpoint to /register or /subscribe"
+    }
+  },
+  "verified_endpoints": {
+    "working": [
+      "POST /api/presale/:eventId/validate",
+      "GET /api/presale/:eventId/codes (returns 401 without auth)",
+      "POST /api/presale/:eventId/codes (returns 401 without auth)",
+      "POST /api/presale/:eventId/codes/generate (returns 401 without auth)",
+      "POST /api/presale/:eventId/codes/:codeId/use"
+    ],
+    "not_working": [
+      "POST /api/presale/:eventId/signup (404 from public URL)",
+      "GET /api/presale/:eventId/signups (404 from public URL)",
+      "POST /api/presale/:eventId/notify-signups (404 from public URL)"
+    ]
+  }
+}
