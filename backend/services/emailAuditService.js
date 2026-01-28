@@ -125,8 +125,10 @@ export const TRIGGER_TYPES = {
     CRON_REMINDER_PRIMARY: 'cron.reminder.primary',
     CRON_REMINDER_SECONDARY: 'cron.reminder.secondary',
     CRON_POST_EVENT: 'cron.post_event',
+    CRON_PRESALE_NOTIFY: 'cron.presale_notify',
     BACKEND_APPROVAL: 'backend.approval',
     BACKEND_MANUAL: 'backend.manual',
+    BACKEND_PRESALE_SIGNUP: 'backend.presale_signup',
 };
 
 /**
@@ -140,6 +142,8 @@ export const EMAIL_TYPES = {
     EVENT_REMINDER_SECONDARY: 'event_reminder_secondary',
     POST_EVENT_THANK_YOU: 'post_event_thank_you',
     APPROVAL_CONFIRMATION: 'approval_confirmation',
+    PRESALE_SIGNUP_CONFIRMATION: 'presale_signup_confirmation',
+    PRESALE_NOW_OPEN: 'presale_now_open',
 };
 
 export default {
