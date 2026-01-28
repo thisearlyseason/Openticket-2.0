@@ -292,7 +292,7 @@ export const EventView = () => {
         setIsSigningUpPresale(true);
         try {
             const API_URL = import.meta.env.VITE_BACKEND_URL || '';
-            const response = await fetch(`${API_URL}/api/presale/${event.id}/signup`, {
+            const response = await fetch(`${API_URL}/api/presale/${event.id}/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
