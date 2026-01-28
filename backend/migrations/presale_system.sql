@@ -1,5 +1,5 @@
 -- Presale System Migration (Fixed for text-type event IDs)
--- Creates the presale_codes table and adds presale_eligible column to profiles
+-- Creates the presale_codes table, presale_signups table, and adds columns to profiles/events
 
 -- Create presale_codes table with TEXT type for event_id (matching events.id)
 CREATE TABLE IF NOT EXISTS presale_codes (
@@ -16,8 +16,22 @@ CREATE TABLE IF NOT EXISTS presale_codes (
     UNIQUE(event_id, code)
 );
 
--- Create index for fast lookups
+-- Create presale_signups table for storing presale notification signups
+CREATE TABLE IF NOT EXISTS presale_signups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    name VARCHAR(255),
+    email VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    notified BOOLEAN DEFAULT FALSE,
+    notified_at TIMESTAMPTZ,
+    UNIQUE(event_id, email)
+);
+
+-- Create indexes for fast lookups
 CREATE INDEX IF NOT EXISTS idx_presale_codes_event_code ON presale_codes(event_id, code);
+CREATE INDEX IF NOT EXISTS idx_presale_signups_event ON presale_signups(event_id);
+CREATE INDEX IF NOT EXISTS idx_presale_signups_email ON presale_signups(email);
 
 -- Add presale_eligible column to profiles if it doesn't exist
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS presale_eligible BOOLEAN DEFAULT FALSE;
@@ -28,3 +42,5 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS presale JSONB;
 -- Grant permissions
 GRANT ALL ON presale_codes TO authenticated;
 GRANT ALL ON presale_codes TO service_role;
+GRANT ALL ON presale_signups TO authenticated;
+GRANT ALL ON presale_signups TO service_role;
