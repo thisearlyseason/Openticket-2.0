@@ -65,8 +65,35 @@ router.post('/:eventId/signup', async (req, res) => {
         // Send confirmation email
         try {
             const presaleConfig = event.presale || {};
-            const presaleDate = presaleConfig.startDate ? new Date(presaleConfig.startDate).toLocaleDateString() : 'TBD';
-            const presaleTime = presaleConfig.startDate ? new Date(presaleConfig.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD';
+            
+            // Format presale date/time nicely
+            const presaleStartDate = presaleConfig.startDate ? new Date(presaleConfig.startDate) : null;
+            const presaleDate = presaleStartDate 
+                ? presaleStartDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })
+                : 'TBD';
+            const presaleTime = presaleStartDate 
+                ? presaleStartDate.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    minute: '2-digit',
+                    hour12: true
+                })
+                : '';
+            
+            // Format event date nicely
+            const eventDateObj = event.date ? new Date(event.date) : null;
+            const eventDateFormatted = eventDateObj 
+                ? eventDateObj.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                })
+                : 'TBD';
             
             // Import unified email templates
             const UnifiedEmailTemplates = (await import('../services/unifiedEmailTemplates.js')).default;
@@ -74,14 +101,15 @@ router.post('/:eventId/signup', async (req, res) => {
             const { subject, html } = UnifiedEmailTemplates.presaleSignupConfirmation({
                 attendeeName: name,
                 eventTitle: event.title,
-                eventDate: event.date,
-                eventTime: event.time || 'TBD',
+                eventDate: eventDateFormatted,
+                eventTime: event.time || '',
                 eventLocation: event.location || event.venue_name || 'TBD',
                 presaleDate,
                 presaleTime,
                 eventImageUrl: event.image_url,
                 logoUrl: event.ticket_design?.logoUrl,
-                eventUrl: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/event/${eventId}`
+                eventUrl: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/event/${eventId}`,
+                timezone: '' // Can be populated from event settings if available
             });
             
             await EmailService.send({
