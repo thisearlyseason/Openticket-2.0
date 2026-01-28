@@ -674,7 +674,11 @@ const normalizeEvent = (raw: any): Event => {
         registeredCount: raw.registeredCount || 0,
         // Email template settings
         ticketDesign: raw.ticket_design || raw.ticketDesign || {},
-        emailSettings: raw.email_settings || raw.emailSettings || {}
+        emailSettings: raw.email_settings || raw.emailSettings || {},
+        // Presale configuration
+        presale: raw.presale || null,
+        // Waitlist configuration
+        waitlistConfig: raw.waitlist_config || raw.waitlistConfig || null
     };
 };
 
