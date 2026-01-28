@@ -50,6 +50,14 @@ A comprehensive presale system that allows organizers to give early access to se
   - Join waitlist option
   - General sale countdown
 
+- **EventView: Presale Signup UI (NEW - 2026-01-28)**
+  - Shows when presale enabled but NOT yet started
+  - Displays event details with icons (date, location)
+  - "Artist Presale" section with start date/time
+  - Email/name signup form
+  - "Public Onsale" section with Set Reminder button
+  - Design inspired by go.seated.com
+
 **Backend Changes:**
 - New routes: `/api/presale/:eventId/*`
   - `POST /validate` - Validate presale access
@@ -58,12 +66,28 @@ A comprehensive presale system that allows organizers to give early access to se
   - `POST /codes/generate` - Auto-generate codes
   - `DELETE /codes/:codeId` - Delete a code
   - `POST /codes/:codeId/use` - Increment usage
+  - `POST /subscribe` - Sign up for presale notifications (NEW - renamed from /signup)
+  - `GET /subscribers` - List presale subscribers (organizer) (NEW)
+  - `POST /notify-subscribers` - Notify all subscribers (NEW)
 
 **Database Migration Required:**
 Run `/app/backend/migrations/presale_system.sql` to create:
 - `presale_codes` table
+- `presale_signups` table (NEW - for pre-launch email signups)
 - `presale` column on events (JSONB)
 - `presale_eligible` column on profiles
+
+### 2026-01-28 - Presale Signup Flow (COMPLETED)
+**Feature:**
+Pre-launch signup page for events with presale enabled but not yet started. Matches go.seated.com design.
+
+**What's New:**
+- Frontend: New presale signup UI in EventView.tsx (lines 1419-1550)
+- Backend: `/api/presale/:eventId/subscribe` endpoint
+- Email: New `presaleSignupConfirmation` template in unifiedEmailTemplates.js
+- Design: Clean minimal layout with event image, date icons, and signup form
+
+**Note:** Routes renamed from `/signup` to `/subscribe` to avoid potential WAF/ingress blocking.
 
 ### 2026-01-27 - Email Template Readability Fix (COMPLETED)
 - Changed event detail boxes to white background with dark text
