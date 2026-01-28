@@ -51,8 +51,8 @@ class EmailService {
         }
 
         try {
-            // Use new template system
-            const { purchaseConfirmation } = await import('./emailTemplates.js');
+            // Use unified template system
+            const { purchaseConfirmation } = await import('./unifiedEmailTemplates.js');
             const emailAudit = await import('./emailAuditService.js');
             
             const eventDate = eventDetails?.date 
