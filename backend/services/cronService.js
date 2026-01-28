@@ -1306,6 +1306,13 @@ export const initCronJobs = () => {
     }, { timezone: 'UTC' });
     console.log('[CRON] ✅ Analytics Cleanup scheduled (Sunday 4 AM UTC)');
 
+    // Presale Notifications - Every 5 minutes (sends 15 min before presale starts)
+    cron.schedule('*/5 * * * *', async () => {
+        console.log('[CRON] Triggered: Presale Notifications');
+        await sendPresaleNotifications();
+    }, { timezone: 'UTC' });
+    console.log('[CRON] ✅ Presale Notifications scheduled (every 5 min)');
+
     cronInitialized = true;
     console.log('[CRON] All jobs initialized successfully');
 };
