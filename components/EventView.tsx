@@ -85,6 +85,9 @@ export const EventView = () => {
     const [presaleSignupData, setPresaleSignupData] = useState({ name: '', email: '' });
     const [isSigningUpPresale, setIsSigningUpPresale] = useState(false);
     const [presaleSignupSuccess, setPresaleSignupSuccess] = useState(false);
+    
+    // Presale Countdown Timer State
+    const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
     // Lightbox state for gallery
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
