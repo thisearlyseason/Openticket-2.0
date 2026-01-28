@@ -9,6 +9,7 @@ import { useConfirm } from './ConfirmContext';
 import { BroadcastTab } from './admin/tabs/BroadcastTab';
 import { PromoCodesTab } from './admin/tabs/PromoCodesTab';
 import { SecurityTab } from './admin/tabs/SecurityTab';
+import { FinanceTab } from './admin/tabs/FinanceTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
 import SMMManagement from './admin/SMMManagement';
 import { DataTable, Column } from './DataTable';
