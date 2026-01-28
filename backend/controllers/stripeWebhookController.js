@@ -670,7 +670,7 @@ async function handleRefund(stripe, refundData) {
 
     // ========== SEND REFUND CONFIRMATION EMAIL ==========
     try {
-        const { refundConfirmation } = await import('../services/emailTemplates.js');
+        const { refundConfirmation } = await import('../services/unifiedEmailTemplates.js');
         const emailAudit = await import('../services/emailAuditService.js');
         const { sendEmailWithProvider } = await import('../services/cronService.js');
 
