@@ -1417,9 +1417,99 @@ export const EventView = () => {
                                     </div>
 
                                     <Card className="p-8 border-zinc-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-900/50 rounded-[2.5rem]">
-                                        {/* Presale Blocking UI - Show when presale is active and user doesn't have access */}
-                                        {presaleAccess?.presaleActive && !presaleAccess?.hasAccess ? (
-                                            <div className="space-y-8">
+                                        {/* PRESALE NOT STARTED YET - Show signup form (matching go.seated.com design) */}
+                                        {event?.presale?.enabled && presaleAccess?.presaleStartDate && !presaleAccess?.presaleActive && !presaleAccess?.hasAccess ? (
+                                            <div className="space-y-6" data-testid="presale-signup-section">
+                                                {/* Header with event branding icon */}
+                                                <div className="text-center">
+                                                    <p className="text-zinc-500 text-base mb-2">
+                                                        Sign up now to receive a password.
+                                                    </p>
+                                                </div>
+                                                
+                                                {/* Event Details with Icons */}
+                                                <div className="border-t border-b border-zinc-200 dark:border-zinc-700 py-4 space-y-2">
+                                                    <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
+                                                        <Calendar size={18} className="text-zinc-400" />
+                                                        <span>{event.date ? new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-zinc-700 dark:text-zinc-300">
+                                                        <MapPin size={18} className="text-zinc-400" />
+                                                        <span>{event.location || event.venue_name || 'TBD'}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Artist Presale Section */}
+                                                <div className="border-t border-zinc-200 dark:border-zinc-700 pt-6">
+                                                    <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-1">Artist Presale</h3>
+                                                    <p className="text-zinc-500 text-sm mb-4">
+                                                        {new Date(presaleAccess.presaleStartDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(presaleAccess.presaleStartDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                    </p>
+                                                    
+                                                    {presaleSignupSuccess ? (
+                                                        <div className="text-center py-6 animate-in zoom-in-95 duration-500" data-testid="presale-signup-success">
+                                                            <div className="w-16 h-16 bg-teal-500/10 text-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                                <CheckCircle size={32} />
+                                                            </div>
+                                                            <h3 className="text-xl font-black mb-2 text-zinc-900 dark:text-white">You're signed up!</h3>
+                                                            <p className="text-zinc-500 text-sm max-w-sm mx-auto">
+                                                                You will receive an email notification with your password at least 15 minutes before tickets go on sale.
+                                                            </p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-3" data-testid="presale-signup-form">
+                                                            <Input
+                                                                placeholder="Your name"
+                                                                value={presaleSignupData.name}
+                                                                onChange={e => setPresaleSignupData({ ...presaleSignupData, name: e.target.value })}
+                                                                className="bg-white dark:bg-black rounded-xl h-12"
+                                                            />
+                                                            <Input
+                                                                type="email"
+                                                                placeholder="Your email"
+                                                                value={presaleSignupData.email}
+                                                                onChange={e => setPresaleSignupData({ ...presaleSignupData, email: e.target.value })}
+                                                                className="bg-white dark:bg-black rounded-xl h-12"
+                                                            />
+                                                            <Button
+                                                                onClick={handlePresaleSignup}
+                                                                isLoading={isSigningUpPresale}
+                                                                className="w-full h-14 rounded-xl bg-[#a8e6cf] hover:bg-[#98d9be] text-black font-bold text-lg"
+                                                                data-testid="presale-signup-btn"
+                                                            >
+                                                                Sign Up
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Public On Sale Section */}
+                                                {event?.presale?.endDate && (
+                                                    <div className="border-t border-zinc-200 dark:border-zinc-700 pt-6">
+                                                        <h3 className="text-xl font-black text-zinc-900 dark:text-white mb-1">Public Onsale</h3>
+                                                        <p className="text-zinc-500 text-sm mb-4">
+                                                            {new Date(event.presale.endDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(event.presale.endDate).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                        </p>
+                                                        <Button
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                // Create calendar reminder
+                                                                const eventDate = new Date(event.presale?.endDate || '');
+                                                                const title = `Tickets on sale: ${event.title}`;
+                                                                const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${eventDate.toISOString().replace(/-|:|\.\d+/g, '')}/${new Date(eventDate.getTime() + 3600000).toISOString().replace(/-|:|\.\d+/g, '')}`;
+                                                                window.open(url, '_blank');
+                                                            }}
+                                                            className="w-full h-14 rounded-xl border-2 border-zinc-300 dark:border-zinc-600 font-bold"
+                                                            data-testid="public-sale-reminder-btn"
+                                                        >
+                                                            Set Reminder
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : presaleAccess?.presaleActive && !presaleAccess?.hasAccess ? (
+                                            /* PRESALE IN PROGRESS - User needs code to access */
+                                            <div className="space-y-8" data-testid="presale-in-progress-section">
                                                 <div className="text-center mb-6">
                                                     <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900/30 text-purple-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
                                                         <Lock size={40} />
@@ -1450,11 +1540,13 @@ export const EventView = () => {
                                                                         value={presaleCode}
                                                                         onChange={(e) => setPresaleCode(e.target.value.toUpperCase())}
                                                                         className="flex-1 uppercase font-mono"
+                                                                        data-testid="presale-code-input"
                                                                     />
                                                                     <Button
                                                                         onClick={validatePresaleCode}
                                                                         isLoading={isCheckingPresale}
                                                                         className="px-6"
+                                                                        data-testid="presale-code-submit-btn"
                                                                     >
                                                                         Unlock
                                                                     </Button>
@@ -1471,6 +1563,7 @@ export const EventView = () => {
                                                                 variant="outline"
                                                                 onClick={() => setShowPresaleCodeInput(true)}
                                                                 className="w-full h-14 rounded-2xl border-purple-300 text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400"
+                                                                data-testid="have-presale-code-btn"
                                                             >
                                                                 <Key size={18} className="mr-2" />
                                                                 Have a Presale Code?
