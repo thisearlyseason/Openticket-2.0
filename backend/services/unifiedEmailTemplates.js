@@ -294,6 +294,7 @@ export const purchaseConfirmation = ({
 
 /**
  * Presale Signup Confirmation Email
+ * Design based on go.seated.com confirmation email
  */
 export const presaleSignupConfirmation = ({
     attendeeName,
@@ -305,54 +306,101 @@ export const presaleSignupConfirmation = ({
     presaleTime,
     eventImageUrl,
     logoUrl,
-    eventUrl
+    eventUrl,
+    timezone = ''
 }) => {
+    // Format presale date/time for display
+    const presaleDateFormatted = presaleDate || 'TBD';
+    const presaleTimeFormatted = presaleTime ? `${presaleTime}${timezone ? ` ${timezone}` : ''}` : '';
+    
     const content = `
-        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
-            You're signed up for presale access! We'll notify you when tickets become available.
+        <!-- Main Message -->
+        <p style="color: #111827; font-size: 18px; line-height: 1.6; margin: 0 0 16px 0;">
+            Tickets go on sale on <strong>${presaleDateFormatted}</strong>${presaleTimeFormatted ? ` at <strong>${presaleTimeFormatted}</strong>` : ''}.
         </p>
         
-        <!-- Presale Info Box -->
-        <table width="100%" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); border-radius: 12px; margin-bottom: 24px;">
+        <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;">
+            You will receive an email notification with your password at least 15 minutes before tickets go on sale.
+        </p>
+        
+        <!-- Event Details Box - Clean minimal design matching screenshot -->
+        <table width="100%" style="border-top: 1px solid #e5e7eb; margin-bottom: 24px;">
             <tr>
-                <td style="padding: 24px; text-align: center;">
-                    <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Presale Starts</p>
-                    <h2 style="color: #ffffff; font-size: 28px; font-weight: 800; margin: 0 0 4px 0;">${presaleDate}</h2>
-                    <p style="color: rgba(255,255,255,0.9); font-size: 18px; margin: 0;">${presaleTime}</p>
+                <td style="padding: 20px 0;">
+                    <!-- Event Icon + Title with highlight -->
+                    <table width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                            <td style="padding: 8px 0;">
+                                <table cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="width: 28px; vertical-align: middle;">
+                                            <span style="font-size: 18px;">🎫</span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-left: 8px;">
+                                            <span style="color: #111827; font-size: 16px; font-weight: 600;">${eventTitle}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0;">
+                                <table cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="width: 28px; vertical-align: middle;">
+                                            <span style="font-size: 18px;">📅</span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-left: 8px;">
+                                            <span style="color: #374151; font-size: 15px;">${eventDate}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0;">
+                                <table cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td style="width: 28px; vertical-align: middle;">
+                                            <span style="font-size: 18px;">📍</span>
+                                        </td>
+                                        <td style="vertical-align: middle; padding-left: 8px;">
+                                            <span style="color: #374151; font-size: 15px;">${eventLocation}</span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
         
-        <!-- Event Details -->
-        <table width="100%" style="background: #ffffff; border: 2px solid ${GLOBAL_STYLES.primaryColor}; border-radius: 12px; margin-bottom: 24px;">
+        <!-- Disclaimer -->
+        <p style="color: #9ca3af; font-size: 13px; text-align: left; margin: 0 0 24px 0; font-style: italic;">
+            On sale date/time is subject to change.
+        </p>
+        
+        <!-- Questions Section -->
+        <table width="100%" style="border-top: 1px solid #e5e7eb;">
             <tr>
-                <td style="padding: 20px;">
-                    <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 0 0 12px 0;">${eventTitle}</h2>
-                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">📅 ${eventDate}</p>
-                    <p style="color: #374151; font-size: 14px; margin: 0 0 6px 0;">🕐 ${eventTime}</p>
-                    <p style="color: #374151; font-size: 14px; margin: 0;">📍 ${eventLocation}</p>
+                <td style="padding: 20px 0 0 0;">
+                    <p style="color: #111827; font-size: 14px; font-weight: 700; margin: 0 0 4px 0;">Have Questions?</p>
+                    <a href="${eventUrl || '#'}" style="color: #111827; font-size: 14px; text-decoration: underline;">Click here</a>
                 </td>
             </tr>
         </table>
-        
-        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
-            We'll send you another email when presale tickets are available for purchase.
-        </p>
     `;
 
     return {
-        subject: `✅ You're signed up for ${eventTitle} presale!`,
+        subject: `You're signed up for ${eventTitle}!`,
         html: universalEmailWrapper({
             eventImageUrl,
             logoUrl,
-            title: "You're Signed Up!",
-            subtitle: 'Presale access confirmed',
+            title: "You're signed up!",
+            subtitle: null,
             content,
-            ctaButtons: [
-                { label: 'Buy Presale Tickets', url: eventUrl || '#', primary: true },
-                { label: 'Set Reminder', url: eventUrl || '#', primary: false }
-            ],
+            ctaButtons: [], // No CTA buttons - matches the screenshot design
             footer: 'Powered by OpenTicket'
         })
     };
