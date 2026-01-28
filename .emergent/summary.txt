@@ -1,110 +1,92 @@
 <analysis>**original_problem_statement:**
-The user's goal is to make the event ticketing application 100% production-ready. The primary focus of this session was to fix a series of critical, interconnected bugs across the Kiosk, Mobile Scanner, and Check-In Portal interfaces, where check-in status was inconsistent, causing operational failures and user confusion. The scope also expanded to fix data integrity issues on the Organizer Dashboard, where refunded tickets were being incorrectly included in financial and attendance metrics.
+The user's primary goal is to unify the application's email system and refine the presale functionality for a production-ready event ticketing platform.
 
 PRODUCT REQUIREMENTS:
-1.  **Fix Scanner Sync/Check-In State:** Check-ins via Kiosk or Mobile Scanner must immediately and correctly update the check-in state across all interfaces.
-2.  **Fix Kiosk Mode:**
-    - Kiosk Mode must be true full-screen, without any navigation bars.
-    - Scanning a valid ticket should not result in ticket not found or Token Verification Failed errors.
-    - Manual search should show a Check-In button (not Pay Now) for paid tickets.
-    - After a cash payment in kiosk mode, the ticket should be automatically checked in.
-3.  **Fix Mobile Scanner Mode:**
-    - Scanning a ticket should not get stuck on Processing or result in a Failed to update ticket error.
-    - The scanner should close after a successful or failed scan attempt.
-4.  **Fix Organizer Dashboard Data:** All dashboard metrics (tickets sold, revenue) and lists (attendees, guests) must exclude refunded tickets and their associated revenue.
-5.  **Remove QR Scanner from Check-in Screen:** This was a feature change request to remove the scanning capability from the main web check-in portal, making it a status-viewing and manual check-in tool only.
+1.  **Event Visibility & Presale Flow:** Events should be viewable before tickets go live. If presale is enabled but not yet active, the event page must display a presale signup form (Sign up for presale) instead of the purchase options. Presale signups must be stored and users automatically notified when the presale begins.
+2.  **Presale Signup Email:** An email must be sent immediately after a user signs up for a presale. It must contain the event image, editable text content (presale date/time), and a Buy Presale Tickets button (inactive until the presale starts).
+3.  **Global Email System Unification:** All email template selection options must be removed from the Event Builder. A single, universal email layout must be enforced for all system-generated emails (confirmations, reminders, refunds, presale notifications, etc.).
+4.  **Universal Email Layout Rules:** The single global email must have a fixed structure: event image at the top, an editable text block, and context-specific CTA buttons. Confirmation emails must also include ticket details and QR codes within this same layout.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack event ticketing platform with a React/Vite frontend and a Node.js/Express backend using Supabase (Postgres). It has roles for SuperAdmins, Organizers, Affiliates, and Attendees.
-
-The agent has been attempting to fix a bundle of critical bugs related to the ticket check-in system. Throughout the session, the agent made numerous code changes across the frontend and backend. While some minor UI changes were successful (like removing the QR scanner from one page), the core check-in functionality remains broken. The agent inadvertently introduced severe backend regressions, including syntax errors and overwriting entire controller files, which led to service downtime and prevented user login. The backend was eventually restored to a running state, but the fundamental bugs reported by the user persist.
+The application is a full-stack event ticketing platform (React/Vite, Node.js/Express, Supabase/Postgres). A comprehensive presale system with access-code-based control has been implemented. The agent has just started a major refactor to unify all email templates into a single global system and enhance the presale flow to support pre-launch signups. The UI for selecting email templates in the  has been removed, a new migration file has been updated to include a  table, and a placeholder file for the new unified template () has been created. The application's email functionality is likely in a broken state until this refactor is complete.
 
 **Last working item**:
-- Last item agent was working: Recovering the backend service from a crash state. The agent had incorrectly modified  and , causing the backend to fail on startup. After multiple failed attempts to restore the files, the agent finally managed to revert the changes and get the backend running again.
+- Last item agent was working: The agent was in the middle of a large-scale refactor to unify all email communications and enhance the presale flow. The agent has removed the email template selection UI from , created a new backend file  for the global template, and updated the  migration to add a  table. The next step was to implement the presale signup logic in  and the backend.
 - Status: IN PROGRESS
 - Agent Testing Done: N
 - Which testing method agent to use? both
-- User Testing Done: Y (User confirmed they could not log in while the backend was down, and previously reported all the check-in and dashboard errors that are still pending).
+- User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Critical Check-in Failures (Mobile & Kiosk) (P0)
-  - Issue 2: Organizer Dashboard Data Integrity Issues (P0)
-  - Issue 3: Unhandled Frontend TypeError in Firebase functions (P1)
-  - Issue 4: Missing  Column Causing Widespread Backend Failures (P0)
+  - Issue 1: Unhandled Frontend TypeError in Firebase functions (P1)
   
   Issues Detail:
-  - **Issue 1: Critical Check-in Failures (Mobile & Kiosk)**
-     - **Description**: Both Mobile and Kiosk scanners fail to check in tickets, resulting in 500 Internal Server Errors. The Mobile Scanner gets stuck in a retry loop before failing. The Kiosk scanner shows various errors like Ticket not found, Token Verification Failed, or gets stuck after a scan. Manual check-in for paid tickets incorrectly prompts for payment.
-     - **Attempted fixes**: The agent made multiple attempts: unifying check-in endpoints, changing which API is called (from  to  and back), adding logging, and attempting to fix UI. These fixes were unsuccessful and sometimes contradictory. The core issue of failed API calls was never resolved.
+  - **Issue 1: Unhandled Frontend TypeError in Firebase functions**
+     - **Description**: The user has repeatedly reported seeing a console error: . This error originates from an external Firebase script and has been present since the initial handoff but has been consistently overlooked.
+     - **Attempted fixes**: None. The agent has not addressed this issue.
      - **Next debug checklist**:
-        1.  **Fix Auth Header:** The primary reason for 500 errors is . The agent must ensure that API calls from  and  correctly retrieve the auth token and include it in the  header.
-        2.  **Fix Kiosk Manual Check-in Logic:** In , review the  function. The logic to determine if a ticket  is flawed. It must correctly identify tickets that are already paid (status 'succeeded', 'paid', 'completed') and present a Check-In button, not a Pay Now button.
-        3.  **Implement Auto Check-in on Cash Payment:** In , after a successful cash payment is recorded, the logic must immediately call the internal check-in function for that ticket. The agent added a placeholder but it needs to be verified.
-     - **Why fix this issue and what will be achieved with the fix?**: This is the application's most critical function. Without reliable check-in, the platform is unusable for live events.
-     - **Status**:  IN PROGRESS
-     - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: both
-     - **Blocked on other issue**: Issue 4
-
-  - **Issue 2: Organizer Dashboard Data Integrity Issues**
-     - **Description**: The user reported that all organizer-facing dashboards and lists incorrectly include data from refunded tickets, inflating metrics like Tickets Sold and Total Revenue.
-     - **Attempted fixes**: The agent inspected  and noted it seemed to have some filtering. The agent then tried to create a new  endpoint but broke the backend in the process. The issue remains unresolved.
-     - **Next debug checklist**:
-        1.  **Correctly Implement Stats Endpoint:** Re-implement the  function in  and add the corresponding  route in  without syntax errors.
-        2.  **Audit All Data Queries:** Systematically review every function that feeds data to the organizer dashboards (, , , ) and ensure there is a  clause (or equivalent filtering) in all Supabase queries or data processing steps.
-     - **Why fix this issue and what will be achieved with the fix?**: Organizers rely on this data for financial reconciliation. Incorrect metrics are misleading and damage trust in the platform.
-     - **Status**:  IN PROGRESS
-     - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: both
-
-  - **Issue 3: Unhandled Frontend TypeError in Firebase functions**
-     - **Description**: User console logs consistently show the error: . This error originates from an external Firebase script and likely indicates a race condition where the script tries to attach a listener to a DOM element that hasn't been rendered yet.
-     - **Attempted fixes**: None. The agent identified the error but did not investigate or attempt a fix.
-     - **Next debug checklist**:
-        1.  Identify which component is triggering this. The error happens on both Kiosk and Mobile scanner pages.
-        2.  Wrap the component's logic, especially anything related to authentication or external scripts, inside a  hook to ensure it runs only after the component has mounted.
-        3.  Ensure any DOM manipulation or listener attachment happens within  and has a proper cleanup function.
-     - **Why fix this issue and what will be achieved with the fix?**: Uncaught errors can lead to unpredictable behavior and instability in the application.
+        1. Identify which component or page is triggering this script execution before the DOM is fully ready.
+        2. Trace the source of the  script. It is likely related to Firebase Authentication.
+        3. Wrap the related logic in a  hook or ensure it runs after the  event to prevent the race condition.
+     - **Why fix this issue and what will be achieved with the fix?**: This is a recurring error reported by the user. Fixing it will improve application stability and prevent potential unpredictable behavior related to authentication or other Firebase services.
      - **Status**:  NOT STARTED
      - **Is recurring issue?**: Y
      - **Should Test frontend/backend/both after fix?**: frontend
-
-  - **Issue 4: Missing  Column Causing Widespread Backend Failures**
-     - **Description**: Backend logs repeatedly show the error . This indicates a database schema mismatch between what the code expects and what the database has. This error is a likely contributor to the 500 errors during check-in and other operations.
-     - **Attempted fixes**: None. The agent saw this error multiple times but never addressed the root cause.
-     - **Next debug checklist**:
-        1.  Create a new SQL migration file: .
-        2.  The file should contain the command: 
-        3.  Instruct the user to run this migration script against their database, similar to the previous  script.
-     - **Why fix this issue and what will be achieved with the fix?**: This is a fundamental blocker. The backend will continue to fail on multiple routes until the database schema is corrected.
-     - **Status**:  NOT STARTED
-     - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: backend
+     - **Blocked on other issue**: None
 
 **In progress Task List**:
-- None.
+  - Task 1: Complete the Email Unification and Presale Signup Flow Refactor (P0)
+
+ Task Detail:
+  - **Task 1: Complete the Email Unification and Presale Signup Flow Refactor**
+     - **Where to resume**:
+        1.  **Backend**: Implement the logic in  to handle new presale signups (storing them in the  table). Create the controller function for this.
+        2.  **Backend**: Replace all existing calls to the old  service with the new  service across the application (e.g., in , ). Implement the actual universal template logic in .
+        3.  **Frontend**: Modify  to display the Sign up for presale form when an event has presale enabled but is not yet active. Implement the API call to submit the signup form.
+     - **What will be achieved with this?**: This will complete the user's latest core request, simplifying event setup for organizers and creating a clear pre-launch flow for attendees.
+     - **Status**:  IN PROGRESS
+     - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on something**: No
 
 **Upcoming and Future Tasks**
 - **Future Tasks**:
-    - **Refactor  (P2):** This component is over 3,000 lines long. It should be broken down into smaller, manageable child components to improve maintainability.
-    - **Refactor Check-in Data Model (P2):** The underlying data model still relies on three different fields for check-in status (, , ). This should be consolidated into a single source of truth in the database to prevent future bugs.
+    - **Refactor  (P2):** This component is over 3,000 lines long and should be broken down into smaller, manageable child components for maintainability.
+    - **Refactor Check-in Data Model (P2):** Consolidate the multiple fields for check-in status (, , ) into a single source of truth to prevent future data integrity bugs.
 
 **Completed work in this session**
-- **Removed QR Scanner from Check-In Portal:** The built-in scanner in  was successfully removed as per the user's request.
-- **Backend Service Recovery:** The agent successfully recovered the backend service after introducing critical syntax errors in  and  that caused it to crash repeatedly.
+- **Presale System V1 (Implemented & Fixed):**
+  - Added presale configuration to  (Step 7).
+  - Implemented backend routes and database tables () for presale management.
+  - Added logic to  to block non-presale users and show a waitlist option.
+  - Fixed a  bug in .
+  - Fixed an SQL migration error by changing column types from  to  to match the existing schema.
+- **Push Notifications for Sales (Implemented):**
+  - Integrated with the existing push notification system to send real-time sale alerts to event organizers.
+  - Triggered notifications from the Stripe webhook handler for both online and at-door payments.
+  - Added New sales to the  component.
+- **Email Readability & Navigation Bug (Fixed):**
+  - Corrected poor text contrast in email templates and the  component by dynamically setting text color based on background luminance.
+  - Fixed a broken back button in  to navigate correctly to the manage event page.
+- **Shareable Tickets & Live Revenue Widget (Implemented):**
+  - Added a Share button to  to generate a shareable link.
+  - Created a  component and added it to the organizer , powered by a new  endpoint.
+- **UI/Data Integrity Fixes:**
+  - Enforced black text on all bright yellow () backgrounds across the app, fixing multiple accessibility and branding violations.
+  - Corrected ticket counting logic in  to accurately display paid, pending, and refunded ticket totals.
+  - Added a descriptive text block to the  page.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: Missing  column**
-     - **Debug checklist**: Create a new migration script () with  and instruct the user to run it.
-     - **Why to solve this issue and what will be achieved with this?**: This is a root cause of many backend 500 errors and is blocking progress on fixing check-in functionality.
-     - **Should Test frontend/backend/both after fix**: backend
+   - **Issue 1: Unhandled Frontend TypeError in Firebase functions**
+     - **Debug checklist**: Identify the component causing the script to run before the DOM is ready and wrap the logic in a  hook.
+     - **Why to solve this issue and what will be achieved with this?**: Fixes a recurring console error reported by the user, improving application stability.
+     - **Should Test frontend/backend/both after fix**: frontend
      - **Is recurring issue?**: Y
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**: Backend module caching remains an issue, requiring manual restarts (backend: stopped
-backend: started) to apply changes.
+  - **Issue recurrence in previous fork**: Backend module caching, often requiring manual backend: stopped
+backend: started to apply changes.
   - **Recurrence count**: 10+
   - **Status**: IN PROGRESS (Workaround in place)
 
@@ -113,113 +95,69 @@ backend: started) to apply changes.
 
 **Key Technical Concepts**
 - **Full Stack**: React/Vite (frontend), Node.js/Express (backend), Supabase/Postgres (database).
-- **Authentication**: Firebase/Supabase JWT for users, separate token system for Kiosk mode.
-- **Deployment**: Vercel.
+- **Global Email Template Unification**: A major refactor to consolidate all email layouts into a single, non-customizable template for brand consistency.
+- **Presale Access Control**: A multi-faceted system using database flags, time-based checks, and access codes to manage early access to events. Now being expanded to include a pre-launch signup flow.
+- **Real-time Notifications**: Using a push notification service triggered by backend webhooks (Stripe) to provide live updates to users.
+- **Dynamic Theming**: Using CSS variables to enforce accessible color contrast programmatically.
 
 **key DB schema**
-- : {{..., , , }} - **Missing  column.**
-- : {{...,  (JSONB), , ,  (JSONB),  (boolean)}}
-- : {{..., , }}
+- : Added  (JSONB) column.
+-  (New Table): 
+-  (New Table): 
 
 **changes in tech stack**
 - None.
 
 **All files of reference**
-- 
-- 
--  (Restored after being broken)
--  (Restored after being broken)
-- 
-- 
-- 
-- 
-- 
-- 
-- 
+-  (Currently being refactored)
+-  (Next to be refactored)
+-  (New file for refactor)
+-  (Contains new tables for presale)
+-  (Contains presale logic)
+-  (Contains new type definitions for presale)
 
 **Areas that need refactoring**:
-- ** & :** The agent's struggle to edit these files highlights their fragility. They should be reviewed for clarity and consistency.
-- **Check-in Data Model:** The use of three separate fields (, , ) remains a major source of bugs and needs to be consolidated.
-- **:** This monolithic 3000+ line component needs to be broken down.
+- **Email System**: Currently in the middle of a major refactor. The system is in a temporarily broken state.
+- **:** A 3000+ line monolithic component that needs to be broken down.
+- **Check-in Data Model:** Still relies on multiple redundant fields for check-in status.
 
 **key api endpoints**
--  (POST): Fails with 500 error due to missing auth/DB column.
--  (POST): Fails with 500 error due to missing DB column.
--  (POST): Appears to be working but the subsequent check-in fails.
--  (GET): Endpoint was added incorrectly, causing a server crash, and then removed. Needs to be re-implemented correctly.
--  (GET): Failed with 500 error when the backend was down, preventing user login.
+-  (POST): Validates if a user has presale access.
+-  (POST): Creates presale codes for an event.
+-  (POST): (To be implemented) Adds a user to the presale signup list.
+-  (GET): New endpoint for the real-time revenue widget.
 
 **Critical Info for New Agent**
-- **Address Root Causes First:** The previous agent was stuck in a loop trying to fix symptoms. Your first priority must be to fix the two main root causes:
-    1.  **Database Schema Mismatch:** Create a migration to add the  column to the  table. This is non-negotiable and is the source of many backend 500 errors.
-    2.  **Missing Auth Headers:** Ensure all frontend API calls in the check-in flows are sending the  header. The backend is correctly rejecting unauthenticated requests.
-- **Agent Instability and Recovery:** The previous agent demonstrated extreme instability by overwriting entire critical backend files (), leading to a total service outage. Be extremely cautious with file edits. Use  instead of  for modifications. Before restoring files with usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
-           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
-           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--bare]
-           [--git-dir=<path>] [--work-tree=<path>] [--namespace=<name>]
-           [--super-prefix=<path>] [--config-env=<name>=<envvar>]
-           <command> [<args>]
-
-These are common Git commands used in various situations:
-
-start a working area (see also: git help tutorial)
-   clone     Clone a repository into a new directory
-   init      Create an empty Git repository or reinitialize an existing one
-
-work on the current change (see also: git help everyday)
-   add       Add file contents to the index
-   mv        Move or rename a file, a directory, or a symlink
-   restore   Restore working tree files
-   rm        Remove files from the working tree and from the index
-
-examine the history and state (see also: git help revisions)
-   bisect    Use binary search to find the commit that introduced a bug
-   diff      Show changes between commits, commit and working tree, etc
-   grep      Print lines matching a pattern
-   log       Show commit logs
-   show      Show various types of objects
-   status    Show the working tree status
-
-grow, mark and tweak your common history
-   branch    List, create, or delete branches
-   commit    Record changes to the repository
-   merge     Join two or more development histories together
-   rebase    Reapply commits on top of another base tip
-   reset     Reset current HEAD to the specified state
-   switch    Switch branches
-   tag       Create, list, delete or verify a tag object signed with GPG
-
-collaborate (see also: git help workflows)
-   fetch     Download objects and refs from another repository
-   pull      Fetch from and integrate with another repository or a local branch
-   push      Update remote refs along with associated objects
-
-'git help -a' and 'git help -g' list available subcommands and some
-concept guides. See 'git help <command>' or 'git help <concept>'
-to read about a specific subcommand or concept.
-See 'git help git' for an overview of the system., use  to verify you are restoring the correct version.
-- **User is the Source of Truth for Testing:** The agent's local tests or assumptions are not sufficient. The user's reports and console logs have consistently been accurate in identifying failures. Trust user feedback above all else.
+- **You are in the middle of a major refactor.** The email system is being unified. The UI for selecting email templates has been removed from , but the backend and other parts of the app have not yet been updated to use the new  service. This means email-related functionality is currently broken and must be fixed by completing the task.
+- **The user has repeatedly pointed out a  from .** This has been ignored in previous sessions. You should prioritize investigating and fixing this recurring JavaScript error to improve app stability and address the user's direct feedback.
+- The SQL migration  has been updated multiple times. Ensure you are working with the latest version which includes the  table and uses  for foreign keys to the  table.
 
 **documents and test reports created in this job**
-- None.
+- 
+- 
+- 
+- 
+- 
+- 
+-  (Continuously updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- 10. Reports Kiosk says ticket not found for valid tickets, pay now for paid tickets, and that cash payments don't result in a check-in. Reports Mobile Scanner shows Failed to update ticket. Reports Event Financials are not loading. (IN PROGRESS)
-- 9. Reports Kiosk mode still shows INVALID TICKET, manual search has no check-in button, and the Mobile Scanner is still stuck on processing. (IN PROGRESS)
-- 8. Reports Kiosk mode errors (Invalid Ticket, Token Verification Failed) and Mobile scanner getting stuck on the camera view. (IN PROGRESS)
-- 7. Acknowledges some fixes but reports new Kiosk errors (Invalid Ticket, navigation bars still visible) and that the Mobile scanner gets stuck. Confirms QR scanner on the web portal is gone. (IN PROGRESS)
-- 6. Initial detailed bug report for this session: Fix scanner sync, fix Kiosk UI, fix mobile scanner behavior, and remove the web QR scanner. (IN PROGRESS)
-- 5. Confirms they cannot log in due to console errors after the agent broke the backend. (RESOLVED, backend is running again)
-- 4. Provides detailed console logs about check-in failures, including the 500 errors and retry loops. (IN PROGRESS)
-- 3. Provides detailed requirements to fix mobile/kiosk scanning and dashboard data integrity, highlighting the  on null error and the need to exclude refunded tickets. (IN PROGRESS)
-- 2. Provides console logs for Mobile scanner showing  error, 404 on  endpoint, and 500 on  endpoint. (IN PROGRESS)
-- 1. Provides kiosk console logs showing the same errors (, 500 error on ). (IN PROGRESS)
+- **10. User Request:** Initiated a major refactor to unify all email templates and enhance the presale flow with a pre-launch signup page. (IN PROGRESS)
+- **9. Agent Confirmation:** The agent is finishing the previous task and updating the PRD.
+- **8. User Bug Report:** I got this error...Badge is not defined. Also asks to verify presale and waitlist logic. Mentions the recurring . (COMPLETED - Badge fixed, logic verified).
+- **7. Agent Confirmation:**  success message is normal. Provides SQL queries for verification.
+- **6. User Confirmation:** Success. No rows returned. (COMPLETED)
+- **5. Agent Response:** Corrected the SQL migration ( -> ) and asked the user to re-run it.
+- **4. User Bug Report:** i got this error...foreign key constraint...incompatible types: uuid and text. (COMPLETED - Agent fixed migration).
+- **3. Agent Finish:** Summarized the implementation of the presale system.
+- **2. User Request:** Provided choices for presale implementation. (COMPLETED)
+- **1. Agent :** Asked for clarification on presale requirements.
 
 **Project Health Check:**
-- **Broken**: Core user-facing functionality, including login (intermittently) and ticket check-in (persistently), is non-operational. The application is not in a usable state for its primary purpose.
+- **Broken**: The email system is currently broken due to an in-progress refactoring. Key functionality like purchase confirmations and reminders will not work until the refactor is complete.
 
 **3rd Party Integrations**
-- **Supabase**: PostgreSQL Database, Auth.
+- **Supabase**: PostgreSQL Database, Auth, Storage.
 - **Firebase**: Authentication (UI).
 - **Stripe**: Payment Processing & Webhooks.
 - **Resend**: Transactional Emails.
@@ -227,10 +165,13 @@ See 'git help git' for an overview of the system., use  to verify you are restor
 - **Google Generative AI**: For AI features.
 
 **Testing status**
-  - Testing agent used after significant changes: NO
-  - Troubleshoot agent used after agent stuck in loop: YES (was very effective at identifying root causes)
-  - Test files created: No
-  - Known regressions: Login functionality was broken by the agent and then restored. The check-in system remains in a broken state.
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: Email functionality is currently broken due to the ongoing refactor.
+
+**Credentials to test flow:**
+- Not applicable for summary.
 
 **What agent forgot to execute**
-- The agent repeatedly saw the backend error  in the logs but **never** created the necessary database migration script to fix it. This is the most critical oversight and is the root cause of many persistent 500 errors.</analysis>
+- The agent has consistently failed to address the  error. The user has pointed this out multiple times (most recently in message #441), and it was noted in the initial handoff summary. This remains unaddressed technical debt.</analysis>
