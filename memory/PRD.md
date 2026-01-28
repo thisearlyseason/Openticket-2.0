@@ -134,7 +134,8 @@ Unified all email templates into a single system for consistent branding.
 - [x] Live Revenue Dashboard Widget
 - [x] Push Notifications for Sales
 - [x] **Presale System** (requires DB migration)
-- [x] **Presale Signup Flow** (requires DB migration)
+- [x] **Presale Signup Flow** with countdown timer (requires DB migration)
+- [x] **Email Template Unification** (all emails now use unified templates)
 
 ### 🔴 REQUIRES ACTION
 - [ ] **Run Database Migration**: `/app/backend/migrations/presale_system.sql`
@@ -143,11 +144,12 @@ Unified all email templates into a single system for consistent branding.
 
 ## P1 - High Priority
 - [ ] Test presale flow end-to-end after migration
-- [ ] Investigate Firebase TypeError (intermittent console error)
+- [ ] Investigate Firebase TypeError (intermittent console error - not reproduced recently)
 
 ## P2 - Technical Debt
-- [ ] Refactor `SuperAdminDashboard.tsx` (3000+ lines)
-- [ ] Complete email template unification (migrate all emails to unifiedEmailTemplates.js)
+- [ ] Complete `SuperAdminDashboard.tsx` refactor (FinanceTab created, needs wiring)
+- [ ] Extract remaining tabs: AffiliatesTab, NonprofitTab, OnboardingTab, SettingsTab
+- [ ] Consolidate check-in data model (multiple redundant fields)
 
 ---
 
