@@ -86,8 +86,28 @@ Pre-launch signup page for events with presale enabled but not yet started. Matc
 - Backend: `/api/presale/:eventId/subscribe` endpoint
 - Email: New `presaleSignupConfirmation` template in unifiedEmailTemplates.js
 - Design: Clean minimal layout with event image, date icons, and signup form
+- **Countdown Timer**: Live countdown showing days/hours/minutes/seconds until presale starts
 
 **Note:** Routes renamed from `/signup` to `/subscribe` to avoid potential WAF/ingress blocking.
+
+### 2026-01-28 - Email Template Unification (COMPLETED)
+**Feature:**
+Unified all email templates into a single system for consistent branding.
+
+**What Changed:**
+- Migrated all imports from `emailTemplates.js` to `unifiedEmailTemplates.js`
+- Added new templates: `abandonedCart`, `eventReminderPrimary`, `eventReminderSecondary`, `postEventThankYou`, `approvalConfirmation`
+- Files updated: `serverEmail.js`, `cronService.js`, `stripeWebhookController.js`, `registrationController.js`
+
+### 2026-01-28 - SuperAdminDashboard Partial Refactor (IN PROGRESS)
+**What's Done:**
+- Created `/app/components/admin/tabs/FinanceTab.tsx` component (ready for future use)
+- Component is imported but not yet wired up (preserving existing functionality)
+
+**Remaining:**
+- Wire up FinanceTab component to replace inline JSX
+- Extract AffiliatesTab, NonprofitTab, OnboardingTab, SettingsTab
+- Each extraction requires careful state management due to tight coupling
 
 ### 2026-01-27 - Email Template Readability Fix (COMPLETED)
 - Changed event detail boxes to white background with dark text
