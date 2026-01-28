@@ -546,8 +546,8 @@ const sendAbandonedCartEmails = async () => {
                 }
                 
                 try {
-                    // Use new email template system
-                    const { abandonedCart } = await import('./emailTemplates.js');
+                    // Use unified email template system
+                    const { abandonedCart } = await import('./unifiedEmailTemplates.js');
                     const emailAudit = await import('./emailAuditService.js');
                     
                     // Check for duplicates
