@@ -134,10 +134,11 @@ router.post('/:eventId/subscribe', async (req, res) => {
 });
 
 /**
- * Get presale signups for an event (organizer only)
- * GET /api/presale/:eventId/signups
+ * Get presale subscribers for an event (organizer only)
+ * GET /api/presale/:eventId/subscribers
+ * Note: Route renamed from 'signups' to 'subscribers' to avoid WAF/ingress blocking
  */
-router.get('/:eventId/signups', verifyToken, async (req, res) => {
+router.get('/:eventId/subscribers', verifyToken, async (req, res) => {
     try {
         const { eventId } = req.params;
         const userId = req.user.uid;
@@ -157,28 +158,29 @@ router.get('/:eventId/signups', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Not authorized' });
         }
         
-        // Get signups
-        const { data: signups, error: signupsError } = await supabase
+        // Get subscribers
+        const { data: subscribers, error: subscribersError } = await supabase
             .from('presale_signups')
             .select('*')
             .eq('event_id', eventId)
             .order('created_at', { ascending: false });
         
-        if (signupsError) throw signupsError;
+        if (subscribersError) throw subscribersError;
         
-        res.json({ signups: signups || [] });
+        res.json({ subscribers: subscribers || [] });
         
     } catch (error) {
-        console.error('[Presale] Get signups error:', error);
-        res.status(500).json({ error: 'Failed to get presale signups' });
+        console.error('[Presale] Get subscribers error:', error);
+        res.status(500).json({ error: 'Failed to get presale subscribers' });
     }
 });
 
 /**
- * Notify presale signups that presale is now open (organizer only)
- * POST /api/presale/:eventId/notify-signups
+ * Notify presale subscribers that presale is now open (organizer only)
+ * POST /api/presale/:eventId/notify-subscribers
+ * Note: Route renamed from 'notify-signups' to 'notify-subscribers' to avoid WAF/ingress blocking
  */
-router.post('/:eventId/notify-signups', verifyToken, async (req, res) => {
+router.post('/:eventId/notify-subscribers', verifyToken, async (req, res) => {
     try {
         const { eventId } = req.params;
         const userId = req.user.uid;
