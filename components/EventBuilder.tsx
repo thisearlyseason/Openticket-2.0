@@ -1270,307 +1270,63 @@ export const EventBuilder = () => {
                                     </div>
                                 </div>
 
-                                {/* Email Ticket Templates - Visual Design for Emails */}
+                                {/* Organizer Logo for Emails */}
                                 <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800">
-                                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Mail className="text-purple-500" /> Email Ticket Templates</h2>
-                                    <p className="text-sm text-zinc-500 mb-6">Choose a visual design for your confirmation emails and printable tickets. Customize content (subject lines, text) in Settings → Email Templates.</p>
-                                    
-                                    {/* Default Template Presets */}
-                                    <div className="mb-4">
-                                        <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block">Default Templates</label>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                            {[
-                                                { id: 'modern', name: 'Modern', gradient: 'from-purple-500 to-indigo-600', textColor: '#ffffff', bgColor: '#ffffff', accent: '#8b5cf6' },
-                                                { id: 'classic', name: 'Classic', gradient: 'from-zinc-800 to-zinc-900', textColor: '#ffffff', bgColor: '#1a1a1a', accent: '#fbbf24' },
-                                                { id: 'minimal', name: 'Minimal', gradient: 'from-zinc-100 to-zinc-200', textColor: '#000000', bgColor: '#ffffff', accent: '#000000' },
-                                                { id: 'festive', name: 'Festive', gradient: 'from-pink-500 to-orange-400', textColor: '#ffffff', bgColor: '#fff5f5', accent: '#ec4899' },
-                                            ].map(template => (
-                                                <button
-                                                    key={template.id}
-                                                    type="button"
-                                                    onClick={() => setFormData({ 
-                                                        ...formData, 
-                                                        ticketDesign: { 
-                                                            ...(formData.ticketDesign || {}), 
-                                                            template: template.id,
-                                                            backgroundColor: template.bgColor,
-                                                            textColor: template.textColor,
-                                                            accentColor: template.accent,
-                                                        } 
-                                                    })}
-                                                    className={`relative p-3 rounded-xl border-2 transition-all ${
-                                                        (formData.ticketDesign?.template || 'modern') === template.id 
-                                                            ? 'border-primary ring-2 ring-primary/20' 
-                                                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                                                    }`}
-                                                >
-                                                    {/* Mini Preview */}
-                                                    <div className="w-full aspect-[3/4] rounded-lg overflow-hidden shadow-sm mb-2">
-                                                        <div className={`h-1/3 bg-gradient-to-br ${template.gradient}`}></div>
-                                                        <div className="h-2/3 flex flex-col items-center justify-center p-2" style={{ backgroundColor: template.bgColor }}>
-                                                            <div className="w-4 h-4 rounded bg-zinc-300 mb-1"></div>
-                                                            <div className="w-8 h-1 rounded bg-zinc-300"></div>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs font-bold">{template.name}</span>
-                                                    {(formData.ticketDesign?.template || 'modern') === template.id && (
-                                                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                                            <Check size={12} className="text-white" />
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* My Saved Templates */}
-                                    {currentUser?.savedTicketTemplates && currentUser.savedTicketTemplates.length > 0 && (
-                                        <div className="mb-6">
-                                            <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block flex items-center gap-2">
-                                                <Heart size={12} className="text-pink-500" /> My Templates
-                                            </label>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                {currentUser.savedTicketTemplates.map(saved => (
-                                                    <div key={saved.id} className="relative group">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setFormData({ 
-                                                                ...formData, 
-                                                                ticketDesign: { 
-                                                                    ...(formData.ticketDesign || {}), 
-                                                                    template: saved.id,
-                                                                    logoUrl: saved.design.logoUrl || formData.ticketDesign?.logoUrl,
-                                                                    backgroundColor: saved.design.backgroundColor || '#ffffff',
-                                                                    textColor: saved.design.textColor || '#000000',
-                                                                    accentColor: saved.design.accentColor || '#8b5cf6',
-                                                                    customMessage: saved.design.customMessage || '',
-                                                                } 
-                                                            })}
-                                                            className={`w-full p-3 rounded-xl border-2 transition-all ${
-                                                                formData.ticketDesign?.template === saved.id 
-                                                                    ? 'border-pink-500 ring-2 ring-pink-500/20' 
-                                                                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
-                                                            }`}
-                                                        >
-                                                            {/* Mini Preview */}
-                                                            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden shadow-sm mb-2">
-                                                                <div 
-                                                                    className="h-1/3 flex items-center justify-center"
-                                                                    style={{ backgroundColor: saved.design.accentColor || '#8b5cf6' }}
-                                                                >
-                                                                    {saved.design.logoUrl ? (
-                                                                        <img src={saved.design.logoUrl} className="max-h-full max-w-full object-contain p-1" alt="" />
-                                                                    ) : (
-                                                                        <div className="w-6 h-3 bg-white/30 rounded"></div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="h-2/3 flex flex-col items-center justify-center p-2" style={{ backgroundColor: saved.design.backgroundColor || '#ffffff' }}>
-                                                                    <div className="w-4 h-4 rounded bg-zinc-300 mb-1"></div>
-                                                                    <div className="w-8 h-1 rounded bg-zinc-300"></div>
-                                                                </div>
-                                                            </div>
-                                                            <span className="text-xs font-bold truncate block">{saved.name}</span>
-                                                            {formData.ticketDesign?.template === saved.id && (
-                                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-pink-500 rounded-full flex items-center justify-center">
-                                                                    <Check size={12} className="text-white" />
-                                                                </div>
-                                                            )}
-                                                        </button>
-                                                        {/* Delete Button */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={async (e) => {
-                                                                e.stopPropagation();
-                                                                const confirmed = await confirm({
-                                                                    title: 'Delete Template',
-                                                                    message: `Delete template "${saved.name}"?`,
-                                                                    confirmText: 'Delete',
-                                                                    variant: 'danger'
-                                                                });
-
-                                                                if (confirmed) {
-                                                                    const updated = currentUser.savedTicketTemplates?.filter(t => t.id !== saved.id) || [];
-                                                                    await StorageService.updateUser(currentUser.id, { savedTicketTemplates: updated });
-                                                                    setCurrentUser({ ...currentUser, savedTicketTemplates: updated });
-                                                                }
-                                                            }}
-                                                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-lg"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2"><Mail className="text-purple-500" /> Email Branding</h2>
+                                    <p className="text-sm text-zinc-500 mb-6">Add your logo to appear in all confirmation emails sent to attendees.</p>
                                     
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {/* Left: Customization Options */}
-                                        <div className="space-y-4 relative z-10">
-                                            {/* A. Add Image to Ticket */}
-                                            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                                <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2 block flex items-center gap-2">
-                                                    <ImageIcon size={16} className="text-purple-500" />
-                                                    Ticket Image <span className="text-xs font-normal text-zinc-400">(optional)</span>
-                                                </label>
-                                                <p className="text-xs text-zinc-500 mb-3">Logo or banner for the ticket header. Use a URL or upload (400x200px recommended).</p>
-                                                
-                                                {/* URL Input Option */}
-                                                <div className="mb-3">
-                                                    <input
-                                                        type="url"
-                                                        className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm"
-                                                        placeholder="https://example.com/logo.png"
-                                                        value={formData.ticketDesign?.logoUrl?.startsWith('http') ? formData.ticketDesign.logoUrl : ''}
-                                                        onChange={(e) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: e.target.value } })}
-                                                    />
-                                                </div>
-                                                
-                                                <div className="text-xs text-zinc-400 text-center mb-2">— or upload —</div>
-                                                
-                                                <div className="h-20">
-                                                    <FileDropZone
-                                                        label="Upload Image"
-                                                        currentImage={formData.ticketDesign?.logoUrl || undefined}
-                                                        onFileSelect={async (b64) => {
-                                                            // Upload to storage and get public URL
-                                                            try {
-                                                                const path = `events/${formData.id || 'new'}/ticket-logo-${Date.now()}.png`;
-                                                                const publicUrl = await StorageService.uploadFile(b64 as string, path);
+                                        {/* Logo Upload */}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-zinc-500 uppercase mb-3 block">Organizer Logo (Optional)</label>
+                                                <Input
+                                                    placeholder="https://your-logo-url.com/logo.png"
+                                                    value={formData.ticketDesign?.logoUrl?.startsWith('http') ? formData.ticketDesign.logoUrl : ''}
+                                                    onChange={(e) => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: e.target.value } })}
+                                                    className="mb-2"
+                                                />
+                                                <FileDropZone
+                                                    currentImage={formData.ticketDesign?.logoUrl || undefined}
+                                                    label="Drop Logo Here"
+                                                    onFileSelect={async (b64, fileName, file) => {
+                                                        if (file && id) {
+                                                            const publicUrl = await StorageService.uploadEventLogo(id, file);
+                                                            if (publicUrl) {
                                                                 setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: publicUrl } });
-                                                            } catch (e) {
-                                                                console.error('Logo upload failed:', e);
-                                                                // Fallback to base64 if upload fails
-                                                                setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } });
                                                             }
-                                                        }}
-                                                        onClear={() => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: '' } })}
-                                                    />
-                                                </div>
-                                            </div>
-                                            
-                                            {/* B. Add Details to Ticket */}
-                                            <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                                <label className="text-sm font-bold text-zinc-700 dark:text-zinc-300 mb-2 block flex items-center gap-2">
-                                                    <FileText size={16} className="text-blue-500" />
-                                                    Ticket Details <span className="text-xs font-normal text-zinc-400">(optional)</span>
-                                                </label>
-                                                <p className="text-xs text-zinc-500 mb-2">Instructions or reminders for attendees.</p>
-                                                <textarea
-                                                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-black text-sm resize-none"
-                                                    rows={2}
-                                                    placeholder="e.g., Bring valid ID. Doors open 30 min early."
-                                                    value={formData.ticketDesign?.customMessage || ''}
-                                                    onChange={e => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), customMessage: e.target.value } })}
+                                                        } else {
+                                                            setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: b64 as string } });
+                                                        }
+                                                    }}
+                                                    onClear={() => setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), logoUrl: '' } })}
+                                                    accept="image/*"
                                                 />
                                             </div>
-
-                                            {/* Save as My Template */}
-                                            <button
-                                                type="button"
-                                                onClick={async () => {
-                                                    const templateName = prompt('Give your template a name:', `My Template ${(currentUser?.savedTicketTemplates?.length || 0) + 1}`);
-                                                    if (!templateName) return;
-                                                    
-                                                    const newTemplate = {
-                                                        id: `custom_${Date.now()}`,
-                                                        name: templateName,
-                                                        createdAt: Date.now(),
-                                                        design: {
-                                                            logoUrl: formData.ticketDesign?.logoUrl || '',
-                                                            backgroundColor: formData.ticketDesign?.backgroundColor || '#ffffff',
-                                                            textColor: formData.ticketDesign?.textColor || '#000000',
-                                                            accentColor: formData.ticketDesign?.accentColor || '#8b5cf6',
-                                                            customMessage: formData.ticketDesign?.customMessage || '',
-                                                        }
-                                                    };
-                                                    
-                                                    const existingTemplates = currentUser?.savedTicketTemplates || [];
-                                                    const updated = [...existingTemplates, newTemplate];
-                                                    
-                                                    await StorageService.updateUser(currentUser!.id, { savedTicketTemplates: updated });
-                                                    setCurrentUser({ ...currentUser!, savedTicketTemplates: updated });
-                                                    
-                                                    // Select the new template
-                                                    setFormData({ ...formData, ticketDesign: { ...(formData.ticketDesign || {}), template: newTemplate.id } });
-                                                    
-                                                    window.alert(`Template "${templateName}" saved! You can now use it for future events.`);
-                                                }}
-                                                className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-purple-500/20"
-                                            >
-                                                <Heart size={16} /> Save as My Template
-                                            </button>
                                         </div>
                                         
-                                        {/* Right: Live Preview */}
-                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 min-h-[300px]">
-                                            {(() => {
-                                                const defaultTemplates: Record<string, { gradient: string; bg: string; text: string }> = {
-                                                    modern: { gradient: 'from-purple-500 to-indigo-600', bg: 'bg-white dark:bg-zinc-800', text: 'text-zinc-900 dark:text-white' },
-                                                    classic: { gradient: 'from-zinc-800 to-zinc-900', bg: 'bg-zinc-900', text: 'text-white' },
-                                                    minimal: { gradient: 'from-zinc-100 to-zinc-200', bg: 'bg-white', text: 'text-zinc-900' },
-                                                    festive: { gradient: 'from-pink-500 to-orange-400', bg: 'bg-pink-50', text: 'text-pink-900' },
-                                                };
-                                                
-                                                const templateId = formData.ticketDesign?.template || 'modern';
-                                                const isCustomTemplate = templateId.startsWith('custom_');
-                                                
-                                                // For custom templates, use the stored colors
-                                                let t = defaultTemplates[templateId] || defaultTemplates.modern;
-                                                let headerStyle: React.CSSProperties = {};
-                                                let bodyStyle: React.CSSProperties = {};
-                                                
-                                                if (isCustomTemplate) {
-                                                    // Use inline styles for custom templates
-                                                    headerStyle = { backgroundColor: formData.ticketDesign?.accentColor || '#8b5cf6' };
-                                                    bodyStyle = { 
-                                                        backgroundColor: formData.ticketDesign?.backgroundColor || '#ffffff',
-                                                        color: formData.ticketDesign?.textColor || '#000000'
-                                                    };
-                                                    t = { gradient: '', bg: '', text: '' };
-                                                }
-                                                
-                                                return (
-                                                    <div 
-                                                        className={`w-full max-w-[240px] rounded-xl shadow-xl overflow-hidden ${!isCustomTemplate ? t.bg : ''}`}
-                                                        style={isCustomTemplate ? bodyStyle : {}}
-                                                    >
-                                                        {/* Ticket Header */}
-                                                        <div 
-                                                            className={`h-20 flex items-center justify-center p-3 ${!isCustomTemplate ? `bg-gradient-to-br ${t.gradient}` : ''}`}
-                                                            style={isCustomTemplate ? headerStyle : {}}
-                                                        >
-                                                            {formData.ticketDesign?.logoUrl ? (
-                                                                <img src={formData.ticketDesign.logoUrl} className="max-h-full max-w-full object-contain" alt="Ticket" />
-                                                            ) : (
-                                                                <span className="text-white/60 text-[10px] font-bold uppercase">Your Logo</span>
-                                                            )}
-                                                        </div>
-                                                        
-                                                        {/* Ticket Content */}
-                                                        <div 
-                                                            className={`p-3 text-center ${!isCustomTemplate ? t.text : ''}`}
-                                                            style={isCustomTemplate ? bodyStyle : {}}
-                                                        >
-                                                            <div className="font-black text-sm leading-tight mb-0.5">{formData.title || 'Event Title'}</div>
-                                                            <div className="text-[10px] opacity-60 mb-2">{formData.date || 'Date'} • {formData.location || 'Location'}</div>
-                                                            
-                                                            {/* Custom Message */}
-                                                            {formData.ticketDesign?.customMessage && (
-                                                                <div className="text-[9px] opacity-70 bg-black/5 p-1.5 rounded mb-2 line-clamp-2">
-                                                                    {formData.ticketDesign.customMessage}
-                                                                </div>
-                                                            )}
-                                                            
-                                                            {/* QR Code */}
-                                                            <div className="w-16 h-16 mx-auto bg-black/10 rounded-lg flex items-center justify-center">
-                                                                <QrCode size={32} className="opacity-40" />
-                                                            </div>
-                                                            <div className="font-mono text-[8px] opacity-40 mt-1">#TICKET-12345</div>
-                                                        </div>
+                                        {/* Preview */}
+                                        <div className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 flex flex-col items-center justify-center border border-zinc-200 dark:border-zinc-800 min-h-[200px]">
+                                            <p className="text-xs text-zinc-500 mb-3">Email Preview</p>
+                                            <div className="w-full max-w-[280px] bg-white dark:bg-zinc-800 rounded-lg shadow-lg overflow-hidden">
+                                                {/* Header with Logo */}
+                                                <div className="h-16 bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center p-3">
+                                                    {formData.ticketDesign?.logoUrl ? (
+                                                        <img src={formData.ticketDesign.logoUrl} className="max-h-full max-w-full object-contain" alt="Logo" />
+                                                    ) : (
+                                                        <span className="text-white/60 text-xs font-bold uppercase">Your Logo</span>
+                                                    )}
+                                                </div>
+                                                {/* Content Preview */}
+                                                <div className="p-4">
+                                                    <div className="font-bold text-sm mb-1">{formData.title || 'Event Title'}</div>
+                                                    <div className="text-xs text-zinc-500 mb-3">{formData.date || 'Date'} • {formData.location || 'Venue'}</div>
+                                                    <div className="w-12 h-12 mx-auto bg-zinc-100 dark:bg-zinc-700 rounded flex items-center justify-center">
+                                                        <QrCode size={24} className="text-zinc-400" />
                                                     </div>
-                                                );
-                                            })()}
+                                                </div>
+                                            </div>
+                                            <p className="text-[10px] text-zinc-400 mt-3">All emails use the same unified layout</p>
                                         </div>
                                     </div>
                                 </div>
