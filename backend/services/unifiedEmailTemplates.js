@@ -626,14 +626,208 @@ export const generalAdmissionOpen = ({
     };
 };
 
+/**
+ * Abandoned Cart Email
+ */
+export const abandonedCart = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    checkoutUrl
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName || 'there'}</strong>,<br><br>
+            You left some items in your cart! Don't miss out on <strong>${eventTitle}</strong>.
+        </p>
+        
+        ${generateEventDetailsBox(eventTitle, eventDate, '', eventLocation)}
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            Complete your purchase before tickets sell out!
+        </p>
+    `;
+
+    return {
+        subject: `⏰ Don't forget your tickets for ${eventTitle}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'You Left Something Behind!',
+            subtitle: 'Complete your purchase',
+            content,
+            ctaButtons: [
+                { label: 'Complete Purchase', url: checkoutUrl || '#', primary: true }
+            ],
+            footer: 'Powered by OpenTicket'
+        })
+    };
+};
+
+/**
+ * Event Reminder - Primary (24 hours before)
+ */
+export const eventReminderPrimary = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    ticketUrl
+}) => {
+    return eventReminder({
+        attendeeName,
+        eventTitle,
+        eventDate,
+        eventTime,
+        eventLocation,
+        eventImageUrl,
+        logoUrl,
+        ticketUrl,
+        timeUntil: '24 hours'
+    });
+};
+
+/**
+ * Event Reminder - Secondary (configurable time, e.g., 1 hour before)
+ */
+export const eventReminderSecondary = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    ticketUrl,
+    timeUntilEvent
+}) => {
+    return eventReminder({
+        attendeeName,
+        eventTitle,
+        eventDate,
+        eventTime,
+        eventLocation,
+        eventImageUrl,
+        logoUrl,
+        ticketUrl,
+        timeUntil: timeUntilEvent || '1 hour'
+    });
+};
+
+/**
+ * Post-Event Thank You Email
+ */
+export const postEventThankYou = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    organizerName,
+    eventImageUrl,
+    logoUrl,
+    feedbackUrl
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName}</strong>,<br><br>
+            Thank you for attending <strong>${eventTitle}</strong>! We hope you had an amazing time.
+        </p>
+        
+        <table width="100%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+                <td style="padding: 20px; text-align: center;">
+                    <p style="color: #111827; font-size: 18px; font-weight: 700; margin: 0 0 8px 0;">
+                        How was your experience?
+                    </p>
+                    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+                        Your feedback helps us improve future events.
+                    </p>
+                </td>
+            </tr>
+        </table>
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            See you at the next one! 🎉
+        </p>
+    `;
+
+    return {
+        subject: `Thanks for attending ${eventTitle}! 🎉`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: 'Thanks for Coming!',
+            subtitle: `We loved having you at ${eventTitle}`,
+            content,
+            ctaButtons: feedbackUrl ? [
+                { label: 'Leave Feedback', url: feedbackUrl, primary: true }
+            ] : [],
+            footer: `Organized by ${organizerName || 'Event Organizer'} • Powered by OpenTicket`
+        })
+    };
+};
+
+/**
+ * Registration Approval Confirmation Email
+ */
+export const approvalConfirmation = ({
+    attendeeName,
+    eventTitle,
+    eventDate,
+    eventTime,
+    eventLocation,
+    eventImageUrl,
+    logoUrl,
+    ticketUrl,
+    organizerName
+}) => {
+    const content = `
+        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            Hi <strong>${attendeeName}</strong>,<br><br>
+            Great news! Your registration for <strong>${eventTitle}</strong> has been approved.
+        </p>
+        
+        ${generateEventDetailsBox(eventTitle, eventDate, eventTime, eventLocation)}
+        
+        <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
+            We can't wait to see you there!
+        </p>
+    `;
+
+    return {
+        subject: `✅ You're approved for ${eventTitle}!`,
+        html: universalEmailWrapper({
+            eventImageUrl,
+            logoUrl,
+            title: "You're Approved! 🎉",
+            subtitle: 'Your registration has been confirmed',
+            content,
+            ctaButtons: [
+                { label: 'View Your Tickets', url: ticketUrl || '#', primary: true }
+            ],
+            footer: `Organized by ${organizerName || 'Event Organizer'} • Powered by OpenTicket`
+        })
+    };
+};
+
 export default {
     purchaseConfirmation,
     presaleSignupConfirmation,
     presaleNowOpen,
     eventReminder,
+    eventReminderPrimary,
+    eventReminderSecondary,
     refundConfirmation,
     waitlistNotification,
     generalAdmissionOpen,
+    abandonedCart,
+    postEventThankYou,
+    approvalConfirmation,
     // Helper for custom emails using unified layout
     universalEmailWrapper
 };
