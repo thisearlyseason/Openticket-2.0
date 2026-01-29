@@ -611,7 +611,8 @@ export const EventBuilder = () => {
 
         const subtotal = price + taxAmount + customFeesTotal;
 
-        const plan = currentUser?.subscription?.plan || 'free';
+        const planKey = currentUser?.subscription?.plan || 'free';
+        const plan = (planKey in PLANS ? planKey : 'free') as keyof typeof PLANS;
         const platformFee = StorageService.calculateFees(price, plan);
         let stripeFee = 0;
 
