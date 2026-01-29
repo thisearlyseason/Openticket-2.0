@@ -124,11 +124,17 @@ export const updateEvent = async (req, res) => {
         const owner_id = req.user.uid;
         const updates = req.body;
 
+        console.log('[Event Update] Received updates for event:', id);
+        console.log('[Event Update] Presale data:', updates.presale);
+
         // SANITIZATION
         const safeUpdates = {};
         ALLOWED_EVENT_FIELDS.forEach(field => {
             if (updates[field] !== undefined) safeUpdates[field] = updates[field];
         });
+
+        console.log('[Event Update] Safe updates keys:', Object.keys(safeUpdates));
+        console.log('[Event Update] Safe updates presale:', safeUpdates.presale);
 
         // Ensure we don't accidentally wipe out the whole record if safeUpdates is empty, 
         // though typically that just does nothing.
