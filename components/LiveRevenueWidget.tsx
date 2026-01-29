@@ -39,7 +39,13 @@ export const LiveRevenueWidget = () => {
 
     const fetchLiveSales = useCallback(async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/organizer/live-sales`, {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            if (!backendUrl) {
+                console.warn('[LiveRevenue] VITE_BACKEND_URL not set');
+                return;
+            }
+            
+            const response = await fetch(`${backendUrl}/api/admin/organizer/live-sales`, {
                 headers: {
                     'Authorization': `Bearer ${await StorageService.getAuthToken()}`,
                     'Content-Type': 'application/json'
