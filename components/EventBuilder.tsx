@@ -725,7 +725,7 @@ export const EventBuilder = () => {
 
                 <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700 space-y-1 mb-2">
                     <div className="flex justify-between text-zinc-500">
-                        <span>Platform Fee ({PLANS[plan].name}):</span>
+                        <span>Platform Fee ({(PLANS[plan] || PLANS.free).name}):</span>
                         <span className="font-mono">${platformFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-zinc-500">
