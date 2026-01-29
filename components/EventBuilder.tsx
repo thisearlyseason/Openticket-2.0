@@ -166,10 +166,26 @@ export const EventBuilder = () => {
                     const organizerName = event.organizer?.trim() || defaultOrganizerName || 'Your Name';
                     const organizerEmail = event.organizerEmail?.trim() || defaultOrganizerEmail || user.email || '';
                     
+                    // Ensure presale has proper defaults if not set
+                    const presaleDefaults = {
+                        enabled: false,
+                        startDate: '',
+                        endDate: '',
+                        accessMethods: {
+                            accountFlag: false,
+                            codes: true,
+                            privateLink: true
+                        },
+                        privateToken: '',
+                        generalSaleMessage: 'Presale in progress. General sale starts soon!'
+                    };
+                    
                     setFormData({
                         ...event,
                         organizer: organizerName,
-                        organizerEmail: organizerEmail
+                        organizerEmail: organizerEmail,
+                        // Merge presale with defaults to ensure all fields exist
+                        presale: event.presale ? { ...presaleDefaults, ...event.presale } : presaleDefaults
                     });
                     
                     // Load presale codes if event has presale enabled
