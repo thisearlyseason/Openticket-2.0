@@ -255,11 +255,11 @@ router.get('/organizer/live-sales', verifyToken, async (req, res) => {
         // Get recent registrations (last 24 hours, paid only)
         const { data: recentRegs, error: regsError } = await supabase
             .from('registrations')
-            .select('id, event_id, attendee_name, total_amount, tickets, timestamp, payment_status')
+            .select('id, event_id, attendee_name, total_amount, tickets, created_at, payment_status')
             .in('event_id', eventIds)
             .in('payment_status', ['paid', 'completed'])
-            .gte('timestamp', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
-            .order('timestamp', { ascending: false })
+            .gte('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+            .order('created_at', { ascending: false })
             .limit(50);
         
         if (regsError) throw regsError;
@@ -270,7 +270,7 @@ router.get('/organizer/live-sales', verifyToken, async (req, res) => {
         let lastHourSales = 0;
         
         const recentSales = (recentRegs || []).map(reg => {
-            const regTime = new Date(reg.timestamp);
+            const regTime = new Date(reg.created_at);
             const ticketCount = reg.tickets?.reduce((sum, t) => sum + (t.quantity || 1), 0) || 1;
             
             // Today's stats
@@ -290,7 +290,7 @@ router.get('/organizer/live-sales', verifyToken, async (req, res) => {
                 attendeeName: reg.attendee_name || 'Guest',
                 amount: reg.total_amount || 0,
                 ticketCount,
-                timestamp: reg.timestamp
+                timestamp: reg.created_at
             };
         });
         
