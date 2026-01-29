@@ -2178,11 +2178,12 @@ export const EventBuilder = () => {
                                                             <Select
                                                                 value={newPresaleCode.limitType}
                                                                 onChange={(e) => setNewPresaleCode(prev => ({ ...prev, limitType: e.target.value as any }))}
-                                                            >
-                                                                <option value="single">Single Use</option>
-                                                                <option value="multi">Multi-Use</option>
-                                                                <option value="unlimited">Unlimited</option>
-                                                            </Select>
+                                                                options={[
+                                                                    { value: 'single', label: 'Single Use' },
+                                                                    { value: 'multi', label: 'Multi-Use' },
+                                                                    { value: 'unlimited', label: 'Unlimited' }
+                                                                ]}
+                                                            />
                                                             {newPresaleCode.limitType === 'multi' && (
                                                                 <Input
                                                                     type="number"
