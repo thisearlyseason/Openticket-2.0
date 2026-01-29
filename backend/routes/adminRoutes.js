@@ -222,11 +222,11 @@ router.get('/organizer/live-sales', verifyToken, async (req, res) => {
         const supabase = (await import('../services/supabase.js')).default;
         const userId = req.user.uid;
         
-        // Get organizer's events
+        // Get organizer's events (using owner_id, not created_by)
         const { data: events, error: eventsError } = await supabase
             .from('events')
             .select('id, title')
-            .eq('created_by', userId);
+            .eq('owner_id', userId);
         
         if (eventsError) throw eventsError;
         
