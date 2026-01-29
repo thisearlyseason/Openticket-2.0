@@ -425,6 +425,11 @@ export const EventBuilder = () => {
         try {
             // Prepare final data object
             let finalData = { ...formData };
+            
+            // Debug: Log presale state before save
+            console.log('[EventBuilder] Saving event with presale enabled:', formData.presale?.enabled);
+            console.log('[EventBuilder] Full presale config:', JSON.stringify(formData.presale));
+            console.log('[EventBuilder] finalData.presale:', JSON.stringify(finalData.presale));
 
             // 3. Helper to process uploads with Timeout
             // 3. Helper to process uploads with Timeout
