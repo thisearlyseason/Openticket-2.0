@@ -1439,6 +1439,9 @@ export const StorageService = {
             waitlist_config: clean.waitlistConfig
         };
 
+        console.log('[StorageService] Saving event with presale:', clean.presale);
+        console.log('[StorageService] Full payload presale:', payload.presale);
+
         // Determine if update or create.
         // We can try to fetch it first, or just hit PUT if we have an ID?
         // Backend /events POST likely creates.
