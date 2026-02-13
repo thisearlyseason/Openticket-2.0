@@ -364,8 +364,8 @@ export function DataTable<T>({
 
             {/* Table */}
             <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-800 rounded-lg">
-                <table className="w-full">
-                    <thead className="bg-zinc-50 dark:bg-zinc-900">
+                <table className="w-full min-w-[1200px]">
+                    <thead className="bg-zinc-50 dark:bg-zinc-900 sticky top-0 z-10">
                         <tr>
                             {/* Bulk selection checkbox */}
                             {hasBulkActions && (
