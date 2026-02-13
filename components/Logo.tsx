@@ -1,4 +1,6 @@
 import React from 'react';
+import logoDark from './assets/logo-dark.png';
+import logoLight from './assets/logo-light.png';
 
 interface LogoProps {
     variant?: 'light' | 'dark';
@@ -19,8 +21,8 @@ export const Logo: React.FC<LogoProps> = ({
     };
 
     const logoSrc = variant === 'dark' 
-        ? '/logo-dark.png'  // White text for dark backgrounds
-        : '/logo-light.png';  // Dark text for light backgrounds
+        ? logoDark  // White text for dark backgrounds
+        : logoLight;  // Dark text for light backgrounds
 
     return (
         <img 
@@ -43,12 +45,12 @@ export const LogoAuto: React.FC<Omit<LogoProps, 'variant'>> = ({ className = '',
     return (
         <>
             <img 
-                src="/logo-dark.png" 
+                src={logoDark} 
                 alt="OpenTicket" 
                 className={`hidden dark:block ${sizeClasses[size]} w-auto object-contain ${className}`}
             />
             <img 
-                src="/logo-light.png" 
+                src={logoLight} 
                 alt="OpenTicket" 
                 className={`block dark:hidden ${sizeClasses[size]} w-auto object-contain ${className}`}
             />
