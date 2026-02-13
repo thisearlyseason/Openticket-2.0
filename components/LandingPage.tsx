@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Ticket, Shield, BarChart3, Globe, Heart, CheckCircle2, ArrowRight, Zap, PlayCircle, Star, Instagram, Twitter, Linkedin, Facebook } from 'lucide-react';
 import { Button, Card } from './UI';
 import { StorageService } from '../services/storageService';
+import { Logo } from './Logo';
 
 export const LandingPage = () => {
     const navigate = useNavigate();
@@ -33,9 +34,7 @@ export const LandingPage = () => {
         <div className="bg-black text-white min-h-screen font-sans selection:bg-[#E0FF20] selection:text-black overflow-x-hidden">
             {/* Nav Mockup */}
             <nav className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
-                <div className="text-2xl font-black font-display tracking-tighter">
-                    OPEN<span className="text-[#E0FF20]">TICKET</span>
-                </div>
+                <Logo variant="dark" size="lg" />
                 <div className="flex gap-4">
                     <button onClick={() => navigate('/pricing')} className="hidden md:block font-bold hover:text-[#E0FF20]">Pricing</button>
                     <button onClick={() => navigate('/browse')} className="hidden md:block font-bold hover:text-[#E0FF20]">Explore</button>
@@ -143,8 +142,8 @@ export const LandingPage = () => {
             <footer className="bg-zinc-900 border-t border-zinc-800 pt-20 pb-10 px-4 mt-20">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
                     <div className="col-span-1 md:col-span-2">
-                        <div className="text-2xl font-black font-display tracking-tighter mb-4">
-                            OPEN<span className="text-[#E0FF20]">TICKET</span>
+                        <div className="mb-4">
+                            <Logo variant="dark" size="lg" />
                         </div>
                         <p className="text-zinc-500 max-w-sm">
                             The future of event ticketing. Built for creators, organizers, and party-starters who demand more control and less fees.
