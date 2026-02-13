@@ -18,6 +18,46 @@ import {
     Target, Check, Image as ImageIcon
 } from 'lucide-react';
 
+// Helper to determine event status
+const getEventStatus = (event: Event): { label: string; color: 'yellow' | 'green' | 'red' | 'blue' | 'purple' | 'orange' } => {
+    const now = new Date();
+    const eventDate = new Date(event.date);
+    
+    // Check if draft
+    if (event.isDraft) {
+        return { label: 'DRAFT', color: 'yellow' };
+    }
+    
+    // Check if event has passed
+    if (eventDate < now && eventDate.toDateString() !== now.toDateString()) {
+        return { label: 'PAST', color: 'red' };
+    }
+    
+    // Check if sold out
+    const totalCapacity = event.ticketTiers?.reduce((sum, t) => sum + (t.quantity || t.capacity || 0), 0) || event.capacity || 0;
+    const registered = event.registeredCount || 0;
+    if (totalCapacity > 0 && registered >= totalCapacity) {
+        return { label: 'SOLD OUT', color: 'red' };
+    }
+    
+    // Check presale status
+    if (event.presale?.enabled) {
+        const presaleStart = event.presale.startDate ? new Date(event.presale.startDate) : null;
+        const presaleEnd = event.presale.endDate ? new Date(event.presale.endDate) : null;
+        
+        if (presaleStart && now < presaleStart) {
+            return { label: 'SCHEDULED', color: 'blue' };
+        }
+        
+        if (presaleStart && presaleEnd && now >= presaleStart && now < presaleEnd) {
+            return { label: 'PRESALE', color: 'purple' };
+        }
+    }
+    
+    // Event is live and tickets are available
+    return { label: 'ACTIVE', color: 'green' };
+};
+
 export const Dashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
