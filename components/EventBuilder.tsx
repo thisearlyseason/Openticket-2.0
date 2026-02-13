@@ -2410,13 +2410,13 @@ export const EventBuilder = () => {
                                                         {presaleCodes.length === 0 ? (
                                                             <p className="text-sm text-zinc-500 text-center py-4">No presale codes yet. Add or generate codes above.</p>
                                                         ) : (
-                                                            <div className="max-h-48 overflow-y-auto space-y-2">
-                                                                {presaleCodes.map((code) => (
-                                                                    <div key={code.id} className="flex items-center justify-between p-2 bg-white dark:bg-zinc-800 rounded-lg border">
+                                                            <div className="max-h-48 overflow-y-auto space-y-2" key={`codes-list-${presaleCodes.length}`}>
+                                                                {presaleCodes.map((code, index) => (
+                                                                    <div key={code.id || `code-${index}`} className="flex items-center justify-between p-2 bg-white dark:bg-zinc-800 rounded-lg border">
                                                                         <div className="flex items-center gap-3">
                                                                             <span className="font-mono font-bold">{code.code}</span>
                                                                             <Badge color={code.limitType === 'single' ? 'blue' : code.limitType === 'multi' ? 'orange' : 'green'}>
-                                                                                {code.limitType === 'single' ? '1 use' : code.limitType === 'multi' ? `${code.currentUses}/${code.maxUses}` : '∞'}
+                                                                                {code.limitType === 'single' ? '1 use' : code.limitType === 'multi' ? `${code.currentUses || 0}/${code.maxUses || '?'}` : '∞'}
                                                                             </Badge>
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
