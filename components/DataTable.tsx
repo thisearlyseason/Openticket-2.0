@@ -381,7 +381,7 @@ export function DataTable<T>({
                             {columns.map(col => (
                                 <th
                                     key={col.key}
-                                    className={`px-4 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider ${
+                                    className={`px-4 py-3 text-left text-xs font-semibold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider whitespace-nowrap ${
                                         col.sortable ? 'cursor-pointer select-none hover:bg-zinc-100 dark:hover:bg-zinc-800' : ''
                                     }`}
                                     onClick={() => col.sortable && handleSort(col.key)}
