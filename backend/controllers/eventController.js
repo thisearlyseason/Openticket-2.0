@@ -168,6 +168,7 @@ export const updateEvent = async (req, res) => {
             return res.status(404).json({ error: "Event not found or unauthorized" });
         }
 
+        console.log('[Event Update] Update successful. Result presale:', data?.[0]?.presale);
         res.json({ event: data[0] });
     } catch (error) {
         res.status(400).json({ error: error.message });
