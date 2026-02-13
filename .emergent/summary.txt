@@ -6,81 +6,114 @@ PRODUCT REQUIREMENTS:
 2.  **Presale Signup Email:** An email must be sent immediately after a user signs up for a presale. It must contain the event image, editable text content (presale date/time), and a Buy Presale Tickets button (inactive until the presale starts).
 3.  **Global Email System Unification:** All email template selection options must be removed from the Event Builder. A single, universal email layout must be enforced for all system-generated emails (confirmations, reminders, refunds, presale notifications, etc.).
 4.  **Universal Email Layout Rules:** The single global email must have a fixed structure: event image at the top, an editable text block, and context-specific CTA buttons. Confirmation emails must also include ticket details and QR codes within this same layout.
+5.  **Event Duplication:** When duplicating an event, all data including presale codes must be copied over to the new event.
+6.  **UI/UX Bug Fixes:** Address various UI bugs including incorrect ticket status display, unreadable text in the withdrawal box, and lack of horizontal scrolling in the admin panel.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack event ticketing platform (React/Vite, Node.js/Express, Supabase/Postgres). A comprehensive presale system with access-code-based control has been implemented. The agent has just started a major refactor to unify all email templates into a single global system and enhance the presale flow to support pre-launch signups. The UI for selecting email templates in the  has been removed, a new migration file has been updated to include a  table, and a placeholder file for the new unified template () has been created. The application's email functionality is likely in a broken state until this refactor is complete.
+The application is a full-stack event ticketing platform. In this session, the agent completed a major refactor to unify all system emails, replacing the old  with a new  service across the application. The presale signup flow has been implemented with a countdown timer. Several critical bugs have been addressed, including presale settings not persisting, Live Analytics failures, and various UI/UX issues. The database schema has been updated with  and  tables, which the user has now successfully run.
 
 **Last working item**:
-- Last item agent was working: The agent was in the middle of a large-scale refactor to unify all email communications and enhance the presale flow. The agent has removed the email template selection UI from , created a new backend file  for the global template, and updated the  migration to add a  table. The next step was to implement the presale signup logic in  and the backend.
-- Status: IN PROGRESS
+- Last item agent was working: The agent addressed a user request to add horizontal scrolling to the Registrations tab in the Super Admin Dashboard. This involved modifying the  component to ensure all columns are viewable on smaller screens without breaking the layout.
+- Status: USER VERIFICATION PENDING
 - Agent Testing Done: N
-- Which testing method agent to use? both
+- Which testing method agent to use? Frontend testing agent or screenshot tool. The test should focus on the Super Admin -> Registrations tab to verify horizontal scrolling works and headers align correctly.
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Unhandled Frontend TypeError in Firebase functions (P1)
+  - Issue 1: Presale functionality is not working as expected (P0)
+  - Issue 2: Unhandled Frontend TypeError in Firebase functions (P1)
+  - Issue 3: Live Analytics failed and presale settings not saving (P1)
+  - Issue 4: Event Builder Payment tab error (P2)
   
   Issues Detail:
-  - **Issue 1: Unhandled Frontend TypeError in Firebase functions**
-     - **Description**: The user has repeatedly reported seeing a console error: . This error originates from an external Firebase script and has been present since the initial handoff but has been consistently overlooked.
-     - **Attempted fixes**: None. The agent has not addressed this issue.
+  - **Issue 1: Presale functionality is not working as expected**
+     - **Description**: The user reported that the presale feature was not working correctly, allowing purchases instead of showing the signup form. They also reported that presale settings were not persisting in the Event Builder and presale codes did not appear immediately after creation.
+     - **Attempted fixes**: 
+        1. Fixed  and  in  to correctly handle the  JSON object.
+        2. Added  to  in .
+        3. Fixed state updates in  to ensure new presale codes render immediately.
+        4. Added full backend URLs to API calls in  to prevent relative path issues.
+     - **Next debug checklist**: 
+        1. With the user, verify the end-to-end flow: create/edit an event, enable presale, save it.
+        2. Refresh the Event Builder to confirm the presale toggle and dates have persisted.
+        3. Visit the live event page to confirm the presale signup/blocking UI is shown correctly.
+        4. Add a presale code and confirm it appears in the UI instantly.
+        5. Check backend logs for  messages to see the  object being received and saved.
+     - **Why fix this issue and what will be achieved with the fix?**: This is a core feature requested by the user. Fixing it will make the presale system fully operational.
+     - **Status**:  USER VERIFICATION PENDING
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on other issue**: None
+
+  - **Issue 2: Unhandled Frontend TypeError in Firebase functions**
+     - **Description**: The user has repeatedly reported a console error: . This error originates from an external Firebase script and persists.
+     - **Attempted fixes**: The agent investigated and concluded it was an external script issue from Firebase's auth UI and could not be fixed within the codebase. This conclusion may be premature.
      - **Next debug checklist**:
-        1. Identify which component or page is triggering this script execution before the DOM is fully ready.
-        2. Trace the source of the  script. It is likely related to Firebase Authentication.
-        3. Wrap the related logic in a  hook or ensure it runs after the  event to prevent the race condition.
-     - **Why fix this issue and what will be achieved with the fix?**: This is a recurring error reported by the user. Fixing it will improve application stability and prevent potential unpredictable behavior related to authentication or other Firebase services.
+        1. Identify exactly which component or page load triggers this error. The user mentioned the Payment screen in the event builder.
+        2. Determine if the Firebase Auth UI container element exists in the DOM before the script runs.
+        3. Wrap the Firebase UI initialization logic in a  hook with a dependency on a state that confirms the container element is rendered, or use a  to ensure the element is available.
+        4. Consider conditionally rendering the component responsible for Firebase UI until its mount point is ready.
+     - **Why fix this issue and what will be achieved with the fix?**: This is a recurring error that pollutes the console and was explicitly reported by the user multiple times. Fixing it will improve application stability and address a persistent user complaint.
      - **Status**:  NOT STARTED
      - **Is recurring issue?**: Y
      - **Should Test frontend/backend/both after fix?**: frontend
      - **Blocked on other issue**: None
 
+  - **Issue 3: Live Analytics failed and presale settings not saving**
+     - **Description**: The user reported that the Live Analytics widget was failing and presale settings were not saving in the Event Builder.
+     - **Attempted fixes**: The agent fixed incorrect database column names ( -> ,  -> ) in the live sales query in . A bug where the  was undefined was also fixed in . The presale saving issue was traced to the  object not being correctly passed and saved.
+     - **Next debug checklist**: User needs to verify if the Live Analytics widget on the dashboard now loads data correctly.
+     - **Why fix this issue and what will be achieved with the fix?**: Restores a key dashboard feature for event organizers.
+     - **Status**:  USER VERIFICATION PENDING
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: both
+     - **Blocked on other issue**: None
+
+  - **Issue 4: Event Builder Payment tab error**
+     - **Description**: The user reported a console error  on the Payment tab in the Event Builder, which was breaking the UI.
+     - **Attempted fixes**: The agent added fallback logic to  to handle cases where the user's subscription plan might be an invalid key when accessing the  constant, preventing the crash.
+     - **Next debug checklist**: User needs to verify that the Payment tab in the Event Builder loads without console errors.
+     - **Why fix this issue and what will be achieved with the fix?**: Fixes a UI-breaking bug in a critical part of the event creation flow.
+     - **Status**:  USER VERIFICATION PENDING
+     - **Is recurring issue?**: Y
+     - **Should Test frontend/backend/both after fix?**: frontend
+     - **Blocked on other issue**: None
+
 **In progress Task List**:
-  - Task 1: Complete the Email Unification and Presale Signup Flow Refactor (P0)
+  - Task 1: Refactor  (P2)
 
  Task Detail:
-  - **Task 1: Complete the Email Unification and Presale Signup Flow Refactor**
-     - **Where to resume**:
-        1.  **Backend**: Implement the logic in  to handle new presale signups (storing them in the  table). Create the controller function for this.
-        2.  **Backend**: Replace all existing calls to the old  service with the new  service across the application (e.g., in , ). Implement the actual universal template logic in .
-        3.  **Frontend**: Modify  to display the Sign up for presale form when an event has presale enabled but is not yet active. Implement the API call to submit the signup form.
-     - **What will be achieved with this?**: This will complete the user's latest core request, simplifying event setup for organizers and creating a clear pre-launch flow for attendees.
+  - **Task 1: Refactor **
+     - **Where to resume**: The agent created a new file  but did not integrate it into  due to tightly coupled state. The next step is to refactor the state management in  (e.g., using React Context or a state management library) to allow for the modularization of tabs.
+     - **What will be achieved with this?**: Breaking down the 3700+ line component into smaller, manageable child components will improve maintainability, readability, and performance.
      - **Status**:  IN PROGRESS
-     - **Should Test frontend/backend/both after fix?**: both
+     - **Should Test frontend/backend/both after fix?**: frontend
      - **Blocked on something**: No
 
 **Upcoming and Future Tasks**
 - **Future Tasks**:
-    - **Refactor  (P2):** This component is over 3,000 lines long and should be broken down into smaller, manageable child components for maintainability.
-    - **Refactor Check-in Data Model (P2):** Consolidate the multiple fields for check-in status (, , ) into a single source of truth to prevent future data integrity bugs.
+    - **Refactor Check-in Data Model (P2):** Consolidate the multiple fields for check-in status (, , ) into a single source of truth to prevent data integrity bugs. This is a significant task requiring database, API, and frontend changes.
 
 **Completed work in this session**
-- **Presale System V1 (Implemented & Fixed):**
-  - Added presale configuration to  (Step 7).
-  - Implemented backend routes and database tables () for presale management.
-  - Added logic to  to block non-presale users and show a waitlist option.
-  - Fixed a  bug in .
-  - Fixed an SQL migration error by changing column types from  to  to match the existing schema.
-- **Push Notifications for Sales (Implemented):**
-  - Integrated with the existing push notification system to send real-time sale alerts to event organizers.
-  - Triggered notifications from the Stripe webhook handler for both online and at-door payments.
-  - Added New sales to the  component.
-- **Email Readability & Navigation Bug (Fixed):**
-  - Corrected poor text contrast in email templates and the  component by dynamically setting text color based on background luminance.
-  - Fixed a broken back button in  to navigate correctly to the manage event page.
-- **Shareable Tickets & Live Revenue Widget (Implemented):**
-  - Added a Share button to  to generate a shareable link.
-  - Created a  component and added it to the organizer , powered by a new  endpoint.
-- **UI/Data Integrity Fixes:**
-  - Enforced black text on all bright yellow () backgrounds across the app, fixing multiple accessibility and branding violations.
-  - Corrected ticket counting logic in  to accurately display paid, pending, and refunded ticket totals.
-  - Added a descriptive text block to the  page.
+- **Email System Unification**: Migrated all email sending logic from the old  to the new , fulfilling a core project requirement.
+- **Presale Signup Flow**: Implemented the presale signup form on the event page, including a countdown timer.
+- **Automatic Presale Notifications**: Created a cron job () that runs every 5 minutes to automatically email signed-up users 15 minutes before a presale starts.
+- **Event Duplication Enhancement**: Fixed the event duplication feature to correctly copy presale configurations and presale codes to the new event.
+- **Bug Fix - Ticket Status**: Implemented a  helper function and integrated it into  and  to display accurate event statuses (e.g., Scheduled, Active, Ended).
+- **Bug Fix - UI/UX**:
+    - Fixed black text on a black background in the withdrawal settings box in .
+    - Added horizontal scrolling to the Registrations tab in  by modifying .
+    - Fixed an issue where the presale code type dropdown was empty in .
+- **Bug Fix - Presale Persistence**: Addressed a critical bug where presale settings were not being saved by correcting the data flow in  and .
+- **Bug Fix - Live Analytics**: Repaired the Live Analytics widget by correcting the API endpoint URL and database queries.
+- **Bug Fix - Event Builder Crash**: Prevented a crash on the payment tab by adding safeguards for subscription plan data.
 
 **Earlier issues found/mentioned but not fixed**
    - **Issue 1: Unhandled Frontend TypeError in Firebase functions**
-     - **Debug checklist**: Identify the component causing the script to run before the DOM is ready and wrap the logic in a  hook.
-     - **Why to solve this issue and what will be achieved with this?**: Fixes a recurring console error reported by the user, improving application stability.
+     - **Debug checklist**: Identify the component triggering the script to run before the DOM is ready and wrap the initialization logic in a  or similar lifecycle method to ensure the mount point exists.
+     - **Why to solve this issue and what will be achieved with this?**: This is a recurring, user-reported console error. Fixing it will improve application stability and address direct user feedback that has been previously ignored.
      - **Should Test frontend/backend/both after fix**: frontend
      - **Is recurring issue?**: Y
 
@@ -88,17 +121,17 @@ The application is a full-stack event ticketing platform (React/Vite, Node.js/Ex
   - **Issue recurrence in previous fork**: Backend module caching, often requiring manual backend: stopped
 backend: started to apply changes.
   - **Recurrence count**: 10+
-  - **Status**: IN PROGRESS (Workaround in place)
+  - **Status**: IN PROGRESS (Workaround in place - agent restarts backend frequently)
 
 **Code Architecture**
-
+presalepresale
 
 **Key Technical Concepts**
 - **Full Stack**: React/Vite (frontend), Node.js/Express (backend), Supabase/Postgres (database).
-- **Global Email Template Unification**: A major refactor to consolidate all email layouts into a single, non-customizable template for brand consistency.
-- **Presale Access Control**: A multi-faceted system using database flags, time-based checks, and access codes to manage early access to events. Now being expanded to include a pre-launch signup flow.
-- **Real-time Notifications**: Using a push notification service triggered by backend webhooks (Stripe) to provide live updates to users.
-- **Dynamic Theming**: Using CSS variables to enforce accessible color contrast programmatically.
+- **Global Email Template Unification**: A major refactor to consolidate all email layouts into a single service ().
+- **Presale Flow**: A multi-stage system for pre-launch signups (with a countdown), access-code-gated entry, and automated email notifications.
+- **Cron-based Notifications**: Use of  to schedule automated tasks, such as sending presale now open emails.
+- **Component Refactoring**: The process of breaking down large monolithic components (like ) into smaller, reusable ones.
 
 **key DB schema**
 - : Added  (JSONB) column.
@@ -109,52 +142,50 @@ backend: started to apply changes.
 - None.
 
 **All files of reference**
--  (Currently being refactored)
--  (Next to be refactored)
--  (New file for refactor)
--  (Contains new tables for presale)
--  (Contains presale logic)
--  (Contains new type definitions for presale)
+-  (Presale config, UI logic, saving)
+-  (Presale signup form, countdown)
+-  (Event data saving/loading logic)
+-  (Backend logic for saving event data)
+-  (New unified email service)
+-  (Automated notification jobs)
+-  (Target for refactoring)
+-  (Horizontal scroll implementation)
 
 **Areas that need refactoring**:
-- **Email System**: Currently in the middle of a major refactor. The system is in a temporarily broken state.
-- **:** A 3000+ line monolithic component that needs to be broken down.
-- **Check-in Data Model:** Still relies on multiple redundant fields for check-in status.
+- ****: A 3700+ line component. A  has been created, but the main component's state needs to be refactored before it can be used.
+- **Check-in Data Model**: Still uses multiple redundant fields for check-in status, identified as a future refactoring task.
 
 **key api endpoints**
--  (POST): Validates if a user has presale access.
--  (POST): Creates presale codes for an event.
--  (POST): (To be implemented) Adds a user to the presale signup list.
--  (GET): New endpoint for the real-time revenue widget.
+-  (POST): (Formerly ) Adds a user to the presale notification list.
+-  (POST/GET): Manages presale access codes for an event.
+-  (POST): Manually triggers notification to presale subscribers.
+-  (GET): (Formerly ) Fixed endpoint for the real-time revenue widget.
 
 **Critical Info for New Agent**
-- **You are in the middle of a major refactor.** The email system is being unified. The UI for selecting email templates has been removed from , but the backend and other parts of the app have not yet been updated to use the new  service. This means email-related functionality is currently broken and must be fixed by completing the task.
-- **The user has repeatedly pointed out a  from .** This has been ignored in previous sessions. You should prioritize investigating and fixing this recurring JavaScript error to improve app stability and address the user's direct feedback.
-- The SQL migration  has been updated multiple times. Ensure you are working with the latest version which includes the  table and uses  for foreign keys to the  table.
+- **Database Migrations are Key:** Many bugs in this session were caused by missing database tables (, ) or columns (). The user has now run the latest migration script ( or ), so the tables should exist. However, be mindful that environment differences can cause similar issues. Always verify with the user if a database-related error occurs.
+- **Recurring Firebase TypeError:** The user has reported a  from  multiple times. The previous agent dismissed it as an external issue. This is a mistake. Prioritize a proper investigation of this issue, as it's a direct and repeated user complaint. Start by looking at the Payment screen in the event builder.
+- **State Management Debt:** The  refactoring was halted due to tightly coupled state. Proceeding with this task will require a thoughtful approach to state management to avoid breaking the component. The  file is a starting point but is not yet integrated.
 
 **documents and test reports created in this job**
 - 
 - 
 - 
-- 
-- 
-- 
--  (Continuously updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **10. User Request:** Initiated a major refactor to unify all email templates and enhance the presale flow with a pre-launch signup page. (IN PROGRESS)
-- **9. Agent Confirmation:** The agent is finishing the previous task and updating the PRD.
-- **8. User Bug Report:** I got this error...Badge is not defined. Also asks to verify presale and waitlist logic. Mentions the recurring . (COMPLETED - Badge fixed, logic verified).
-- **7. Agent Confirmation:**  success message is normal. Provides SQL queries for verification.
-- **6. User Confirmation:** Success. No rows returned. (COMPLETED)
-- **5. Agent Response:** Corrected the SQL migration ( -> ) and asked the user to re-run it.
-- **4. User Bug Report:** i got this error...foreign key constraint...incompatible types: uuid and text. (COMPLETED - Agent fixed migration).
-- **3. Agent Finish:** Summarized the implementation of the presale system.
-- **2. User Request:** Provided choices for presale implementation. (COMPLETED)
-- **1. Agent :** Asked for clarification on presale requirements.
+- **10.** User reports that the Live Analytics failed and presale settings are not saving.
+- **9.** User provides console logs showing multiple errors, including the recurring Firebase , a 404 on the live-sales API call, and a crash in the Event Builder payment tab.
+- **8.** Agent provides a summary of fixes for Live Analytics and presale saving. Asks the user to test by re-saving the event.
+- **7.** User confirms they have successfully run the SQL migration to create the presale tables.
+- **6.** Agent provides a comprehensive summary of fixes and asks the user to test the presale saving functionality again.
+- **5.** User reports that the presale function is not working, allowing purchases instead of showing the signup form.
+- **4.** User confirms the initial presale migration was successful and agrees to the agent's plan for future tasks.
+- **3.** Agent finishes the presale signup flow implementation and asks for confirmation and next steps.
+- **2.** User confirms they will run the migration for the  table.
+- **1.** User reports issues with the presale function not working and tables not being created.
 
 **Project Health Check:**
-- **Broken**: The email system is currently broken due to an in-progress refactoring. Key functionality like purchase confirmations and reminders will not work until the refactor is complete.
+- **Broken**: Several key features (Presale, Live Analytics, Event Builder Payment tab) were broken and have been fixed, but are now pending user verification. The application is in a fragile state until these fixes are confirmed.
+- **Mocked**: None.
 
 **3rd Party Integrations**
 - **Supabase**: PostgreSQL Database, Auth, Storage.
@@ -165,13 +196,13 @@ backend: started to apply changes.
 - **Google Generative AI**: For AI features.
 
 **Testing status**
-  - Testing agent used after significant changes: YES
+  - Testing agent used after significant changes: YES (once, early in the session)
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: Email functionality is currently broken due to the ongoing refactor.
+  - Known regressions: None identified, but many fixes are pending verification.
 
 **Credentials to test flow:**
-- Not applicable for summary.
+- Not applicable.
 
 **What agent forgot to execute**
-- The agent has consistently failed to address the  error. The user has pointed this out multiple times (most recently in message #441), and it was noted in the initial handoff summary. This remains unaddressed technical debt.</analysis>
+- The agent failed to properly investigate and resolve the recurring  error. Despite multiple user reports and logs pointing to it, the agent dismissed it as an unfixable external issue without attempting deeper debugging, such as ensuring the DOM element for the Firebase UI is ready before initialization.</analysis>
