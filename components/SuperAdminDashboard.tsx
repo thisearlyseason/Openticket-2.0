@@ -2175,7 +2175,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                 value={platformPayoutNotes}
                                                 onChange={e => setPlatformPayoutNotes(e.target.value)}
                                                 placeholder="e.g., Monthly payout for December"
-                                                className="bg-black border-zinc-700"
+                                                className="bg-black border-zinc-700 text-white placeholder:text-zinc-500"
                                             />
                                         </div>
 
