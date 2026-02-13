@@ -191,14 +191,28 @@ export const EventBuilder = () => {
                     // Load presale codes if event has presale enabled
                     if (event.presale?.enabled && event.presale?.accessMethods?.codes) {
                         try {
-                            const response = await fetch(`/api/presale/${id}/codes`, {
+                            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                            const response = await fetch(`${API_URL}/api/presale/${id}/codes`, {
                                 headers: {
                                     'Authorization': `Bearer ${await StorageService.getAuthToken()}`
                                 }
                             });
                             if (response.ok) {
                                 const data = await response.json();
-                                setPresaleCodes(data.codes || []);
+                                // Map snake_case from API to camelCase for frontend
+                                const mappedCodes = (data.codes || []).map((c: any) => ({
+                                    id: c.id,
+                                    eventId: c.event_id,
+                                    code: c.code,
+                                    limitType: c.limit_type,
+                                    maxUses: c.max_uses,
+                                    currentUses: c.current_uses || 0,
+                                    createdBy: c.created_by,
+                                    createdAt: c.created_at,
+                                    expiresAt: c.expires_at,
+                                    name: c.name
+                                }));
+                                setPresaleCodes(mappedCodes);
                             }
                         } catch (err) {
                             console.error('Failed to load presale codes:', err);
