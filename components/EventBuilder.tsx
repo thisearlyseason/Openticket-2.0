@@ -2303,7 +2303,8 @@ export const EventBuilder = () => {
                                                                 onClick={async () => {
                                                                     try {
                                                                         setIsLoadingCodes(true);
-                                                                        const response = await fetch(`/api/presale/${id}/codes/generate`, {
+                                                                        const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                                                                        const response = await fetch(`${API_URL}/api/presale/${id}/codes/generate`, {
                                                                             method: 'POST',
                                                                             headers: {
                                                                                 'Content-Type': 'application/json',
@@ -2318,8 +2319,21 @@ export const EventBuilder = () => {
                                                                         });
                                                                         if (response.ok) {
                                                                             const data = await response.json();
-                                                                            setPresaleCodes(prev => [...data.codes, ...prev]);
-                                                                            showToast(`${data.codes.length} codes generated!`, 'success');
+                                                                            // Map snake_case from API to camelCase
+                                                                            const mappedCodes = (data.codes || []).map((c: any) => ({
+                                                                                id: c.id,
+                                                                                eventId: c.event_id,
+                                                                                code: c.code,
+                                                                                limitType: c.limit_type,
+                                                                                maxUses: c.max_uses,
+                                                                                currentUses: c.current_uses || 0,
+                                                                                createdBy: c.created_by,
+                                                                                createdAt: c.created_at,
+                                                                                expiresAt: c.expires_at,
+                                                                                name: c.name
+                                                                            }));
+                                                                            setPresaleCodes(prev => [...mappedCodes, ...prev]);
+                                                                            showToast(`${mappedCodes.length} codes generated!`, 'success');
                                                                         } else {
                                                                             const err = await response.json();
                                                                             showToast(err.error || 'Failed to generate codes', 'error');
