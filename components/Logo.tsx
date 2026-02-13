@@ -32,18 +32,25 @@ export const Logo: React.FC<LogoProps> = ({
 };
 
 // Auto-detecting theme variant
-export const LogoAuto: React.FC<Omit<LogoProps, 'variant'>> = (props) => {
+export const LogoAuto: React.FC<Omit<LogoProps, 'variant'>> = ({ className = '', size = 'md' }) => {
+    const sizeClasses = {
+        sm: 'h-6',
+        md: 'h-8',
+        lg: 'h-10',
+        xl: 'h-12'
+    };
+
     return (
         <>
             <img 
                 src="/logo-dark.png" 
                 alt="OpenTicket" 
-                className={`hidden dark:block ${props.className || ''} ${props.size ? `h-${props.size === 'sm' ? '6' : props.size === 'md' ? '8' : props.size === 'lg' ? '10' : '12'}` : 'h-8'} w-auto object-contain`}
+                className={`hidden dark:block ${sizeClasses[size]} w-auto object-contain ${className}`}
             />
             <img 
                 src="/logo-light.png" 
                 alt="OpenTicket" 
-                className={`block dark:hidden ${props.className || ''} ${props.size ? `h-${props.size === 'sm' ? '6' : props.size === 'md' ? '8' : props.size === 'lg' ? '10' : '12'}` : 'h-8'} w-auto object-contain`}
+                className={`block dark:hidden ${sizeClasses[size]} w-auto object-contain ${className}`}
             />
         </>
     );
