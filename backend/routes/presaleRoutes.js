@@ -550,7 +550,8 @@ router.post('/:eventId/codes', verifyToken, async (req, res) => {
             throw insertError;
         }
         
-        res.json({ codes: insertedCodes });
+        console.log('[Presale] Inserted codes:', insertedCodes);
+        res.json({ codes: insertedCodes || [] });
         
     } catch (error) {
         console.error('[Presale] Create codes error:', error);
