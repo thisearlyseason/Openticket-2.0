@@ -176,11 +176,9 @@ export const Dashboard = () => {
         const user = currentUser || StorageService.getCurrentUser();
         if (!user) return;
 
-        if (!user) return;
-
         showConfirm({
             title: "Duplicate Event",
-            message: `Duplicate "${event.title}"?`,
+            message: `Duplicate "${event.title}"? All settings, ticket tiers, and presale codes will be copied.`,
             confirmText: "Duplicate",
             onConfirm: async () => {
                 try {
@@ -227,9 +225,18 @@ export const Dashboard = () => {
                         cleanProps.affiliates = []; // Clear affiliates for new event
                     }
 
+                    // 4. Handle presale configuration - regenerate private token
+                    if (cleanProps.presale) {
+                        cleanProps.presale = {
+                            ...cleanProps.presale,
+                            privateToken: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                        };
+                    }
+
+                    const newEventId = `evt-${Date.now()}`;
                     const newEvent: Event = {
                         ...cleanProps,
-                        id: `evt-${Date.now()}`,
+                        id: newEventId,
                         title: `${event.title} (Copy)`,
                         registeredCount: 0,
                         createdAt: Date.now(),
@@ -239,6 +246,47 @@ export const Dashboard = () => {
                     };
 
                     const savedEvent = await StorageService.saveEvent(newEvent);
+                    
+                    // 5. Copy presale codes to new event (if presale is enabled with codes)
+                    if (cleanProps.presale?.enabled && cleanProps.presale?.accessMethods?.codes) {
+                        try {
+                            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                            // First, get existing codes from original event
+                            const codesResponse = await fetch(`${API_URL}/api/presale/${id}/codes`, {
+                                headers: {
+                                    'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                }
+                            });
+                            
+                            if (codesResponse.ok) {
+                                const codesData = await codesResponse.json();
+                                const originalCodes = codesData.codes || [];
+                                
+                                if (originalCodes.length > 0) {
+                                    // Create codes for new event
+                                    const codesToCreate = originalCodes.map((c: any) => ({
+                                        code: c.code,
+                                        limitType: c.limit_type || 'single',
+                                        maxUses: c.max_uses,
+                                        name: c.name
+                                    }));
+                                    
+                                    await fetch(`${API_URL}/api/presale/${savedEvent.id}/codes`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${await StorageService.getAuthToken()}`
+                                        },
+                                        body: JSON.stringify({ codes: codesToCreate })
+                                    });
+                                }
+                            }
+                        } catch (codeErr) {
+                            console.warn('Failed to copy presale codes:', codeErr);
+                            // Don't fail the whole duplication if codes fail to copy
+                        }
+                    }
+                    
                     // Use the returned event which has the correct database ID
                     setEvents(prev => [savedEvent, ...prev]);
                     setActiveTab('drafts');
