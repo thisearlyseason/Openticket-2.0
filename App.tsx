@@ -50,6 +50,7 @@ import { ConfirmProvider } from './components/ConfirmContext';
 import { NotificationService } from './services/notificationService';
 import { CurrencySelector } from './components/CurrencySelector';
 import { UserNotification } from './types';
+import { LogoAuto } from './components/Logo';
 
 const Layout = ({ children }: { children?: React.ReactNode }) => {
     const navigate = useNavigate();
@@ -223,12 +224,7 @@ const Layout = ({ children }: { children?: React.ReactNode }) => {
                     <div className="max-w-7xl mx-auto px-4">
                         <div className="flex justify-between items-center h-16">
                             <Link to={user ? "/browse" : "/"} className="flex items-center space-x-2 group">
-                                <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center rotate-3 group-hover:rotate-12 transition-transform shadow-[0_0_15px_rgba(224,255,32,0.5)]">
-                                    <Ticket className="text-black w-5 h-5" />
-                                </div>
-                                <span className="text-xl font-bold font-display tracking-tight text-zinc-900 dark:text-white">
-                                    Open<span className="text-secondary">Ticket</span>
-                                </span>
+                                <LogoAuto size="md" />
                             </Link>
 
                             <div className="hidden md:flex items-center space-x-6">
