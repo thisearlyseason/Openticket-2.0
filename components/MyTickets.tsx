@@ -412,7 +412,7 @@ export const MyTickets = () => {
                     <div class="ticket">
                         <div class="stub">
                             <div class="stub-header">
-                                <span class="brand">OPENTICKET</span>
+                                <img src="/logo-dark.png" alt="OpenTicket" style="height: 20px; width: auto;" />
                                 <span class="admit">ADMIT ONE</span>
                             </div>
                             <div class="stub-body">
