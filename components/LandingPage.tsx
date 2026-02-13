@@ -131,7 +131,7 @@ export const LandingPage = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10">
                     <h2 className="text-6xl md:text-8xl font-black font-display tracking-tighter mb-8 leading-none">
-                        READY TO <span className="text-transparent bg-clip-text bg-gradient-to-br from-[#E0FF20] to-[#ff00ff]">POP?</span>
+                        READY TO <span className="bg-gradient-to-br from-[#E0FF20] to-[#ff00ff] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>POP?</span>
                     </h2>
                     <button onClick={() => navigate('/auth')} className="px-12 py-6 bg-white text-black font-black text-2xl rounded-full hover:bg-[#E0FF20] transition-colors shadow-2xl">
                         CREATE EVENT FREE
