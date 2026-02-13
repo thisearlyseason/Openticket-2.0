@@ -592,8 +592,14 @@ export const Dashboard = () => {
                                 )}
                                 <div className="absolute top-3 left-3 flex gap-2 flex-wrap max-w-[80%]">
                                     <Badge color={event.visibility === 'public' ? 'green' : 'gray'}>{event.visibility}</Badge>
-                                    {event.isDraft && <Badge color="purple">DRAFT</Badge>}
-                                    {!event.isDraft && isPast && <Badge color="red">ENDED</Badge>}
+                                    {(() => {
+                                        const status = getEventStatus(event);
+                                        // Don't show "ACTIVE" badge if visibility badge already shows status
+                                        if (status.label !== 'ACTIVE' || event.visibility !== 'public') {
+                                            return <Badge color={status.color}>{status.label}</Badge>;
+                                        }
+                                        return null;
+                                    })()}
                                 </div>
                                 {/* Card Menu */}
                                 <div className="absolute top-3 right-3">
