@@ -731,16 +731,16 @@ export const Billing = () => {
                     ) : netPayoutAvailable > 0 ? (
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                                <input type="radio" name="payout" checked={payoutMode === 'standard'} onChange={() => setPayoutMode('standard')} />
+                                <input type="radio" name="payout" checked={payoutMode === 'standard'} onChange={() => setPayoutMode('standard')} className="accent-[#E0FF20]" />
                                 <div className="text-xs">
-                                    <div className="font-bold">Standard (2-3 Days)</div>
+                                    <div className="font-bold text-white">Standard (2-3 Days)</div>
                                     <div className="text-zinc-400">Free</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
-                                <input type="radio" name="payout" checked={payoutMode === 'instant'} onChange={() => setPayoutMode('instant')} />
+                                <input type="radio" name="payout" checked={payoutMode === 'instant'} onChange={() => setPayoutMode('instant')} className="accent-[#E0FF20]" />
                                 <div className="text-xs">
-                                    <div className="font-bold flex items-center gap-1">Instant <Zap size={10} className="text-[#E0FF20]" fill="currentColor" /></div>
+                                    <div className="font-bold text-white flex items-center gap-1">Instant <Zap size={10} className="text-[#E0FF20]" fill="currentColor" /></div>
                                     <div className="text-zinc-400">1.5% Fee (${instantFee.toFixed(2)})</div>
                                 </div>
                             </div>
