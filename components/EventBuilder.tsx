@@ -2215,6 +2215,7 @@ export const EventBuilder = () => {
                                                                     }
                                                                     try {
                                                                         const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                                                                        console.log('[Presale] Creating code:', newPresaleCode);
                                                                         const response = await fetch(`${API_URL}/api/presale/${id}/codes`, {
                                                                             method: 'POST',
                                                                             headers: {
@@ -2223,21 +2224,24 @@ export const EventBuilder = () => {
                                                                             },
                                                                             body: JSON.stringify({
                                                                                 codes: [{
-                                                                                    code: newPresaleCode.code,
+                                                                                    code: newPresaleCode.code.toUpperCase(),
                                                                                     limitType: newPresaleCode.limitType,
                                                                                     maxUses: newPresaleCode.limitType === 'multi' ? newPresaleCode.maxUses : undefined,
                                                                                     name: newPresaleCode.name || undefined
                                                                                 }]
                                                                             })
                                                                         });
+                                                                        
+                                                                        const data = await response.json();
+                                                                        console.log('[Presale] API response:', data);
+                                                                        
                                                                         if (response.ok) {
-                                                                            const data = await response.json();
                                                                             // Map snake_case from API to camelCase for frontend
                                                                             const mappedCodes = (data.codes || []).map((c: any) => ({
                                                                                 id: c.id,
                                                                                 eventId: c.event_id,
                                                                                 code: c.code,
-                                                                                limitType: c.limit_type,
+                                                                                limitType: c.limit_type || 'single',
                                                                                 maxUses: c.max_uses,
                                                                                 currentUses: c.current_uses || 0,
                                                                                 createdBy: c.created_by,
@@ -2245,15 +2249,24 @@ export const EventBuilder = () => {
                                                                                 expiresAt: c.expires_at,
                                                                                 name: c.name
                                                                             }));
-                                                                            setPresaleCodes(prev => [...mappedCodes, ...prev]);
+                                                                            console.log('[Presale] Mapped codes:', mappedCodes);
+                                                                            console.log('[Presale] Current presaleCodes before update:', presaleCodes);
+                                                                            
+                                                                            // Update state with new codes at the beginning
+                                                                            setPresaleCodes(prevCodes => {
+                                                                                const newCodes = [...mappedCodes, ...prevCodes];
+                                                                                console.log('[Presale] New presaleCodes after update:', newCodes);
+                                                                                return newCodes;
+                                                                            });
+                                                                            
+                                                                            // Reset form
                                                                             setNewPresaleCode({ code: '', limitType: 'single', maxUses: 1, name: '' });
                                                                             showToast('Code added!', 'success');
                                                                         } else {
-                                                                            const err = await response.json();
-                                                                            showToast(err.error || 'Failed to add code', 'error');
+                                                                            showToast(data.error || 'Failed to add code', 'error');
                                                                         }
                                                                     } catch (err) {
-                                                                        console.error('Failed to add presale code:', err);
+                                                                        console.error('[Presale] Failed to add presale code:', err);
                                                                         showToast('Failed to add code', 'error');
                                                                     }
                                                                 }}
