@@ -51,7 +51,7 @@ export const LandingPage = () => {
                         <span className="text-[#E0FF20]">●</span> THE FUTURE OF EVENTS
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-9xl font-black font-display tracking-tighter leading-none mb-6">
-                        TICKETS <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E0FF20] to-[#00ff9d]">SOLD.</span><br />
+                        TICKETS <span className="bg-gradient-to-r from-[#E0FF20] to-[#00ff9d] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
                         <span className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl">VIBES UNCOMPROMISED.</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 font-medium">
@@ -76,7 +76,7 @@ export const LandingPage = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500 rounded-full blur-[60px] opacity-40"></div>
                         <h2 className="text-4xl md:text-6xl font-black font-display italic uppercase leading-none relative z-10">
                             NO FEES ON <span className="text-pink-500">FREE EVENTS</span> <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-400">EVER. SERIOUSLY.</span>
+                            <span className="bg-gradient-to-r from-white to-zinc-400 text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EVER. SERIOUSLY.</span>
                         </h2>
                         <p className="text-zinc-400 mt-4 font-bold tracking-wide">
                             Hosting a free meetup? We won't charge you a dime. Not now, not ever.
