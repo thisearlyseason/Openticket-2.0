@@ -241,7 +241,10 @@ export const ManageEvent = () => {
                             <ArrowLeft size={16} className="mr-1" /> Back to Dashboard
                         </button>
                         <div className="flex items-center gap-3 mb-2">
-                            <Badge color={event.isDraft ? 'yellow' : 'green'}>{event.isDraft ? 'DRAFT' : 'LIVE'}</Badge>
+                            {(() => {
+                                const status = getEventStatus(event);
+                                return <Badge color={status.color}>{status.label}</Badge>;
+                            })()}
                             <span className="text-white/70 text-sm font-bold flex items-center gap-1"><Calendar size={14} /> {new Date(event.date).toLocaleDateString()}</span>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter drop-shadow-2xl">{event.title}</h1>
