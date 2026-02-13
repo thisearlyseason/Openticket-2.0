@@ -112,6 +112,7 @@ export const getEventFull = async (req, res) => {
             return res.status(403).json({ error: "Unauthorized" });
         }
 
+        console.log('[Event Full] Returning event with presale:', data.presale);
         res.json({ event: data });
     } catch (error) {
         res.status(404).json({ error: 'Event not found' });
