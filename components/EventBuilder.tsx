@@ -2200,7 +2200,8 @@ export const EventBuilder = () => {
                                                                         return;
                                                                     }
                                                                     try {
-                                                                        const response = await fetch(`/api/presale/${id}/codes`, {
+                                                                        const API_URL = import.meta.env.VITE_BACKEND_URL || '';
+                                                                        const response = await fetch(`${API_URL}/api/presale/${id}/codes`, {
                                                                             method: 'POST',
                                                                             headers: {
                                                                                 'Content-Type': 'application/json',
@@ -2210,13 +2211,27 @@ export const EventBuilder = () => {
                                                                                 codes: [{
                                                                                     code: newPresaleCode.code,
                                                                                     limitType: newPresaleCode.limitType,
-                                                                                    maxUses: newPresaleCode.limitType === 'multi' ? newPresaleCode.maxUses : undefined
+                                                                                    maxUses: newPresaleCode.limitType === 'multi' ? newPresaleCode.maxUses : undefined,
+                                                                                    name: newPresaleCode.name || undefined
                                                                                 }]
                                                                             })
                                                                         });
                                                                         if (response.ok) {
                                                                             const data = await response.json();
-                                                                            setPresaleCodes(prev => [...data.codes, ...prev]);
+                                                                            // Map snake_case from API to camelCase for frontend
+                                                                            const mappedCodes = (data.codes || []).map((c: any) => ({
+                                                                                id: c.id,
+                                                                                eventId: c.event_id,
+                                                                                code: c.code,
+                                                                                limitType: c.limit_type,
+                                                                                maxUses: c.max_uses,
+                                                                                currentUses: c.current_uses || 0,
+                                                                                createdBy: c.created_by,
+                                                                                createdAt: c.created_at,
+                                                                                expiresAt: c.expires_at,
+                                                                                name: c.name
+                                                                            }));
+                                                                            setPresaleCodes(prev => [...mappedCodes, ...prev]);
                                                                             setNewPresaleCode({ code: '', limitType: 'single', maxUses: 1, name: '' });
                                                                             showToast('Code added!', 'success');
                                                                         } else {
@@ -2224,6 +2239,7 @@ export const EventBuilder = () => {
                                                                             showToast(err.error || 'Failed to add code', 'error');
                                                                         }
                                                                     } catch (err) {
+                                                                        console.error('Failed to add presale code:', err);
                                                                         showToast('Failed to add code', 'error');
                                                                     }
                                                                 }}
