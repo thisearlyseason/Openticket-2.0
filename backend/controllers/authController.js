@@ -1,4 +1,5 @@
 import supabase from '../services/supabase.js';
+import passwordSecurityService from '../services/passwordSecurityService.js';
 
 /**
  * Link guest purchases to user account by email
@@ -49,6 +50,30 @@ const linkGuestPurchasesToUser = async (userId, email) => {
 export const signup = async (req, res) => {
     try {
         const { email, password, firstName, lastName } = req.body;
+        
+        // ========== PASSWORD SECURITY VALIDATION ==========
+        // CRITICAL: Validate password strength and check breach database
+        console.log('[Password Security] Validating password for signup...');
+        const validation = await passwordSecurityService.validatePassword(password);
+        
+        if (!validation.valid) {
+            console.warn('[Password Security] ⚠️ Password validation failed', {
+                errors: validation.errors
+            });
+            return res.status(400).json({ 
+                error: 'Password does not meet security requirements',
+                details: validation.errors,
+                warnings: validation.warnings
+            });
+        }
+        
+        if (validation.warnings.length > 0) {
+            console.log('[Password Security] Password warnings:', validation.warnings);
+        }
+        
+        console.log('[Password Security] ✅ Password validation passed');
+        // ========== END PASSWORD VALIDATION ==========
+        
         const { data, error } = await supabase.auth.admin.createUser({
             email,
             password,
@@ -66,6 +91,7 @@ export const signup = async (req, res) => {
         
         res.status(201).json({ user: data.user });
     } catch (error) {
+        console.error('[Signup Error]', error);
         res.status(400).json({ error: error.message });
     }
 };
