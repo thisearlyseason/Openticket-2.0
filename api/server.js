@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import csrf from 'csurf';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -205,6 +207,52 @@ app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhoo
 // Increase JSON body limit to handle base64 encoded files (e.g., nonprofit documents)
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ limit: '15mb', extended: true }));
+
+// ==================== CSRF PROTECTION ====================
+// Enable cookie parsing for CSRF tokens
+app.use(cookieParser());
+
+// Configure CSRF protection
+const csrfProtection = csrf({ 
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: 'strict',
+        maxAge: 3600000 // 1 hour
+    }
+});
+
+// CSRF token endpoint (public, no auth required)
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
+
+// Apply CSRF protection to all state-changing routes
+// Exclude: GET requests, webhooks, public endpoints
+const csrfMiddleware = (req, res, next) => {
+    // Skip CSRF for safe methods and webhooks
+    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+        return next();
+    }
+    
+    // Skip CSRF for webhook endpoint
+    if (req.path === '/api/webhook') {
+        return next();
+    }
+    
+    // Skip CSRF for public event views (read-only)
+    if (req.path.startsWith('/api/events/') && req.method === 'GET') {
+        return next();
+    }
+    
+    // Apply CSRF protection
+    return csrfProtection(req, res, next);
+};
+
+app.use('/api/', csrfMiddleware);
+
+console.log('[Security] ✅ CSRF protection enabled');
+// ==================== END CSRF PROTECTION ====================
 
 // Request logger
 app.use((req, res, next) => {
