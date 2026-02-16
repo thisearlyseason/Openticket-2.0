@@ -65,9 +65,19 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
     const token = await getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    // Add CSRF token for state-changing requests
+    const { getCsrfToken } = await import('./csrfService');
+    try {
+        const csrfToken = await getCsrfToken();
+        headers['X-CSRF-Token'] = csrfToken;
+    } catch (csrfError) {
+        console.warn('[postSupabase] Failed to get CSRF token, request may fail:', csrfError);
+    }
+
     const options: RequestInit = {
         method,
         headers,
+        credentials: 'include', // Required for CSRF cookie
     };
     if (body) options.body = JSON.stringify(body);
 
