@@ -16,7 +16,7 @@ import os
 import json
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://ticket-platform-v2.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://event-ticketing-dev.preview.emergentagent.com')
 
 class TestHealthAndBasicEndpoints:
     """Basic health and connectivity tests"""
