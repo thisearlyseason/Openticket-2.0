@@ -36,11 +36,31 @@ const verifyToken = async (req, res, next) => {
         
         if (user && !error) {
             console.log('[Auth] ✅ Supabase token verified for user:', user.id, user.email);
+            
+            // ========== SESSION EXPIRATION (Supabase) ==========
+            // Check if token was issued more than 24 hours ago
+            const tokenIssuedAt = new Date(user.created_at).getTime() / 1000;
+            const tokenAge = Math.floor(Date.now() / 1000) - tokenIssuedAt;
+            const MAX_SESSION_AGE = 24 * 60 * 60; // 24 hours
+            
+            if (tokenAge > MAX_SESSION_AGE) {
+                console.warn('[Security] Supabase session expired', {
+                    userId: user.id,
+                    tokenAge: `${Math.floor(tokenAge / 3600)}h`
+                });
+                return res.status(401).json({
+                    error: 'Session expired. Please log in again.',
+                    code: 'SESSION_EXPIRED'
+                });
+            }
+            // ========== END SESSION EXPIRATION ==========
+            
             // Format user object to match Firebase structure
             req.user = {
                 uid: user.id,
                 email: user.email,
                 email_verified: user.email_confirmed_at != null,
+                auth_time: tokenIssuedAt,
                 ...user.user_metadata
             };
             return next();
@@ -53,7 +73,24 @@ const verifyToken = async (req, res, next) => {
     if (token.length > 100) {
         try {
             const decodedToken = await admin.auth().verifyIdToken(token);
-            console.log('[Auth] Firebase token verified for user:', decodedToken.uid);
+            
+            // ========== SESSION EXPIRATION (Firebase) ==========
+            const MAX_SESSION_AGE = 24 * 60 * 60; // 24 hours in seconds
+            const tokenAge = Math.floor(Date.now() / 1000) - decodedToken.auth_time;
+            
+            if (tokenAge > MAX_SESSION_AGE) {
+                console.warn('[Security] Firebase session expired', {
+                    userId: decodedToken.uid,
+                    tokenAge: `${Math.floor(tokenAge / 3600)}h`
+                });
+                return res.status(401).json({
+                    error: 'Session expired. Please log in again.',
+                    code: 'SESSION_EXPIRED'
+                });
+            }
+            // ========== END SESSION EXPIRATION ==========
+            
+            console.log('[Auth] ✅ Firebase token verified for user:', decodedToken.uid, `(session age: ${Math.floor(tokenAge / 60)}min)`);
             req.user = decodedToken;
             return next();
         } catch (firebaseError) {
