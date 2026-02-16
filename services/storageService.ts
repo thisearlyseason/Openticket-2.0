@@ -36,7 +36,10 @@ const fetchSupabase = async (endpoint: string, authenticated = true): Promise<an
         const token = await getAuthToken();
         if (token) headers['Authorization'] = `Bearer ${token}`;
     }
-    const res = await fetch(`${SUPABASE_API_BASE}${endpoint}`, { headers });
+    const res = await fetch(`${SUPABASE_API_BASE}${endpoint}`, { 
+        headers,
+        credentials: 'include' // Include cookies for CSRF
+    });
     if (!res.ok) {
         let errorMsg = `Backend API error: ${res.status} ${res.statusText || 'No status text'}`;
         try {
