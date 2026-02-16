@@ -48,6 +48,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalUIProvider, useGlobalUI } from './components/GlobalUIProvider';
 import { ConfirmProvider } from './components/ConfirmContext';
 import { NotificationService } from './services/notificationService';
+import { fetchCsrfToken } from './services/csrfService';
 import { CurrencySelector } from './components/CurrencySelector';
 import { UserNotification } from './types';
 import { LogoAuto } from './components/Logo';
@@ -592,6 +593,13 @@ const App = () => {
         const initApp = async () => {
             try {
                 await StorageService.init();
+                // Pre-fetch CSRF token on app initialization
+                try {
+                    await fetchCsrfToken();
+                    console.log('[App] ✅ CSRF token initialized');
+                } catch (csrfError) {
+                    console.warn('[App] ⚠️ CSRF token fetch failed, will retry on first API call:', csrfError);
+                }
             } catch (e: any) {
                 console.error("Initialization error:", e);
             } finally {
