@@ -35,8 +35,8 @@ const COMMON_PASSWORDS = [
  * @returns {Promise<{valid: boolean, errors: string[], warnings: string[]}>}
  */
 export const validatePassword = async (password) => {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors = [];
+    const warnings = [];
 
     // Check minimum length
     if (password.length < PASSWORD_POLICY.minLength) {
