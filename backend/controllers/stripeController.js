@@ -77,7 +77,68 @@ export const createOrder = async (req, res) => {
             return res.status(404).json({ error: "Event not found" });
         }
 
-        // ========== AUTO LOCAL CURRENCY FEATURE ==========
+        // ========== SERVER-SIDE PRICE VALIDATION (SECURITY) ==========
+        // CRITICAL: ALWAYS fetch and validate prices from database, NEVER trust client
+        // Prevents price manipulation attacks
+        
+        // Validate ticket selections against database prices
+        for (const selection of ticketSelections) {
+            const tier = event.ticket_tiers?.find(t => t.id === selection.tierId);
+            
+            if (!tier) {
+                console.error(`[Security] Invalid tier ID: ${selection.tierId}`);
+                return res.status(400).json({ error: 'Invalid ticket tier' });
+            }
+            
+            // CRITICAL: Compare server price with client-provided price
+            const serverPrice = parseFloat(tier.price) || 0;
+            const clientPrice = parseFloat(selection.price) || 0;
+            
+            if (Math.abs(serverPrice - clientPrice) > 0.01) {
+                console.error(`[Security] Price mismatch detected!`, {
+                    tierId: selection.tierId,
+                    tierName: tier.name,
+                    serverPrice,
+                    clientPrice,
+                    eventId
+                });
+                return res.status(400).json({ 
+                    error: 'Price validation failed. Please refresh and try again.' 
+                });
+            }
+        }
+        
+        // Validate add-on selections against database prices
+        if (addOnSelections && addOnSelections.length > 0) {
+            for (const selection of addOnSelections) {
+                const addon = event.add_ons?.find(a => a.id === selection.addOnId);
+                
+                if (!addon) {
+                    console.error(`[Security] Invalid add-on ID: ${selection.addOnId}`);
+                    return res.status(400).json({ error: 'Invalid add-on' });
+                }
+                
+                const serverPrice = parseFloat(addon.price) || 0;
+                const clientPrice = parseFloat(selection.price) || 0;
+                
+                if (Math.abs(serverPrice - clientPrice) > 0.01) {
+                    console.error(`[Security] Add-on price mismatch detected!`, {
+                        addOnId: selection.addOnId,
+                        addOnName: addon.name,
+                        serverPrice,
+                        clientPrice,
+                        eventId
+                    });
+                    return res.status(400).json({ 
+                        error: 'Price validation failed. Please refresh and try again.' 
+                    });
+                }
+            }
+        }
+        
+        console.log('[Security] ✅ Price validation passed - all prices match database');
+        
+        // ========== END PRICE VALIDATION ==========
         // ATTENDEE CURRENCY: Attendees can be charged in their local/selected currency
         // ORGANIZER CURRENCY: All organizer views remain in their configured default currency
         // 
