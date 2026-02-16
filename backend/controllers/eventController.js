@@ -122,11 +122,42 @@ export const getEventFull = async (req, res) => {
 export const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const owner_id = req.user.uid;
+        const userId = req.user.uid;
         const updates = req.body;
 
         console.log('[Event Update] Received updates for event:', id);
         console.log('[Event Update] Presale data:', updates.presale);
+
+        // ========== IDOR PROTECTION: Verify Ownership ==========
+        const { data: existingEvent, error: fetchError } = await supabase
+            .from('events')
+            .select('owner_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !existingEvent) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Check ownership or admin status
+        const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        const isAdmin = userProfile?.is_admin === true;
+        const isOwner = existingEvent.owner_id === userId;
+
+        if (!isOwner && !isAdmin) {
+            console.error('[Security] IDOR attempt - updateEvent', {
+                userId,
+                eventId: id,
+                actualOwnerId: existingEvent.owner_id
+            });
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        // ========== END IDOR PROTECTION ==========
 
         // SANITIZATION
         const safeUpdates = {};
