@@ -3,7 +3,7 @@
  * Validates passwords against security best practices and breach databases
  */
 
-import { pwnedPassword } from '@passfort/haveibeenpwned';
+import { pwnedPassword } from 'hibp';
 
 /**
  * Password policy configuration
