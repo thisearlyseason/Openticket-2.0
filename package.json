@@ -41,6 +41,7 @@
     "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
     "framer-motion": "^10.16.16",
+    "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "idb": "^8.0.1",

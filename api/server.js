@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -94,6 +95,39 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// ==================== SECURITY HEADERS (Helmet) ====================
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://www.googletagmanager.com"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            connectSrc: [
+                "'self'", 
+                "https://*.supabase.co", 
+                "https://api.stripe.com",
+                "https://*.googleapis.com",
+                "https://*.firebaseio.com"
+            ],
+            frameSrc: ["'self'", "https://js.stripe.com"],
+            fontSrc: ["'self'", "data:", "https:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'", "blob:", "data:"],
+            workerSrc: ["'self'", "blob:"]
+        }
+    },
+    crossOriginEmbedderPolicy: false, // Required for some third-party embeds
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Required for CDN assets
+    hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true
+    }
+}));
+
+console.log('[Security] ✅ Helmet security headers enabled');
 
 // ==================== RATE LIMITING ====================
 
