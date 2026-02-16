@@ -31,12 +31,10 @@ const COMMON_PASSWORDS = [
 
 /**
  * Validate password strength and security
+ * @param {string} password - The password to validate
+ * @returns {Promise<{valid: boolean, errors: string[], warnings: string[]}>}
  */
-export const validatePassword = async (password: string): Promise<{
-    valid: boolean;
-    errors: string[];
-    warnings: string[];
-}> => {
+export const validatePassword = async (password) => {
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -125,8 +123,10 @@ export const validatePassword = async (password: string): Promise<{
 
 /**
  * Calculate password strength score (0-100)
+ * @param {string} password
+ * @returns {number} Score from 0-100
  */
-export const calculatePasswordStrength = (password: string): number => {
+export const calculatePasswordStrength = (password) => {
     let score = 0;
 
     // Length score (max 40 points)
@@ -150,11 +150,10 @@ export const calculatePasswordStrength = (password: string): number => {
 
 /**
  * Get password strength label
+ * @param {number} score - Strength score
+ * @returns {{label: string, color: string}}
  */
-export const getPasswordStrengthLabel = (score: number): {
-    label: string;
-    color: string;
-} => {
+export const getPasswordStrengthLabel = (score) => {
     if (score >= 80) return { label: 'Strong', color: 'green' };
     if (score >= 60) return { label: 'Good', color: 'blue' };
     if (score >= 40) return { label: 'Fair', color: 'yellow' };
