@@ -5,7 +5,7 @@ Verifies that CSRF protection is working correctly without breaking existing fun
 import requests
 import json
 
-API_URL = "https://www.openticket.events"
+API_URL = "http://localhost:8001"
 
 def test_csrf_protection():
     """Test CSRF token endpoint and protection"""
