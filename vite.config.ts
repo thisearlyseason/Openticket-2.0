@@ -16,7 +16,9 @@ export default defineConfig(({ mode }) => {
         'localhost',
         '127.0.0.1',
         '.preview.emergentagent.com',
-        '.emergentagent.com'
+        '.emergentagent.com',
+        '.preview.emergentcf.cloud',
+        'ticket-platform-v2.cluster-5.preview.emergentcf.cloud'
       ],
       headers: {
         // Prevent caching of HTML in development
