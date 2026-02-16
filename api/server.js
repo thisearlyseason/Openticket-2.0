@@ -166,6 +166,35 @@ const passwordLimiter = rateLimit({
     message: { error: 'Too many password change attempts. Please try again later.' }
 });
 
+// ========== PAYMENT ENDPOINT RATE LIMITER (SECURITY) ==========
+// CRITICAL: Prevent card testing attacks and payment abuse
+const paymentLimiter = rateLimit({
+    ...rateLimitOptions,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Only 10 payment attempts per 15 min per IP
+    message: { 
+        error: 'Too many payment attempts. Please try again in 15 minutes.',
+        code: 'RATE_LIMIT_EXCEEDED'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Log suspicious activity
+    handler: (req, res) => {
+        console.error('[Security] Payment rate limit exceeded', {
+            ip: req.ip,
+            path: req.path,
+            timestamp: new Date().toISOString()
+        });
+        res.status(429).json({
+            error: 'Too many payment attempts. Please try again in 15 minutes.',
+            code: 'RATE_LIMIT_EXCEEDED'
+        });
+    }
+});
+
+console.log('[Security] ✅ Payment rate limiting configured (10 req/15min)');
+// ========== END PAYMENT RATE LIMITER ==========
+
 // Apply general rate limiter to all API routes
 app.use('/api/', generalLimiter);
 
