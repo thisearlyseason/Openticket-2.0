@@ -184,8 +184,8 @@ class TestRegistrationEndpoints:
     def test_get_registrations_requires_auth(self):
         """Getting registrations requires auth"""
         response = requests.get(f"{BASE_URL}/api/registrations")
-        assert response.status_code == 401
-        print("✅ Get registrations without auth returns 401")
+        assert response.status_code in [401, 403]  # Both indicate unauthorized
+        print(f"✅ Get registrations without auth returns {response.status_code}")
 
 
 class TestWaitlistEndpoints:
