@@ -209,18 +209,49 @@ export const updateEvent = async (req, res) => {
 export const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
-        const owner_id = req.user.uid;
+        const userId = req.user.uid;
+
+        // ========== IDOR PROTECTION: Verify Ownership ==========
+        const { data: existingEvent, error: fetchError } = await supabase
+            .from('events')
+            .select('owner_id')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !existingEvent) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Check ownership or admin status
+        const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        const isAdmin = userProfile?.is_admin === true;
+        const isOwner = existingEvent.owner_id === userId;
+
+        if (!isOwner && !isAdmin) {
+            console.error('[Security] IDOR attempt - deleteEvent', {
+                userId,
+                eventId: id,
+                actualOwnerId: existingEvent.owner_id
+            });
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        // ========== END IDOR PROTECTION ==========
 
         const { error } = await supabase
             .from('events')
             .delete()
-            .eq('id', id)
-            .eq('owner_id', owner_id);
+            .eq('id', id);
 
         if (error) throw error;
         res.json({ status: 'deleted' });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error('[Event Delete Error]', error);
+        res.status(400).json({ error: 'Failed to delete event' });
     }
 };
 
