@@ -468,12 +468,12 @@ export const Dashboard = () => {
                     <Wallet size={24} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
                 {/* Affiliate Access */}
-                <div className="bg-gradient-to-br from-[#E0FF20]/20 to-green-500/10 border border-[#E0FF20]/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-[#E0FF20] transition-colors group" onClick={() => navigate('/affiliate')}>
+                <div className="bg-gradient-to-br from-accent/20 to-green-500/10 border border-accent/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-accent transition-colors group" onClick={() => navigate('/affiliate')}>
                     <div className="flex justify-between items-center mb-1">
                         <div className="text-xs font-bold text-black dark:text-white uppercase">Partner Program</div>
-                        <ArrowRight size={16} className="text-[#E0FF20] group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight size={16} className="text-accent group-hover:translate-x-1 transition-transform" />
                     </div>
-                    <div className="text-sm font-bold text-white">Earn 15% Commissions</div>
+                    <div className="text-sm font-bold text-zinc-900 dark:text-white">Earn 15% Commissions</div>
                 </div>
             </div>
 
