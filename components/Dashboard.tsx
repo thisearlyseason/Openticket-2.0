@@ -470,7 +470,7 @@ export const Dashboard = () => {
                 {/* Affiliate Access */}
                 <div className="bg-gradient-to-br from-[#E0FF20]/20 to-green-500/10 border border-[#E0FF20]/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-[#E0FF20] transition-colors group" onClick={() => navigate('/affiliate')}>
                     <div className="flex justify-between items-center mb-1">
-                        <div className="text-xs font-bold text-[#E0FF20] uppercase">Partner Program</div>
+                        <div className="text-xs font-bold text-black dark:text-white uppercase">Partner Program</div>
                         <ArrowRight size={16} className="text-[#E0FF20] group-hover:translate-x-1 transition-transform" />
                     </div>
                     <div className="text-sm font-bold text-white">Earn 15% Commissions</div>
