@@ -2,9 +2,10 @@ import express from 'express';
 const router = express.Router();
 import * as eventController from '../controllers/eventController.js';
 import verifyToken from '../middlewares/authMiddleware.js';
+import { enforceEventLimits } from '../middlewares/subscriptionMiddleware.js';
 
 router.get('/public', eventController.getPublicEvents);
-router.post('/', verifyToken, eventController.createEvent);
+router.post('/', verifyToken, enforceEventLimits, eventController.createEvent);
 router.get('/', verifyToken, eventController.getEvents);
 router.get('/:id/full', verifyToken, eventController.getEventFull);
 router.get('/:id/stats', verifyToken, eventController.getEventStats);
