@@ -1,0 +1,132 @@
+{
+  "summary": "MONETIZATION SECURITY AUDIT COMPLETE. Critical vulnerability found: Backend has NO plan limit enforcement on event creation. Frontend-only validation can be bypassed. Webhook security is correctly implemented. Fee calculation correctly fetches plan from database.",
+
+  "backend_issues": {
+    "critical": [
+      {
+        "id": "VULN-001",
+        "endpoint": "POST /api/events",
+        "issue": "NO subscription/plan validation middleware. eventController.js createEvent() (lines 20-54) has ZERO checks for ticketLimit, eventLimit, or monthlyTicketLimit. Free plan users can create events with unlimited tickets by bypassing frontend.",
+        "priority": "CRITICAL",
+        "affected_code": "/app/backend/controllers/eventController.js lines 20-54",
+        "revenue_leakage_risk": "HIGH - Users on Free plan ($0) could sell unlimited tickets, bypassing the 100/event and 400/month limits meant to upsell Pro ($39/mo) and Premium ($110/mo)"
+      },
+      {
+        "id": "VULN-002",
+        "endpoint": "All authenticated endpoints",
+        "issue": "No backend enforcement of expired/cancelled subscription status. Code only checks subscription status for fee calculation (stripeController.js line 257) but not for feature gating.",
+        "priority": "HIGH",
+        "affected_code": "/app/backend/controllers/stripeController.js",
+        "revenue_leakage_risk": "MEDIUM - Users with expired subscriptions may continue using premium features"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "/api/subscription/status/:userId",
+        "issue": "Returns 500 error when user ID not found (should return 404)",
+        "priority": "LOW"
+      }
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "security_findings": [
+      {
+        "component": "EventBuilder.tsx",
+        "issue": "Plan limits are ONLY enforced in frontend (lines 385-434). Modal popup can be bypassed with DevTools or direct API calls. Backend does not validate these limits.",
+        "lines": "385-434",
+        "recommendation": "Keep frontend validation for UX, but MUST add backend enforcement"
+      }
+    ]
+  },
+
+  "correctly_implemented": [
+    "✓ Webhook signature validation - stripeWebhookController.js line 34 uses stripe.webhooks.constructEvent()",
+    "✓ Authentication required for event creation - authMiddleware.js blocks unauthenticated requests",
+    "✓ Fee calculation uses backend plan lookup (event.owner?.subscription?.plan) not client-provided value",
+    "✓ Price validation prevents price manipulation attacks (stripeController.js lines 85-155)",
+    "✓ CSRF protection implemented in server.js (lines 211-255)",
+    "✓ CORS whitelist restricts origins (server.js lines 61-98)"
+  ],
+
+  "potential_revenue_leakage": [
+    "Free users creating events with >100 tickets per event (limit bypassed)",
+    "Free users selling >400 tickets per month (no monthly tracking in backend)",
+    "No enforcement of teamMemberLimit in backend",
+    "Expired subscription users may continue creating events",
+    "Downgraded users (Pro→Free) may retain Pro features"
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_subscription_bypass.py",
+    "/app/test_reports/pytest/pytest_subscription_bypass.xml"
+  ],
+
+  "action_items": [
+    "1. CRITICAL: Add subscription validation middleware to POST /api/events - check user's plan limits before allowing event creation",
+    "2. HIGH: Create database table to track monthly ticket sales per user (for monthlyTicketLimit enforcement)",
+    "3. HIGH: Add subscription status check (reject if status !== 'active') before allowing paid features",
+    "4. MEDIUM: Add plan validation to ticket registration endpoint to prevent selling beyond limits",
+    "5. MEDIUM: Log all limit bypass attempts for security monitoring",
+    "6. LOW: Fix /api/subscription/status/:userId to return 404 instead of 500 for missing users"
+  ],
+
+  "critical_code_review_comments": [
+    "eventController.js createEvent() has NO plan validation - this is the root cause of the bypass vulnerability",
+    "Frontend EventBuilder.tsx has plan checks (lines 385-434) but these are client-side only and easily bypassed",
+    "PLAN_VERSIONS in storageService.ts defines limits correctly, but backend doesn't use them",
+    "stripeController.js correctly fetches organizerPlan from database (line 257) for fee calculation, but this pattern is NOT applied to event creation",
+    "authMiddleware.js verifies authentication but does NOT check subscription status"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_subscription_bypass.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (15/15 tests passed - tests verify current behavior, which reveals the vulnerability)",
+    "frontend": "Pricing page displays limits correctly. Create event redirects to auth."
+  },
+
+  "monetization_integrity_score": 35,
+  "score_breakdown": {
+    "authentication": "90/100 - Properly requires auth for all protected endpoints",
+    "webhook_security": "95/100 - Correctly validates Stripe signatures",
+    "plan_limit_enforcement": "0/100 - NO backend enforcement (CRITICAL)",
+    "fee_calculation": "90/100 - Correctly uses backend plan lookup",
+    "expired_subscription_handling": "20/100 - Only used for fee calc, not feature gating",
+    "overall": "35/100 - Major revenue leakage vulnerability exists"
+  },
+
+  "bypass_vulnerabilities_found": {
+    "bypass_1_unauthenticated_access": "BLOCKED - Authentication required",
+    "bypass_2_exceed_ticket_limits": "VULNERABLE - No backend check",
+    "bypass_3_plan_injection": "BLOCKED - Backend fetches plan from DB",
+    "bypass_4_frontend_only_checks": "VULNERABLE - Backend has no validation",
+    "bypass_5_expired_subscription": "PARTIALLY VULNERABLE - Not checked for features",
+    "bypass_6_downgrade_retention": "UNKNOWN - Could not test without accounts"
+  },
+
+  "recommendations": {
+    "immediate": [
+      "Add middleware to check subscription plan limits before event creation",
+      "Implement monthly ticket tracking in database"
+    ],
+    "short_term": [
+      "Add subscription status validation to all premium feature endpoints",
+      "Create plan enforcement utility function to centralize validation"
+    ],
+    "long_term": [
+      "Implement usage-based billing alerts",
+      "Add admin dashboard for monitoring limit bypasses"
+    ]
+  },
+
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CRITICAL: Backend has NO plan limit enforcement. Frontend validation in EventBuilder.tsx (lines 385-434) can be bypassed. Main agent needs to add subscription validation middleware to eventController.js. Test files created: /app/backend/tests/test_subscription_bypass.py"
+}
