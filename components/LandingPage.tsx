@@ -67,13 +67,13 @@ export const LandingPage = () => {
 
             {/* Hero */}
             <header className="relative pt-32 pb-20 px-4 text-center">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#E0FF20] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
                 <div className="relative z-10">
                     <div className="inline-block border border-white/20 rounded-full px-4 py-1 text-sm font-bold mb-6 bg-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700">
-                        <span className="text-[#E0FF20]">●</span> THE FUTURE OF EVENTS
+                        <span className="text-accent">●</span> THE FUTURE OF EVENTS
                     </div>
                     <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-9xl font-black font-display tracking-tighter leading-none mb-6">
-                        TICKETS <span className="bg-gradient-to-r from-[#E0FF20] to-[#00ff9d] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
+                        TICKETS <span className="bg-gradient-to-r from-accent to-[#00ff9d] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
                         <span className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl">VIBES UNCOMPROMISED.</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 font-medium">
@@ -81,7 +81,7 @@ export const LandingPage = () => {
                         <span className="text-white">100% Vibes.</span>
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <button onClick={() => navigate('/auth')} className="px-8 py-4 bg-[#E0FF20] text-black font-black text-xl rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(224,255,32,0.4)]">
+                        <button onClick={() => navigate('/auth')} className="px-8 py-4 bg-accent text-accent-fg font-black text-xl rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(196,232,85,0.4)]">
                             START SELLING
                         </button>
                         <button onClick={() => navigate('/browse')} className="px-8 py-4 border border-zinc-700 text-white font-bold text-xl rounded-full hover:bg-zinc-900 transition-colors">
