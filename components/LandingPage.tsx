@@ -92,15 +92,15 @@ export const LandingPage = () => {
             </header>
 
             {/* Zero Fees Pop Banner */}
-            <div className="relative z-20 max-w-5xl mx-auto px-4 -mt-8 mb-16 transform hover:scale-105 transition-transform duration-300">
-                <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 p-1 rounded-3xl shadow-[0_0_50px_rgba(236,72,153,0.5)]">
-                    <div className="bg-black rounded-[1.3rem] p-8 text-center relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500 rounded-full blur-[60px] opacity-40"></div>
-                        <h2 className="text-4xl md:text-6xl font-black font-display italic uppercase leading-none relative z-10">
-                            NO FEES ON <span className="text-pink-500">FREE EVENTS</span> <br />
-                            <span className="bg-gradient-to-r from-white to-zinc-400 text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EVER. SERIOUSLY.</span>
+            <div className="relative z-20 max-w-5xl mx-auto px-4 mb-20 transform hover:scale-[1.02] transition-transform duration-300">
+                <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 p-1 rounded-3xl shadow-2xl">
+                    <div className="bg-zinc-900 dark:bg-black rounded-[1.3rem] p-10 text-center relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-pink-500 rounded-full blur-[80px] opacity-30"></div>
+                        <h2 className="text-3xl md:text-5xl font-black font-display italic uppercase leading-tight relative z-10 text-white">
+                            NO FEES ON <span className="text-pink-400">FREE EVENTS</span> <br />
+                            <span className="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>EVER. SERIOUSLY.</span>
                         </h2>
-                        <p className="text-zinc-400 mt-4 font-bold tracking-wide">
+                        <p className="text-zinc-300 mt-4 font-medium tracking-wide text-sm md:text-base">
                             Hosting a free meetup? We won't charge you a dime. Not now, not ever.
                         </p>
                     </div>
@@ -108,10 +108,10 @@ export const LandingPage = () => {
             </div>
 
             {/* Scroll-Driven Marquee */}
-            <div className="bg-accent py-4 rotate-1 scale-105 mb-20 overflow-hidden">
+            <div className="bg-accent dark:bg-accent py-5 rotate-1 scale-105 mb-24 overflow-hidden shadow-xl">
                 <div
                     ref={marqueeRef}
-                    className="flex gap-8 whitespace-nowrap text-black font-black text-2xl uppercase tracking-tighter will-change-transform"
+                    className="flex gap-8 whitespace-nowrap text-accent-fg font-black text-xl md:text-2xl uppercase tracking-tight will-change-transform"
                 >
                     {Array(20).fill("• No Hidden Fees • Easy Payouts • Custom Branding • QR Check-in • Real-time Analytics ").map((text, i) => (
                         <span key={i}>{text}</span>
@@ -120,30 +120,31 @@ export const LandingPage = () => {
             </div>
 
             {/* Features Grid */}
-            <section className="max-w-7xl mx-auto px-4 py-20">
+            <section className="max-w-7xl mx-auto px-4 py-20 bg-gradient-to-b from-transparent via-zinc-50/50 to-transparent dark:via-transparent">
+                <h2 className="text-4xl md:text-6xl font-black text-center mb-16 font-display">Why Creators <span className="text-accent">Love Us</span></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-accent transition-colors group">
-                        <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mb-6 text-black group-hover:rotate-12 transition-transform">
-                            <Zap size={28} fill="currentColor" />
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border-2 border-zinc-200 dark:border-zinc-800 hover:border-accent hover:shadow-2xl transition-all duration-300 group">
+                        <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mb-6 text-accent-fg group-hover:rotate-12 group-hover:scale-110 transition-transform shadow-lg">
+                            <Zap size={32} fill="currentColor" />
                         </div>
-                        <h3 className="text-2xl font-black mb-2 font-display uppercase">Easy Payouts</h3>
-                        <p className="text-zinc-400">Get paid directly to your bank account via Stripe.</p>
+                        <h3 className="text-2xl font-black mb-3 font-display uppercase">Easy Payouts</h3>
+                        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">Get paid directly to your bank account via Stripe. Fast, secure, hassle-free.</p>
                     </div>
 
-                    <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-[#ff00ff] transition-colors group">
-                        <div className="w-14 h-14 bg-[#ff00ff] rounded-2xl flex items-center justify-center mb-6 text-white group-hover:-rotate-12 transition-transform">
-                            <Star size={28} fill="currentColor" />
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border-2 border-zinc-200 dark:border-zinc-800 hover:border-[#ff00ff] hover:shadow-2xl transition-all duration-300 group">
+                        <div className="w-16 h-16 bg-[#ff00ff] rounded-2xl flex items-center justify-center mb-6 text-white group-hover:-rotate-12 group-hover:scale-110 transition-transform shadow-lg">
+                            <Star size={32} fill="currentColor" />
                         </div>
-                        <h3 className="text-2xl font-black mb-2 font-display uppercase">Premium Brand</h3>
-                        <p className="text-zinc-400">Customize your event page with your colors, logo, and custom domain. Make it yours.</p>
+                        <h3 className="text-2xl font-black mb-3 font-display uppercase">Premium Brand</h3>
+                        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">Customize your event page with your colors, logo, and custom domain. Make it yours.</p>
                     </div>
 
-                    <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-[#00ff9d] transition-colors group">
-                        <div className="w-14 h-14 bg-[#00ff9d] rounded-2xl flex items-center justify-center mb-6 text-black group-hover:scale-110 transition-transform">
-                            <CheckCircle2 size={28} />
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 border-2 border-zinc-200 dark:border-zinc-800 hover:border-[#00ff9d] hover:shadow-2xl transition-all duration-300 group">
+                        <div className="w-16 h-16 bg-[#00ff9d] rounded-2xl flex items-center justify-center mb-6 text-black group-hover:scale-110 transition-transform shadow-lg">
+                            <CheckCircle2 size={32} />
                         </div>
-                        <h3 className="text-2xl font-black mb-2 font-display uppercase">Easy Check-in</h3>
-                        <p className="text-zinc-400">Scan tickets at the door with any device using our ultra-fast check-in portal.</p>
+                        <h3 className="text-2xl font-black mb-3 font-display uppercase">Easy Check-in</h3>
+                        <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">Scan tickets at the door with any device using our ultra-fast check-in portal.</p>
                     </div>
                 </div>
             </section>
