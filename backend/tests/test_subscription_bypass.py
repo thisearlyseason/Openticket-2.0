@@ -326,7 +326,7 @@ class TestWebhookSecurity:
         }
         
         response = self.session.post(
-            f"{BASE_URL}/api/stripe/webhook",
+            f"{BASE_URL}/api/webhook",
             json=fake_webhook,
             headers={'Content-Type': 'application/json'}
         )
@@ -340,7 +340,7 @@ class TestWebhookSecurity:
     def test_webhook_with_invalid_signature(self):
         """Test webhook with fake signature header"""
         response = self.session.post(
-            f"{BASE_URL}/api/stripe/webhook",
+            f"{BASE_URL}/api/webhook",
             data=b'{"type":"checkout.session.completed"}',
             headers={
                 'Content-Type': 'application/json',
