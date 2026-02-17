@@ -27,6 +27,25 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: ['/app', '/app/frontend']
       },
+      hmr: {
+        overlay: false
+      },
+      watch: {
+        // Reduce file watching aggressiveness
+        usePolling: false,
+        interval: 1000,
+        // Ignore files that shouldn't trigger reload
+        ignored: [
+          '**/node_modules/**',
+          '**/dist/**',
+          '**/.git/**',
+          '**/backend/**',
+          '**/tests/**',
+          '**/test_reports/**',
+          '**/*.md',
+          '**/*.log'
+        ]
+      },
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:8001',
