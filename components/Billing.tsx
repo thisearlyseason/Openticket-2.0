@@ -704,15 +704,15 @@ export const Billing = () => {
                     {renderStripeConnect()}
                 </div>
 
-                <Card className="p-6 bg-zinc-900 text-white border-zinc-800 h-fit">
+                <Card className="p-6 bg-zinc-900 dark:bg-zinc-900 text-white dark:text-white border-zinc-800 h-fit">
                     <div className="flex justify-between items-start mb-2">
                         <div>
-                            <h2 className="text-lg font-bold">Payout Balance</h2>
-                            <p className="text-xs text-zinc-400 dark:text-zinc-400">Available to withdraw</p>
+                            <h2 className="text-lg font-bold text-white">Payout Balance</h2>
+                            <p className="text-xs text-zinc-300">Available to withdraw</p>
                         </div>
                         <Zap size={20} className="text-[#E0FF20]" fill="currentColor" />
                     </div>
-                    <div className="text-4xl font-black mb-4">${availablePayout.toFixed(2)}</div>
+                    <div className="text-4xl font-black mb-4 text-white">${availablePayout.toFixed(2)}</div>
 
                     {balanceDue > 0 && (
                         <div className="bg-red-900/30 p-2 rounded-lg mb-4 text-xs text-red-300 flex justify-between">
