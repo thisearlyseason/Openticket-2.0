@@ -1,7 +1,7 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Ticket, Shield, BarChart3, Globe, Heart, CheckCircle2, ArrowRight, Zap, PlayCircle, Star, Instagram, Twitter, Linkedin, Facebook } from 'lucide-react';
+import { Ticket, Shield, BarChart3, Globe, Heart, CheckCircle2, ArrowRight, Zap, PlayCircle, Star, Instagram, Twitter, Linkedin, Facebook, Sun, Moon } from 'lucide-react';
 import { Button, Card } from './UI';
 import { StorageService } from '../services/storageService';
 import { Logo } from './Logo';
@@ -9,6 +9,22 @@ import { Logo } from './Logo';
 export const LandingPage = () => {
     const navigate = useNavigate();
     const marqueeRef = useRef<HTMLDivElement>(null);
+    const [isDark, setIsDark] = useState(true);
+
+    // Initialize theme
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('openticket_theme');
+        const prefersDark = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        setIsDark(prefersDark);
+        document.documentElement.classList.toggle('dark', prefersDark);
+    }, []);
+
+    const toggleTheme = () => {
+        const newTheme = !isDark;
+        setIsDark(newTheme);
+        document.documentElement.classList.toggle('dark', newTheme);
+        localStorage.setItem('openticket_theme', newTheme ? 'dark' : 'light');
+    };
 
     // Redirect logged-in users to dashboard
     useEffect(() => {
@@ -31,14 +47,21 @@ export const LandingPage = () => {
     }, []);
 
     return (
-        <div className="bg-black text-white min-h-screen font-sans selection:bg-[#E0FF20] selection:text-black overflow-x-hidden">
+        <div className="bg-black dark:bg-black bg-white text-white dark:text-white text-zinc-900 min-h-screen font-sans selection:bg-accent selection:text-accent-fg overflow-x-hidden">
             {/* Nav Mockup */}
             <nav className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
-                <Logo variant="dark" size="lg" />
-                <div className="flex gap-4">
-                    <button onClick={() => navigate('/pricing')} className="hidden md:block font-bold hover:text-[#E0FF20]">Pricing</button>
-                    <button onClick={() => navigate('/browse')} className="hidden md:block font-bold hover:text-[#E0FF20]">Explore</button>
-                    <button onClick={() => navigate('/auth')} className="font-bold hover:text-[#E0FF20]">Sign In</button>
+                <Logo variant={isDark ? "dark" : "light"} size="lg" />
+                <div className="flex gap-4 items-center">
+                    <button 
+                        onClick={toggleTheme}
+                        className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/10 hover:bg-zinc-100 transition-colors"
+                        aria-label="Toggle theme"
+                    >
+                        {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-zinc-700" />}
+                    </button>
+                    <button onClick={() => navigate('/pricing')} className="hidden md:block font-bold hover:text-accent">Pricing</button>
+                    <button onClick={() => navigate('/browse')} className="hidden md:block font-bold hover:text-accent">Explore</button>
+                    <button onClick={() => navigate('/auth')} className="font-bold hover:text-accent">Sign In</button>
                 </div>
             </nav>
 
