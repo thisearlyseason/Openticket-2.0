@@ -31,9 +31,9 @@ export default defineConfig(({ mode }) => {
         overlay: false
       },
       watch: {
-        // Reduce file watching aggressiveness
+        // Reduce file watching aggressiveness  
         usePolling: false,
-        interval: 1000,
+        interval: 3000,
         // Ignore files that shouldn't trigger reload
         ignored: [
           '**/node_modules/**',
@@ -42,8 +42,12 @@ export default defineConfig(({ mode }) => {
           '**/backend/**',
           '**/tests/**',
           '**/test_reports/**',
+          '**/automation_output/**',
           '**/*.md',
-          '**/*.log'
+          '**/*.log',
+          '**/*.json',
+          '**/package-lock.json',
+          '**/yarn.lock'
         ]
       },
       proxy: {
