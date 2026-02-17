@@ -73,7 +73,7 @@ export const LandingPage = () => {
                         <span className="text-accent">●</span> THE FUTURE OF EVENTS
                     </div>
                     <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-9xl font-black font-display tracking-tighter leading-[0.9] mb-8">
-                        TICKETS <span className="bg-gradient-to-r from-accent via-[#00ff9d] to-primary text-transparent bg-clip-text animate-pulse-slow" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
+                        TICKETS <span className="bg-gradient-to-r from-primary via-accent to-[#00ff9d] text-transparent bg-clip-text animate-pulse-slow" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
                         <span className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl">VIBES UNCOMPROMISED.</span>
                     </h1>
                     <p className="text-lg md:text-2xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
