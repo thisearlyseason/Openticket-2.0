@@ -255,7 +255,7 @@ export const ManageEvent = () => {
 
                     <div className="flex gap-3">
                         <Button onClick={() => window.open(`/#/event/${event.id}`, '_blank')} variant="outline" className="bg-black/30 backdrop-blur border-white/20 text-white hover:bg-white/10">
-                            <Eye size={18} className="mr-2" /> View Page
+                            <Eye size={18} className="mr-2" /> <span className="text-current">View Page</span>
                         </Button>
                         <Button onClick={() => navigate(`/edit/${event.id}`)} variant="secondary" className="shadow-[0_0_20px_rgba(224,255,32,0.3)]">
                             <Edit size={18} className="mr-2" /> Edit Event
