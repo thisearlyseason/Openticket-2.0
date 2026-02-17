@@ -708,7 +708,7 @@ export const Billing = () => {
                     <div className="flex justify-between items-start mb-2">
                         <div>
                             <h2 className="text-lg font-bold">Payout Balance</h2>
-                            <p className="text-xs text-zinc-400">Available to withdraw</p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-400">Available to withdraw</p>
                         </div>
                         <Zap size={20} className="text-[#E0FF20]" fill="currentColor" />
                     </div>
