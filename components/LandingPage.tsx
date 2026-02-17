@@ -47,44 +47,44 @@ export const LandingPage = () => {
     }, []);
 
     return (
-        <div className="bg-black dark:bg-black bg-white text-white dark:text-white text-zinc-900 min-h-screen font-sans selection:bg-accent selection:text-accent-fg overflow-x-hidden">
-            {/* Nav Mockup */}
-            <nav className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-50">
+        <div className="bg-white dark:bg-black text-zinc-900 dark:text-white min-h-screen font-sans selection:bg-accent selection:text-accent-fg overflow-x-hidden transition-colors duration-300">
+            {/* Nav */}
+            <nav className="sticky top-0 left-0 right-0 p-6 flex justify-between items-center z-50 backdrop-blur-md bg-white/90 dark:bg-black/90 border-b border-zinc-200 dark:border-zinc-800">
                 <Logo variant={isDark ? "dark" : "light"} size="lg" />
                 <div className="flex gap-4 items-center">
                     <button 
                         onClick={toggleTheme}
-                        className="p-2 rounded-full hover:bg-white/10 dark:hover:bg-white/10 hover:bg-zinc-100 transition-colors"
+                        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
                         aria-label="Toggle theme"
                     >
                         {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-zinc-700" />}
                     </button>
-                    <button onClick={() => navigate('/pricing')} className="hidden md:block font-bold hover:text-accent">Pricing</button>
-                    <button onClick={() => navigate('/browse')} className="hidden md:block font-bold hover:text-accent">Explore</button>
-                    <button onClick={() => navigate('/auth')} className="font-bold hover:text-accent">Sign In</button>
+                    <button onClick={() => navigate('/pricing')} className="hidden md:block font-bold hover:text-accent transition-colors">Pricing</button>
+                    <button onClick={() => navigate('/browse')} className="hidden md:block font-bold hover:text-accent transition-colors">Explore</button>
+                    <button onClick={() => navigate('/auth')} className="font-bold hover:text-accent transition-colors">Sign In</button>
                 </div>
             </nav>
 
             {/* Hero */}
-            <header className="relative pt-32 pb-20 px-4 text-center">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-                <div className="relative z-10">
-                    <div className="inline-block border border-white/20 rounded-full px-4 py-1 text-sm font-bold mb-6 bg-white/5 backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-700">
+            <header className="relative pt-20 pb-20 px-4 text-center bg-gradient-to-br from-white via-zinc-50 to-accent/10 dark:from-black dark:via-zinc-900 dark:to-black">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent rounded-full blur-[200px] opacity-20 dark:opacity-15 pointer-events-none"></div>
+                <div className="relative z-10 max-w-6xl mx-auto">
+                    <div className="inline-block border-2 border-accent/30 dark:border-accent/50 rounded-full px-5 py-2 text-sm font-bold mb-8 bg-white dark:bg-white/5 backdrop-blur-md shadow-lg animate-in fade-in slide-in-from-top-4 duration-700">
                         <span className="text-accent">●</span> THE FUTURE OF EVENTS
                     </div>
-                    <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-9xl font-black font-display tracking-tighter leading-none mb-6">
-                        TICKETS <span className="bg-gradient-to-r from-accent to-[#00ff9d] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
-                        <span className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl">VIBES UNCOMPROMISED.</span>
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-9xl font-black font-display tracking-tighter leading-[0.9] mb-8">
+                        TICKETS <span className="bg-gradient-to-r from-accent via-[#00ff9d] to-primary text-transparent bg-clip-text animate-pulse-slow" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SOLD.</span><br />
+                        <span className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl">VIBES UNCOMPROMISED.</span>
                     </h1>
-                    <p className="text-xl md:text-2xl text-zinc-400 max-w-2xl mx-auto mb-10 font-medium">
+                    <p className="text-lg md:text-2xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
                         The boldest ticketing platform for creators. Zero hidden fees.
-                        <span className="text-white">100% Vibes.</span>
+                        <span className="text-zinc-900 dark:text-white font-bold"> 100% Vibes.</span>
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <button onClick={() => navigate('/auth')} className="px-8 py-4 bg-accent text-accent-fg font-black text-xl rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(196,232,85,0.4)]">
+                        <button onClick={() => navigate('/auth')} className="px-10 py-5 bg-accent text-accent-fg font-black text-xl rounded-full hover:scale-105 hover:shadow-2xl transition-all duration-200 shadow-lg">
                             START SELLING
                         </button>
-                        <button onClick={() => navigate('/browse')} className="px-8 py-4 border border-zinc-700 text-white font-bold text-xl rounded-full hover:bg-zinc-900 transition-colors">
+                        <button onClick={() => navigate('/browse')} className="px-10 py-5 border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-transparent text-zinc-900 dark:text-white font-bold text-xl rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-accent transition-all duration-200">
                             FIND EVENTS
                         </button>
                     </div>
