@@ -10,7 +10,7 @@ router.get('/', verifyToken, eventController.getEvents);
 router.get('/:id/full', verifyToken, eventController.getEventFull);
 router.get('/:id/stats', verifyToken, eventController.getEventStats);
 router.get('/:id', eventController.getEventById);
-router.put('/:id', verifyToken, eventController.updateEvent);
+router.put('/:id', verifyToken, enforceEventLimits, eventController.updateEvent);
 router.delete('/:id', verifyToken, eventController.deleteEvent);
 
 export default router;
