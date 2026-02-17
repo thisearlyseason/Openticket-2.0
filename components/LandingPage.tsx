@@ -108,7 +108,7 @@ export const LandingPage = () => {
             </div>
 
             {/* Scroll-Driven Marquee */}
-            <div className="bg-[#E0FF20] py-4 rotate-1 scale-105 mb-20 overflow-hidden">
+            <div className="bg-accent py-4 rotate-1 scale-105 mb-20 overflow-hidden">
                 <div
                     ref={marqueeRef}
                     className="flex gap-8 whitespace-nowrap text-black font-black text-2xl uppercase tracking-tighter will-change-transform"
@@ -122,8 +122,8 @@ export const LandingPage = () => {
             {/* Features Grid */}
             <section className="max-w-7xl mx-auto px-4 py-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-[#E0FF20] transition-colors group">
-                        <div className="w-14 h-14 bg-[#E0FF20] rounded-2xl flex items-center justify-center mb-6 text-black group-hover:rotate-12 transition-transform">
+                    <div className="bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800 hover:border-accent transition-colors group">
+                        <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mb-6 text-black group-hover:rotate-12 transition-transform">
                             <Zap size={28} fill="currentColor" />
                         </div>
                         <h3 className="text-2xl font-black mb-2 font-display uppercase">Easy Payouts</h3>
@@ -153,9 +153,9 @@ export const LandingPage = () => {
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10">
                     <h2 className="text-6xl md:text-8xl font-black font-display tracking-tighter mb-8 leading-none">
-                        READY TO <span className="bg-gradient-to-br from-[#E0FF20] to-[#ff00ff] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>POP?</span>
+                        READY TO <span className="bg-gradient-to-br from-accent to-[#ff00ff] text-transparent bg-clip-text" style={{ WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>POP?</span>
                     </h2>
-                    <button onClick={() => navigate('/auth')} className="px-12 py-6 bg-white text-black font-black text-2xl rounded-full hover:bg-[#E0FF20] transition-colors shadow-2xl">
+                    <button onClick={() => navigate('/auth')} className="px-12 py-6 bg-white text-black font-black text-2xl rounded-full hover:bg-accent transition-colors shadow-2xl">
                         CREATE EVENT FREE
                     </button>
                 </div>
@@ -175,20 +175,20 @@ export const LandingPage = () => {
                     <div>
                         <h4 className="font-bold text-white mb-6 uppercase tracking-wider">Platform</h4>
                         <ul className="space-y-4 text-zinc-400">
-                            <li><button onClick={() => navigate('/browse')} className="hover:text-[#E0FF20] transition-colors">Explore Events</button></li>
-                            <li><button onClick={() => navigate('/pricing')} className="hover:text-[#E0FF20] transition-colors">Pricing</button></li>
-                            <li><button onClick={() => navigate('/auth')} className="hover:text-[#E0FF20] transition-colors">Sign In</button></li>
-                            <li><button onClick={() => navigate('/auth')} className="hover:text-[#E0FF20] transition-colors">Start Selling</button></li>
-                            <li><button onClick={() => navigate('/affiliate-login')} className="hover:text-[#E0FF20] transition-colors text-[#E0FF20]">Affiliate Program</button></li>
+                            <li><button onClick={() => navigate('/browse')} className="hover:text-accent transition-colors">Explore Events</button></li>
+                            <li><button onClick={() => navigate('/pricing')} className="hover:text-accent transition-colors">Pricing</button></li>
+                            <li><button onClick={() => navigate('/auth')} className="hover:text-accent transition-colors">Sign In</button></li>
+                            <li><button onClick={() => navigate('/auth')} className="hover:text-accent transition-colors">Start Selling</button></li>
+                            <li><button onClick={() => navigate('/affiliate-login')} className="hover:text-accent transition-colors text-accent">Affiliate Program</button></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-bold text-white mb-6 uppercase tracking-wider">Support</h4>
                         <ul className="space-y-4 text-zinc-400">
-                            <li><button onClick={() => navigate('/contact')} className="hover:text-[#E0FF20] transition-colors">Contact Us</button></li>
-                            <li><button onClick={() => navigate('/refunds')} className="hover:text-[#E0FF20] transition-colors">Refund Policy</button></li>
-                            <li><Link to="/terms" className="hover:text-[#E0FF20] transition-colors">Terms of Service</Link></li>
-                            <li><Link to="/privacy" className="hover:text-[#E0FF20] transition-colors">Privacy Policy</Link></li>
+                            <li><button onClick={() => navigate('/contact')} className="hover:text-accent transition-colors">Contact Us</button></li>
+                            <li><button onClick={() => navigate('/refunds')} className="hover:text-accent transition-colors">Refund Policy</button></li>
+                            <li><Link to="/terms" className="hover:text-accent transition-colors">Terms of Service</Link></li>
+                            <li><Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link></li>
                         </ul>
                     </div>
                 </div>
