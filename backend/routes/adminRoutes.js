@@ -1091,6 +1091,10 @@ router.post('/platform-payouts/schedule', verifyToken, requireAdmin, async (req,
 /**
  * Execute a platform payout (mark as completed)
  * POST /api/admin/platform-payouts/:id/execute
+ * 
+ * IMPORTANT: This should be called AFTER Stripe payout succeeds
+ * The frontend/caller is responsible for creating the Stripe payout
+ * This endpoint only marks the database record as completed
  */
 router.post('/platform-payouts/:id/execute', verifyToken, requireAdmin, async (req, res) => {
     try {
@@ -1098,7 +1102,29 @@ router.post('/platform-payouts/:id/execute', verifyToken, requireAdmin, async (r
         const { stripePayoutId, destinationAccount } = req.body;
         const supabase = (await import('../services/supabase.js')).default;
 
-        const { data: payout, error } = await supabase
+        // Verify the payout exists and is in pending state
+        const { data: existingPayout, error: fetchError } = await supabase
+            .from('platform_payouts')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) {
+            console.error('[Execute Payout] Fetch error:', fetchError);
+            throw new Error(`Failed to fetch payout: ${fetchError.message}`);
+        }
+
+        if (!existingPayout) {
+            return res.status(404).json({ error: 'Payout not found' });
+        }
+
+        if (existingPayout.status === 'completed') {
+            return res.status(400).json({ error: 'Payout already completed' });
+        }
+
+        // Update the payout to completed status
+        // executed_at and status MUST be set together atomically
+        const { data: payout, error: updateError } = await supabase
             .from('platform_payouts')
             .update({
                 status: 'completed',
@@ -1112,7 +1138,20 @@ router.post('/platform-payouts/:id/execute', verifyToken, requireAdmin, async (r
             .select()
             .single();
 
-        if (error) throw error;
+        if (updateError) {
+            console.error('[Execute Payout] Update error:', updateError);
+            throw new Error(`Failed to update payout: ${updateError.message}`);
+        }
+
+        if (!payout) {
+            throw new Error('Payout update returned no data');
+        }
+
+        // Verify the update was successful
+        if (payout.status !== 'completed' || !payout.executed_at) {
+            console.error('[Execute Payout] Verification failed:', payout);
+            throw new Error('Payout update verification failed - status or executed_at not set');
+        }
 
         // Log the action
         await supabase.from('audit_logs').insert({
@@ -1122,12 +1161,23 @@ router.post('/platform-payouts/:id/execute', verifyToken, requireAdmin, async (r
             action: 'execute_platform_payout',
             target_type: 'platform_payout',
             target_id: id,
-            details: { amount: payout.amount, payoutType: payout.payout_type }
+            details: { 
+                amount: payout.amount, 
+                payoutType: payout.payout_type,
+                stripePayoutId: stripePayoutId || 'none'
+            }
         }).catch(e => console.warn('Audit log failed:', e));
+
+        console.log('[Execute Payout] ✅ Success:', {
+            id: payout.id,
+            amount: payout.amount,
+            status: payout.status,
+            executed_at: payout.executed_at
+        });
 
         res.json({ success: true, payout });
     } catch (error) {
-        console.error('Execute platform payout error:', error);
+        console.error('[Execute Payout] ❌ Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
