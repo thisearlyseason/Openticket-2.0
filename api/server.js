@@ -335,6 +335,9 @@ app.use('/api/upload', uploadRoutes);
 // Settings routes (global admin settings)
 app.use('/api/settings', settingsRoutes);
 
+// Platform settings - admin only, for system-wide configuration  
+app.use('/api/platform-settings', platformSettingsRoutes);
+
 // Kiosk routes (event-scoped kiosk mode)
 app.use('/api/kiosk', kioskRoutes);
 
