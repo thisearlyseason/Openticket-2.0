@@ -39,6 +39,7 @@ import onboardingRoutes from '../backend/routes/onboardingRoutes.js';
 import uploadRoutes from '../backend/routes/uploadRoutes.js';
 import subscriptionRoutes from '../backend/routes/subscriptionRoutes.js';
 import settingsRoutes from '../backend/routes/settingsRoutes.js';
+import platformSettingsRoutes from '../backend/routes/platformSettingsRoutes.js';
 import smmRoutes from '../backend/routes/smmRoutes.js';
 import kioskRoutes from '../backend/routes/kioskRoutes.js';
 
