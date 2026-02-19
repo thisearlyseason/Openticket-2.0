@@ -178,9 +178,11 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
 
     // Platform Settings State
-    const [platformStripeId, setPlatformStripeId] = useState('');
-    const [platformPublishableKey, setPlatformPublishableKey] = useState('');
-    const [platformSecretKey, setPlatformSecretKey] = useState('');
+    const [platformStripePublishableKey, setPlatformStripePublishableKey] = useState('');
+    const [platformStripeSecretKey, setPlatformStripeSecretKey] = useState('');
+    const [platformStripeWebhookSecret, setPlatformStripeWebhookSecret] = useState('');
+    const [stripeEnvironment, setStripeEnvironment] = useState<'test' | 'live'>('test');
+    const [isSavingStripeSettings, setIsSavingStripeSettings] = useState(false);
     const [resendApiKeyConfigured, setResendApiKeyConfigured] = useState(false);
     const [backendDefaultCurrency, setBackendDefaultCurrency] = useState('USD');
     const [globalGeminiKey, setGlobalGeminiKey] = useState('');
@@ -976,13 +978,74 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     };
 
     const handleSavePlatformSettings = async () => {
-        if (!currentUser) return;
-        await StorageService.updateUser(currentUser.id, {
-            stripeConnectId: platformStripeId,
-            stripePublishableKey: platformPublishableKey,
-            stripeSecretKey: platformSecretKey
-        });
-        window.alert("Platform settings saved successfully.");
+        if (!platformStripePublishableKey || !platformStripeSecretKey) {
+            window.alert("❌ Both Publishable Key and Secret Key are required.");
+            return;
+        }
+
+        setIsSavingStripeSettings(true);
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/platform-settings/stripe', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    publishableKey: platformStripePublishableKey,
+                    secretKey: platformStripeSecretKey,
+                    webhookSecret: platformStripeWebhookSecret || undefined
+                })
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to save Stripe settings');
+            }
+
+            // Reload settings to confirm save
+            await loadPlatformSettings();
+
+            window.alert(
+                `✅ ${data.message}\n\n` +
+                `Environment: ${data.environment.toUpperCase()}\n\n` +
+                `⚠️ IMPORTANT: Changes will take effect after backend restart or next deployment.`
+            );
+        } catch (error: any) {
+            console.error('Failed to save platform settings:', error);
+            window.alert(`❌ Error: ${error.message}`);
+        } finally {
+            setIsSavingStripeSettings(false);
+        }
+    };
+
+    const loadPlatformSettings = async () => {
+        try {
+            const token = await StorageService.getAuthToken();
+            const response = await fetch('/api/platform-settings/stripe', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setPlatformStripePublishableKey(data.publishableKey || '');
+                // Don't load secret key for security - just show masked version
+                setStripeEnvironment(data.environment || 'test');
+                console.log('[SuperAdmin] Platform settings loaded:', {
+                    publishableKeyMasked: data.publishableKeyMasked,
+                    secretKeyMasked: data.secretKeyMasked,
+                    webhookSecretMasked: data.webhookSecretMasked,
+                    environment: data.environment,
+                    isConfigured: data.isConfigured
+                });
+            }
+        } catch (error) {
+            console.error('[SuperAdmin] Failed to load platform settings:', error);
+        }
     };
 
     const handleSaveGlobalGeminiKey = async () => {
