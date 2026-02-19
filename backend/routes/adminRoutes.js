@@ -982,23 +982,25 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
     try {
         const supabase = (await import('../services/supabase.js')).default;
         
-        // Get the last completed payout date for each type
+        // Get the most recent completed payout for each type (by created_at, not executed_at)
         const { data: lastPayouts } = await supabase
             .from('platform_payouts')
-            .select('payout_type, executed_at')
+            .select('payout_type, created_at')
             .eq('status', 'completed')
-            .order('executed_at', { ascending: false });
+            .order('created_at', { ascending: false });
 
-        const lastPlatformFeePayout = lastPayouts?.find(p => p.payout_type === 'platform_fees')?.executed_at;
-        const lastSubscriptionPayout = lastPayouts?.find(p => p.payout_type === 'subscriptions')?.executed_at;
+        const lastPlatformFeePayout = lastPayouts?.find(p => p.payout_type === 'platform_fees')?.created_at;
+        const lastSubscriptionPayout = lastPayouts?.find(p => p.payout_type === 'subscriptions')?.created_at;
 
-        // Calculate pending platform fees (from financial_transactions since last payout)
+        // Calculate pending platform fees (from financial_transactions)
         let platformFeesQuery = supabase
             .from('financial_transactions')
             .select('platform_fee, created_at')
             .eq('status', 'succeeded')
             .gt('platform_fee', 0);
         
+        // CRITICAL: Only filter by date if a completed payout exists
+        // If no payout exists, ALL succeeded transactions are pending
         if (lastPlatformFeePayout) {
             platformFeesQuery = platformFeesQuery.gt('created_at', lastPlatformFeePayout);
         }
