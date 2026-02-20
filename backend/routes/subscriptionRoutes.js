@@ -394,7 +394,6 @@ router.post('/verify', async (req, res) => {
                 status: 'succeeded',
                 payout_status: 'pending',
                 transaction_type: 'smm_subscription',
-                type: 'subscription',
                 affiliate_code: userId, // Store user_id here for tracking
                 affiliate_commission: 0,
                 discount_amount: 0,
