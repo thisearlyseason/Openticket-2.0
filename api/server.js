@@ -31,20 +31,24 @@ const loadPlatformSettingsFromDB = async () => {
             process.env.SUPABASE_URL,
             process.env.SUPABASE_SERVICE_ROLE_KEY
         );
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('platform_settings')
             .select('value')
             .eq('key', 'stripe_config')
             .single();
+        if (error && (error.message?.includes('does not exist') || error.message?.includes('schema cache'))) {
+            console.log('[Server] platform_settings table not yet created - using env vars');
+            return;
+        }
         if (data?.value) {
             const cfg = data.value;
             if (cfg.secretKey) process.env.STRIPE_SECRET_KEY = cfg.secretKey;
             if (cfg.publishableKey) process.env.VITE_STRIPE_PUBLISHABLE_KEY = cfg.publishableKey;
             if (cfg.webhookSecret) process.env.STRIPE_WEBHOOK_SECRET = cfg.webhookSecret;
-            console.log('[Server] ✅ Loaded Stripe settings from database (overrides env vars)');
+            console.log('[Server] Loaded Stripe settings from database (overrides env vars)');
         }
     } catch (e) {
-        // Table may not exist yet or other error - use env vars as fallback
+        // Ignore errors - use env vars as fallback
         console.log('[Server] Platform settings not in DB, using env vars');
     }
 };
