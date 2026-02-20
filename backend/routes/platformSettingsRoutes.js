@@ -200,14 +200,16 @@ router.put('/stripe', verifyToken, requireAdmin, async (req, res) => {
 router.get('/all', verifyToken, requireAdmin, async (req, res) => {
     try {
         const supabase = (await import('../services/supabase.js')).default;
-        const { data: dbSettings } = await supabase
+        const { data: dbSettings, error: dbErr } = await supabase
             .from('platform_settings')
             .select('key, value');
 
         const dbConfig = {};
-        (dbSettings || []).forEach(row => {
-            dbConfig[row.key] = row.value;
-        });
+        if (!dbErr) {
+            (dbSettings || []).forEach(row => {
+                dbConfig[row.key] = row.value;
+            });
+        }
 
         const stripeConfig = dbConfig.stripe_config || {};
         const publishableKey = stripeConfig.publishableKey || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
