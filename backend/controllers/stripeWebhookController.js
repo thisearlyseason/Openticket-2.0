@@ -26,8 +26,8 @@ export const handleWebhook = async (req, res) => {
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!endpointSecret) {
-        console.error('STRIPE_WEBHOOK_SECRET is missing');
-        return res.status(500).send('Webhook Error: Secret missing');
+        console.error('[Webhook] STRIPE_WEBHOOK_SECRET is missing');
+        return res.status(400).send('Webhook Error: Secret not configured');
     }
 
     let event;
@@ -38,6 +38,30 @@ export const handleWebhook = async (req, res) => {
     } catch (err) {
         console.error(`Webhook Signature Verification Failed: ${err.message}`);
         return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // ✅ FIX: Prevent webhook replay attacks
+    const eventId = event.id;
+    
+    if (processedWebhookEvents.has(eventId)) {
+        console.log(`[Webhook] Duplicate event detected: ${eventId}. Skipping.`);
+        return res.json({ received: true, status: 'duplicate' });
+    }
+
+    // Add to processed cache
+    processedWebhookEvents.add(eventId);
+    
+    // Cleanup cache periodically to prevent memory leak
+    cacheCleanupCounter++;
+    if (cacheCleanupCounter > 1000) {
+        if (processedWebhookEvents.size > MAX_CACHE_SIZE) {
+            // Remove oldest 50% of entries (Set is insertion-ordered)
+            const entries = Array.from(processedWebhookEvents);
+            const toRemove = entries.slice(0, Math.floor(entries.length / 2));
+            toRemove.forEach(id => processedWebhookEvents.delete(id));
+            console.log(`[Webhook] Cache cleanup: removed ${toRemove.length} old entries`);
+        }
+        cacheCleanupCounter = 0;
     }
 
     console.log(`[Webhook] Received event: ${event.type}`);
