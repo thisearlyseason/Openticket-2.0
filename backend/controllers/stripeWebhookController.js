@@ -93,6 +93,14 @@ export const handleWebhook = async (req, res) => {
                 await handlePayoutFailed(event.data.object);
                 break;
 
+            case 'invoice.paid':
+                await handleInvoicePaid(event.data.object);
+                break;
+
+            case 'invoice.payment_failed':
+                await handleInvoicePaymentFailed(event.data.object);
+                break;
+
             case 'checkout.session.expired':
             case 'checkout.session.async_payment_failed':
                 await handlePaymentFailed(stripe, event.data.object);
