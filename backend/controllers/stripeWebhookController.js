@@ -921,6 +921,150 @@ async function handlePayoutFailed(payout) {
                         
                         <p>Unfortunately, your recent payout of <strong>${formattedAmount}</strong> has failed.</p>
                         
+
+/**
+ * ✅ FIX: Handle invoice.paid (subscription payments)
+ * Track subscription revenue in financial_transactions
+ */
+async function handleInvoicePaid(invoice) {
+    console.log(`[Webhook] Processing invoice.paid: ${invoice.id}`);
+
+    try {
+        // Check if it's a subscription invoice
+        if (!invoice.subscription) {
+            console.log('[Webhook] Invoice is not for a subscription, skipping');
+            return;
+        }
+
+        const stripeSubscriptionId = invoice.subscription;
+
+        // Find user by subscription ID
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, email, name')
+            .eq('stripe_subscription_id', stripeSubscriptionId)
+            .single();
+
+        if (profileError || !profile) {
+            console.error(`[Webhook] Could not find profile for subscription: ${stripeSubscriptionId}`);
+            return;
+        }
+
+        // Check if already recorded (idempotency)
+        const { data: existing } = await supabase
+            .from('financial_transactions')
+            .select('id')
+            .eq('stripe_payment_intent_id', invoice.payment_intent)
+            .single();
+
+        if (existing) {
+            console.log(`[Webhook] Invoice ${invoice.id} already recorded. Skipping.`);
+            return;
+        }
+
+        // Calculate amounts
+        const grossAmount = invoice.amount_paid / 100;
+        const stripeFee = invoice.charge 
+            ? (await getActualStripeFee(invoice.charge)) 
+            : (grossAmount * 0.039 + 0.30); // Fallback estimate
+
+        // Insert financial transaction
+        const { error: txError } = await supabase
+            .from('financial_transactions')
+            .insert({
+                user_id: profile.id,
+                transaction_type: invoice.metadata?.subscription_type || 'subscription',
+                type: 'subscription',
+                gross_amount: grossAmount,
+                platform_fee: grossAmount, // Platform keeps 100% of subscription revenue
+                stripe_fee: stripeFee,
+                organizer_net: 0,
+                status: 'succeeded',
+                stripe_payment_intent_id: invoice.payment_intent,
+                currency: invoice.currency,
+                created_at: new Date(invoice.created * 1000).toISOString(),
+                metadata: {
+                    invoice_id: invoice.id,
+                    subscription_id: stripeSubscriptionId,
+                    billing_reason: invoice.billing_reason
+                }
+            });
+
+        if (txError) {
+            console.error('[Webhook] Failed to insert subscription transaction:', txError);
+        } else {
+            console.log(`[Webhook] Recorded subscription payment: $${grossAmount} for user ${profile.email}`);
+        }
+
+    } catch (error) {
+        console.error('[Webhook] Error handling invoice.paid:', error);
+    }
+}
+
+/**
+ * Handle invoice.payment_failed (subscription payment failures)
+ */
+async function handleInvoicePaymentFailed(invoice) {
+    console.log(`[Webhook] Processing invoice.payment_failed: ${invoice.id}`);
+
+    try {
+        if (!invoice.subscription) {
+            return;
+        }
+
+        const stripeSubscriptionId = invoice.subscription;
+
+        // Find user
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, email, name')
+            .eq('stripe_subscription_id', stripeSubscriptionId)
+            .single();
+
+        if (profile) {
+            // Log audit trail
+            await AuditLogService.log({
+                timestamp: new Date().toISOString(),
+                actorId: profile.id,
+                actorType: 'user',
+                action: 'subscription_payment_failed',
+                targetType: 'subscription',
+                targetId: stripeSubscriptionId,
+                details: {
+                    invoice_id: invoice.id,
+                    amount: invoice.amount_due / 100,
+                    currency: invoice.currency,
+                    attempt_count: invoice.attempt_count,
+                    next_payment_attempt: invoice.next_payment_attempt
+                }
+            });
+
+            console.log(`[Webhook] Subscription payment failed for user ${profile.email}`);
+        }
+    } catch (error) {
+        console.error('[Webhook] Error handling invoice.payment_failed:', error);
+    }
+}
+
+/**
+ * Helper: Get actual Stripe fee from charge
+ */
+async function getActualStripeFee(chargeId) {
+    try {
+        const stripe = getStripe();
+        const charge = await stripe.charges.retrieve(chargeId, {
+            expand: ['balance_transaction']
+        });
+        
+        if (charge?.balance_transaction?.fee) {
+            return charge.balance_transaction.fee / 100;
+        }
+    } catch (err) {
+        console.warn('[Webhook] Could not retrieve actual stripe fee:', err.message);
+    }
+    return 0;
+}
+
                         <div style="background-color: #fff3cd; border-left: 4px solid: #ffc107; padding: 15px; margin: 20px 0;">
                             <h4 style="margin-top: 0; color: #856404;">Reason:</h4>
                             <p style="margin-bottom: 0;">${payout.failure_message || 'No specific reason provided by Stripe'}</p>
