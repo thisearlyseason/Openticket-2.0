@@ -1388,23 +1388,30 @@ export const confirmAtDoorPayment = async (req, res) => {
         // Record financial transaction
         const grossAmount = paymentIntent.amount / 100;
         const currency = paymentIntent.currency.toUpperCase();
+        const platformFee = paymentIntent.application_fee_amount ? paymentIntent.application_fee_amount / 100 : 0;
+        const stripeFee = 0; // Stripe fee is deducted from organizer's connected account
+        const organizerNet = grossAmount - platformFee;
 
         try {
-            await supabase.from('financial_transactions').insert({
-                event_id: paymentIntent.metadata.eventId,
+            const { error: txInsertErr } = await supabase.from('financial_transactions').insert({
+                event_id: paymentIntent.metadata?.eventId || null,
                 registration_id: registrationId,
-                type: 'sale',
+                transaction_type: 'at_door_payment',
                 gross_amount: grossAmount,
-                platform_fee: paymentIntent.application_fee_amount ? paymentIntent.application_fee_amount / 100 : 0,
-                net_amount: paymentIntent.amount_received ? paymentIntent.amount_received / 100 : grossAmount,
-                currency: currency,
-                payment_method: 'card',
-                payment_source: 'stripe_at_door',
+                platform_fee: platformFee,
+                stripe_fee: stripeFee,
+                organizer_net: organizerNet,
+                currency: paymentIntent.currency?.toLowerCase() || 'usd',
                 stripe_payment_intent_id: paymentIntentId,
-                status: 'completed',
+                status: 'succeeded',
+                payout_status: 'pending',
                 created_at: new Date().toISOString(),
             });
-            console.log(`[Stripe] Financial transaction recorded for at-door payment: ${registrationId}`);
+            if (txInsertErr) {
+                console.warn('[Stripe] Could not record financial transaction:', txInsertErr.message);
+            } else {
+                console.log(`[Stripe] Financial transaction recorded for at-door payment: ${registrationId}`);
+            }
         } catch (txError) {
             console.warn('[Stripe] Could not record financial transaction:', txError);
             // Non-blocking - registration is already marked as paid
