@@ -351,7 +351,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         try {
             const token = await import('../services/firebaseConfig').then(m => m.getAuthToken());
             const severityParam = suspiciousSeverityFilter !== 'all' ? `?severity=${suspiciousSeverityFilter}` : '';
-            const response = await fetch(`/api/admin/security-audit-logs/suspicious${severityParam}`, {
+            const response = await csrfFetch(`/api/admin/security-audit-logs/suspicious${severityParam}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
