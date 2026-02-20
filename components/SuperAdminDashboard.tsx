@@ -186,6 +186,10 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const [resendApiKeyConfigured, setResendApiKeyConfigured] = useState(false);
     const [backendDefaultCurrency, setBackendDefaultCurrency] = useState('USD');
     const [globalGeminiKey, setGlobalGeminiKey] = useState('');
+    // Stripe Connect state (separate from API key settings)
+    const [platformStripeId, setPlatformStripeId] = useState('');
+    const [platformPublishableKey, setPlatformPublishableKey] = useState('');
+    const [platformSecretKey, setPlatformSecretKey] = useState('');
 
     // Finance date range filter - applies to all financial data
     const [financeDateRange, setFinanceDateRange] = useState<'30d' | '60d' | '90d' | 'all' | 'custom'>('30d');
