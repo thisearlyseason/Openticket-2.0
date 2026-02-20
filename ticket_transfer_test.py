@@ -11,7 +11,7 @@ import uuid
 from typing import Dict, Any, Optional
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://ticket-payout-audit.preview.emergentagent.com"
+BACKEND_URL = "https://payout-system-14.preview.emergentagent.com"
 
 class TicketTransferTester:
     def __init__(self):

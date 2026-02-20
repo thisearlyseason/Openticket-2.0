@@ -14,7 +14,7 @@ from typing import Dict, Any, List
 from datetime import datetime
 
 # Configuration - Use production URL from frontend/.env
-BACKEND_URL = "https://ticket-payout-audit.preview.emergentagent.com"
+BACKEND_URL = "https://payout-system-14.preview.emergentagent.com"
 
 class CheckInSystemTester:
     def __init__(self):
