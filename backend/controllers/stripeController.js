@@ -270,6 +270,26 @@ export const createOrder = async (req, res) => {
             donationAmount: ticketDonationAmount, // For donation-type tickets
         });
 
+        // ✅ FIX: Validate transaction amount limits
+        const MAX_TRANSACTION_AMOUNT = 50000; // $50,000
+        const MIN_TRANSACTION_AMOUNT = 0.50;   // $0.50
+
+        if (breakdown.grandTotal > MAX_TRANSACTION_AMOUNT) {
+            return res.status(400).json({ 
+                error: `Transaction amount ($${breakdown.grandTotal.toFixed(2)}) exceeds maximum allowed ($${MAX_TRANSACTION_AMOUNT.toFixed(2)})`,
+                code: 'AMOUNT_TOO_HIGH',
+                maxAmount: MAX_TRANSACTION_AMOUNT
+            });
+        }
+
+        if (breakdown.grandTotal > 0 && breakdown.grandTotal < MIN_TRANSACTION_AMOUNT) {
+            return res.status(400).json({
+                error: `Transaction amount ($${breakdown.grandTotal.toFixed(2)}) is below minimum allowed ($${MIN_TRANSACTION_AMOUNT.toFixed(2)})`,
+                code: 'AMOUNT_TOO_LOW',
+                minAmount: MIN_TRANSACTION_AMOUNT
+            });
+        }
+
         if (breakdown.items.length === 0) {
             return res.status(400).json({ error: "No items selected" });
         }
