@@ -660,6 +660,31 @@ async function handleRefund(stripe, refundData) {
         return;
     }
 
+    // ✅ FIX: Validate refund amount
+    const originalAmount = transaction.gross_amount;
+    
+    if (refundAmountDollars > originalAmount) {
+        console.error(`[Webhook] Invalid refund: $${refundAmountDollars} exceeds original $${originalAmount}`);
+        return; // Skip processing invalid refund
+    }
+
+    // Check total refunds don't exceed original transaction
+    const { data: existingRefunds } = await supabase
+        .from('financial_transactions')
+        .select('gross_amount')
+        .eq('stripe_payment_intent_id', paymentIntentId)
+        .eq('transaction_type', 'refund');
+
+    const totalRefunded = (existingRefunds || [])
+        .reduce((sum, r) => sum + Math.abs(r.gross_amount), 0);
+
+    if (totalRefunded + refundAmountDollars > originalAmount + 0.01) { // Allow 1 cent tolerance
+        console.error(`[Webhook] Total refunds ($${totalRefunded + refundAmountDollars}) would exceed original ($${originalAmount})`);
+        return;
+    }
+
+    console.log(`[Webhook] Refund validation passed: $${refundAmountDollars} of $${originalAmount} (total refunded so far: $${totalRefunded})`);
+
     // Calculate refund proportions
     const refundRatio = transaction.gross_amount > 0 
         ? refundAmountDollars / transaction.gross_amount 
