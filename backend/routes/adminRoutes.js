@@ -1033,6 +1033,8 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
         res.json({
             platformFees: {
                 amount: pendingPlatformFees,
+                totalCollected: totalPlatformFees,
+                scheduledAmount: scheduledPlatformFees,
                 transactionCount: platformFeeCount,
                 periodStart: lastPlatformFeePayout || null,
                 periodEnd: new Date().toISOString()
