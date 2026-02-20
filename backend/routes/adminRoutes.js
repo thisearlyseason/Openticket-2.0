@@ -1133,17 +1133,35 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
                 amount: pendingPlatformFees,
                 totalCollected: totalPlatformFees,
                 scheduledAmount: scheduledPlatformFees,
+                failedAmount: failedAmount,
                 transactionCount: platformFeeCount,
                 periodStart: lastPlatformFeePayout || null,
                 periodEnd: new Date().toISOString()
             },
             subscriptions: {
                 amount: pendingSubscriptionRevenue,
+                totalCollected: totalSubscriptionRevenue,
+                scheduledAmount: scheduledSubscriptionRevenue,
+                failedAmount: failedSubAmount,
                 transactionCount: subscriptionCount,
                 periodStart: lastSubscriptionPayout || null,
                 periodEnd: new Date().toISOString()
             },
-            total: pendingPlatformFees + pendingSubscriptionRevenue
+            smm: {
+                amount: pendingSMMRevenue,
+                totalCollected: totalSMMRevenue,
+                scheduledAmount: scheduledSMMRevenue,
+                failedAmount: failedSMMAmount,
+                transactionCount: smmCount,
+                periodStart: lastSMMPayout || null,
+                periodEnd: new Date().toISOString()
+            },
+            total: pendingPlatformFees + pendingSubscriptionRevenue + pendingSMMRevenue,
+            breakdown: {
+                platformFees: pendingPlatformFees,
+                subscriptions: pendingSubscriptionRevenue,
+                smm: pendingSMMRevenue
+            }
         });
     } catch (error) {
         console.error('Get pending payouts error:', error);
