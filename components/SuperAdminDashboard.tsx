@@ -378,7 +378,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const fetchGlobalGeminiKey = async () => {
         try {
             console.log('[SuperAdmin] Fetching global Gemini key...');
-            const response = await fetch('/api/settings/admin-gemini-key');
+            const response = await csrfFetch('/api/settings/admin-gemini-key');
             const data = await response.json();
             console.log('[SuperAdmin] Gemini key response:', data);
             if (data.globalGeminiKey) {
