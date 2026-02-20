@@ -840,7 +840,7 @@ export const EventBuilder = () => {
                             {/* ... Date & Time Card ... */}
                             <Card className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-bold flex items-center gap-4"><Clock className="text-[#00ff9d]" size={20} /> Date & Time</h2>
+                                    <h2 className="text-xl font-bold flex items-center gap-2"><Clock className="text-primary" size={18} /> Date & Time</h2>
 
                                     <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-900 rounded-full px-3 py-1 border border-zinc-200 dark:border-zinc-800">
                                         <span className={`text-xs font-bold ${!formData.isRecurring ? 'text-primary' : 'text-zinc-500'}`}>Single Date</span>
