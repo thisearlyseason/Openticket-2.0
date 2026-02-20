@@ -66,7 +66,7 @@ FOR ALL
 USING (
     EXISTS (
         SELECT 1 FROM profiles 
-        WHERE profiles.id = auth.uid() 
+        WHERE profiles.id = auth.uid()::text 
         AND profiles.is_admin = true
     )
 );
