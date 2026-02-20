@@ -207,7 +207,8 @@ def test_type_field_requirement():
                 timeout=10
             )
             
-            if migration_response.status_code == 401:
+            # Accept both 401 (auth required) and 403 (CSRF protection)
+            if migration_response.status_code in [401, 403]:
                 log_test("Type field migration endpoint", "PASS", "Migration endpoint accessible and secured")
                 return True
             else:
