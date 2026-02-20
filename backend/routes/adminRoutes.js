@@ -1378,18 +1378,27 @@ router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
                 // Backfill type field in financial_transactions
                 if (dryRun) {
                     const supabase = (await import('../services/supabase.js')).default;
-                    const { data: txCount } = await supabase
+                    const { data: txCount, error: countErr } = await supabase
                         .from('financial_transactions')
                         .select('id', { count: 'exact', head: true })
                         .or('type.is.null,type.eq.unknown');
-                    results = { 
-                        dryRun: true, 
-                        message: `Would update ${txCount?.length || 'N'} transactions with unknown/null type`,
-                        pendingCount: txCount?.length || 0
-                    };
+                    
+                    if (countErr && countErr.message?.includes('"type"')) {
+                        results = { 
+                            dryRun: true, 
+                            columnExists: false,
+                            message: 'type column does not exist yet. Run the SQL migration first.'
+                        };
+                    } else {
+                        results = { 
+                            dryRun: true, 
+                            columnExists: true,
+                            message: `Would update transactions with unknown/null type`,
+                        };
+                    }
                 } else {
-                    const { default: migrateModule } = await import('../migrations/migrate_transaction_types.js');
-                    results = { success: true, message: 'Migration executed' };
+                    const { migrateTransactionTypes } = await import('../migrations/migrate_transaction_types.js');
+                    results = await migrateTransactionTypes();
                 }
                 break;
             case 'backfill_transaction_types':
