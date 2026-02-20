@@ -542,7 +542,6 @@ async function handlePaymentIntentSucceeded(stripe, paymentIntent) {
         status: 'succeeded',
         payout_status: 'pending',
         transaction_type: 'checkin_payment',
-        type: 'event',
     });
 
     console.log(`[Webhook] At-door payment processed for registration: ${registrationId}`);
