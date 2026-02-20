@@ -13,7 +13,8 @@ let tokenExpiryTime: number = 0;
  */
 export const fetchCsrfToken = async (): Promise<string> => {
     try {
-        const response = await fetch(`${API_URL}/api/csrf-token`, {
+        // Always use relative URL so Vite proxy (dev) and Vercel proxy (prod) handle routing correctly
+        const response = await fetch(`/api/csrf-token`, {
             method: 'GET',
             credentials: 'include', // Important: Include cookies
             headers: {
