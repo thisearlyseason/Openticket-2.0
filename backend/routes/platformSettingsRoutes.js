@@ -31,29 +31,14 @@ const maskKey = (key) => {
 
 /**
  * Ensure platform_settings table exists in Supabase
+ * Returns true if table exists, false otherwise
  */
-async function ensurePlatformSettingsTable(supabase) {
+async function checkPlatformSettingsTable(supabase) {
     try {
         await supabase.from('platform_settings').select('key').limit(1);
+        return true;
     } catch (err) {
-        // Table might not exist - try to create it
-        try {
-            await supabase.rpc('exec_sql', {
-                sql: `
-                    CREATE TABLE IF NOT EXISTS platform_settings (
-                        key TEXT PRIMARY KEY,
-                        value JSONB NOT NULL DEFAULT '{}',
-                        updated_at TIMESTAMPTZ DEFAULT NOW(),
-                        updated_by TEXT
-                    );
-                    ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
-                    CREATE POLICY IF NOT EXISTS "Service role access" ON platform_settings
-                        USING (true);
-                `
-            });
-        } catch (createErr) {
-            console.warn('[PlatformSettings] Could not create table:', createErr.message);
-        }
+        return false;
     }
 }
 
