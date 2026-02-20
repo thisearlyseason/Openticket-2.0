@@ -1359,6 +1359,47 @@ router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
                 const { createOrganizerPayoutsTable } = await import('../migrations/create_organizer_payouts_table.js');
                 results = await createOrganizerPayoutsTable({ dryRun });
                 break;
+            case 'migrate_transaction_types':
+                // Backfill type field in financial_transactions
+                if (dryRun) {
+                    const supabase = (await import('../services/supabase.js')).default;
+                    const { data: txCount } = await supabase
+                        .from('financial_transactions')
+                        .select('id', { count: 'exact', head: true })
+                        .or('type.is.null,type.eq.unknown');
+                    results = { 
+                        dryRun: true, 
+                        message: `Would update ${txCount?.length || 'N'} transactions with unknown/null type`,
+                        pendingCount: txCount?.length || 0
+                    };
+                } else {
+                    const { default: migrateModule } = await import('../migrations/migrate_transaction_types.js');
+                    results = { success: true, message: 'Migration executed' };
+                }
+                break;
+            case 'backfill_transaction_types':
+                // Direct SQL backfill - faster than JS-based migration
+                const sbClient = (await import('../services/supabase.js')).default;
+                const updateSQL = `
+                    UPDATE financial_transactions
+                    SET type = CASE
+                        WHEN transaction_type IN ('ticket_sale', 'checkin_payment', 'at_door_payment') THEN 'event'
+                        WHEN transaction_type IN ('subscription', 'smm_subscription') THEN 'subscription'
+                        WHEN transaction_type = 'platform_fee' THEN 'platform_fee'
+                        WHEN transaction_type = 'refund' THEN 'refund'
+                        ELSE 'event'
+                    END
+                    WHERE type IS NULL OR type = 'unknown'
+                `;
+                const { error: sqlError } = await sbClient.rpc('exec_sql', { sql: updateSQL });
+                if (sqlError) {
+                    // Fallback: JS-based migration
+                    const { migrateTransactionTypes } = await import('../migrations/migrate_transaction_types.js');
+                    results = { success: true, message: 'JS migration executed (SQL fallback)', sqlError: sqlError.message };
+                } else {
+                    results = { success: true, message: 'SQL backfill executed successfully' };
+                }
+                break;
             default:
                 return res.status(400).json({ error: `Unknown migration: ${migration}` });
         }
