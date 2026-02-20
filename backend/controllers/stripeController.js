@@ -388,7 +388,16 @@ export const createOrder = async (req, res) => {
             // Convert platform fee and donation to charge currency
             const convertedPlatformFee = breakdown.platformFee * currencyConversionRate;
             const convertedDonation = donationAmount * currencyConversionRate;
-            const applicationFeeAmount = Math.round((convertedPlatformFee + convertedDonation) * 100); // cents in charge currency
+            
+            // ✅ FIX: Add Stripe's 1% currency conversion fee if currency conversion happened
+            const conversionFeeAmount = needsConversion ? (convertedPlatformFee + convertedDonation) * 0.01 : 0;
+            const totalApplicationFee = convertedPlatformFee + convertedDonation + conversionFeeAmount;
+            
+            const applicationFeeAmount = Math.round(totalApplicationFee * 100); // cents in charge currency
+
+            if (needsConversion && conversionFeeAmount > 0) {
+                console.log(`[Stripe] Currency conversion fee (1%): ${conversionFeeAmount.toFixed(2)} ${chargeCurrency.toUpperCase()}`);
+            }
 
             sessionOptions.payment_intent_data = {
                 application_fee_amount: applicationFeeAmount,
