@@ -1037,14 +1037,14 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             if (response.ok) {
                 const data = await response.json();
                 setPlatformStripePublishableKey(data.publishableKey || '');
-                // Don't load secret key for security - just show masked version
                 setStripeEnvironment(data.environment || 'test');
                 console.log('[SuperAdmin] Platform settings loaded:', {
                     publishableKeyMasked: data.publishableKeyMasked,
                     secretKeyMasked: data.secretKeyMasked,
                     webhookSecretMasked: data.webhookSecretMasked,
                     environment: data.environment,
-                    isConfigured: data.isConfigured
+                    isConfigured: data.isConfigured,
+                    isFromDB: data.isFromDB
                 });
             }
         } catch (error) {
