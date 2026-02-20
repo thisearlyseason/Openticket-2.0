@@ -62,6 +62,10 @@ export const handleWebhook = async (req, res) => {
                 await handlePayoutPaid(event.data.object);
                 break;
 
+            case 'payout.failed':
+                await handlePayoutFailed(event.data.object);
+                break;
+
             case 'checkout.session.expired':
             case 'checkout.session.async_payment_failed':
                 await handlePaymentFailed(stripe, event.data.object);
@@ -817,6 +821,105 @@ async function handlePayoutPaid(payout) {
 
     // For now, just log it
     console.log(`[Webhook] Payout ${payout.id} paid: $${payout.amount / 100}`);
+}
+
+/**
+ * Handle payout.failed
+ * Track failed payouts and notify affected organizers
+ */
+async function handlePayoutFailed(payout) {
+    console.error(`[Webhook] Processing payout.failed: ${payout.id}`);
+    console.error(`[Webhook] Failure reason: ${payout.failure_message || 'Unknown'}`);
+    console.error(`[Webhook] Amount: ${payout.currency.toUpperCase()} ${payout.amount / 100}`);
+
+    try {
+        // 1. Log to audit trail
+        await AuditLogService.log({
+            timestamp: new Date().toISOString(),
+            actorId: 'system',
+            actorType: 'system',
+            action: 'payout_failed',
+            targetType: 'payout',
+            targetId: payout.id,
+            details: {
+                stripePayoutId: payout.id,
+                stripeAccountId: payout.destination || payout.account,
+                amount: payout.amount / 100,
+                currency: payout.currency,
+                failureCode: payout.failure_code,
+                failureMessage: payout.failure_message,
+                failureBalanceTransaction: payout.failure_balance_transaction,
+                arrivalDate: payout.arrival_date,
+            }
+        });
+
+        // 2. Find the affected organizer
+        const stripeAccountId = payout.destination || payout.account;
+        const { data: organizer, error } = await supabase
+            .from('profiles')
+            .select('id, email, name, business_name')
+            .eq('stripe_connect_id', stripeAccountId)
+            .single();
+
+        if (error || !organizer) {
+            console.error(`[Webhook] Could not find organizer for Stripe account: ${stripeAccountId}`);
+            return;
+        }
+
+        // 3. Send notification email to organizer
+        try {
+            const displayName = organizer.business_name || organizer.name || 'there';
+            const formattedAmount = `${payout.currency.toUpperCase()} ${(payout.amount / 100).toFixed(2)}`;
+            
+            await EmailService.sendEmail({
+                to: organizer.email,
+                subject: `⚠️ Payout Failed - Action Required`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #e74c3c;">Payout Failed</h2>
+                        
+                        <p>Hi ${displayName},</p>
+                        
+                        <p>Unfortunately, your recent payout of <strong>${formattedAmount}</strong> has failed.</p>
+                        
+                        <div style="background-color: #fff3cd; border-left: 4px solid: #ffc107; padding: 15px; margin: 20px 0;">
+                            <h4 style="margin-top: 0; color: #856404;">Reason:</h4>
+                            <p style="margin-bottom: 0;">${payout.failure_message || 'No specific reason provided by Stripe'}</p>
+                        </div>
+                        
+                        <h3>What to do next:</h3>
+                        <ol>
+                            <li>Log in to your Stripe Dashboard to review the payout details</li>
+                            <li>Update your bank account information if needed</li>
+                            <li>Contact your bank to ensure they can receive payments</li>
+                            <li>Stripe will automatically retry the payout in the next cycle</li>
+                        </ol>
+                        
+                        <p>If you need assistance, please contact our support team or visit your Stripe Dashboard.</p>
+                        
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                            <p style="color: #666; font-size: 12px;">
+                                <strong>Payout ID:</strong> ${payout.id}<br>
+                                <strong>Stripe Account:</strong> ${stripeAccountId}<br>
+                                <strong>Date:</strong> ${new Date(payout.created * 1000).toLocaleString()}
+                            </p>
+                        </div>
+                        
+                        <p style="color: #666; font-size: 12px; margin-top: 20px;">
+                            This is an automated notification from OpenTicket.
+                        </p>
+                    </div>
+                `
+            });
+
+            console.log(`[Webhook] Payout failed notification sent to ${organizer.email}`);
+        } catch (emailError) {
+            console.error('[Webhook] Failed to send payout failure email:', emailError);
+        }
+
+    } catch (error) {
+        console.error('[Webhook] Error handling payout.failed:', error);
+    }
 }
 
 
