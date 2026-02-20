@@ -1702,59 +1702,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden min-h-[500px]">
                 {/* USERS TAB */}
                 {activeTab === 'users' && (
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="font-bold text-white">All Users ({safeUsers.length})</span>
-                        </div>
-                        
-                        <DataTable
-                            data={safeUsers}
-                            columns={userColumns}
-                            searchPlaceholder="Search users by name, email, or organization..."
-                            emptyMessage="No users found."
-                            exportFilename="openticket_users"
-                            getRowId={(user) => user.id}
-                        />
-                    </div>
+                    <UsersTab users={users} userColumns={userColumns} />
                 )}
 
                 {/* EVENTS TAB */}
                 {activeTab === 'events' && (
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="font-bold text-white">All Events ({safeEvents.length})</span>
-                        </div>
-                        
-                        <DataTable
-                            data={safeEvents}
-                            columns={eventColumns}
-                            searchPlaceholder="Search events by title, location, or organizer..."
-                            emptyMessage="No events found."
-                            exportFilename="openticket_events"
-                            getRowId={(event) => event.id}
-                        />
-                    </div>
+                    <EventsTab events={events} eventColumns={eventColumns} />
                 )}
 
                 {/* REGISTRATIONS TAB */}
                 {activeTab === 'registrations' && (
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="font-bold text-white">All Registrations ({safeRegistrations.length})</span>
-                            <span className="text-xs text-zinc-500 flex items-center gap-1">
-                                <span>← Scroll horizontally to see all columns →</span>
-                            </span>
-                        </div>
-                        
-                        <DataTable
-                            data={safeRegistrations}
-                            columns={registrationColumns}
-                            searchPlaceholder="Search registrations by event, attendee, or email..."
-                            emptyMessage="No registrations found. Registrations will appear here when users purchase tickets."
-                            exportFilename="openticket_registrations"
-                            getRowId={(reg) => reg.id}
-                        />
-                    </div>
+                    <RegistrationsTab registrations={registrations} registrationColumns={registrationColumns} />
                 )}
 
                 {/* FINANCE TAB */}
