@@ -226,15 +226,9 @@ async function handleCheckoutCompleted(stripe, session) {
             affiliate_commission: affiliateCommission,
         });
     } else {
-        // Fix type field for RPC-created transaction (RPC doesn't include type column)
-        await supabase
-            .from('financial_transactions')
-            .update({ type: 'event' })
-            .eq('stripe_session_id', session.id)
-            .or('type.is.null,type.eq.unknown');
+        // RPC succeeded - transaction created via stored procedure
+        console.log(`[Stripe] Transaction Processed via RPC for Session ${session.id}`);
     }
-
-    console.log(`[Stripe] Transaction Processed for Session ${session.id}`);
 
     // 8. Log to Audit Trail
     try {
