@@ -4,15 +4,18 @@ import { createRequire } from 'module';
 import { AuditLogService } from '../services/auditLogService.js';
 import { generateUniqueTickets } from '../utils/ticketGenerator.js';
 import PushService from '../services/pushService.js';
+import { getValidatedStripe } from '../utils/stripeHelper.js';
 const require = createRequire(import.meta.url);
 
 // FIX: Use Server-Side Email Service (Nodemailer), not Client-Side (Firebase)
 import { EmailService } from '../services/serverEmail.js';
 
-const getStripe = () => {
-    const Stripe = require('stripe');
-    return new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
-};
+// Processed webhook event IDs cache (prevent replay attacks)
+const processedWebhookEvents = new Set();
+const MAX_CACHE_SIZE = 10000; // Prevent memory leak
+let cacheCleanupCounter = 0;
+
+const getStripe = () => getValidatedStripe();
 
 /**
  * COMPREHENSIVE STRIPE WEBHOOK HANDLER
