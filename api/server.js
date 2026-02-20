@@ -24,6 +24,32 @@ console.log('[Server] RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY)
 console.log('[Server] SENDER_EMAIL:', process.env.SENDER_EMAIL || 'not set');
 console.log('[Server] FRONTEND_URL:', process.env.FRONTEND_URL || 'NOT SET');
 
+// Load platform settings from DB (overrides env vars if set via admin UI)
+const loadPlatformSettingsFromDB = async () => {
+    try {
+        const supabase = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
+        const { data } = await supabase
+            .from('platform_settings')
+            .select('value')
+            .eq('key', 'stripe_config')
+            .single();
+        if (data?.value) {
+            const cfg = data.value;
+            if (cfg.secretKey) process.env.STRIPE_SECRET_KEY = cfg.secretKey;
+            if (cfg.publishableKey) process.env.VITE_STRIPE_PUBLISHABLE_KEY = cfg.publishableKey;
+            if (cfg.webhookSecret) process.env.STRIPE_WEBHOOK_SECRET = cfg.webhookSecret;
+            console.log('[Server] ✅ Loaded Stripe settings from database (overrides env vars)');
+        }
+    } catch (e) {
+        // Table may not exist yet or other error - use env vars as fallback
+        console.log('[Server] Platform settings not in DB, using env vars');
+    }
+};
+loadPlatformSettingsFromDB();
+
 // Routes - FULLY ENABLED
 import authRoutes from '../backend/routes/authRoutes.js';
 import eventRoutes from '../backend/routes/eventRoutes.js';
