@@ -145,8 +145,7 @@ def test_api_structure():
         "/api/admin/events", 
         "/api/admin/registrations",
         "/api/admin/financials",
-        "/api/platform-settings/stripe",
-        "/api/admin/run-migration"
+        "/api/platform-settings/stripe"
     ]
     
     results = []
@@ -168,6 +167,23 @@ def test_api_structure():
         except requests.exceptions.RequestException as e:
             log_test(f"Route {route}", "FAIL", f"Request failed: {str(e)}")
             results.append(False)
+    
+    # Test POST migration route separately (expecting 403 due to CSRF)
+    try:
+        response = requests.post(f"{BACKEND_URL}/api/admin/run-migration", 
+                               json={"migration": "test", "dryRun": True}, timeout=10)
+        if response.status_code in [401, 403]:
+            log_test("Route /api/admin/run-migration (POST)", "PASS", f"Exists and secured (status: {response.status_code})")
+            results.append(True)
+        elif response.status_code == 404:
+            log_test("Route /api/admin/run-migration (POST)", "FAIL", "Route not found (404)")
+            results.append(False)
+        else:
+            log_test("Route /api/admin/run-migration (POST)", "PASS", f"Exists (status: {response.status_code})")
+            results.append(True)
+    except requests.exceptions.RequestException as e:
+        log_test("Route /api/admin/run-migration (POST)", "FAIL", f"Request failed: {str(e)}")
+        results.append(False)
     
     return all(results)
 
