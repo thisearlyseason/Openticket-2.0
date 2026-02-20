@@ -12,16 +12,29 @@ export const PLAN_FEES = {
     enterprise: { percent: 0.019, fixed: 0.49 },   // 1.9% + $0.49
 };
 
+// ✅ FIX: Platform fee cap to prevent excessive fees
+export const PLATFORM_FEE_CAP = 100; // $100 maximum
+
 /**
- * Calculate platform service fee
+ * Calculate platform service fee (with cap)
  * @param {number} subtotal - Base amount in dollars
  * @param {string} plan - 'free' | 'pro' | 'premium'
- * @returns {number} Service fee in dollars
+ * @returns {number} Service fee in dollars (capped at PLATFORM_FEE_CAP)
  */
 export const calculatePlatformFee = (subtotal, plan = 'free') => {
     if (subtotal <= 0) return 0;
+    
     const planFees = PLAN_FEES[plan] || PLAN_FEES.free;
-    return Number(((subtotal * planFees.percent) + planFees.fixed).toFixed(2));
+    const calculatedFee = Number(((subtotal * planFees.percent) + planFees.fixed).toFixed(2));
+    
+    // ✅ FIX: Cap the fee at maximum
+    const cappedFee = Math.min(calculatedFee, PLATFORM_FEE_CAP);
+    
+    if (cappedFee < calculatedFee) {
+        console.log(`[PriceCalculator] Platform fee capped: $${calculatedFee.toFixed(2)} → $${cappedFee.toFixed(2)}`);
+    }
+    
+    return cappedFee;
 };
 
 /**
