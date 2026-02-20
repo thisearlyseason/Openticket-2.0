@@ -1041,13 +1041,18 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                 const data = await response.json();
                 setPlatformStripePublishableKey(data.publishableKey || '');
                 setStripeEnvironment(data.environment || 'test');
+                // Store table existence info for UI
+                if (!data.tableExists) {
+                    console.warn('[SuperAdmin] platform_settings table not created yet. Run SQL migration.');
+                }
                 console.log('[SuperAdmin] Platform settings loaded:', {
                     publishableKeyMasked: data.publishableKeyMasked,
                     secretKeyMasked: data.secretKeyMasked,
                     webhookSecretMasked: data.webhookSecretMasked,
                     environment: data.environment,
                     isConfigured: data.isConfigured,
-                    isFromDB: data.isFromDB
+                    isFromDB: data.isFromDB,
+                    tableExists: data.tableExists
                 });
             }
         } catch (error) {
