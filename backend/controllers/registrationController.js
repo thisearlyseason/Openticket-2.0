@@ -705,6 +705,7 @@ export const refundRegistration = async (req, res) => {
                     status: 'refunded',
                     payout_status: 'pending_webhook',
                     transaction_type: 'refund',
+                    type: 'refund',
                     stripe_refund_id: stripeRefundId,
                 });
                 console.log(`[Refund] Created backup financial record for Stripe refund ${stripeRefundId}`);
