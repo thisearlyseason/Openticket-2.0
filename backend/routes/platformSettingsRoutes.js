@@ -30,19 +30,6 @@ const maskKey = (key) => {
 };
 
 /**
- * Ensure platform_settings table exists in Supabase
- * Returns true if table exists, false otherwise
- */
-async function checkPlatformSettingsTable(supabase) {
-    try {
-        await supabase.from('platform_settings').select('key').limit(1);
-        return true;
-    } catch (err) {
-        return false;
-    }
-}
-
-/**
  * GET /api/platform-settings/stripe
  * Get current Stripe configuration (masked for security)
  * Priority: DB settings > env vars
