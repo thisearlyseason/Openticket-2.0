@@ -222,6 +222,7 @@ async function handleCheckoutCompleted(stripe, session) {
             status: 'succeeded',
             payout_status: 'pending',
             transaction_type: 'ticket_sale',
+            type: 'event',
             affiliate_code: affiliateCode,
             affiliate_commission: affiliateCommission,
         });
