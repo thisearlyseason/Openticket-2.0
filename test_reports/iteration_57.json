@@ -1,0 +1,97 @@
+{
+  "summary": "Backend-only testing of financial system, Stripe key storage, and payout logic. All 31 tests passed. Key features verified: platform settings routes (GET/PUT /api/platform-settings/stripe), pending payout balance calculation, backfill_transaction_types migration, and SuperAdmin form state variables. One critical bug found: stripeController.js confirmAtDoorPayment() inserts wrong fields into financial_transactions.",
+
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/stripe/at-door/confirm-payment",
+        "issue": "confirmAtDoorPayment() in stripeController.js (lines 1393-1406) inserts financial_transactions with wrong schema fields: 'type: sale' (column doesn't exist, should be 'transaction_type: at_door_payment'), 'net_amount' (should be 'organizer_net'), 'payment_method', 'payment_source' (non-existent columns), 'status: completed' (should be 'succeeded'). Error is silently swallowed in try/catch so at-door Stripe payments produce NO financial transaction record.",
+        "priority": "HIGH",
+        "affected_file": "/app/backend/controllers/stripeController.js lines 1393-1406",
+        "fix": "Replace with: { transaction_type: 'at_door_payment', gross_amount: grossAmount, platform_fee: platformFee, stripe_fee: 0, organizer_net: grossAmount - platformFee, currency: currency.toLowerCase(), status: 'succeeded', payout_status: 'pending', stripe_payment_intent_id: paymentIntentId, event_id: ..., registration_id: ... }"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "platformSettingsRoutes.js",
+        "issue": "checkPlatformSettingsTable() helper function always returns true because Supabase client returns errors in {data, error} object (doesn't throw exceptions) but the function uses try/catch. This is dead code - routes use correct inline checks - but the helper is misleading.",
+        "priority": "LOW"
+      }
+    ]
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "features_verified": {
+    "GET_platform_settings_stripe": {
+      "status": "VERIFIED",
+      "notes": "Route exists, returns 401 without auth. Code review confirms: when table doesn't exist (Supabase error includes 'does not exist'), tableExists=false and falls back to env vars. When table exists but no row, tableExists=true. Response includes publishableKey, masked keys, isConfigured, isFromDB, tableExists, environment fields."
+    },
+    "PUT_platform_settings_stripe": {
+      "status": "VERIFIED",
+      "notes": "Route exists, returns 401/403 without auth. Code review confirms: checks for table existence before upsert. Returns 503 with setupRequired:true and SQL instructions when platform_settings table doesn't exist (error includes 'does not exist' or 'schema cache')."
+    },
+    "GET_admin_platform_payouts_pending": {
+      "status": "VERIFIED",
+      "notes": "Route exists, returns 401 without auth. Code review confirms: only counts 'succeeded' transactions with platform_fee>0. Only filters by date when a prior completed payout exists (all transactions when no prior payout). Subtracts in-flight (scheduled/pending) payouts. Uses Math.max(0,...) to prevent negatives. Response includes totalCollected, scheduledAmount, transactionCount, periodStart, periodEnd."
+    },
+    "POST_admin_run_migration_backfill": {
+      "status": "VERIFIED",
+      "notes": "Route exists, returns 401/403 without auth. Code review confirms: backfill_transaction_types case checks if 'type' column exists. Returns SQL instructions with success:false, columnExists:false, and ALTER TABLE SQL when column missing. Falls back to JS-based backfill when column exists."
+    },
+    "financial_transactions_type_field": {
+      "status": "PARTIAL - BUG FOUND",
+      "notes": "stripeWebhookController.js and registrationController.js correctly use 'transaction_type' (no bare 'type:' field). stripeController.js confirmAtDoorPayment() has 'type: sale' bug (line 1396) in the at-door Stripe payment path."
+    },
+    "superadmin_form_state_variables": {
+      "status": "VERIFIED",
+      "notes": "platformStripePublishableKey, platformStripeSecretKey, platformStripeWebhookSecret state variables exist. Form inputs bound to these variables. loadPlatformSettings() called when activeTab === 'settings'. Submission uses correct variable names."
+    }
+  },
+
+  "critical_code_review_comments": [
+    "CRITICAL: stripeController.js confirmAtDoorPayment() - 'type: sale' field does not exist in financial_transactions table (column is 'transaction_type'). Also uses net_amount, payment_method, payment_source, status: 'completed' - none matching the actual schema. Error silently swallowed so at-door Stripe payments create NO financial records.",
+    "DEAD CODE: checkPlatformSettingsTable() in platformSettingsRoutes.js always returns true because it uses try/catch but Supabase doesn't throw - it returns {data, error}. This helper is never called by routes (routes do inline checks correctly) but the misleading function should be removed or fixed.",
+    "NOTE: server.js loadPlatformSettingsFromDB() correctly handles missing platform_settings table on startup - confirmed working.",
+    "NOTE: All other financial_transaction inserts (webhook, registration, refund flows) correctly use 'transaction_type' field and proper schema."
+  ],
+
+  "test_report_links": [
+    "/app/backend/tests/test_financial_platform_settings.py",
+    "/app/test_reports/pytest/pytest_financial_platform.xml"
+  ],
+
+  "action_items": [
+    "CRITICAL: Fix stripeController.js confirmAtDoorPayment() (lines 1393-1406) - replace wrong financial_transactions insert with correct schema fields: transaction_type='at_door_payment', gross_amount, platform_fee, stripe_fee, organizer_net, currency, status='succeeded', payout_status='pending', stripe_payment_intent_id",
+    "LOW: Remove or fix the dead checkPlatformSettingsTable() helper in platformSettingsRoutes.js (lines 36-43) that always returns true"
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_financial_platform_settings.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (31/31 tests passed)",
+    "frontend": "N/A - backend-only testing requested"
+  },
+
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend financial system tests created at /app/backend/tests/test_financial_platform_settings.py (31 tests, 100% pass rate). Critical bug: stripeController.js confirmAtDoorPayment() uses wrong fields in financial_transactions insert (type: sale instead of transaction_type). All platform-settings routes verified. Pending balance calculation correctly subtracts scheduled payouts. backfill_transaction_types migration handles missing 'type' column by returning SQL instructions.",
+  "rca_of_issues": {
+    "at_door_financial_transaction_bug": {
+      "affected_file": "/app/backend/controllers/stripeController.js",
+      "affected_function": "confirmAtDoorPayment",
+      "lines": "1393-1406",
+      "root_cause": "The confirmAtDoorPayment() function appears to have been written independently from the main ticket sale financial transaction logic, using a different schema (possibly from an older version of the table). It uses 'type', 'net_amount', 'payment_method', 'payment_source' which don't exist in the financial_transactions table. The try/catch silently swallows the error, hiding the bug in production.",
+      "impact": "At-door Stripe card payments (POST /api/stripe/at-door/confirm-payment) will NOT create financial transaction records. This means: (1) at-door sales are invisible to the platform fee payout calculation, (2) organizer net earnings reports miss at-door payments, (3) the pending payout calculation for platform fees will undercount.",
+      "reproduction": "Process an at-door payment using the Stripe kiosk flow. Check financial_transactions table - no record will be created for that payment.",
+      "mitigation": "Replace the insert with correct schema: transaction_type='at_door_payment', gross_amount, platform_fee (from application_fee_amount), stripe_fee=0, organizer_net=grossAmount-platformFee, currency=currency.toLowerCase(), status='succeeded', payout_status='pending', stripe_payment_intent_id"
+    }
+  }
+}
