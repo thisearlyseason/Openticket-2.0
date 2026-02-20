@@ -2,7 +2,7 @@
 // @ts-ignore
 import { initializeApp } from 'firebase/app';
 // @ts-ignore
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { initializeAuth, GoogleAuthProvider, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
 // @ts-ignore
 import { getStorage } from 'firebase/storage';
 
@@ -19,7 +19,8 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "openticket-4f5bc.firebasestorage.app",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "926069496604",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:926069496604:web:d898aa1f91b31db38e78d9",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-S25BFPR85R"
+  // measurementId intentionally removed — auto-initializes Analytics which
+  // triggers addEventListener on DOM elements before React mounts
 };
 
 // Explicitly initialize with null to avoid "Missing initializer" const errors if variable type changes
@@ -31,8 +32,11 @@ let storageInstance: any = null;
 try {
   // Initialize Firebase
   app = initializeApp(firebaseConfig);
-  // Removed: getFirestore (Supabase is now the DB)
-  authInstance = getAuth(app);
+  // Use initializeAuth with explicit persistence instead of getAuth()
+  // This prevents the Firebase SDK from triggering DOM event listeners at module load time
+  authInstance = initializeAuth(app, {
+    persistence: [browserLocalPersistence, browserSessionPersistence]
+  });
   storageInstance = getStorage(app);
   googleProviderInstance = new GoogleAuthProvider();
   console.log("Firebase App Initialized (Auth & Storage Only)");
