@@ -92,11 +92,11 @@ export const validateTransactionAmount = (amount, transactionType = 'payment') =
     // Maximum transaction limit
     const MAX_AMOUNT = 50000; // $50,000
     
-    // Check for negative amounts (only allowed for refunds)
+    // ✅ FIX: Strict negative amount protection
     if (amt < 0 && transactionType !== 'refund') {
         return {
             isValid: false,
-            error: `Negative amounts ($${amt}) only allowed for refunds`
+            error: `Negative amounts ($${amt}) only allowed for refunds, got type: ${transactionType}`
         };
     }
 
@@ -104,7 +104,7 @@ export const validateTransactionAmount = (amount, transactionType = 'payment') =
     if (amt === 0 && transactionType !== 'free_event' && transactionType !== 'refund') {
         return {
             isValid: false,
-            error: 'Zero amount transactions not allowed'
+            error: `Zero amount transactions not allowed for type: ${transactionType}`
         };
     }
 
@@ -114,6 +114,16 @@ export const validateTransactionAmount = (amount, transactionType = 'payment') =
             isValid: false,
             error: `Transaction amount ($${amt.toFixed(2)}) exceeds maximum allowed ($${MAX_AMOUNT})`
         };
+    }
+
+    // Additional validation for refunds
+    if (transactionType === 'refund') {
+        if (amt > 0) {
+            return {
+                isValid: false,
+                error: `Refund amounts must be negative, got: $${amt}`
+            };
+        }
     }
 
     return {
