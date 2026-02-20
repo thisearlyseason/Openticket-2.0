@@ -303,7 +303,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         console.log('[SuperAdmin] checkResendStatus called');
         try {
             console.log('[SuperAdmin] Fetching /api/email/status...');
-            const response = await fetch('/api/email/status', {
+            const response = await csrfFetch('/api/email/status', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -3438,7 +3438,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                         </div>
                                         <Button variant="outline" onClick={async () => {
                                             try {
-                                                const response = await fetch('/api/email/status', { cache: 'no-store' });
+                                                const response = await csrfFetch('/api/email/status', { cache: 'no-store' });
                                                 const status = await response.json();
                                                 const isConfigured = status.configured === true && status.available === true;
                                                 setResendApiKeyConfigured(isConfigured);
