@@ -3,11 +3,13 @@ const router = express.Router();
 import * as stripeController from '../controllers/stripeController.js';
 import * as stripeConnectController from '../controllers/stripeConnectController.js';
 import verifyToken from '../middlewares/authMiddleware.js';
+import { checkoutRateLimiter } from '../middleware/rateLimiter.js';
 
 // ========== CHECKOUT ROUTES ==========
-router.post('/create-order', stripeController.createOrder);
+// ✅ FIX: Apply rate limiting to checkout endpoints
+router.post('/create-order', checkoutRateLimiter, stripeController.createOrder);
 router.post('/create-portal-session', verifyToken, stripeController.createPortalSession);
-router.post('/create-payment-intent', verifyToken, stripeController.createPaymentIntent);
+router.post('/create-payment-intent', verifyToken, checkoutRateLimiter, stripeController.createPaymentIntent);
 router.post('/calculate-order', stripeController.calculateOrder);
 router.post('/verify-session', stripeController.verifySession);
 
