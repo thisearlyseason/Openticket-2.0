@@ -798,7 +798,6 @@ export const verifySession = async (req, res) => {
             status: 'succeeded',
             payout_status: 'pending',
             transaction_type: 'ticket_sale',
-            type: 'event',
             discount_amount: discountAmount,
             affiliate_code: affiliateCode,
             affiliate_commission: affiliateCommission,
