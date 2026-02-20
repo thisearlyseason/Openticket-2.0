@@ -1,14 +1,30 @@
 /**
  * Migration Script: Populate type field in financial_transactions
- * Run this once to backfill existing data
+ * Run this once to backfill existing data after adding the 'type' column to the schema.
+ * 
+ * PREREQUISITE: Run this SQL in Supabase SQL Editor first:
+ *   ALTER TABLE financial_transactions ADD COLUMN IF NOT EXISTS type TEXT;
  */
 import supabase from '../services/supabase.js';
 
-async function migrateTransactionTypes() {
+export async function migrateTransactionTypes() {
     console.log('Starting migration: Populating type field in financial_transactions...\n');
 
+    // First check if 'type' column exists
+    const { error: checkError } = await supabase
+        .from('financial_transactions')
+        .select('type')
+        .limit(1);
+
+    if (checkError && (checkError.message?.includes('column') || checkError.message?.includes('"type"'))) {
+        const sql = `ALTER TABLE financial_transactions ADD COLUMN IF NOT EXISTS type TEXT;\n\nUPDATE financial_transactions SET type = CASE\n    WHEN transaction_type IN ('ticket_sale', 'checkin_payment', 'at_door_payment') THEN 'event'\n    WHEN transaction_type IN ('subscription', 'smm_subscription') THEN 'subscription'\n    WHEN transaction_type = 'platform_fee' THEN 'platform_fee'\n    WHEN transaction_type = 'refund' THEN 'refund'\n    ELSE 'event'\nEND WHERE type IS NULL;`;
+        console.error('ERROR: "type" column does not exist in financial_transactions.');
+        console.error('Please run the following SQL in your Supabase SQL Editor first:');
+        console.error(sql);
+        return { success: false, columnExists: false, sql };
+    }
+
     try {
-        // Fetch all transactions without type or with 'unknown' type
         const { data: transactions, error: fetchError } = await supabase
             .from('financial_transactions')
             .select('id, transaction_type, type')
@@ -19,11 +35,20 @@ async function migrateTransactionTypes() {
         console.log(`Found ${transactions?.length || 0} transactions to update\n`);
 
         if (!transactions || transactions.length === 0) {
-            console.log('✅ No transactions need updating');
-            return;
+            console.log('No transactions need updating');
+            return { success: true, updated: 0 };
         }
 
-        // Update transactions in batches
+        const typeMap = {
+            'ticket_sale': 'event',
+            'checkin_payment': 'event',
+            'at_door_payment': 'event',
+            'subscription': 'subscription',
+            'smm_subscription': 'subscription',
+            'platform_fee': 'platform_fee',
+            'refund': 'refund'
+        };
+
         let updated = 0;
         const batchSize = 50;
 
@@ -31,26 +56,14 @@ async function migrateTransactionTypes() {
             const batch = transactions.slice(i, i + batchSize);
             
             for (const tx of batch) {
-                let type = 'event'; // Default
-
-                // Determine type based on transaction_type
-                if (tx.transaction_type === 'ticket_sale' || tx.transaction_type === 'checkin_payment' || tx.transaction_type === 'at_door_payment') {
-                    type = 'event';
-                } else if (tx.transaction_type === 'subscription' || tx.transaction_type === 'smm_subscription') {
-                    type = 'subscription';
-                } else if (tx.transaction_type === 'platform_fee') {
-                    type = 'platform_fee';
-                } else if (tx.transaction_type === 'refund') {
-                    type = 'refund';
-                }
-
+                const type = typeMap[tx.transaction_type] || 'event';
                 const { error: updateError } = await supabase
                     .from('financial_transactions')
                     .update({ type })
                     .eq('id', tx.id);
 
                 if (updateError) {
-                    console.error(`❌ Error updating transaction ${tx.id}:`, updateError);
+                    console.error(`Error updating transaction ${tx.id}:`, updateError);
                 } else {
                     updated++;
                 }
@@ -59,20 +72,23 @@ async function migrateTransactionTypes() {
             console.log(`Progress: ${Math.min(i + batchSize, transactions.length)}/${transactions.length}`);
         }
 
-        console.log(`\n✅ Migration complete: ${updated} transactions updated`);
+        console.log(`\nMigration complete: ${updated} transactions updated`);
+        return { success: true, updated };
     } catch (error) {
-        console.error('❌ Migration failed:', error);
+        console.error('Migration failed:', error);
         throw error;
     }
 }
 
-// Run migration
-migrateTransactionTypes()
-    .then(() => {
-        console.log('\n✅ Migration successful');
-        process.exit(0);
-    })
-    .catch((error) => {
-        console.error('\n❌ Migration failed:', error);
-        process.exit(1);
-    });
+// Allow direct execution
+if (import.meta.url === `file://${process.argv[1]}`) {
+    migrateTransactionTypes()
+        .then(result => {
+            console.log('Result:', result);
+            process.exit(result.success ? 0 : 1);
+        })
+        .catch(error => {
+            console.error('Migration failed:', error);
+            process.exit(1);
+        });
+}
