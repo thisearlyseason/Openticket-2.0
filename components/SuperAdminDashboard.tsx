@@ -13,6 +13,7 @@ import { FinanceTab } from './admin/tabs/FinanceTab';
 import AdminAnalyticsDashboard from './AdminAnalyticsDashboard';
 import SMMManagement from './admin/SMMManagement';
 import { DataTable, Column } from './DataTable';
+import { csrfFetch } from '../services/csrfService';
 
 // Safe array utility - ensures we never call array methods on undefined/null
 const ensureArray = <T,>(value: T[] | undefined | null): T[] => 
