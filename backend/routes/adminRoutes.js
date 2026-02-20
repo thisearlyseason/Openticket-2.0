@@ -1007,10 +1007,23 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
         
         const { data: feeTransactions } = await platformFeesQuery;
         
-        const pendingPlatformFees = (feeTransactions || []).reduce(
+        const totalPlatformFees = (feeTransactions || []).reduce(
             (sum, tx) => sum + (Number(tx.platform_fee) || 0), 0
         );
         const platformFeeCount = feeTransactions?.length || 0;
+
+        // Subtract in-flight (scheduled/pending) payouts to get AVAILABLE balance
+        const { data: inFlightPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount, payout_type')
+            .in('status', ['scheduled', 'pending'])
+            .eq('payout_type', 'platform_fees');
+
+        const scheduledPlatformFees = (inFlightPayouts || []).reduce(
+            (sum, p) => sum + (Number(p.amount) || 0), 0
+        );
+
+        const pendingPlatformFees = Math.max(0, totalPlatformFees - scheduledPlatformFees);
 
         // For subscriptions, we'd need to track subscription payments separately
         // For now, return a placeholder - this would need integration with Stripe subscriptions
