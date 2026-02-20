@@ -1069,7 +1069,64 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
             (sum, p) => sum + (Number(p.amount) || 0), 0
         );
 
+        // Add back failed subscription payouts
+        const { data: failedSubPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount, payout_type, created_at')
+            .eq('status', 'failed')
+            .eq('payout_type', 'subscriptions');
+
+        const failedSubAmount = (failedSubPayouts || [])
+            .filter(p => !lastSubscriptionPayout || p.created_at > lastSubscriptionPayout)
+            .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
         const pendingSubscriptionRevenue = Math.max(0, totalSubscriptionRevenue - scheduledSubscriptionRevenue);
+
+        // Calculate SMM (Social Media Marketing) revenue separately
+        let smmQuery = supabase
+            .from('financial_transactions')
+            .select('gross_amount, created_at')
+            .eq('status', 'succeeded')
+            .eq('transaction_type', 'smm_subscription')
+            .gt('gross_amount', 0);
+
+        // Get last SMM payout
+        const lastSMMPayout = lastPayouts?.find(p => p.payout_type === 'smm')?.executed_at;
+        
+        if (lastSMMPayout) {
+            smmQuery = smmQuery.gt('created_at', lastSMMPayout);
+        }
+
+        const { data: smmTxs } = await smmQuery;
+
+        const totalSMMRevenue = (smmTxs || []).reduce(
+            (sum, tx) => sum + (Number(tx.gross_amount) || 0), 0
+        );
+        const smmCount = smmTxs?.length || 0;
+
+        // Subtract in-flight SMM payouts
+        const { data: inFlightSMMPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount')
+            .in('status', ['scheduled', 'pending'])
+            .eq('payout_type', 'smm');
+
+        const scheduledSMMRevenue = (inFlightSMMPayouts || []).reduce(
+            (sum, p) => sum + (Number(p.amount) || 0), 0
+        );
+
+        // Add back failed SMM payouts
+        const { data: failedSMMPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount, created_at')
+            .eq('status', 'failed')
+            .eq('payout_type', 'smm');
+
+        const failedSMMAmount = (failedSMMPayouts || [])
+            .filter(p => !lastSMMPayout || p.created_at > lastSMMPayout)
+            .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+        const pendingSMMRevenue = Math.max(0, totalSMMRevenue - scheduledSMMRevenue);
 
         res.json({
             platformFees: {
