@@ -640,6 +640,7 @@ async function handleRefund(stripe, refundData) {
         status: 'refunded',
         payout_status: 'settled',
         transaction_type: 'refund',
+        type: 'refund',
     });
 
     // Update original transaction status if full refund
