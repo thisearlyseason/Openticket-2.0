@@ -125,7 +125,20 @@ router.put('/stripe', verifyToken, requireAdmin, async (req, res) => {
         }
 
         const supabase = (await import('../services/supabase.js')).default;
-        await ensurePlatformSettingsTable(supabase);
+
+        // Check if table exists
+        const { error: tableCheckError } = await supabase
+            .from('platform_settings')
+            .select('key')
+            .limit(1);
+
+        if (tableCheckError && (tableCheckError.message?.includes('does not exist') || tableCheckError.message?.includes('schema cache'))) {
+            return res.status(503).json({
+                error: 'platform_settings table does not exist. Please run the database migration first.',
+                setupRequired: true,
+                sql: `-- Run in Supabase SQL Editor:\nCREATE TABLE IF NOT EXISTS platform_settings (\n    key TEXT PRIMARY KEY,\n    value JSONB NOT NULL DEFAULT '{}',\n    updated_at TIMESTAMPTZ DEFAULT NOW(),\n    updated_by TEXT\n);\nALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;`
+            });
+        }
 
         const configValue = {
             publishableKey,
