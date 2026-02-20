@@ -1397,6 +1397,7 @@ export const confirmAtDoorPayment = async (req, res) => {
                 event_id: paymentIntent.metadata?.eventId || null,
                 registration_id: registrationId,
                 transaction_type: 'at_door_payment',
+                type: 'event',
                 gross_amount: grossAmount,
                 platform_fee: platformFee,
                 stripe_fee: stripeFee,
