@@ -1003,6 +1003,7 @@ export const recordAtDoorPayment = async (req, res) => {
                 status: 'succeeded',
                 payout_status: method === 'cash' ? 'collected' : 'pending',
                 transaction_type: 'at_door_payment',
+                type: 'event',
                 payment_method: method,
                 affiliate_code: reg.affiliate_code || null,
                 affiliate_commission: 0, // At-door payments don't typically carry affiliate commission
