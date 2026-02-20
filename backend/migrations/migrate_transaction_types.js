@@ -34,14 +34,14 @@ async function migrateTransactionTypes() {
                 let type = 'event'; // Default
 
                 // Determine type based on transaction_type
-                if (tx.transaction_type === 'ticket_sale') {
+                if (tx.transaction_type === 'ticket_sale' || tx.transaction_type === 'checkin_payment' || tx.transaction_type === 'at_door_payment') {
                     type = 'event';
-                } else if (tx.transaction_type === 'subscription') {
+                } else if (tx.transaction_type === 'subscription' || tx.transaction_type === 'smm_subscription') {
                     type = 'subscription';
                 } else if (tx.transaction_type === 'platform_fee') {
                     type = 'platform_fee';
                 } else if (tx.transaction_type === 'refund') {
-                    type = 'event'; // Refunds are still event-related
+                    type = 'refund';
                 }
 
                 const { error: updateError } = await supabase
