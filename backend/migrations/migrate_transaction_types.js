@@ -8,11 +8,11 @@ async function migrateTransactionTypes() {
     console.log('Starting migration: Populating type field in financial_transactions...\n');
 
     try {
-        // Fetch all transactions without type
+        // Fetch all transactions without type or with 'unknown' type
         const { data: transactions, error: fetchError } = await supabase
             .from('financial_transactions')
             .select('id, transaction_type, type')
-            .is('type', null);
+            .or('type.is.null,type.eq.unknown');
 
         if (fetchError) throw fetchError;
 
