@@ -605,7 +605,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             // Load non-profit applications
             try {
                 const token = await StorageService.getAuthToken();
-                const response = await fetch('/api/onboarding/admin/nonprofit/all', {
+                const response = await csrfFetch('/api/onboarding/admin/nonprofit/all', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -625,7 +625,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             // Load onboarding responses
             try {
                 const token = await StorageService.getAuthToken();
-                const response = await fetch('/api/onboarding/admin/all', {
+                const response = await csrfFetch('/api/onboarding/admin/all', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -667,7 +667,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             const token = await StorageService.getAuthToken();
             console.log('Token obtained, making request...');
             
-            const response = await fetch('/api/onboarding/admin/nonprofit/approve', {
+            const response = await csrfFetch('/api/onboarding/admin/nonprofit/approve', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -728,7 +728,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setIsApprovingNonprofit(true);
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/onboarding/admin/nonprofit/reject', {
+            const response = await csrfFetch('/api/onboarding/admin/nonprofit/reject', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -992,7 +992,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
         setIsSavingStripeSettings(true);
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/platform-settings/stripe', {
+            const response = await csrfFetch('/api/platform-settings/stripe', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1032,7 +1032,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const loadPlatformSettings = async () => {
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/platform-settings/stripe', {
+            const response = await csrfFetch('/api/platform-settings/stripe', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -1064,7 +1064,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
     const handleSaveGlobalGeminiKey = async () => {
         try {
             const token = await StorageService.getAuthToken();
-            const response = await fetch('/api/settings/admin-gemini-key', {
+            const response = await csrfFetch('/api/settings/admin-gemini-key', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2370,7 +2370,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
                                     onClick={async () => {
                                         try {
-                                            const response = await fetch('/api/admin/affiliate/send-weekly-summaries', {
+                                            const response = await csrfFetch('/api/admin/affiliate/send-weekly-summaries', {
                                                 method: 'POST',
                                                 headers: { 
                                                     'Content-Type': 'application/json',
@@ -2452,7 +2452,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             setIsUpdatingGlobalRate(true);
                                             try {
                                                 const token = await StorageService.getAuthToken();
-                                                const response = await fetch('/api/admin/affiliates/global-commission', {
+                                                const response = await csrfFetch('/api/admin/affiliates/global-commission', {
                                                     method: 'PUT',
                                                     headers: { 
                                                         'Content-Type': 'application/json',
@@ -2909,7 +2909,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
                                         try {
                                             const token = await StorageService.getAuthToken();
-                                            const response = await fetch('/api/onboarding/admin/nonprofit/migrate', {
+                                            const response = await csrfFetch('/api/onboarding/admin/nonprofit/migrate', {
                                                 method: 'POST',
                                                 headers: { 'Authorization': `Bearer ${token}` }
                                             });
@@ -3645,7 +3645,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     setMigrationResults(null);
                                                     try {
                                                         const token = await StorageService.getAuthToken();
-                                                        const response = await fetch('/api/admin/run-migration', {
+                                                        const response = await csrfFetch('/api/admin/run-migration', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Content-Type': 'application/json',
@@ -3685,7 +3685,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     setMigrationResults(null);
                                                     try {
                                                         const token = await StorageService.getAuthToken();
-                                                        const response = await fetch('/api/admin/run-migration', {
+                                                        const response = await csrfFetch('/api/admin/run-migration', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Content-Type': 'application/json',
@@ -3785,7 +3785,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     setMigrationResults(null);
                                                     try {
                                                         const token = await StorageService.getAuthToken();
-                                                        const response = await fetch('/api/admin/run-migration', {
+                                                        const response = await csrfFetch('/api/admin/run-migration', {
                                                             method: 'POST',
                                                             headers: {
                                                                 'Content-Type': 'application/json',
