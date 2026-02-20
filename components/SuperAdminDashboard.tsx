@@ -3301,24 +3301,45 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                     )}
                                     <Input
                                         label="Publishable Key"
-                                        placeholder="pk_live_..."
-                                        value={platformPublishableKey}
-                                        onChange={e => setPlatformPublishableKey(e.target.value)}
+                                        placeholder="pk_live_... or pk_test_..."
+                                        value={platformStripePublishableKey}
+                                        onChange={e => setPlatformStripePublishableKey(e.target.value)}
                                         className="bg-black border-zinc-700 text-white"
+                                        data-testid="stripe-publishable-key-input"
                                     />
                                     <div className="relative">
                                         <Input
                                             label="Secret Key"
-                                            placeholder="sk_live_..."
+                                            placeholder="sk_live_... or sk_test_..."
                                             type="password"
-                                            value={platformSecretKey}
-                                            onChange={e => setPlatformSecretKey(e.target.value)}
+                                            value={platformStripeSecretKey}
+                                            onChange={e => setPlatformStripeSecretKey(e.target.value)}
                                             className="bg-black border-zinc-700 text-white"
+                                            data-testid="stripe-secret-key-input"
                                         />
                                         <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
                                             <Lock size={16} />
                                         </div>
                                     </div>
+                                    <div className="relative">
+                                        <Input
+                                            label="Webhook Secret (optional)"
+                                            placeholder="whsec_..."
+                                            type="password"
+                                            value={platformStripeWebhookSecret}
+                                            onChange={e => setPlatformStripeWebhookSecret(e.target.value)}
+                                            className="bg-black border-zinc-700 text-white"
+                                            data-testid="stripe-webhook-secret-input"
+                                        />
+                                        <div className="absolute right-0 top-0 mt-8 mr-3 text-zinc-500 pointer-events-none">
+                                            <Lock size={16} />
+                                        </div>
+                                    </div>
+                                    {stripeEnvironment && (
+                                        <div className={`text-xs font-bold px-2 py-1 rounded w-fit ${stripeEnvironment === 'live' ? 'bg-green-900/30 text-green-400' : 'bg-amber-900/30 text-amber-400'}`}>
+                                            Current: {stripeEnvironment.toUpperCase()} MODE
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="mt-6 flex justify-end">
