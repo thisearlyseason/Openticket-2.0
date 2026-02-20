@@ -655,7 +655,6 @@ export const refundRegistration = async (req, res) => {
                 status: 'refunded',
                 payout_status: 'settled',
                 transaction_type: 'refund',
-                type: 'refund',
             });
         } else if (stripeRefundId && amountToRefundCents > 0) {
             // Stripe refund - calculate proportional fees from original transaction
