@@ -1393,27 +1393,57 @@ router.post('/run-migration', verifyToken, requireAdmin, async (req, res) => {
                 }
                 break;
             case 'backfill_transaction_types':
-                // Direct SQL backfill - faster than JS-based migration
+                // Backfill type field - first check if column exists
                 const sbClient = (await import('../services/supabase.js')).default;
-                const updateSQL = `
-                    UPDATE financial_transactions
-                    SET type = CASE
-                        WHEN transaction_type IN ('ticket_sale', 'checkin_payment', 'at_door_payment') THEN 'event'
-                        WHEN transaction_type IN ('subscription', 'smm_subscription') THEN 'subscription'
-                        WHEN transaction_type = 'platform_fee' THEN 'platform_fee'
-                        WHEN transaction_type = 'refund' THEN 'refund'
-                        ELSE 'event'
-                    END
-                    WHERE type IS NULL OR type = 'unknown'
-                `;
-                const { error: sqlError } = await sbClient.rpc('exec_sql', { sql: updateSQL });
-                if (sqlError) {
-                    // Fallback: JS-based migration
-                    const { migrateTransactionTypes } = await import('../migrations/migrate_transaction_types.js');
-                    results = { success: true, message: 'JS migration executed (SQL fallback)', sqlError: sqlError.message };
-                } else {
-                    results = { success: true, message: 'SQL backfill executed successfully' };
+                
+                // Check if 'type' column exists
+                const { data: sampleTx, error: checkErr } = await sbClient
+                    .from('financial_transactions')
+                    .select('type')
+                    .limit(1);
+                
+                if (checkErr?.message?.includes('column') && checkErr?.message?.includes('type')) {
+                    // Column doesn't exist - return SQL to run in Supabase
+                    const migrationSQL = `-- Run this SQL in your Supabase SQL Editor (Dashboard > SQL Editor)
+-- Step 1: Add 'type' column
+ALTER TABLE financial_transactions ADD COLUMN IF NOT EXISTS type TEXT;
+
+-- Step 2: Backfill from transaction_type
+UPDATE financial_transactions
+SET type = CASE
+    WHEN transaction_type IN ('ticket_sale', 'checkin_payment', 'at_door_payment') THEN 'event'
+    WHEN transaction_type IN ('subscription', 'smm_subscription') THEN 'subscription'
+    WHEN transaction_type = 'platform_fee' THEN 'platform_fee'
+    WHEN transaction_type = 'refund' THEN 'refund'
+    ELSE 'event'
+END
+WHERE type IS NULL;`;
+                    return res.json({
+                        success: false,
+                        columnExists: false,
+                        message: 'The type column does not exist in financial_transactions. Run the provided SQL in your Supabase SQL Editor first.',
+                        sql: migrationSQL
+                    });
                 }
+                
+                // Column exists - do JS-based backfill
+                const typeMap = {
+                    'ticket_sale': 'event', 'checkin_payment': 'event', 'at_door_payment': 'event',
+                    'subscription': 'subscription', 'smm_subscription': 'subscription',
+                    'platform_fee': 'platform_fee', 'refund': 'refund'
+                };
+                const { data: toUpdate } = await sbClient
+                    .from('financial_transactions')
+                    .select('id, transaction_type')
+                    .or('type.is.null,type.eq.unknown');
+                
+                let updated = 0;
+                for (const tx of (toUpdate || [])) {
+                    const newType = typeMap[tx.transaction_type] || 'event';
+                    await sbClient.from('financial_transactions').update({ type: newType }).eq('id', tx.id);
+                    updated++;
+                }
+                results = { success: true, message: `Backfilled ${updated} transactions`, updatedCount: updated };
                 break;
             default:
                 return res.status(400).json({ error: `Unknown migration: ${migration}` });
