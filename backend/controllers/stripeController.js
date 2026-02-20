@@ -3,6 +3,7 @@ import { createRequire } from 'module';
 import { calculateOrderBreakdown, buildStripeLineItems } from '../utils/priceCalculator.js';
 import { generateTicketId, generateTicketNumber } from '../utils/ticketGenerator.js';
 import { EmailService } from '../services/serverEmail.js';
+import { getValidatedStripe, isTestMode } from '../utils/stripeHelper.js';
 const require = createRequire(import.meta.url);
 
 /**
@@ -10,10 +11,8 @@ const require = createRequire(import.meta.url);
  * Creates Stripe Checkout sessions with proper Connect destination
  */
 
-const getStripe = () => {
-    const Stripe = require('stripe');
-    return new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
-};
+// Use centralized validated Stripe instance
+const getStripe = () => getValidatedStripe();
 
 export const createOrder = async (req, res) => {
     try {
