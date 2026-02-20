@@ -50,16 +50,22 @@ async function checkPlatformSettingsTable(supabase) {
 router.get('/stripe', verifyToken, requireAdmin, async (req, res) => {
     try {
         const supabase = (await import('../services/supabase.js')).default;
-        await ensurePlatformSettingsTable(supabase);
-
-        // Try to get from DB first
-        const { data: dbSettings } = await supabase
+        
+        let dbConfig = {};
+        let tableExists = false;
+        
+        const { data: dbSettings, error: dbError } = await supabase
             .from('platform_settings')
             .select('value')
             .eq('key', 'stripe_config')
             .single();
 
-        const dbConfig = dbSettings?.value || {};
+        if (!dbError) {
+            dbConfig = dbSettings?.value || {};
+            tableExists = true;
+        } else if (!dbError.message?.includes('does not exist') && !dbError.message?.includes('schema cache')) {
+            tableExists = true; // Table exists but no row yet
+        }
 
         // Use DB values if set, otherwise fall back to env vars
         const publishableKey = dbConfig.publishableKey || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
@@ -74,6 +80,7 @@ router.get('/stripe', verifyToken, requireAdmin, async (req, res) => {
             webhookSecretMasked: maskKey(webhookSecret),
             isConfigured: !!(publishableKey && secretKey),
             isFromDB,
+            tableExists,
             environment: secretKey.startsWith('sk_live') ? 'live' : 'test'
         });
     } catch (error) {
