@@ -185,8 +185,12 @@ async function handleCheckoutCompleted(stripe, session) {
     }
 
     // Fallback estimation if actual fee not available
+    // ✅ FIX: Use conservative estimate (international rate)
     if (stripeFee === 0) {
-        stripeFee = Number(((grossAmount * 0.029) + 0.30).toFixed(2));
+        console.warn(`[Webhook] Unable to retrieve actual Stripe fee for ${session.payment_intent}`);
+        // Use international card rate (3.9% + $0.30) as conservative estimate
+        stripeFee = Number(((grossAmount * 0.039) + 0.30).toFixed(2));
+        console.warn(`[Webhook] Using estimated fee (international rate): $${stripeFee}`);
     }
 
     // 4. Parse metadata for financial reconciliation
