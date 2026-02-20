@@ -879,12 +879,63 @@ async function handleAccountUpdated(account) {
 async function handlePayoutPaid(payout) {
     console.log(`[Webhook] Processing payout.paid: ${payout.id}`);
 
-    // This is a payout to the connected account
-    // We could track this, but Stripe Connect handles payouts automatically
-    // This is mainly for audit/reporting purposes
+    try {
+        // ✅ FIX: Update financial transactions to 'paid' status
+        const stripeAccountId = payout.destination || payout.account;
+        
+        // Find which organizer this payout is for
+        const { data: organizer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('stripe_connect_id', stripeAccountId)
+            .single();
 
-    // For now, just log it
-    console.log(`[Webhook] Payout ${payout.id} paid: $${payout.amount / 100}`);
+        if (organizer) {
+            // Update all transactions that were requested/scheduled to 'paid'
+            const { data: updated, error } = await supabase
+                .from('financial_transactions')
+                .update({
+                    payout_status: 'paid',
+                    payout_date: new Date(payout.arrival_date * 1000).toISOString(),
+                    payout_metadata: {
+                        stripe_payout_id: payout.id,
+                        amount: payout.amount / 100,
+                        currency: payout.currency
+                    }
+                })
+                .eq('organizer_id', organizer.id)
+                .in('payout_status', ['requested', 'scheduled'])
+                .select('id');
+
+            if (error) {
+                console.error('[Webhook] Failed to update payout status:', error);
+            } else {
+                console.log(`[Webhook] Updated ${updated?.length || 0} transactions to 'paid' status for organizer ${organizer.id}`);
+            }
+        } else {
+            console.log(`[Webhook] Payout is for account ${stripeAccountId} - logging for audit`);
+        }
+
+        // Log audit trail
+        await AuditLogService.log({
+            timestamp: new Date().toISOString(),
+            actorId: 'stripe',
+            actorType: 'system',
+            action: 'payout_completed',
+            targetType: 'payout',
+            targetId: payout.id,
+            details: {
+                stripe_account_id: stripeAccountId,
+                amount: payout.amount / 100,
+                currency: payout.currency,
+                arrival_date: new Date(payout.arrival_date * 1000).toISOString(),
+                type: payout.type
+            }
+        });
+
+    } catch (error) {
+        console.error('[Webhook] Error handling payout.paid:', error);
+    }
 }
 
 /**
