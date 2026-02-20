@@ -1025,6 +1025,18 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
             (sum, p) => sum + (Number(p.amount) || 0), 0
         );
 
+        // Add back failed payouts to available balance (they were never actually paid out)
+        const { data: failedPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount, payout_type, created_at')
+            .eq('status', 'failed')
+            .eq('payout_type', 'platform_fees');
+
+        // Only count failed payouts that occurred after the last successful payout
+        const failedAmount = (failedPayouts || [])
+            .filter(p => !lastPlatformFeePayout || p.created_at > lastPlatformFeePayout)
+            .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
         const pendingPlatformFees = Math.max(0, totalPlatformFees - scheduledPlatformFees);
 
         // Calculate pending subscription revenue (Pro/Premium subscriptions)
