@@ -2519,6 +2519,7 @@ export const syncStripeRefundStatus = async (req, res) => {
                 status: 'refunded',
                 payout_status: 'settled',
                 transaction_type: 'refund',
+                type: 'refund',
                 stripe_refund_id: paymentIntent.charges?.data[0]?.refunds?.data[0]?.id || 'synced'
             });
             console.log('[SyncStripeRefund] Created financial transaction record');
