@@ -3762,20 +3762,19 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             <div>
                                                 <h4 className="font-semibold text-white text-sm">Backfill Transaction Types</h4>
                                                 <p className="text-xs text-zinc-400 mt-1">
-                                                    Fixes all financial_transactions records where type is null or 'unknown'. 
-                                                    This resolves financial reporting and payout calculation issues.
+                                                    Adds a 'type' column to financial_transactions for improved reporting. 
+                                                    Requires a one-time SQL migration in Supabase SQL Editor.
                                                 </p>
                                             </div>
                                             <Badge variant="outline" className="text-blue-400 border-blue-400/50">
                                                 Data Fix
                                             </Badge>
                                         </div>
-                                        <div className="mt-4">
+                                        <div className="mt-4 space-y-3">
                                             <Button
                                                 size="sm"
                                                 disabled={migrationRunning}
                                                 onClick={async () => {
-                                                    if (!window.confirm('This will update all financial_transactions records with unknown/null type. Proceed?')) return;
                                                     setMigrationRunning(true);
                                                     setMigrationResults(null);
                                                     try {
@@ -3792,7 +3791,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                             })
                                                         });
                                                         const result = await response.json();
-                                                        setMigrationResults({ ...result, mode: 'live' });
+                                                        setMigrationResults({ ...result, mode: result.columnExists === false ? 'sql-needed' : 'live' });
                                                     } catch (error: any) {
                                                         setMigrationResults({ error: error.message, mode: 'live' });
                                                     }
@@ -3807,6 +3806,22 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                                     <><Zap size={14} className="mr-2" /> Run Transaction Type Backfill</>
                                                 )}
                                             </Button>
+                                            {migrationResults?.sql && (
+                                                <div className="mt-2 p-3 bg-zinc-800 rounded-lg">
+                                                    <p className="text-xs text-amber-400 font-semibold mb-2">Run this SQL in your Supabase SQL Editor first:</p>
+                                                    <pre className="text-xs text-zinc-300 overflow-x-auto whitespace-pre-wrap">{migrationResults.sql}</pre>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="mt-2 text-xs"
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(migrationResults.sql);
+                                                        }}
+                                                    >
+                                                        Copy SQL
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
