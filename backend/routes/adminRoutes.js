@@ -1027,10 +1027,37 @@ router.get('/platform-payouts/pending', verifyToken, requireAdmin, async (req, r
 
         const pendingPlatformFees = Math.max(0, totalPlatformFees - scheduledPlatformFees);
 
-        // For subscriptions, we'd need to track subscription payments separately
-        // For now, return a placeholder - this would need integration with Stripe subscriptions
-        const pendingSubscriptionRevenue = 0; // TODO: Calculate from actual subscription payments
-        const subscriptionCount = 0;
+        // Calculate pending subscription revenue (Pro/Premium subscriptions)
+        let subscriptionQuery = supabase
+            .from('financial_transactions')
+            .select('gross_amount, platform_fee, created_at')
+            .eq('status', 'succeeded')
+            .in('type', ['subscription'])  // Use new type field for subscriptions
+            .gt('gross_amount', 0);
+
+        if (lastSubscriptionPayout) {
+            subscriptionQuery = subscriptionQuery.gt('created_at', lastSubscriptionPayout);
+        }
+
+        const { data: subscriptionTxs } = await subscriptionQuery;
+
+        const totalSubscriptionRevenue = (subscriptionTxs || []).reduce(
+            (sum, tx) => sum + (Number(tx.gross_amount) || 0), 0
+        );
+        const subscriptionCount = subscriptionTxs?.length || 0;
+
+        // Subtract in-flight subscription payouts
+        const { data: inFlightSubPayouts } = await supabase
+            .from('platform_payouts')
+            .select('amount')
+            .in('status', ['scheduled', 'pending'])
+            .eq('payout_type', 'subscriptions');
+
+        const scheduledSubscriptionRevenue = (inFlightSubPayouts || []).reduce(
+            (sum, p) => sum + (Number(p.amount) || 0), 0
+        );
+
+        const pendingSubscriptionRevenue = Math.max(0, totalSubscriptionRevenue - scheduledSubscriptionRevenue);
 
         res.json({
             platformFees: {
