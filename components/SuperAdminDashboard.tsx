@@ -3755,6 +3755,60 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Transaction Type Backfill */}
+                                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-4">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <h4 className="font-semibold text-white text-sm">Backfill Transaction Types</h4>
+                                                <p className="text-xs text-zinc-400 mt-1">
+                                                    Fixes all financial_transactions records where type is null or 'unknown'. 
+                                                    This resolves financial reporting and payout calculation issues.
+                                                </p>
+                                            </div>
+                                            <Badge variant="outline" className="text-blue-400 border-blue-400/50">
+                                                Data Fix
+                                            </Badge>
+                                        </div>
+                                        <div className="mt-4">
+                                            <Button
+                                                size="sm"
+                                                disabled={migrationRunning}
+                                                onClick={async () => {
+                                                    if (!window.confirm('This will update all financial_transactions records with unknown/null type. Proceed?')) return;
+                                                    setMigrationRunning(true);
+                                                    setMigrationResults(null);
+                                                    try {
+                                                        const token = await StorageService.getAuthToken();
+                                                        const response = await fetch('/api/admin/run-migration', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
+                                                            body: JSON.stringify({
+                                                                migration: 'backfill_transaction_types',
+                                                                dryRun: false
+                                                            })
+                                                        });
+                                                        const result = await response.json();
+                                                        setMigrationResults({ ...result, mode: 'live' });
+                                                    } catch (error: any) {
+                                                        setMigrationResults({ error: error.message, mode: 'live' });
+                                                    }
+                                                    setMigrationRunning(false);
+                                                }}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white border-none"
+                                                data-testid="backfill-transaction-types-btn"
+                                            >
+                                                {migrationRunning ? (
+                                                    <><RefreshCw size={14} className="mr-2 animate-spin" /> Running...</>
+                                                ) : (
+                                                    <><Zap size={14} className="mr-2" /> Run Transaction Type Backfill</>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
