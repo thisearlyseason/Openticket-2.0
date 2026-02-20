@@ -3343,8 +3343,13 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
                                 </div>
 
                                 <div className="mt-6 flex justify-end">
-                                    <Button onClick={handleSavePlatformSettings} className="bg-[#635BFF] hover:bg-[#534ac2] text-white border-none">
-                                        <Save size={16} className="mr-2" /> Save Configuration
+                                    <Button 
+                                        onClick={handleSavePlatformSettings} 
+                                        disabled={isSavingStripeSettings}
+                                        className="bg-[#635BFF] hover:bg-[#534ac2] text-white border-none"
+                                        data-testid="save-stripe-settings-btn"
+                                    >
+                                        <Save size={16} className="mr-2" /> {isSavingStripeSettings ? 'Saving...' : 'Save to Database'}
                                     </Button>
                                 </div>
                             </div>
