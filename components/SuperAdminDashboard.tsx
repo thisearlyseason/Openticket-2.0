@@ -414,6 +414,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
             console.log('[SuperAdmin] Settings tab active, checking Resend status...');
             checkResendStatus().catch(console.error);
             fetchGlobalGeminiKey().catch(console.error);
+            loadPlatformSettings().catch(console.error);
         }
         if (activeTab === 'security') {
             console.log('[SuperAdmin] Security tab active, loading suspicious activities...');
