@@ -983,7 +983,7 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
     const handleSavePlatformSettings = async () => {
         if (!platformStripePublishableKey || !platformStripeSecretKey) {
-            window.alert("❌ Both Publishable Key and Secret Key are required.");
+            window.alert("Both Publishable Key and Secret Key are required.");
             return;
         }
 
@@ -1011,15 +1011,17 @@ export const SuperAdminDashboard = ({ embedded = false }: { embedded?: boolean }
 
             // Reload settings to confirm save
             await loadPlatformSettings();
+            // Clear secret key field after save for security
+            setPlatformStripeSecretKey('');
 
             window.alert(
-                `✅ ${data.message}\n\n` +
-                `Environment: ${data.environment.toUpperCase()}\n\n` +
-                `⚠️ IMPORTANT: Changes will take effect after backend restart or next deployment.`
+                `${data.message}\n\n` +
+                `Environment: ${data.environment?.toUpperCase()}\n\n` +
+                `Keys are stored in the database and take effect immediately.`
             );
         } catch (error: any) {
             console.error('Failed to save platform settings:', error);
-            window.alert(`❌ Error: ${error.message}`);
+            window.alert(`Error: ${error.message}`);
         } finally {
             setIsSavingStripeSettings(false);
         }
