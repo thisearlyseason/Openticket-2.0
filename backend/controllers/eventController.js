@@ -23,20 +23,21 @@ export const createEvent = async (req, res) => {
         // Auth Bridge: Use verified Firebase UID
         const owner_id = req.user.uid;
 
-        // ⚠️ TEMPORARY FIX: Only use fields that exist in current DB schema
-        // Until migration adds missing columns, we filter to known-good fields
+        // ✅ FIXED: Only use fields that ACTUALLY exist in the database
+        // Based on actual Supabase schema query results
         const KNOWN_GOOD_FIELDS = [
-            'title', 'description', 'category',
+            'title', 'description', 'category', 'event_type',
             'date', 'time',
             'location', 'venue_name',
             'image_url',
-            'price', 'capacity',
-            'visibility', 'status'
+            'price', 'price_type', 'capacity',
+            'visibility', 'is_draft',
+            'currency', 'absorb_fees'
         ];
 
-        console.log('[Event] Creating event with minimal schema-safe fields');
+        console.log('[Event] Creating event with schema-verified fields');
         
-        // Build safe payload with only known-good fields
+        // Build safe payload with only fields that exist in DB
         const safeData = {};
         KNOWN_GOOD_FIELDS.forEach(field => {
             if (eventData[field] !== undefined) {
@@ -44,9 +45,10 @@ export const createEvent = async (req, res) => {
             }
         });
         
-        // Always set defaults for required fields
-        if (!safeData.status) safeData.status = 'draft';
+        // Set defaults for required fields (using fields that EXIST)
+        if (safeData.is_draft === undefined) safeData.is_draft = true;
         if (!safeData.visibility) safeData.visibility = 'public';
+        if (!safeData.price_type) safeData.price_type = 'paid';
         
         console.log('[Event] Payload fields:', Object.keys(safeData));
 
