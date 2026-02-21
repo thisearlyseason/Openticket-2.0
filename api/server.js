@@ -266,28 +266,36 @@ const csrfMiddleware = (req, res, next) => {
         return next();
     }
     
-    // Skip CSRF for webhook endpoints
-    if (req.path === '/api/webhook' || req.path === '/api/stripe/webhook') {
+    // Log for debugging
+    console.log('[CSRF] Checking path:', req.path, 'Original URL:', req.originalUrl);
+    
+    // Skip CSRF for webhook endpoints (match both path formats)
+    if (req.path === '/webhook' || req.path === '/stripe/webhook' || 
+        req.originalUrl === '/api/webhook' || req.originalUrl === '/api/stripe/webhook') {
+        console.log('[CSRF] Skipping - webhook endpoint');
         return next();
     }
     
     // Skip CSRF for analytics tracking (non-critical)
-    if (req.path === '/api/analytics/track') {
+    if (req.path === '/analytics/track' || req.originalUrl === '/api/analytics/track') {
+        console.log('[CSRF] Skipping - analytics endpoint');
         return next();
     }
     
     // Skip CSRF for Stripe order endpoints (they use Stripe's own security)
-    if (req.path === '/api/stripe/calculate-order' || 
-        req.path === '/api/stripe/create-order' ||
-        req.path.startsWith('/api/stripe/payment-intent/')) {
+    if (req.path === '/stripe/calculate-order' || req.path === '/stripe/create-order' ||
+        req.originalUrl === '/api/stripe/calculate-order' || req.originalUrl === '/api/stripe/create-order' ||
+        req.path.startsWith('/stripe/payment-intent/') || req.originalUrl.startsWith('/api/stripe/payment-intent/')) {
+        console.log('[CSRF] Skipping - Stripe order endpoint');
         return next();
     }
     
     // Skip CSRF for public event views (read-only)
-    if (req.path.startsWith('/api/events/') && req.method === 'GET') {
+    if (req.path.startsWith('/events/') && req.method === 'GET') {
         return next();
     }
     
+    console.log('[CSRF] Applying CSRF protection');
     // Apply CSRF protection to everything else
     return csrfProtection(req, res, next);
 };
