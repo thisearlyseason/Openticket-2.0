@@ -43,11 +43,20 @@ export const createEvent = async (req, res) => {
         );
         
         if (isMissingColumnError) {
-            console.warn('[Event] Schema column missing, retrying without problematic columns...');
+            console.warn('[Event] Schema column missing, retrying with core fields only...');
             console.warn('[Event] Original error:', error);
             
-            // Remove columns that might not exist in the database
-            const { ticket_design, email_settings, cover_image_position, gallery, ...fallbackData } = safeData;
+            // Only use core columns that definitely exist in the database
+            // Remove all potentially missing columns
+            const { 
+                ticket_design, email_settings, cover_image_position, gallery,
+                duration, timeline, schedule_config, waiver_config,
+                ticket_tiers, add_ons, promo_codes, custom_fees,
+                tracking_pixels, remarketing, seo, notifications, reminders,
+                payment_config, broadcasts, presale, waitlist_config,
+                recurring_dates, time_format,
+                ...fallbackData 
+            } = safeData;
             
             const fallbackResult = await supabase
                 .from('events')
@@ -57,7 +66,9 @@ export const createEvent = async (req, res) => {
             error = fallbackResult.error;
             
             if (!error) {
-                console.log('[Event] Successfully created event with fallback');
+                console.log('[Event] Successfully created event with core fields');
+            } else {
+                console.error('[Event] Fallback also failed:', error);
             }
         }
 
