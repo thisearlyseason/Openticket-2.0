@@ -1503,7 +1503,11 @@ export const StorageService = {
         // ✅ FIX: Throw error if event creation/update failed
         if (!response || !response.event) {
             console.error('[StorageService] Event save failed - no event returned from API');
-            throw new Error('Failed to save event. Please check your connection and try again.');
+            console.error('[StorageService] Backend response:', response);
+            
+            // If the response has an error message, use that
+            const errorMessage = response?.error || response?.message || 'Failed to save event. Please check your connection and try again.';
+            throw new Error(errorMessage);
         }
         
         clearCache('events');
