@@ -15,6 +15,9 @@ const require = createRequire(import.meta.url);
 const getStripe = () => getValidatedStripe();
 
 export const createOrder = async (req, res) => {
+    console.log('[Stripe] ===== CREATE ORDER START =====');
+    console.log('[Stripe] Request body:', JSON.stringify(req.body, null, 2));
+    
     try {
         const stripe = getStripe();
 
