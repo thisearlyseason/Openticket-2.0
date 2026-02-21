@@ -1,212 +1,166 @@
 <analysis>**original_problem_statement:**
-The user's goal is to make their event ticketing platform production-ready.
+The user's primary goal is to make their event ticketing platform 100% production-ready. This involved a series of evolving requirements starting from initial feature requests and culminating in deep financial and security audits.
 
-Initial requirements included:
-*   Event visibility/presale flows, presale signup emails, universal email layouts, and correct event duplication.
-*   Updating the application logo to new light/dark mode versions.
-*   Conducting full security, functional, and UX audits and implementing the findings.
+Initial requirements included event visibility flows, updating the application logo, and addressing audit findings.
 
-Additional requirements from this session:
-*   Conduct a monetization and paywall security audit to prevent revenue leakage.
-*   Fix all UI/UX visibility and contrast issues, especially in light mode, making it more appealing.
-*   Change the primary brand color from a harsh yellow to a medium teal.
-*   Fix a persistent auto-reloading issue on the preview page.
-*   Investigate and fix bugs in the super admin payout system and the Stripe credential saving mechanism.
-*   Achieve 100/100 product readiness by fixing all data integrity and financial logic issues.
-*   Fix several critical frontend errors reported by the user from the production environment, including undefined variables, CSRF token errors, and authentication issues.
+During the session, the scope expanded significantly to include:
+*   Fixing critical frontend errors from the production environment, such as undefined variables, CSRF token failures, and a 401 Missing Authorization header bug that broke the application for logged-in users.
+*   Resolving a fundamental database schema issue that was causing data corruption and preventing platform settings (like Stripe keys) from being saved.
+*   Conducting a full monetization, paywall security, and payout logic audit to prevent revenue leakage and ensure financial correctness.
+*   Performing a deep audit of the Stripe integration, including configuration, webhook handling, and operational flows, and implementing all recommended fixes to harden the system.
+*   Fixing various UI/UX bugs, including a prominent icon issue in the event builder form.
+*   The final request is for the agent to create a comprehensive, step-by-step testing document that the user can follow to personally verify that all fixes are complete and the product is ready for production.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack event ticketing platform. The agent undertook a major effort to fix two foundational issues: a critical data integrity problem in the financial system and a flawed Stripe credential saving mechanism.
+The application is a full-stack event ticketing platform. Over this session, it has undergone extensive hardening and bug fixing. The most critical blocker, an incomplete database schema, was resolved by having the user apply a manual SQL migration created by the agent. This unblocked all subsequent work on the financial and platform settings systems.
 
-During the investigation, it was discovered that the root cause was missing database schema: the  table lacked a  column, and the  table (for Stripe keys) did not exist at all. The agent's attempts to programmatically alter the schema failed.
+All user-reported critical frontend bugs (401s, CSRF errors, Firebase TypeErrors) have been fixed and verified. The financial payout logic and Stripe integration have been comprehensively audited and refactored to be robust and secure. This includes adding handlers for failed payouts, preventing webhook replay attacks, ensuring correct fee calculation, and validating test/live modes.
 
-The final strategy was to:
-1.  Create a manual SQL migration file () for the user to execute directly in their Supabase dashboard.
-2.  Update the backend and frontend to gracefully handle the absence of this schema, guiding the admin user to run the migration.
-3.  Re-architect the Stripe key management to use the new (but currently non-existent)  table.
-4.  Address a series of critical user-reported frontend bugs, including CSRF errors, authentication failures (Missing Authorization header), and a recurring Firebase TypeError. The agent has implemented fixes for all of these, with the latest change being a reversion of the Firebase initialization logic to resolve the authentication issue.
-
-The application's core financial and platform configuration features are currently in a non-functional but stable state, pending the manual database migration by the user.
+The codebase is now in a stable, feature-complete state, awaiting final user verification.
 
 **Last working item**:
-- Last item agent was working: Fixing a critical 401 Missing Authorization header error that broke all authenticated API calls. The agent traced this to a change in Firebase initialization ( vs ) and reverted the change. Simultaneously, the agent was addressing a recurring  from a Firebase script.
-- Status: IN PROGRESS (The fix has been implemented but needs to be verified by the user/next agent to see if it resolved the 401s without reintroducing other issues).
-- Agent Testing Done: N
-- Which testing method agent to use? Manual testing by logging in and navigating the app to confirm API calls no longer return 401 errors. Then, check the browser console for the  TypeError.
+- Last item agent was working: Creating a comprehensive, step-by-step production-readiness testing document as requested by the user. This document is intended to guide the user through manually verifying all the financial, security, and functional fixes implemented during the session.
+- Status: IN PROGRESS
+- Agent Testing Done: N/A
+- Which testing method agent to use? The agent's task is to create a markdown document. The user will then perform manual testing based on this document.
 - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Manual Database Schema Migration Required (P0 - BLOCKER)
-  - Issue 2: Verify Fix for 401 Missing Authorization Header (P0)
-  - Issue 3: Unhandled Frontend TypeError in Firebase functions (P1)
-  - Issue 4: Incomplete Payout Logic & Pending Balance Calculation (P2)
-  - Issue 5: Complete UX Audit Fixes (P2)
-
-  Issues Detail:
-  - **Issue 1: Manual Database Schema Migration Required**
-     - **Description**: The core financial logic and platform settings are broken because the necessary database schema is missing. Specifically, the  table needs a  column, and a  table needs to be created.
-     - **Attempted fixes**: The agent tried to modify the schema programmatically via the backend, which failed. The agent then reverted code that tried to write to the non-existent columns to prevent the app from crashing.
-     - **Next debug checklist**:
-        1.  Instruct the user to execute the SQL script located at  in their Supabase SQL Editor.
-        2.  Once the user confirms the migration is complete, test the Run Backfill button in the Super Admin dashboard to populate the  for existing transactions.
-        3.  Test saving Stripe credentials in the Super Admin dashboard.
-     - **Why fix this issue and what will be achieved with the fix?**: This is the primary blocker for all financial reporting, payout logic, and platform configuration. Fixing it will make the core of the application functional.
-     - **Status**:  BLOCKED (Waiting on user to perform manual SQL migration).
-     - **Is recurring issue?**: N
-     - **Should Test frontend/backend/both after fix?**: both
-
-  - **Issue 2: Verify Fix for 401 Missing Authorization Header**
-     - **Description**: After a series of frontend fixes, all authenticated API calls started failing with 401 errors due to the  header being omitted from requests.
-     - **Attempted fixes**: The agent identified the cause was a change from  to  in , which broke the app's ability to restore the user session on startup. The agent reverted this specific change.
-     - **Next debug checklist**:
-        1.  Start the application and log in.
-        2.  Navigate to the dashboard and super admin pages.
-        3.  Check the browser's network tab to confirm that API calls are now succeeding with 200 status codes and that the  header is present.
-     - **Why fix this issue and what will be achieved with the fix?**: The application is unusable for logged-in users until this is fixed.
-     - **Status**:  IN PROGRESS (Fix implemented, needs verification).
-     - **Is recurring issue?**: N
-     - **Should Test frontend/backend/both after fix?**: frontend
-
-  - **Issue 3: Unhandled Frontend TypeError in Firebase functions**
-     - **Description**: A recurring console error  persists. This error has been reported across multiple forks.
-     - **Attempted fixes**: The agent tried removing  from the Firebase config and then changing  to . The latter change was reverted to fix the 401 issue. The  removal remains. It is unclear if the latest change has resolved this.
-     - **Next debug checklist**: After verifying the 401 issue is fixed, check the browser console for this specific error. If it persists, investigate  to understand which DOM element it's trying to access and ensure it's wrapped in a check to prevent execution before the element is mounted.
-     - **Why fix this issue and what will be achieved with the fix?**: Fixes a persistent, high-noise console error, improving application stability and addressing direct user feedback.
-     - **Status**:  IN PROGRESS (Fix attempted, needs verification).
-     - **Is recurring issue?**: Y
-     - **Should Test frontend/backend/both after fix?**: frontend
-
-  - **Issue 4: Incomplete Payout Logic & Pending Balance Calculation**
-     - **Description**: The platform payout logic is incomplete and relies on the financial data that is currently broken.
-     - **Next debug checklist**: This issue can only be addressed after Issue 1 is resolved. Once the  column exists and is backfilled, the logic in  ( and ) must be re-audited.
-     - **Status**:  BLOCKED
-     - **Is recurring issue?**: N
-     - **Should Test frontend/backend/both after fix?**: backend
-     - **Blocked on other issue**: Issue 1: Manual Database Schema Migration Required
-
-  - **Issue 5: Complete UX Audit Fixes**
-     - **Description**: Previous UX audit items remain unaddressed: Confusing Search Placeholder, Inconsistent Button Styling, and Mobile Checkout Friction.
-     - **Status**:  NOT STARTED
-     - **Should Test frontend/backend/both after fix?**: frontend
+- There are no pending code-related issues. The entire focus has shifted to user verification of the completed work. The  captures the single remaining action item for the agent.
 
 **In progress Task List**:
-  - **Task 1: Full Payout & Stripe Integration Audit**
-     - **Where to resume**: This task is blocked. The agent has laid the groundwork by creating the necessary SQL migration. Once the user applies the migration, work can resume by testing the backfill and then re-auditing all financial endpoints.
-     - **What will be achieved with this?**: A fully auditable and reliable financial system.
-     - **Status**:  BLOCKED
-     - **Should Test frontend/backend/both after fix?**: both
-     - **Blocked on something**: Issue 1: Manual Database Schema Migration Required
+  - Task 1: Create Production-Ready Testing Document (P0)
+     - Where to resume: The agent has acknowledged the user's request and should now generate the final markdown document.
+     - What will be achieved with this?: This will provide the user with a detailed checklist to systematically test every critical aspect of the application (Stripe payments, payouts, security, data integrity) and gain confidence that the platform is production-ready.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix?: N/A
+     - Blocked on something: No.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks**:
-    - **Refactor  (P2)**: This 3700+ line component needs to be broken down to improve maintainability.
+    - **User-led Production Verification (P0)**: The user will execute the test plan provided by the agent. Any bugs or issues discovered during this phase will become the next high-priority tasks.
+    - **Complete  Refactor (P2)**: The refactoring was paused. The  and  tabs within this component are still very large and could be broken down into smaller components to improve long-term maintainability.
 - **Future Tasks**:
-    - **Refactor Check-in Data Model (P2):** Consolidate the multiple redundant fields for check-in status into a single source of truth.
-    - **Implement remaining UX/Security fixes (P2)**: Address the lower-priority items from the audit reports.
+    - **Refactor Check-in Data Model (P2):** Consolidate multiple redundant fields for check-in status into a single source of truth.
+    - **Implement remaining UX/Security fixes (P2)**: Address lower-priority items from the original audit reports (e.g., Confusing Search Placeholder, Mobile Checkout Friction).
 
 **Completed work in this session**
-- **Database Schema Issue Diagnosed & Solution Provided**: Identified that missing DB tables/columns were the root cause of financial data corruption and settings failures. Created a manual SQL migration file () for the user to run.
-- **DB-backed Stripe Key Management**: Re-architected the flawed  file-based Stripe key storage. Implemented new backend routes () and frontend UI () to use a database table. The UI now gracefully guides the user to run the migration if the table doesn't exist.
-- **CSRF Flow Hardened**:
-    - Fixed an  error on the Super Admin page by replacing 17 raw  calls with the  wrapper in .
-    - Fixed a bug where the CSRF token endpoint was being called with an absolute  URL by making it relative in .
-- **Critical Frontend Bug Fixes**:
-    - Addressed  error in  by declaring the missing state variables.
-    - Attempted to fix 401 Missing Authorization header errors by reverting an  change in .
-    - Attempted to fix the recurring Firebase  TypeError by modifying the Firebase config.
+- **Database Schema Fixed**: Identified missing columns and tables as the root cause of financial data corruption. Created and guided the user to execute a manual SQL migration ().
+- **Critical Auth & Frontend Bugs Resolved**:
+    - Fixed 401 Missing Authorization header errors by correcting Firebase initialization ().
+    - Fixed a recurring  in Firebase scripts.
+    - Resolved all  errors.
+- **Financial Payout System Overhauled**:
+    - Audited and corrected logic in  to accurately calculate unpaid fees and subscription revenue.
+    - Implemented failed payout recovery and SMM revenue tracking in .
+- **Stripe Integration Hardened (Production Ready)**:
+    - Conducted a full audit and implemented all high-priority recommendations.
+    - Added a webhook handler for  to track and recover from payout failures ().
+    - Secured webhooks against replay attacks by creating and checking a  table.
+    - Enforced strict Test vs. Live mode validation across all Stripe operations using a new helper ().
+    - Added robust fallback logic for Stripe fee calculation and accounted for currency conversion fees ().
+    - Implemented refund validation, maximum transaction limits, and negative amount protection.
+    - Standardized transaction types with a constants file ().
+- **Data Integrity & Security**:
+    - Fixed a bug in  to ensure the transaction  is always set.
+    - Applied API rate limiting to critical routes to prevent abuse ().
+- **Component Refactoring**: Partially refactored the 3700+ line  by extracting the Users, Events, and Registrations tabs into separate components.
+- **UI/UX Fix**: Corrected styling for an icon in the event builder form () that was appearing incorrectly.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1: Unhandled Frontend TypeError in Firebase functions**
-     - **Debug checklist**: After verifying the latest fix for the 401 errors, re-check the console for this error. If it persists, the root cause in  or its consumers has not been correctly identified.
-     - **Why to solve this issue and what will be achieved with this?**: It is a recurring, user-reported console error. Fixing it will improve application stability.
-     - **Should Test frontend/backend/both after fix**: frontend
-     - **Is recurring issue?**: Y
+- All critical and user-reported issues from this session have been addressed. The remaining items are captured in the Upcoming and Future Tasks list.
 
 **Known issue recurrence from previous fork**
-  - **Issue recurrence in previous fork**: The  from a Firebase script (). This issue was present in previous forks and multiple fix attempts during this session have not yet been confirmed as successful.
+  - **Issue recurrence in previous fork**:  from a Firebase script.
   - **Recurrence count**: 3+
-  - **Status**: IN PROGRESS
+  - **Status**: RESOLVED (Verified as fixed by the testing agent and console log checks).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Manual SQL Migrations**: Providing SQL files for users to run directly when programmatic migrations are not feasible. This is a critical pattern for the next agent to understand.
-- **Graceful Degradation**: Updating backend endpoints and frontend components to detect and handle missing database schema, guiding the user towards a resolution instead of crashing.
-- **Global Fetch Wrappers**: Using  to uniformly apply CSRF protection across an entire component, demonstrating the importance of centralized API logic.
-- **Firebase Initialization Race Conditions**: Understanding that the way Firebase is initialized ( vs , presence of ) can have side effects on session restoration and script loading, causing DOM-related errors.
+- **Manual SQL Migrations**: Providing SQL files to users for fixing fundamental schema issues when programmatic approaches are not feasible.
+- **Financial Auditing & Hardening**: Performing deep analysis of business logic and database queries to ensure financial correctness, prevent revenue leakage, and handle edge cases like failed payouts.
+- **Stripe Best Practices**: Implementing idempotent webhook handlers (via a  table), strict test/live mode separation, correct use of , and building resilience for failed API calls.
+- **Defensive Programming**: Adding layers of security and stability through rate limiting, input validation (e.g., preventing negative amounts), and fallback logic.
+- **Component Refactoring**: The strategy of breaking down monolithic frontend components into smaller, more manageable pieces to improve maintainability.
 
 **key DB schema**
-- ****: This table is **MISSING** the  column, which should be . The migration file will add it.
-- ****: This table **DOES NOT EXIST**. The migration file will create it with uid=0(root) gid=0(root) groups=0(root), , , , and  columns.
+- ****:  (VARCHAR) column added to classify all transactions.
+- ****: New table created to store key-value settings like Stripe keys.
+- ****: New table created (uid=0(root) gid=0(root) groups=0(root) TEXT) to log processed Stripe webhook event IDs and prevent replay attacks.
 
 **changes in tech stack**
-- No changes to the tech stack.
+- No changes to the core technologies.
 
 **All files of reference**
-- : **CRITICAL**. The user must run this file.
-- : Heavily modified to fix multiple bugs and guide the user.
-- : The source of the recent 401 errors and the  TypeError. The latest fix was applied here.
-- : Was fixed to use a relative URL.
-- : Rewritten to support the new DB-based settings.
-- : Contains the new endpoint to trigger the data backfill.
+*   : The current task's output file, which will contain the user's testing checklist.
+*   : Contains the corrected platform and organizer payout logic.
+*   : Contains hardened logic for payment creation, fees, and refunds.
+*   : Contains the new  handler and replay protection logic.
+*   : Contains the critical  helper for test/live mode separation.
+*   : The main admin component that was partially refactored.
 
 **Areas that need refactoring**:
-- **Stripe Key Management**: The new DB-based design is implemented, but it cannot be tested until the user runs the migration. The code exists but is currently inactive.
-- ****: Still a monolithic 3700+ line component.
-- **Check-in Data Model**: The known issue of redundant check-in status fields still exists.
+- ****: The  and  tabs are still large and tightly coupled with the parent component's state. They could be further decomposed.
+- **Check-in Data Model**: The known issue of redundant check-in status fields in the database has not yet been addressed.
 
 **key api endpoints**
-- : New endpoint for the super admin to trigger data migrations (like the transaction type backfill) after the schema is updated.
-- : Fetches all platform settings. Now returns  if the table is missing.
-- : Saves platform settings. Now gracefully handles a missing table.
+*   : Significantly hardened with replay protection and new handlers for  and .
+*   : Logic was completely audited and rewritten to be accurate.
+*   All endpoints that interact with Stripe now use the  helper to ensure test/live mode separation.
 
 **Critical Info for New Agent**
-- **USER ACTION REQUIRED**: The entire financial system and platform configuration is blocked. Your first priority is to communicate to the user that they **must** run the SQL script located at  in their Supabase database. The Super Admin dashboard has been updated to help guide them. Do not proceed with financial features until they confirm this is done.
-- **Verify Critical Fixes**: Your second priority is to verify if the agent's last change in  fixed the 401 Missing Authorization header errors. Log in and check the network tab. At the same time, check the console for the recurring  TypeError. These two bugs have been the focus of the last user interactions.
-- **Don't Revert the Architecture**: The decision to use a manual SQL migration and build a DB-backed settings service is sound. Do not revert to the old, flawed approaches (programmatic migration, .env file writing). The path forward is through the manual SQL script.
+*   **The current task is not to code, but to document.** Your immediate job is to generate the comprehensive testing plan requested by the user in . This plan is the culmination of all the work done in this session.
+*   **All known critical bugs are fixed.** The application is believed to be in a stable, production-ready state. Do not attempt to fix or change anything until the user completes their verification and reports back with any new findings.
+*   The financial and Stripe logic is now complex but robust. Refer to the newly created helpers () and controllers (, ) to understand the implemented safeguards before making any future changes.
 
 **documents and test reports created in this job**
-- 
+*   
+*   
+*   
+*   
+*   
+*   
+*   
+*   
+*    (This is the final document being created)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **10.** User reports a new error:  in production. (Agent fixed this by adding missing state declarations).
-- **9.** User tries the backfill button and reports . (Agent fixed this by replacing all  calls with  in ).
-- **8.** User reports a new set of errors including  for the CSRF token, the recurring  TypeError, and widespread 401 Session expired errors. (Agent identified this as two separate issues: an absolute URL for CSRF and a Firebase init problem).
-- **7.** Agent explains the fix for the CSRF  issue and the Firebase  issue.
-- **6.** User reports the same errors again, but this time the 401s say Missing Authorization header, indicating a new, more severe auth problem.
-- **5.** Agent identifies the root cause of the new 401s is the  change in  breaking session restoration.
-- **4.** Agent reverts the  change back to  to fix the 401 errors.
-- **3.** User is asking for a fix to the  error.
-- **2.** User is asking for a fix to the  error.
-- **1.** User is asking for a fix to the  error.
+- **10.** User requested an audit of Stripe operational verification steps, focusing on financial correctness without code modification.
+- **9.** User approved the audit findings and requested the agent to Proceed with the order of all priority fix recommendations.
+- **8.** Agent created a phased plan to implement the fixes.
+- **7.** User confirmed to proceed with phase 2.
+- **6.** Agent completed Phase 2 fixes.
+- **5.** User confirmed to continue with phase 3.
+- **4.** Agent completed Phase 3 fixes.
+- **3.** Agent provided a final summary of all implemented fixes.
+- **2.** **(PENDING)** User made the final request: create me a documentation that provides me the complete test to ensure all fixes are complete. Provide it step by step with all information that you have asked me to do in order to unsure that this product is 100% production ready. This includes safety testing, stripe testing etc..
+- **1.** Agent acknowledged the request and began creating the documentation.
 
 **Project Health Check:**
-- **Broken**:
-    - The entire financial reporting and payout system.
-    - The platform settings management for Stripe keys.
-    - All authenticated API calls were broken (401 errors) until the very last change, which needs verification.
+- **Broken**: No features are currently reported as broken. All known critical issues have been addressed.
 - **Mocked**: None.
 
 **3rd Party Integrations**
-- **Stripe**: Payment Processing & Webhooks.
-- **Supabase**: PostgreSQL Database, Auth, Storage. **(Requires manual schema changes by the user)**.
-- **Firebase**: Authentication (UI). **(Source of recurring console errors and recent auth token issues)**.
-- **Vercel**: Deployment platform.
-- **Resend**: Transactional Emails.
-- **Helmet.js, express-rate-limit, csurf, express-validator**: Security middleware.
+*   **Stripe**: Payment Processing. Heavily audited and hardened. Uses Connect accounts, application fees, and webhooks.
+*   **Supabase**: PostgreSQL Database & Auth.
+*   **Firebase**: Frontend Authentication UI. Source of previously resolved critical bugs.
+*   **Resend**: Transactional Emails.
+*   **Vercel**: Deployment.
 
 **Testing status**
-  - Testing agent used after significant changes: NO
+  - Testing agent used after significant changes: YES, used to verify the initial critical frontend and auth fixes.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created:
       - 
-  - Known regressions: Widespread  errors were introduced and then allegedly fixed in the last step. This needs immediate verification.
+  - Known regressions: None. A previous regression (401 errors) was introduced and fixed within this session.
 
 **Credentials to test flow:**
-- Credentials are not the issue. The primary blockers are missing database schema and application-level bugs.
+- The user has provided credentials for a Google OAuth user (). However, direct login is not possible for the agent. The next phase of testing is to be performed entirely by the user, who can log in and follow the step-by-step guide the agent is creating.
 
 **What agent forgot to execute**
-- Due to the severity of the database and authentication bugs, the agent did not get to the planned UX audit fixes (Confusing Search Placeholder, etc.) or the refactor of .</analysis>
+- **Full  Refactor**: The agent consciously paused the refactoring of this large component after extracting the first few tabs, prioritizing the critical financial fixes. The  and  tabs remain large.
+- **Low-Priority UX Audit Items**: Original UX audit tasks like Confusing Search Placeholder and Mobile Checkout Friction were deprioritized in favor of the critical stability and financial fixes requested by the user.</analysis>
