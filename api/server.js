@@ -266,8 +266,20 @@ const csrfMiddleware = (req, res, next) => {
         return next();
     }
     
-    // Skip CSRF for webhook endpoint
-    if (req.path === '/api/webhook') {
+    // Skip CSRF for webhook endpoints
+    if (req.path === '/api/webhook' || req.path === '/api/stripe/webhook') {
+        return next();
+    }
+    
+    // Skip CSRF for analytics tracking (non-critical)
+    if (req.path === '/api/analytics/track') {
+        return next();
+    }
+    
+    // Skip CSRF for Stripe order endpoints (they use Stripe's own security)
+    if (req.path === '/api/stripe/calculate-order' || 
+        req.path === '/api/stripe/create-order' ||
+        req.path.startsWith('/api/stripe/payment-intent/')) {
         return next();
     }
     
@@ -276,7 +288,7 @@ const csrfMiddleware = (req, res, next) => {
         return next();
     }
     
-    // Apply CSRF protection
+    // Apply CSRF protection to everything else
     return csrfProtection(req, res, next);
 };
 
