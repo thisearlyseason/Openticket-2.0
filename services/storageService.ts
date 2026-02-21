@@ -1498,13 +1498,17 @@ export const StorageService = {
         } else {
             response = await postSupabase('/events', 'POST', payload);
         }
+        
+        // ✅ FIX: Throw error if event creation/update failed
+        if (!response || !response.event) {
+            console.error('[StorageService] Event save failed - no event returned from API');
+            throw new Error('Failed to save event. Please check your connection and try again.');
+        }
+        
         clearCache('events');
         
         // Return the event with the actual database ID
-        if (response?.event) {
-            return normalizeEvent(response.event);
-        }
-        return clean;
+        return normalizeEvent(response.event);
     },
 
     getRegistrations: async (eventId?: string): Promise<Registration[]> => {
