@@ -23,68 +23,47 @@ export const createEvent = async (req, res) => {
         // Auth Bridge: Use verified Firebase UID
         const owner_id = req.user.uid;
 
-        // SANITIZATION
-        const safeData = {};
-        ALLOWED_EVENT_FIELDS.forEach(field => {
-            if (eventData[field] !== undefined) safeData[field] = eventData[field];
-        });
-
-        // Define ULTRA minimal required fields that definitely exist
-        const CORE_FIELDS = [
+        // ⚠️ TEMPORARY FIX: Only use fields that exist in current DB schema
+        // Until migration adds missing columns, we filter to known-good fields
+        const KNOWN_GOOD_FIELDS = [
             'title', 'description', 'category',
             'date', 'time',
             'location', 'venue_name',
             'image_url',
             'price', 'capacity',
-            'visibility'
+            'visibility', 'status'
         ];
+
+        console.log('[Event] Creating event with minimal schema-safe fields');
         
-        // First attempt: try with all safe fields
-        let { data, error } = await supabase
+        // Build safe payload with only known-good fields
+        const safeData = {};
+        KNOWN_GOOD_FIELDS.forEach(field => {
+            if (eventData[field] !== undefined) {
+                safeData[field] = eventData[field];
+            }
+        });
+        
+        // Always set defaults for required fields
+        if (!safeData.status) safeData.status = 'draft';
+        if (!safeData.visibility) safeData.visibility = 'public';
+        
+        console.log('[Event] Payload fields:', Object.keys(safeData));
+
+        const { data, error } = await supabase
             .from('events')
             .upsert([{ ...safeData, owner_id }])
             .select();
 
-        // If we get a schema/column error, retry with only core fields
-        const isMissingColumnError = error && (
-            error.code === '42703' || 
-            error.message?.includes('schema cache') ||
-            error.message?.includes('column') ||
-            error.message?.includes('does not exist')
-        );
-        
-        if (isMissingColumnError) {
-            console.warn('[Event] Column error detected, using minimal fields');
-            console.warn('[Event] Error details:', JSON.stringify(error, null, 2));
-            
-            // Create minimal payload with only core fields
-            const minimalData = {};
-            CORE_FIELDS.forEach(field => {
-                if (safeData[field] !== undefined) {
-                    minimalData[field] = safeData[field];
-                }
-            });
-            
-            console.log('[Event] Retrying with fields:', Object.keys(minimalData));
-            
-            const fallbackResult = await supabase
-                .from('events')
-                .upsert([{ ...minimalData, owner_id }])
-                .select();
-            data = fallbackResult.data;
-            error = fallbackResult.error;
-            
-            if (error) {
-                console.error('[Event] Minimal fields also failed:', JSON.stringify(error, null, 2));
-            } else {
-                console.log('[Event] Successfully created with minimal fields');
-            }
+        if (error) {
+            console.error('[Event] Database error:', JSON.stringify(error, null, 2));
+            throw error;
         }
-
-        if (error) throw error;
+        
+        console.log('[Event] Successfully created event:', data[0]?.id);
         res.status(201).json({ event: data[0] });
     } catch (error) {
-        console.error('[Event] Create event error:', error.message);
+        console.error('[Event] Create event failed:', error.message);
         res.status(400).json({ error: error.message });
     }
 };
