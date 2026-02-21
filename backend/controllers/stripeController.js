@@ -142,23 +142,8 @@ export const createOrder = async (req, res) => {
                     tierName: tierName,
                     serverPrice,
                     clientPrice,
-                    eventId
-                });
-                
-                // Log security event
-                await logAuditEvent({
-                    eventType: AUDIT_EVENTS.PRICE_MANIPULATION_ATTEMPT,
-                    severity: SEVERITY.CRITICAL,
-                    userId: req.user?.uid || null,
-                    details: {
-                        eventId,
-                        tierId: selection.tierId,
-                        tierName: tierName,
-                        expectedPrice: serverPrice,
-                        attemptedPrice: clientPrice,
-                        difference: clientPrice - serverPrice
-                    },
-                    ipAddress: req.ip
+                    eventId,
+                    difference: clientPrice - serverPrice
                 });
                 
                 return res.status(400).json({ 
