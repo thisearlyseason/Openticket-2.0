@@ -107,7 +107,7 @@ export const enforceEventLimits = async (req, res, next) => {
         // Fetch user profile with subscription
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('subscription, plan')
+            .select('subscription')
             .eq('id', userId)
             .single();
         
