@@ -29,53 +29,63 @@ export const createEvent = async (req, res) => {
             if (eventData[field] !== undefined) safeData[field] = eventData[field];
         });
 
+        // Define minimal required fields that definitely exist in the database
+        const CORE_FIELDS = [
+            'title', 'description', 'category', 'event_type',
+            'date', 'time',
+            'location', 'venue_name', 'online_url',
+            'image_url',
+            'price_type', 'price', 'capacity',
+            'visibility', 'is_draft',
+            'organizer', 'organizer_email'
+        ];
+        
+        // First attempt: try with all safe fields
         let { data, error } = await supabase
             .from('events')
             .upsert([{ ...safeData, owner_id }])
             .select();
 
-        // Handle missing column errors gracefully (until migration is run)
-        // Check both error.code and error message for schema column errors
+        // If we get a schema/column error, retry with only core fields
         const isMissingColumnError = error && (
             error.code === '42703' || 
             error.message?.includes('schema cache') ||
-            error.message?.includes('column')
+            error.message?.includes('column') ||
+            error.message?.includes('does not exist')
         );
         
         if (isMissingColumnError) {
-            console.warn('[Event] Schema column missing, retrying with core fields only...');
-            console.warn('[Event] Original error:', error);
+            console.warn('[Event] Column error detected, using minimal fields');
+            console.warn('[Event] Error details:', JSON.stringify(error, null, 2));
             
-            // Only use core columns that definitely exist in the database
-            // Remove all potentially missing columns
-            const { 
-                ticket_design, email_settings, cover_image_position, gallery,
-                duration, timeline, schedule_config, waiver_config,
-                ticket_tiers, add_ons, promo_codes, custom_fees,
-                tracking_pixels, remarketing, seo, notifications, reminders,
-                payment_config, broadcasts, presale, waitlist_config,
-                recurring_dates, time_format,
-                ...fallbackData 
-            } = safeData;
+            // Create minimal payload with only core fields
+            const minimalData = {};
+            CORE_FIELDS.forEach(field => {
+                if (safeData[field] !== undefined) {
+                    minimalData[field] = safeData[field];
+                }
+            });
+            
+            console.log('[Event] Retrying with fields:', Object.keys(minimalData));
             
             const fallbackResult = await supabase
                 .from('events')
-                .upsert([{ ...fallbackData, owner_id }])
+                .upsert([{ ...minimalData, owner_id }])
                 .select();
             data = fallbackResult.data;
             error = fallbackResult.error;
             
-            if (!error) {
-                console.log('[Event] Successfully created event with core fields');
+            if (error) {
+                console.error('[Event] Minimal fields also failed:', JSON.stringify(error, null, 2));
             } else {
-                console.error('[Event] Fallback also failed:', error);
+                console.log('[Event] Successfully created with minimal fields');
             }
         }
 
         if (error) throw error;
         res.status(201).json({ event: data[0] });
     } catch (error) {
-        console.error('[Event] Create event error:', error);
+        console.error('[Event] Create event error:', error.message);
         res.status(400).json({ error: error.message });
     }
 };
