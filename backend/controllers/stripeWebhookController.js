@@ -997,6 +997,23 @@ async function handlePayoutFailed(payout) {
                         
                         <p>Unfortunately, your recent payout of <strong>${formattedAmount}</strong> has failed.</p>
                         
+                        <p><strong>Failure Reason:</strong> ${payout.failure_message || 'Please contact support for details'}</p>
+                        
+                        <p>Please update your bank account information or contact our support team for assistance.</p>
+                        
+                        <p>Best regards,<br>OpenTicket Team</p>
+                    </div>
+                `
+            });
+            console.log(`[Webhook] Notification email sent to ${organizer.email}`);
+        } catch (emailError) {
+            console.error('[Webhook] Failed to send notification email:', emailError);
+        }
+
+    } catch (error) {
+        console.error('[Webhook] Error handling payout.failed:', error);
+    }
+}
 
 /**
  * ✅ FIX: Handle invoice.paid (subscription payments)
