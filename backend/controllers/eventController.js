@@ -35,20 +35,36 @@ export const createEvent = async (req, res) => {
             .select();
 
         // Handle missing column errors gracefully (until migration is run)
-        if (error && error.code === '42703') {
-            console.warn('[Event] Schema column missing, retrying without missing columns...');
-            const { ticket_design, email_settings, cover_image_position, ...fallbackData } = safeData;
+        // Check both error.code and error message for schema column errors
+        const isMissingColumnError = error && (
+            error.code === '42703' || 
+            error.message?.includes('schema cache') ||
+            error.message?.includes('column')
+        );
+        
+        if (isMissingColumnError) {
+            console.warn('[Event] Schema column missing, retrying without problematic columns...');
+            console.warn('[Event] Original error:', error);
+            
+            // Remove columns that might not exist in the database
+            const { ticket_design, email_settings, cover_image_position, gallery, ...fallbackData } = safeData;
+            
             const fallbackResult = await supabase
                 .from('events')
                 .upsert([{ ...fallbackData, owner_id }])
                 .select();
             data = fallbackResult.data;
             error = fallbackResult.error;
+            
+            if (!error) {
+                console.log('[Event] Successfully created event with fallback');
+            }
         }
 
         if (error) throw error;
         res.status(201).json({ event: data[0] });
     } catch (error) {
+        console.error('[Event] Create event error:', error);
         res.status(400).json({ error: error.message });
     }
 };
