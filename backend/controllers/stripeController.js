@@ -97,6 +97,12 @@ export const createOrder = async (req, res) => {
         }
         
         console.log('[Stripe] Normalized ticket selections:', normalizedSelections);
+        console.log('[Stripe] Event pricing model:', {
+            hasTiers: event.ticket_tiers?.length > 0,
+            price: event.price,
+            price_type: event.price_type,
+            ticket_name: event.ticket_name
+        });
         
         // Validate ticket selections against database prices
         for (const selection of normalizedSelections) {
@@ -135,6 +141,14 @@ export const createOrder = async (req, res) => {
             
             // CRITICAL: Compare server price with client-provided price
             const clientPrice = parseFloat(selection.price) || 0;
+            
+            console.log('[Stripe] Price validation:', {
+                tierId: selection.tierId,
+                tierName,
+                serverPrice,
+                clientPrice,
+                difference: Math.abs(serverPrice - clientPrice)
+            });
             
             if (Math.abs(serverPrice - clientPrice) > 0.01) {
                 console.error(`[Security] Price mismatch detected!`, {
