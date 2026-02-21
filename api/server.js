@@ -318,6 +318,14 @@ app.get('/api/debug-env', (req, res) => {
     });
 });
 
+// Request logger for debugging
+app.use((req, res, next) => {
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    }
+    next();
+});
+
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/auth/change-password', passwordLimiter); // Extra strict for password changes
 app.use('/api/events', eventRoutes);
