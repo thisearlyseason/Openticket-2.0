@@ -100,21 +100,46 @@ export const createOrder = async (req, res) => {
         
         // Validate ticket selections against database prices
         for (const selection of normalizedSelections) {
-            const tier = event.ticket_tiers?.find(t => t.id === selection.tierId);
+            // ✅ FIXED: Handle BOTH simple pricing and tiered pricing
+            let tierName = '';
+            let serverPrice = 0;
             
-            if (!tier) {
-                console.error(`[Security] Invalid tier ID: ${selection.tierId}`);
-                return res.status(400).json({ error: 'Invalid ticket tier' });
+            // Check if event uses tiered pricing
+            if (event.ticket_tiers?.length > 0) {
+                // Tiered pricing model
+                const tier = event.ticket_tiers.find(t => t.id === selection.tierId);
+                
+                if (!tier) {
+                    console.error(`[Security] Invalid tier ID: ${selection.tierId}`);
+                    return res.status(400).json({ error: 'Invalid ticket tier' });
+                }
+                
+                tierName = tier.name;
+                serverPrice = parseFloat(tier.price) || 0;
+            } else if (selection.tierId === 'general') {
+                // Simple pricing model (single price for all tickets)
+                tierName = event.ticket_name || 'General Admission';
+                
+                // Calculate server price based on price_type
+                if (event.price_type === 'free' || event.price_type === 'donation') {
+                    serverPrice = 0;
+                } else {
+                    serverPrice = parseFloat(event.price) || 0;
+                }
+                
+                console.log(`[Stripe] Simple pricing - ${tierName}: $${serverPrice}`);
+            } else {
+                console.error(`[Security] Invalid tier ID for simple event: ${selection.tierId}`);
+                return res.status(400).json({ error: 'Invalid ticket selection' });
             }
             
             // CRITICAL: Compare server price with client-provided price
-            const serverPrice = parseFloat(tier.price) || 0;
             const clientPrice = parseFloat(selection.price) || 0;
             
             if (Math.abs(serverPrice - clientPrice) > 0.01) {
                 console.error(`[Security] Price mismatch detected!`, {
                     tierId: selection.tierId,
-                    tierName: tier.name,
+                    tierName: tierName,
                     serverPrice,
                     clientPrice,
                     eventId
@@ -128,7 +153,7 @@ export const createOrder = async (req, res) => {
                     details: {
                         eventId,
                         tierId: selection.tierId,
-                        tierName: tier.name,
+                        tierName: tierName,
                         expectedPrice: serverPrice,
                         attemptedPrice: clientPrice,
                         difference: clientPrice - serverPrice
