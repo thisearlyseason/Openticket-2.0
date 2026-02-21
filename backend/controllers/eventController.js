@@ -36,8 +36,8 @@ export const createEvent = async (req, res) => {
 
         // Handle missing column errors gracefully (until migration is run)
         if (error && error.code === '42703') {
-            console.warn('[Event] Schema column missing, retrying without ticket_design/email_settings...');
-            const { ticket_design, email_settings, ...fallbackData } = safeData;
+            console.warn('[Event] Schema column missing, retrying without missing columns...');
+            const { ticket_design, email_settings, cover_image_position, ...fallbackData } = safeData;
             const fallbackResult = await supabase
                 .from('events')
                 .upsert([{ ...fallbackData, owner_id }])
