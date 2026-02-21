@@ -23,34 +23,43 @@ export const createEvent = async (req, res) => {
         // Auth Bridge: Use verified Firebase UID
         const owner_id = req.user.uid;
 
-        // ✅ FIXED: Only use fields that ACTUALLY exist in the database
-        // Based on actual Supabase schema query results
-        const KNOWN_GOOD_FIELDS = [
-            'title', 'description', 'category', 'event_type',
-            'date', 'time',
-            'location', 'venue_name',
-            'image_url',
-            'price', 'price_type', 'capacity',
-            'visibility', 'is_draft',
-            'currency', 'absorb_fees'
+        // ✅ POST-MIGRATION: All columns now exist in database!
+        // Using full field list now that migration is complete
+        const ALLOWED_FIELDS = [
+            'title', 'subtitle', 'description', 'category', 'event_type',
+            'date', 'time', 'end_date', 'end_time', 'duration',
+            'is_recurring', 'recurring_dates', 'time_format', 'timeline',
+            'location', 'venue_name', 'online_url',
+            'image_url', 'cover_image_position', 'gallery',
+            'price_type', 'price', 'ticket_name', 'ticket_tiers', 'add_ons',
+            'capacity', 'promo_codes', 'tax_rate', 'absorb_fees', 'custom_fees',
+            'questions', 'requires_approval', 'confirmation_message', 'refund_policy',
+            'waiver_config', 'schedule_config',
+            'tags', 'tracking_pixels', 'remarketing', 'seo',
+            'ticket_design', 'email_settings', 'notifications', 'reminders',
+            'payment_config', 'organizer', 'organizer_email', 'organizer_phone', 'organizer_website',
+            'visibility', 'is_draft', 'status', 'broadcasts',
+            'presale', 'waitlist_config', 'currency', 'hide_platform_donation',
+            'kiosk_enabled', 'organizer_absorbed_fee'
         ];
 
-        console.log('[Event] Creating event with schema-verified fields');
+        console.log('[Event] Creating event with full field support (post-migration)');
         
-        // Build safe payload with only fields that exist in DB
+        // Build safe payload
         const safeData = {};
-        KNOWN_GOOD_FIELDS.forEach(field => {
+        ALLOWED_FIELDS.forEach(field => {
             if (eventData[field] !== undefined) {
                 safeData[field] = eventData[field];
             }
         });
         
-        // Set defaults for required fields (using fields that EXIST)
+        // Set defaults for required fields
         if (safeData.is_draft === undefined) safeData.is_draft = true;
+        if (!safeData.status) safeData.status = safeData.is_draft ? 'draft' : 'published';
         if (!safeData.visibility) safeData.visibility = 'public';
         if (!safeData.price_type) safeData.price_type = 'paid';
         
-        console.log('[Event] Payload fields:', Object.keys(safeData));
+        console.log('[Event] Saving fields:', Object.keys(safeData).length, 'fields');
 
         const { data, error } = await supabase
             .from('events')
@@ -62,7 +71,7 @@ export const createEvent = async (req, res) => {
             throw error;
         }
         
-        console.log('[Event] Successfully created event:', data[0]?.id);
+        console.log('[Event] ✅ Successfully created event:', data[0]?.id);
         res.status(201).json({ event: data[0] });
     } catch (error) {
         console.error('[Event] Create event failed:', error.message);
