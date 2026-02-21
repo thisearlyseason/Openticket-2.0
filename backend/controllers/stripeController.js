@@ -80,8 +80,26 @@ export const createOrder = async (req, res) => {
         // CRITICAL: ALWAYS fetch and validate prices from database, NEVER trust client
         // Prevents price manipulation attacks
         
+        // Normalize ticketSelections to array format
+        let normalizedSelections = [];
+        if (Array.isArray(ticketSelections)) {
+            normalizedSelections = ticketSelections;
+        } else if (ticketSelections && typeof ticketSelections === 'object') {
+            // Convert object format to array
+            normalizedSelections = Object.entries(ticketSelections).map(([tierId, quantity]) => ({
+                tierId,
+                quantity: Number(quantity) || 0,
+                price: 0 // Will be fetched from database
+            }));
+        } else {
+            console.error('[Stripe] ticketSelections is invalid:', ticketSelections);
+            return res.status(400).json({ error: 'Invalid ticket selections format' });
+        }
+        
+        console.log('[Stripe] Normalized ticket selections:', normalizedSelections);
+        
         // Validate ticket selections against database prices
-        for (const selection of ticketSelections) {
+        for (const selection of normalizedSelections) {
             const tier = event.ticket_tiers?.find(t => t.id === selection.tierId);
             
             if (!tier) {
