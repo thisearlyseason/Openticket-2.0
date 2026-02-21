@@ -29,15 +29,14 @@ export const createEvent = async (req, res) => {
             if (eventData[field] !== undefined) safeData[field] = eventData[field];
         });
 
-        // Define minimal required fields that definitely exist in the database
+        // Define ULTRA minimal required fields that definitely exist
         const CORE_FIELDS = [
-            'title', 'description', 'category', 'event_type',
+            'title', 'description', 'category',
             'date', 'time',
-            'location', 'venue_name', 'online_url',
+            'location', 'venue_name',
             'image_url',
-            'price_type', 'price', 'capacity',
-            'visibility', 'is_draft',
-            'organizer', 'organizer_email'
+            'price', 'capacity',
+            'visibility'
         ];
         
         // First attempt: try with all safe fields
