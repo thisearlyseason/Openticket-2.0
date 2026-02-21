@@ -93,6 +93,7 @@ const postSupabase = async (endpoint: string, method: 'POST' | 'PUT' | 'DELETE',
             const errorBody = await res.json();
             
             console.log('[postSupabase] Error response:', { status: res.status, errorBody });
+            console.error('[postSupabase] Error details:', JSON.stringify(errorBody, null, 2));
             
             // For structured error responses (like refund errors), return the full error object
             // This allows callers to access stripeError, diagnostics, canRefund, etc.
