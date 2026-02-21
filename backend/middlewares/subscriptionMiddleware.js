@@ -47,7 +47,7 @@ export const requireActiveSubscription = async (req, res, next) => {
         // Fetch user profile with subscription
         const { data: profile, error } = await supabase
             .from('profiles')
-            .select('subscription, plan')
+            .select('subscription')
             .eq('id', userId)
             .single();
         
@@ -204,7 +204,7 @@ export const requirePremiumPlan = (requiredPlan = 'pro') => {
             
             const { data: profile, error } = await supabase
                 .from('profiles')
-                .select('subscription, plan')
+                .select('subscription')
                 .eq('id', userId)
                 .single();
             
