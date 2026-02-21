@@ -45,12 +45,17 @@ export const createEvent = async (req, res) => {
 
         console.log('[Event] Creating event with full field support (post-migration)');
         
-        // Build safe payload
+        // Build safe payload and filter out empty/invalid values
         const safeData = {};
         ALLOWED_FIELDS.forEach(field => {
-            if (eventData[field] !== undefined) {
-                safeData[field] = eventData[field];
+            const value = eventData[field];
+            
+            // Skip undefined, null, or empty strings (especially for date/time fields)
+            if (value === undefined || value === null || value === '') {
+                return;
             }
+            
+            safeData[field] = value;
         });
         
         // Set defaults for required fields
