@@ -1094,7 +1094,7 @@ async function handleInvoicePaid(invoice) {
         const grossAmount = invoice.amount_paid / 100;
         const stripeFee = invoice.charge 
             ? (await getActualStripeFee(invoice.charge)) 
-            : (grossAmount * 0.039 + 0.30); // Fallback estimate
+            : (grossAmount * 0.029 + 0.30); // Fallback estimate: 2.9% + $0.30
 
         // Insert financial transaction
         const { error: txError } = await supabase
