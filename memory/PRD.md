@@ -76,7 +76,12 @@ Make the event ticketing platform production-ready.
 - ✅ Fixed CSRF blocking `/api/stripe/verify-session` endpoint
 - ✅ Re-enabled price validation in checkout (removed `VALIDATION_DISABLED` flag)
 - ✅ Stripe webhook endpoint working correctly
-- ✅ Post-payment confirmation screen: unblocked (verify-session endpoint now works)
+- ✅ Post-payment confirmation screen: unblocked (verify-session now returns chargedCurrency/chargedAmount even on early-return path)
+- ✅ Confirmation emails: now sent via Resend after verify-session processes payment
+- ✅ Currency display in receipts: charged_currency now saved by both webhook handler and verify-session; normalizeRegistration maps it correctly
+- ✅ Webhook handler now saves charged_currency/charged_amount in both RPC and fallback paths
+- ✅ Removed duplicate session_id template from EventView successUrl
+- ✅ EventView normalization now maps chargedCurrency from reg.charged_currency (snake_case fallback)
 
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
