@@ -190,17 +190,18 @@ export const calculateOrderBreakdown = ({
         });
     }
 
-    // 6. Calculate platform fee
+    // 6. Calculate platform fee (per-ticket: % on subtotal + fixed fee × ticket count)
     const feeBase = breakdown.discountedSubtotal + breakdown.taxAmount + breakdown.customFeesAmount;
+    const totalTickets = breakdown.items
+        .filter(item => item.type === 'ticket')
+        .reduce((sum, item) => sum + item.quantity, 0);
     
     // CRITICAL: ALWAYS calculate platform fee for paid transactions
     // Free tickets are the ONLY exception (per business requirements)
-    // - Donation tickets: YES, charge platform fee on donation amount
-    // - Organizer absorbs fees: YES, calculate fee but deduct from organizer revenue
     const isPaidTransaction = event.price_type !== 'free' && feeBase > 0;
 
     if (isPaidTransaction) {
-        breakdown.platformFee = calculatePlatformFee(feeBase, organizerPlan);
+        breakdown.platformFee = calculatePlatformFee(feeBase, organizerPlan, totalTickets || 1);
         // Track whether organizer is absorbing this fee
         breakdown.platformFeeAbsorbedByOrganizer = event.absorb_fees === true;
     } else {
