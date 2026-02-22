@@ -943,8 +943,8 @@ export const EventView = () => {
                         assignments: assignments,
                         phoneNumber: regData.phoneNumber,
                         attendeeCurrency: attendeeCurrency, // Attendee's local/selected currency for charging
-                        successUrl: `${window.location.origin}/?stripe_return=true&success=true&event_id=${event.id}`,
-                        cancelUrl: `${window.location.origin}/?stripe_return=true&canceled=true&event_id=${event.id}`,
+                        successUrl: `${window.location.origin}/#/event/${event.id}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+                        cancelUrl: `${window.location.origin}/#/event/${event.id}?canceled=true`,
                         userId: currentUser?.id
                     }),
                 });
