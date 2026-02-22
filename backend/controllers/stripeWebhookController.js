@@ -683,73 +683,99 @@ async function handleRefund(stripe, refundData) {
     const centsToDollars = (cents) => (cents ? cents / 100 : 0);
     const refundAmountDollars = centsToDollars(refundAmount);
 
-    // Find the financial transaction
+    // Find the financial transaction (ticket_sale only, to get original)
     const { data: transaction, error } = await supabase
         .from('financial_transactions')
         .select('*')
         .eq('stripe_payment_intent_id', paymentIntentId)
-        .single();
+        .eq('transaction_type', 'ticket_sale')
+        .maybeSingle();
 
-    if (error || !transaction) {
-        console.log('[Webhook] No financial transaction found for payment_intent:', paymentIntentId);
-        return;
-    }
-
-    // ✅ FIX: Validate refund amount
-    const originalAmount = transaction.gross_amount;
-    
-    if (refundAmountDollars > originalAmount) {
-        console.error(`[Webhook] Invalid refund: $${refundAmountDollars} exceeds original $${originalAmount}`);
-        return; // Skip processing invalid refund
-    }
-
-    // Check total refunds don't exceed original transaction
-    const { data: existingRefunds } = await supabase
-        .from('financial_transactions')
-        .select('gross_amount')
+    // Find the registration by payment_intent_id
+    const { data: registration } = await supabase
+        .from('registrations')
+        .select('id, payment_status, total_amount')
         .eq('stripe_payment_intent_id', paymentIntentId)
-        .eq('transaction_type', 'refund');
+        .maybeSingle();
 
-    const totalRefunded = (existingRefunds || [])
-        .reduce((sum, r) => sum + Math.abs(r.gross_amount), 0);
-
-    if (totalRefunded + refundAmountDollars > originalAmount + 0.01) { // Allow 1 cent tolerance
-        console.error(`[Webhook] Total refunds ($${totalRefunded + refundAmountDollars}) would exceed original ($${originalAmount})`);
+    if (!registration) {
+        console.warn('[Webhook] No registration found for payment_intent:', paymentIntentId);
         return;
     }
 
-    console.log(`[Webhook] Refund validation passed: $${refundAmountDollars} of $${originalAmount} (total refunded so far: $${totalRefunded})`);
+    const originalAmount = transaction?.gross_amount || registration?.total_amount || refundAmountDollars;
+    const isFullRefund = refundAmountDollars >= (originalAmount - 0.01);
 
-    // Calculate refund proportions
-    const refundRatio = transaction.gross_amount > 0 
-        ? refundAmountDollars / transaction.gross_amount 
-        : 0;
+    console.log(`[Webhook] Refund: $${refundAmountDollars} of $${originalAmount} (full=${isFullRefund}) for reg ${registration.id}`);
 
-    const platformFeeRefund = Number((transaction.platform_fee * refundRatio).toFixed(2));
-    const stripeFeeRefund = Number((transaction.stripe_fee * refundRatio).toFixed(2));
-    const organizerNetRefund = Number((transaction.organizer_net * refundRatio).toFixed(2));
+    // 1. Update registration payment status
+    const newStatus = isFullRefund ? 'refunded' : 'partially_refunded';
+    await supabase
+        .from('registrations')
+        .update({ payment_status: newStatus })
+        .eq('id', registration.id);
+    console.log(`[Webhook] Registration ${registration.id} status → ${newStatus}`);
 
-    // Insert refund transaction
-    await supabase.from('financial_transactions').insert({
-        registration_id: transaction.registration_id,
-        event_id: transaction.event_id,
-        stripe_payment_intent_id: paymentIntentId,
-        gross_amount: -refundAmountDollars,
-        platform_fee: -platformFeeRefund,
-        stripe_fee: -stripeFeeRefund,
-        organizer_net: -organizerNetRefund,
-        currency: transaction.currency,
-        status: 'refunded',
-        payout_status: 'settled',
-        transaction_type: 'refund',
-    });
-
-    // Update original transaction status if full refund
-    if (refundAmountDollars >= transaction.gross_amount) {
-        await supabase
+    // 2. Insert refund financial transaction (only if we have the original transaction to calculate proportions)
+    if (transaction) {
+        // Check total refunds don't exceed original transaction
+        const { data: existingRefunds } = await supabase
             .from('financial_transactions')
-            .update({ status: 'refunded' })
-            .eq('id', transaction.id);
+            .select('gross_amount')
+            .eq('stripe_payment_intent_id', paymentIntentId)
+            .eq('transaction_type', 'refund');
+
+        const totalRefunded = (existingRefunds || [])
+            .reduce((sum, r) => sum + Math.abs(r.gross_amount), 0);
+
+        if (totalRefunded + refundAmountDollars > originalAmount + 0.01) {
+            console.error(`[Webhook] Total refunds ($${totalRefunded + refundAmountDollars}) would exceed original ($${originalAmount})`);
+        } else {
+            const refundRatio = transaction.gross_amount > 0
+                ? refundAmountDollars / transaction.gross_amount
+                : 0;
+
+            const platformFeeRefund = Number((transaction.platform_fee * refundRatio).toFixed(2));
+            const stripeFeeRefund = Number((transaction.stripe_fee * refundRatio).toFixed(2));
+            const organizerNetRefund = Number((transaction.organizer_net * refundRatio).toFixed(2));
+
+            await supabase.from('financial_transactions').insert({
+                registration_id: transaction.registration_id,
+                event_id: transaction.event_id,
+                stripe_payment_intent_id: paymentIntentId,
+                gross_amount: -refundAmountDollars,
+                platform_fee: -platformFeeRefund,
+                stripe_fee: -stripeFeeRefund,
+                organizer_net: -organizerNetRefund,
+                currency: transaction.currency,
+                status: 'refunded',
+                payout_status: 'settled',
+                transaction_type: 'refund',
+            });
+
+            // Update original transaction status if full refund
+            if (isFullRefund) {
+                await supabase
+                    .from('financial_transactions')
+                    .update({ status: 'refunded' })
+                    .eq('id', transaction.id);
+            }
+        }
+    } else {
+        // No financial transaction found — insert a basic refund record from Stripe data
+        console.warn(`[Webhook] No financial_transaction found for ${paymentIntentId}, inserting basic refund record`);
+        await supabase.from('financial_transactions').insert({
+            registration_id: registration.id,
+            stripe_payment_intent_id: paymentIntentId,
+            gross_amount: -refundAmountDollars,
+            platform_fee: 0,
+            stripe_fee: 0,
+            organizer_net: -refundAmountDollars,
+            currency: refundData.currency || 'usd',
+            status: 'refunded',
+            payout_status: 'settled',
+            transaction_type: 'refund',
+        });
     }
 
     // Log to Audit Trail
