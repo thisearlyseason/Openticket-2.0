@@ -1282,3 +1282,73 @@ async function handlePaymentIntentFailed(stripe, paymentIntent) {
         console.error("[Webhook] Error handling payment intent failure:", error);
     }
 }
+
+/**
+ * POST /api/stripe/sync-refunds
+ * Manually fetch recent Stripe refunds and sync any that aren't in the DB yet.
+ * Used to backfill refunds that occurred while the webhook was broken.
+ */
+export const syncStripeRefunds = async (req, res) => {
+    try {
+        const stripe = getStripe();
+        const { days = 7 } = req.body;
+        const since = Math.floor(Date.now() / 1000) - (days * 86400);
+
+        console.log(`[RefundSync] Fetching Stripe charges with refunds since ${new Date(since * 1000).toISOString()}`);
+
+        // List all charges that have been refunded
+        const charges = await stripe.charges.list({
+            created: { gte: since },
+            limit: 100,
+        });
+
+        let synced = 0;
+        let skipped = 0;
+        const results = [];
+
+        for (const charge of charges.data) {
+            if (!charge.refunded && charge.amount_refunded === 0) continue;
+
+            const paymentIntentId = charge.payment_intent;
+            if (!paymentIntentId) continue;
+
+            // Check if a refund transaction already exists in DB
+            const { data: existing } = await supabase
+                .from('financial_transactions')
+                .select('id')
+                .eq('stripe_payment_intent_id', paymentIntentId)
+                .eq('transaction_type', 'refund')
+                .maybeSingle();
+
+            if (existing) {
+                skipped++;
+                continue;
+            }
+
+            // Find the registration
+            const { data: registration } = await supabase
+                .from('registrations')
+                .select('id, payment_status, total_amount')
+                .eq('stripe_payment_intent_id', paymentIntentId)
+                .maybeSingle();
+
+            if (!registration) {
+                results.push({ paymentIntent: paymentIntentId, status: 'no_registration' });
+                continue;
+            }
+
+            // Process the refund using the existing handler
+            await handleRefund(stripe, charge);
+            synced++;
+            results.push({ paymentIntent: paymentIntentId, registrationId: registration.id, status: 'synced', amount: charge.amount_refunded / 100 });
+        }
+
+        console.log(`[RefundSync] Done: ${synced} synced, ${skipped} already in DB`);
+        res.json({ success: true, synced, skipped, results });
+
+    } catch (error) {
+        console.error('[RefundSync] Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
