@@ -1,6 +1,6 @@
 import supabase from '../services/supabase.js';
 import { createRequire } from 'module';
-import { calculateOrderBreakdown, buildStripeLineItems } from '../utils/priceCalculator.js';
+import { calculateOrderBreakdown, buildStripeLineItems, PLAN_FEES, calculatePlatformFee } from '../utils/priceCalculator.js';
 import { generateTicketId, generateTicketNumber } from '../utils/ticketGenerator.js';
 import { EmailService } from '../services/serverEmail.js';
 import { getValidatedStripe, isTestMode } from '../utils/stripeHelper.js';
