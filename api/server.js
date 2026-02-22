@@ -233,7 +233,6 @@ app.use('/api/', generalLimiter);
 
 // Webhook parsing needs RAW body, handled in specific route or before global JSON
 // CRITICAL: Must be BEFORE express.json() to preserve signature
-import { handleWebhook } from './backend/controllers/stripeWebhookController.js';
 app.post('/api/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), handleWebhook);
 
