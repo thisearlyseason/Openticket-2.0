@@ -1367,9 +1367,10 @@ export const createAtDoorPaymentIntent = async (req, res) => {
             !organizerStripeId.startsWith('mock_') &&
             registration.event?.owner?.stripe_onboarding_complete;
 
-        // Calculate platform fee (same as regular checkout)
-        const platformFeePercent = 0.029; // 2.9% platform fee
-        const platformFeeAmount = Math.round(amountInCents * platformFeePercent);
+        // Calculate platform fee based on organizer's plan (single source of truth)
+        const atDoorOrganizerPlan = registration.event?.owner?.subscription?.plan || 'free';
+        const atDoorPlanFee = PLAN_FEES[atDoorOrganizerPlan] || PLAN_FEES.free;
+        const platformFeeAmount = Math.round(amountInCents * atDoorPlanFee.percent);
 
         // Build PaymentIntent options
         const paymentIntentOptions = {
