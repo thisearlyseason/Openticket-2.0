@@ -25,8 +25,14 @@ export const handleWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+    console.log('[Webhook] Handler called');
+    console.log('[Webhook] Signature present:', !!sig);
+    console.log('[Webhook] Secret configured:', !!endpointSecret);
+    console.log('[Webhook] Secret value:', endpointSecret ? endpointSecret.substring(0, 15) + '...' : 'MISSING');
+
     if (!endpointSecret) {
-        console.error('[Webhook] STRIPE_WEBHOOK_SECRET is missing');
+        console.error('[Webhook] STRIPE_WEBHOOK_SECRET is missing from environment');
+        console.error('[Webhook] Available env keys:', Object.keys(process.env).filter(k => k.includes('STRIPE')).join(', '));
         return res.status(400).send('Webhook Error: Secret not configured');
     }
 
