@@ -727,7 +727,10 @@ export const verifySession = async (req, res) => {
         if (reg.payment_status === 'paid' || reg.payment_status === 'completed') {
             return res.json({ 
                 status: 'success',
-                registration: reg
+                registration: reg,
+                // Include charged currency from DB for receipt display
+                chargedCurrency: reg.charged_currency || reg.answers?._metadata?.charged_currency || reg.event?.currency || 'USD',
+                chargedAmount: reg.charged_amount || reg.answers?._metadata?.charged_amount || 0
             });
         }
 
