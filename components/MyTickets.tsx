@@ -624,9 +624,31 @@ export const MyTickets = () => {
                             <Button onClick={() => handlePrint()} variant="outline" size="sm">
                                 <Printer size={16} className="mr-2" /> Print All
                             </Button>
-                            <Button onClick={() => setReceiptModal({ isOpen: true, reg: selectedGroup.tickets[0].reg, event: selectedGroup.event })} variant="secondary" size="sm" className="font-black shadow-lg shadow-primary/10">
-                                <Printer size={16} className="mr-2" /> View Receipt
-                            </Button>
+                            
+                            {/* Show receipt button for each unique purchase/registration */}
+                            {(() => {
+                                // Get unique registrations in this event group
+                                const uniqueRegistrations = Array.from(
+                                    new Map(
+                                        selectedGroup.tickets.map(t => [t.reg.id, { reg: t.reg, timestamp: t.timestamp }])
+                                    ).values()
+                                ).sort((a, b) => b.timestamp - a.timestamp); // Most recent first
+                                
+                                return uniqueRegistrations.map((item, idx) => (
+                                    <Button 
+                                        key={item.reg.id}
+                                        onClick={() => setReceiptModal({ isOpen: true, reg: item.reg, event: selectedGroup.event })} 
+                                        variant={idx === 0 ? "secondary" : "outline"} 
+                                        size="sm" 
+                                        className={idx === 0 ? "font-black shadow-lg shadow-primary/10" : ""}
+                                    >
+                                        <Printer size={16} className="mr-2" /> 
+                                        {uniqueRegistrations.length > 1 
+                                            ? `Receipt ${uniqueRegistrations.length - idx}` 
+                                            : 'View Receipt'}
+                                    </Button>
+                                ));
+                            })()}
                         </div>
                     </div>
 
