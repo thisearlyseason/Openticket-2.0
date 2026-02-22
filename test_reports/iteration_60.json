@@ -1,0 +1,89 @@
+{
+  "summary": "Tested currency fixes for already-paid session early-return path. All 10/10 backend tests passed. verify-session now returns chargedCurrency=CAD and chargedAmount=150.57 from DB for the real paid session (cs_test_b1y7NZbejoWYGpzEubqgUwXCSvgtWzJRblegTBQp3nhmPObjhCymbEDOwp). Registration is not null and status='success'.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "features_verified": {
+    "verify_session_early_return_charged_currency": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/verify-session with already-paid session (cs_test_b1y7NZbe...) returns chargedCurrency=CAD, chargedAmount=150.57 from DB. Early-return path (payment_status='paid') now correctly includes these fields. Fix in stripeController.js lines 727-734."
+    },
+    "verify_session_registration_not_null": {
+      "status": "VERIFIED",
+      "notes": "Response includes registration object (id=3e3d1e99-ad6b-4b60-889c-2306a5c0949b, payment_status=paid, charged_currency=CAD). Not null."
+    },
+    "verify_session_status_success": {
+      "status": "VERIFIED",
+      "notes": "verify-session returns status='success' for already-paid session. Correct idempotency behavior."
+    },
+    "verify_session_no_csrf": {
+      "status": "VERIFIED",
+      "notes": "verify-session is NOT blocked by CSRF. server.js lines 287-293 correctly exclude this endpoint."
+    },
+    "create_order_no_csrf": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/create-order not blocked by CSRF. Returns business logic error (404 event not found), not CSRF 403."
+    },
+    "webhook_no_signature_error": {
+      "status": "VERIFIED",
+      "notes": "POST /api/webhook and /api/stripe/webhook both return 'Webhook Error: No stripe-signature header value was provided.' (400). NOT a key format error."
+    },
+    "db_state_charged_currency_cad": {
+      "status": "VERIFIED",
+      "notes": "DB registration for the test session has payment_status=paid and charged_currency=CAD. reg.charged_currency='CAD', reg.answers._metadata.charged_currency='CAD'."
+    },
+    "webhook_both_paths_save_charged_currency": {
+      "status": "CODE_REVIEWED",
+      "notes": "stripeWebhookController.js lines 247-308: both RPC-success path (line 291-307) and fallback path (line 249-268) now save charged_currency and charged_amount. Code confirmed correct in review."
+    },
+    "ping_health": {
+      "status": "VERIFIED",
+      "notes": "GET /api/ping returns 'pong' (200). GET /api/health returns {status: 'healthy'}."
+    }
+  },
+
+  "actual_api_responses": {
+    "GET /api/ping": "pong (200)",
+    "POST /api/stripe/verify-session (already-paid cs_test_b1y7NZbe...)": "{status:'success', chargedCurrency:'CAD', chargedAmount:150.57, registration:{id:'3e3d1e99...',payment_status:'paid',charged_currency:'CAD'}} (200)",
+    "POST /api/stripe/create-order (no event)": "404 event not found (NOT CSRF)",
+    "POST /api/webhook (no sig)": "Webhook Error: No stripe-signature header value was provided. (400)",
+    "POST /api/stripe/webhook (no sig)": "Webhook Error: No stripe-signature header value was provided. (400)"
+  },
+
+  "test_report_links": [
+    "/app/backend/tests/test_currency_fixes.py",
+    "/app/test_reports/pytest/pytest_currency_fixes.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "GOOD: stripeController.js early-return path (lines 727-734) correctly reads reg.charged_currency || reg.answers?._metadata?.charged_currency || reg.event?.currency || 'USD' - fallback chain is solid.",
+    "GOOD: stripeWebhookController.js both RPC-success and fallback paths (lines 247-308) now save charged_currency and charged_amount in both dedicated columns and answers._metadata.",
+    "NOTE: createOrder still does not save charged_currency/charged_amount at registration creation time (only saves at webhook/verify-session). This is expected because the currency is confirmed at payment completion, not at checkout session creation."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_currency_fixes.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "N/A (backend-only testing requested)"
+  },
+
+  "seed_data_creation": "None - used existing paid registration in DB",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "All currency fixes verified. Real paid session cs_test_b1y7NZbejoWYGpzEubqgUwXCSvgtWzJRblegTBQp3nhmPObjhCymbEDOwp is in DB with payment_status=paid, charged_currency=CAD, charged_amount=150.57. verify-session early-return path now includes chargedCurrency=CAD and chargedAmount=150.57 in response. Previous iteration_59 verified dotenv override fix and CSRF exclusions - those still passing. Test file at /app/backend/tests/test_currency_fixes.py."
+}
