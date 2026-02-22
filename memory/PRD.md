@@ -70,19 +70,25 @@ Make the event ticketing platform production-ready.
 
 ## Pending Items (Prioritized)
 
-### P0 - Critical (Blocking)
-- Run SQL migration in Supabase SQL Editor (file: `/app/database/migrations/add_type_to_financial_transactions.sql`)
-  - Creates `platform_settings` table (enables DB-backed Stripe key storage)
-  - Adds `type` column to `financial_transactions` (enables type-based reporting)
+### P0 - Critical (Resolved Feb 2026)
+- ✅ Run SQL migration in Supabase SQL Editor (file: `/app/database/migrations/add_type_to_financial_transactions.sql`)
+- ✅ Fixed Stripe key loading order: root `.env` has invalid `rk_live_` key; now `backend/.env` takes priority via `override:true` in `api/server.js`
+- ✅ Fixed CSRF blocking `/api/stripe/verify-session` endpoint
+- ✅ Re-enabled price validation in checkout (removed `VALIDATION_DISABLED` flag)
+- ✅ Stripe webhook endpoint working correctly
+- ✅ Post-payment confirmation screen: unblocked (verify-session endpoint now works)
 
 ### P1 - High Priority
-- (None blocking production)
+- User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
 
 ### P2 - Medium Priority
-- Firebase TypeError console error: `Cannot read properties of null (reading 'addEventListener')` - wrap Firebase UI init in useEffect
+- Firebase TypeError console error: wrap Firebase UI init in useEffect
 - SuperAdminDashboard.tsx refactor: 3700+ lines → modular components
 
 ### P3 - Backlog
 - Remaining UX audit fixes: confusing search placeholder, inconsistent button styling, mobile checkout friction
 - Check-in data model refactor: consolidate redundant status fields
 - Backend module caching issue (recurring - use supervisor restart workaround)
+- Cosmetic Stripe key warning in console
+
+
