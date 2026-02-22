@@ -6,35 +6,27 @@
 
 // Platform fee structure by plan
 export const PLAN_FEES = {
-    free: { percent: 0.045, fixed: 0.99 },         // 4.5% + $0.99
-    pro: { percent: 0.029, fixed: 0.69 },          // 2.9% + $0.69
-    premium: { percent: 0.019, fixed: 0.49 },      // 1.9% + $0.49
-    enterprise: { percent: 0.019, fixed: 0.49 },   // 1.9% + $0.49
+    free: { percent: 0.045, fixed: 0.99 },         // 4.5% + $0.99 per ticket
+    pro: { percent: 0.029, fixed: 0.69 },           // 2.9% + $0.69 per ticket
+    premium: { percent: 0.019, fixed: 0.49 },       // 1.9% + $0.49 per ticket
+    enterprise: { percent: 0.019, fixed: 0.49 },    // 1.9% + $0.49 per ticket
 };
 
-// ✅ FIX: Platform fee cap to prevent excessive fees
-export const PLATFORM_FEE_CAP = 100; // $100 maximum
-
 /**
- * Calculate platform service fee (with cap)
- * @param {number} subtotal - Base amount in dollars
+ * Calculate platform service fee
+ * @param {number} subtotal - Base amount in dollars (after discounts)
  * @param {string} plan - 'free' | 'pro' | 'premium'
- * @returns {number} Service fee in dollars (capped at PLATFORM_FEE_CAP)
+ * @param {number} ticketCount - Total number of tickets (fixed fee is per ticket)
+ * @returns {number} Service fee in dollars
  */
-export const calculatePlatformFee = (subtotal, plan = 'free') => {
+export const calculatePlatformFee = (subtotal, plan = 'free', ticketCount = 1) => {
     if (subtotal <= 0) return 0;
     
     const planFees = PLAN_FEES[plan] || PLAN_FEES.free;
-    const calculatedFee = Number(((subtotal * planFees.percent) + planFees.fixed).toFixed(2));
+    // Percent applied to the total subtotal; fixed fee charged per ticket
+    const calculatedFee = Number(((subtotal * planFees.percent) + (planFees.fixed * Math.max(1, ticketCount))).toFixed(2));
     
-    // ✅ FIX: Cap the fee at maximum
-    const cappedFee = Math.min(calculatedFee, PLATFORM_FEE_CAP);
-    
-    if (cappedFee < calculatedFee) {
-        console.log(`[PriceCalculator] Platform fee capped: $${calculatedFee.toFixed(2)} → $${cappedFee.toFixed(2)}`);
-    }
-    
-    return cappedFee;
+    return calculatedFee;
 };
 
 /**
