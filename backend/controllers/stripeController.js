@@ -1053,15 +1053,10 @@ export const recordAtDoorPayment = async (req, res) => {
             return res.status(404).json({ error: 'Registration not found' });
         }
 
-        // Calculate platform fee based on organizer's plan
+        // Calculate platform fee based on organizer's plan (single source of truth: PLAN_FEES from priceCalculator.js)
         const organizerPlan = reg.event?.owner?.subscription?.plan || 'free';
-        const PLAN_FEES = {
-            free: { percent: 0.0275, fixed: 0.99 },
-            pro: { percent: 0.015, fixed: 0.75 },
-            premium: { percent: 0.0075, fixed: 0.30 }
-        };
-        const planFee = PLAN_FEES[organizerPlan] || PLAN_FEES.free;
-        const platformFee = Number((amount * planFee.percent + planFee.fixed).toFixed(2));
+        const planFeeConfig = PLAN_FEES[organizerPlan] || PLAN_FEES.free;
+        const platformFee = Number((amount * planFeeConfig.percent + planFeeConfig.fixed).toFixed(2));
         
         // No Stripe fee for cash/transfer payments
         const stripeFee = method === 'card' ? Number((amount * 0.029 + 0.30).toFixed(2)) : 0;
