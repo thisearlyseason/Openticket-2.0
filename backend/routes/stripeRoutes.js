@@ -35,4 +35,7 @@ router.post('/connect/create-link', verifyToken, stripeConnectController.createA
 router.post('/connect/dashboard-link', verifyToken, stripeConnectController.createDashboardLink);
 router.post('/connect/disconnect', verifyToken, stripeConnectController.disconnectAccount);
 
+// ========== REFUND SYNC (Admin: re-process past Stripe refunds) ==========
+router.post('/sync-refunds', verifyToken, stripeWebhookController.syncStripeRefunds);
+
 export default router;
