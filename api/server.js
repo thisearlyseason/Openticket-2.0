@@ -14,10 +14,10 @@ import http from 'http';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// First load from /app/.env (root)
+// First load from /app/.env (root, lower priority)
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-// Then load from /app/backend/.env (will override if same keys exist)
-dotenv.config({ path: path.resolve(__dirname, '../backend/.env') });
+// Then load from /app/backend/.env (higher priority - overrides root .env)
+dotenv.config({ path: path.resolve(__dirname, '../backend/.env'), override: true });
 
 // Log Resend configuration status
 console.log('[Server] RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY);
