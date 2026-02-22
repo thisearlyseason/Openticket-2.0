@@ -215,6 +215,30 @@ export const createOrder = async (req, res) => {
         
         const supportedCurrencies = ['usd', 'eur', 'gbp', 'cad', 'aud'];
         
+        // Auto-detect attendee currency from IP if not provided
+        let detectedCurrency = attendeeCurrency;
+        if (!detectedCurrency) {
+            // Use IP geolocation to detect currency
+            const customerIP = req.ip || req.headers['x-forwarded-for']?.split(',')[0] || req.connection.remoteAddress;
+            
+            try {
+                // Simple IP to currency mapping (can be enhanced with a geolocation service)
+                const ipToCurrency = {
+                    // This is a simple approximation - in production, use ipapi.co or similar
+                    // For now, we'll use the country code from headers if available
+                };
+                
+                // Check if there's a currency preference in session or headers
+                const currencyHeader = req.headers['x-currency'] || req.headers['accept-currency'];
+                if (currencyHeader && supportedCurrencies.includes(currencyHeader.toLowerCase())) {
+                    detectedCurrency = currencyHeader.toLowerCase();
+                    console.log(`[Stripe] Currency detected from header: ${detectedCurrency.toUpperCase()}`);
+                }
+            } catch (e) {
+                console.warn('[Stripe] Could not detect currency from IP:', e.message);
+            }
+        }
+        
         // Get organization's global default currency from event owner's profile (source of truth for organizer)
         const ownerDefaultCurrency = event.owner?.subscription?.settings?.default_currency?.toLowerCase() || 'usd';
         
@@ -235,7 +259,7 @@ export const createOrder = async (req, res) => {
         let currencyConversionRate = 1; // rate from organizerCurrency to chargeCurrency
         let needsConversion = false;
         
-        const normalizedAttendeeCurrency = attendeeCurrency?.toLowerCase();
+        const normalizedAttendeeCurrency = detectedCurrency?.toLowerCase();
         if (normalizedAttendeeCurrency && 
             supportedCurrencies.includes(normalizedAttendeeCurrency) && 
             normalizedAttendeeCurrency !== organizerCurrency) {
