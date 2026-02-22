@@ -430,7 +430,7 @@ export const EventView = () => {
                                 if (result.status === 'success' && result.registration) {
                                     const reg = result.registration;
                                     // Normalize the registration
-                                    const normalizedReg = {
+                                    const normalizedReg: any = {
                                         ...reg,
                                         id: reg.id,
                                         eventId: reg.event_id,
@@ -440,45 +440,30 @@ export const EventView = () => {
                                         tickets: reg.tickets || [],
                                         addOns: reg.add_ons || [],
                                         timestamp: new Date(reg.created_at).getTime(),
-                                        // Include all fee and discount fields
                                         serviceFee: reg.service_fee || 0,
                                         customFeesAmount: reg.custom_fees_amount || 0,
                                         taxAmount: reg.tax_amount || 0,
                                         donationAmount: reg.donation_amount || 0,
-                                        // Platform donation can be in answers._metadata (new) or direct field (legacy)
                                         platformDonationAmount: reg.answers?._metadata?.platform_donation_amount || reg.platform_donation_amount || 0,
                                         discountAmount: reg.discount_amount || 0,
                                         promoCodeUsed: reg.promo_code_used || null,
                                         answers: reg.answers || {},
-                                        // Store the total amount as charged
                                         totalAmount: reg.total_amount || 0,
+                                        // Map charged currency/amount from either result or DB (snake_case fallback)
+                                        chargedCurrency: result.chargedCurrency || reg.charged_currency || reg.answers?._metadata?.charged_currency || null,
+                                        chargedAmount: result.chargedAmount || reg.charged_amount || reg.answers?._metadata?.charged_amount || 0,
                                     };
                                     
-                                    // Set the actual charged currency and amount from Stripe
-                                    if (result.chargedCurrency) {
-                                        setChargedCurrency(result.chargedCurrency);
-                                        console.log('[EventView] Charged currency from Stripe:', result.chargedCurrency);
+                                    if (normalizedReg.chargedCurrency) {
+                                        setChargedCurrency(normalizedReg.chargedCurrency);
                                     }
                                     
-                                    // Store the charged amount for display
-                                    if (result.chargedAmount) {
-                                        // Update the registration with the actual charged amount
-                                        normalizedReg.chargedAmount = result.chargedAmount;
-                                        console.log('[EventView] Charged amount from Stripe:', result.chargedAmount);
-                                    }
-                                    
-                                    // Store the charged currency for display
-                                    if (result.chargedCurrency) {
-                                        normalizedReg.chargedCurrency = result.chargedCurrency;
-                                        console.log('[EventView] Charged currency from Stripe:', result.chargedCurrency);
-                                    }
-                                    
-                                    setCompletedRegistration(normalizedReg as any);
+                                    setCompletedRegistration(normalizedReg);
                                     setIsSuccess(true);
                                     setIsProcessingPayment(false);
                                     window.scrollTo(0, 0);
 
-                                    // Send confirmation email
+                                    // Send confirmation email via organizer Gmail if connected
                                     if (organizerUser?.gmailConfig?.connected && event.emailSettings?.enabled !== false) {
                                         const subject = event.requiresApproval ? `Application Received: ${event.title}` : `Confirmation: ${event.title}`;
                                         const body = event.requiresApproval
