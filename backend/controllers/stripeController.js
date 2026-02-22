@@ -142,36 +142,10 @@ export const createOrder = async (req, res) => {
                 return res.status(400).json({ error: 'Invalid ticket selection' });
             }
             
-            // CRITICAL: Compare server price with client-provided price
-            const clientPrice = parseFloat(selection.price) || 0;
-            
-            console.log('[Stripe] Price validation:', {
-                tierId: selection.tierId,
-                tierName,
-                serverPrice,
-                clientPrice,
-                difference: Math.abs(serverPrice - clientPrice)
-            });
-            
-            // ⚠️ TEMPORARILY DISABLED - Price validation causing issues during testing
-            // TODO: Re-enable after debugging price mismatch
-            // The frontend might be including fees in the price
-            const VALIDATION_DISABLED = true; // Set to false to re-enable
-            
-            if (!VALIDATION_DISABLED && Math.abs(serverPrice - clientPrice) > 0.01) {
-                console.error(`[Security] Price mismatch detected!`, {
-                    tierId: selection.tierId,
-                    tierName: tierName,
-                    serverPrice,
-                    clientPrice,
-                    eventId,
-                    difference: clientPrice - serverPrice
-                });
-                
-                return res.status(400).json({ 
-                    error: 'Price validation failed. Please refresh and try again.' 
-                });
-            }
+            // Server-side price validation: tier ID and price are validated from DB
+            // Note: Client sends ticketSelections as {tierId: qty} map - no client prices sent
+            // All prices are fetched from DB and used in calculateOrderBreakdown below
+            console.log('[Stripe] Tier validated:', { tierId: selection.tierId, tierName, serverPrice });
         }
         
         // Validate add-on selections against database prices
