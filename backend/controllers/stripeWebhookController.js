@@ -246,13 +246,25 @@ async function handleCheckoutCompleted(stripe, session) {
 
     if (rpcError) {
         console.error("RPC Transaction Failed:", rpcError);
-        // Fallback: Update registration directly
+        // Fallback: Update registration directly including charged currency
+        const chargedCurrency = session.currency?.toUpperCase() || 'USD';
+        const chargedAmount = centsToDollars(session.amount_total);
         await supabase
             .from('registrations')
             .update({
                 payment_status: 'paid',
                 stripe_payment_intent_id: session.payment_intent,
                 tickets: finalizedTickets,
+                charged_currency: chargedCurrency,
+                charged_amount: chargedAmount,
+                answers: {
+                    ...reg.answers,
+                    _metadata: {
+                        ...(reg.answers?._metadata || {}),
+                        charged_currency: chargedCurrency,
+                        charged_amount: chargedAmount,
+                    }
+                }
             })
             .eq('id', reg.id);
 
@@ -275,7 +287,24 @@ async function handleCheckoutCompleted(stripe, session) {
             affiliate_commission: affiliateCommission,
         });
     } else {
-        // RPC succeeded - transaction created via stored procedure
+        // RPC succeeded - also update charged_currency on registration (RPC may not handle this)
+        const chargedCurrency = session.currency?.toUpperCase() || 'USD';
+        const chargedAmount = centsToDollars(session.amount_total);
+        await supabase
+            .from('registrations')
+            .update({
+                charged_currency: chargedCurrency,
+                charged_amount: chargedAmount,
+                answers: {
+                    ...reg.answers,
+                    _metadata: {
+                        ...(reg.answers?._metadata || {}),
+                        charged_currency: chargedCurrency,
+                        charged_amount: chargedAmount,
+                    }
+                }
+            })
+            .eq('id', reg.id);
         console.log(`[Stripe] Transaction Processed via RPC for Session ${session.id}`);
     }
 
