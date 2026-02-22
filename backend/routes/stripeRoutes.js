@@ -2,8 +2,13 @@ import express from 'express';
 const router = express.Router();
 import * as stripeController from '../controllers/stripeController.js';
 import * as stripeConnectController from '../controllers/stripeConnectController.js';
+import * as stripeWebhookController from '../controllers/stripeWebhookController.js';
 import verifyToken from '../middlewares/authMiddleware.js';
 import { checkoutRateLimiter } from '../middleware/rateLimiter.js';
+
+// ========== WEBHOOK ROUTES (Must be FIRST - before other middleware) ==========
+// Webhooks use raw body for signature verification, so they bypass auth/CSRF
+router.post('/webhook', stripeWebhookController.handleWebhook);
 
 // ========== CHECKOUT ROUTES ==========
 // ✅ FIX: Apply rate limiting to checkout endpoints
