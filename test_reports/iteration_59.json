@@ -1,0 +1,94 @@
+{
+  "summary": "Tested all Stripe-related bug fixes: dotenv override:true fix, CSRF exclusions for Stripe endpoints, and webhook handler behavior. All 10/10 backend tests passed. All 3 critical fixes confirmed working.",
+
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+
+  "features_verified": {
+    "dotenv_override_fix": {
+      "status": "VERIFIED",
+      "notes": "backend/.env STRIPE_SECRET_KEY=sk_test_... overrides /app/.env rk_live_... key. Server logs confirm '[Stripe] Initialized in TEST mode'. dotenv@17.2.3 loads 16 vars from backend/.env with override:true."
+    },
+    "webhook_no_signature_error": {
+      "status": "VERIFIED",
+      "notes": "POST /api/webhook without stripe-signature returns 'Webhook Error: No stripe-signature header value was provided.' - NOT 'Secret not configured' or 'STRIPE_SECRET_KEY format is invalid'"
+    },
+    "webhook_alias_no_signature": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/webhook (alias) also returns correct error: 'Webhook Error: No stripe-signature header value was provided.'"
+    },
+    "csrf_verify_session_excluded": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/verify-session with {sessionId: 'cs_test_invalid'} returns Stripe error {'error':'No such checkout.session: cs_test_invalid'} - NOT 'invalid csrf token'. Server logs confirm '[CSRF] Skipping - Stripe order endpoint'"
+    },
+    "csrf_create_order_excluded": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/create-order returns validation error (not CSRF 403). Endpoint proceeds to business logic."
+    },
+    "csrf_calculate_order_excluded": {
+      "status": "VERIFIED",
+      "notes": "POST /api/stripe/calculate-order returns {'error':'Event not found'} - not CSRF blocked."
+    },
+    "ping_health": {
+      "status": "VERIFIED",
+      "notes": "GET /api/ping returns 'pong'. GET /api/health returns {status: 'healthy'}."
+    }
+  },
+
+  "actual_api_responses": {
+    "GET /api/ping": "pong (200)",
+    "POST /api/webhook (no sig)": "Webhook Error: No stripe-signature header value was provided. (400)",
+    "POST /api/stripe/webhook (no sig)": "Webhook Error: No stripe-signature header value was provided. (400)",
+    "POST /api/stripe/verify-session {sessionId: cs_test_invalid}": "{error: No such checkout.session: cs_test_invalid} (400)",
+    "POST /api/stripe/calculate-order": "{error: Event not found} (400)"
+  },
+
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_fixes.py",
+    "/app/test_reports/pytest/pytest_stripe_fixes.xml"
+  ],
+
+  "action_items": [],
+
+  "critical_code_review_comments": [
+    "NOTE: In stripeWebhookController.js, getStripe() is called OUTSIDE the try/catch block (line 40). If getStripe() throws (e.g., if key override fails), the error would propagate to the global error handler but not return the expected 'Webhook Error:' format. This is acceptable since the fix ensures the key is always valid, but worth noting for robustness.",
+    "NOTE: loadPlatformSettingsFromDB() at startup could potentially override STRIPE_SECRET_KEY from the database. If someone stored the rk_live_ key in platform_settings table, it would override the backend/.env fix. Low risk in test env but should be monitored.",
+    "VERIFIED: dotenv@17.2.3 override:true correctly ensures backend/.env sk_test_ key takes priority over root /app/.env rk_live_ key."
+  ],
+
+  "updated_files": [
+    "/app/backend/tests/test_stripe_fixes.py"
+  ],
+
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "N/A (backend-only testing requested)"
+  },
+
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+
+  "context_for_next_testing_agent": "All 3 critical Stripe fixes verified: (1) dotenv override:true working - sk_test_ key in use, (2) CSRF exclusion for /stripe/verify-session and other Stripe endpoints working, (3) Webhook returns correct 'No stripe-signature' error (not key config error). Test file at /app/backend/tests/test_stripe_fixes.py. Previous tests (iteration_58) verified Firebase fix and auth 401 messages - those still passing.",
+
+  "rca_of_issues": {
+    "dotenv_override_fix": {
+      "root_cause": "/app/.env had STRIPE_SECRET_KEY=rk_live_... (restricted key, not a standard secret key). server.js loaded root .env first, then backend/.env, but without override:true, the rk_live_ value persisted. getValidatedStripe() validates key starts with 'sk_' so rk_live_ caused 'format is invalid' error.",
+      "fix_applied": "Added override:true to second dotenv.config call in server.js (line 20). Now backend/.env sk_test_... key overrides root .env rk_live_ key.",
+      "verification": "Server logs: '[Stripe] Initialized in TEST mode'. Webhook returns signature error (not key format error)."
+    },
+    "csrf_verify_session_fix": {
+      "root_cause": "csrfMiddleware in server.js was applying CSRF protection to /api/stripe/verify-session because it wasn't in the exclusion list.",
+      "fix_applied": "Added verify-session to CSRF exclusion conditions (lines 287-291 of server.js): `req.path === '/stripe/verify-session'`",
+      "verification": "Server logs: '[CSRF] Skipping - Stripe order endpoint' for verify-session. API returns Stripe error not CSRF error."
+    }
+  }
+}
