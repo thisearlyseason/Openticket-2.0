@@ -609,8 +609,10 @@ export const createPaymentIntent = async (req, res) => {
         };
 
         if (isRealAccount) {
-            // Calculate platform fee (simplified - use same structure)
-            const platformFeePercent = 0.0275; // Default free plan
+            // Calculate platform fee using organizer's plan
+            const organizerPlan = reg.event?.owner?.subscription?.plan || 'free';
+            const planFee = PLAN_FEES[organizerPlan] || PLAN_FEES.free;
+            const platformFeePercent = planFee.percent;
             const platformFee = Math.round(amount * platformFeePercent * 100);
 
             paymentIntentData.application_fee_amount = platformFee;
