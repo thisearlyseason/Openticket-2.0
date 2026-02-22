@@ -1594,9 +1594,10 @@ export const createDoorCheckoutSession = async (req, res) => {
         const successUrl = `${baseUrl}?payment=success&registration=${registrationId}`;
         const cancelUrl = `${baseUrl}?payment=cancelled`;
         
-        // Calculate platform fee
-        const platformFeePercent = 0.029;
-        const platformFeeAmount = Math.round(amountInCents * platformFeePercent);
+        // Calculate platform fee based on organizer's plan (single source of truth)
+        const atDoorPlan = registration.event?.owner?.subscription?.plan || 'free';
+        const atDoorFeeConfig = PLAN_FEES[atDoorPlan] || PLAN_FEES.free;
+        const platformFeeAmount = Math.round(amountInCents * atDoorFeeConfig.percent);
         
         // Build checkout session options
         const sessionOptions = {
