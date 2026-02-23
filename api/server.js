@@ -373,6 +373,10 @@ app.get('/api/check', (req, res) => {
 // app.use('/api/billing', billingRoutes); // REPLACEMENT ROUTE - REMOVED
 import stripeRoutes from '../backend/routes/stripeRoutes.js';
 // Apply payment rate limiter to ALL Stripe endpoints (SECURITY)
+// Apply rate limiters per stripe route type:
+// - calculate-order: permissive (called on every qty change)
+// - All other stripe routes: strict payment limiter
+app.use('/api/stripe/calculate-order', calculateOrderLimiter);
 app.use('/api/stripe', paymentLimiter, stripeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
