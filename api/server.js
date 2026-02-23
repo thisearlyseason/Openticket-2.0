@@ -225,7 +225,17 @@ const paymentLimiter = rateLimit({
     }
 });
 
-console.log('[Security] ✅ Payment rate limiting configured (10 req/15min)');
+// Permissive limiter for calculate-order (called on every ticket quantity change)
+const calculateOrderLimiter = rateLimit({
+    ...rateLimitOptions,
+    windowMs: 60 * 1000, // 1 minute
+    max: 120, // 120 fee-preview requests per minute per IP
+    message: { error: 'Too many fee calculation requests, please slow down.', code: 'RATE_LIMIT_EXCEEDED' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+console.log('[Security] ✅ Payment rate limiting configured (10 req/15min), calculate-order: 120 req/min');
 // ========== END PAYMENT RATE LIMITER ==========
 
 // Apply general rate limiter to all API routes
