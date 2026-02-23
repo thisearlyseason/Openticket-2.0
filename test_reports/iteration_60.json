@@ -19,7 +19,7 @@
     },
     "verify_session_registration_not_null": {
       "status": "VERIFIED",
-      "notes": "Response includes registration object (id=3e3d1e99-ad6b-4b60-889c-2306a5c0949b, payment_status=paid, charged_currency=CAD). Not null."
+      "notes": "Response includes registration object (id=stripe-refactor, payment_status=paid, charged_currency=CAD). Not null."
     },
     "verify_session_status_success": {
       "status": "VERIFIED",
