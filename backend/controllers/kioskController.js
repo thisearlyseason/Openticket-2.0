@@ -677,7 +677,7 @@ const checkInGuest = async (req, res) => {
                 });
             }
             
-            // Update the specific ticket's check-in status
+            // Update the specific ticket's check-in status (SINGLE SOURCE OF TRUTH: ticket.checkedIn)
             const updatedTickets = [...registration.tickets];
             updatedTickets[ticketIndex] = {
                 ...ticket,
@@ -687,21 +687,10 @@ const checkInGuest = async (req, res) => {
                 checkedInDevice: deviceId || 'unknown'
             };
             
-            // Also update check_in_statuses for CheckInPortal compatibility
-            const checkInStatuses = registration.check_in_statuses || {};
-            const ticketKey = `${ticket.tierId || ticket.id}-${ticketIndex}-0`;
-            checkInStatuses[ticketKey] = {
-                checkedIn: true,
-                timestamp: Date.now()
-            };
-            
             // Try full update first, fallback if columns don't exist
             let { error: updateError } = await supabase
                 .from('registrations')
-                .update({ 
-                    tickets: updatedTickets,
-                    check_in_statuses: checkInStatuses
-                })
+                .update({ tickets: updatedTickets })
                 .eq('id', registrationId);
             
             // If update failed due to missing columns, try simpler update
