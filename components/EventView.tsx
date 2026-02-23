@@ -482,7 +482,6 @@ export const EventView = () => {
                                 setIsSuccess(true);
                                 setIsProcessingPayment(false);
                                 window.scrollTo(0, 0);
-                                window.history.replaceState({}, '', `/#/event/${event.id}`);
                                 return;
                             }
                         } catch (e) {
