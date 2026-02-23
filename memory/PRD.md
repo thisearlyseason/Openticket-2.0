@@ -82,7 +82,16 @@ Make the event ticketing platform production-ready.
 - ✅ Webhook handler now saves charged_currency/charged_amount in both RPC and fallback paths
 - ✅ Removed duplicate session_id template from EventView successUrl
 - ✅ EventView normalization now maps chargedCurrency from reg.charged_currency (snake_case fallback)
-- ✅ **[Feb 23 2026] Post-payment confirmation screen FULLY FIXED**: Changed successUrl from hash-based (`/#/event/ID?success=true`) to real URL params (`/?stripe_return=true&event_id=ID&success=true`). Added early redirect in `index.tsx` before React mounts (no page flash). Removed `window.history.replaceState` cleanup that was causing state reset.
+- ✅ **[Feb 23 2026] Fee Transparency & DB Reconciliation**:
+  - `priceCalculator.js`: Added `stripeFee` (2.9% + $0.30) to breakdown, included in `grandTotal`. Added as Stripe line item in `buildStripeLineItems`.
+  - `stripeController.js` createOrder: Added `subtotal`, `stripe_fee`, `custom_fees_amount` to `registrationPayload`. Added reconciliation validation (aborts write if sum ≠ total). Added `stripe_fee` to `applicationFeeAmount` for Connect accounts.
+  - `EventView.tsx`: Replaced ALL inline fee calculations in Charge Summary with `orderBreakdown`-only display. Shows: Subtotal, Platform Fee, Payment Processing, Tax, Additional Fees, Total.
+  - `EventView.tsx` Confirmation Page: Shows Platform Fee, Payment Processing, Additional Fees as separate rows.
+  - `UI.tsx` ReceiptModal: Fee breakdown shows Platform Fee, Payment Processing, Additional Fees separately.
+  - `normalization`: Fixed `customFeesAmount` to read from `reg.custom_fees_amount || reg.answers?._metadata?.custom_fees_amount`.
+  - Migration: `/app/migrations/add_fee_transparency_columns.sql` adds `subtotal`, `stripe_fee`, `custom_fees_amount` columns.
+  - Rate limiter: `calculate-order` now has 120 req/min (was sharing 10 req/15min with payment creation).
+
 - ✅ **[Feb 23 2026] Payout 404 FIXED**: Added `POST /api/stripe/request-payout` endpoint to `stripeController.js` and `stripeRoutes.js`. Added CSRF exception for this endpoint in `api/server.js`.
 - ✅ **[Feb 23 2026] Platform fees unified, Stripe processing fees corrected, refund processing repaired, Stripe keys corrected, price validation re-enabled, webhook secret fixed, CSRF tuned**
 
