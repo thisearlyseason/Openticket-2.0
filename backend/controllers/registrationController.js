@@ -1123,7 +1123,8 @@ export const checkInTicket = async (req, res) => {
             });
         }
         
-        // 5. Update ticket check-in status in tickets array AND checkInStatuses
+        // 5. Update ticket check-in status in tickets array (SINGLE SOURCE OF TRUTH)
+        // NOTE: ticket.checkedIn is authoritative. check_in_statuses is legacy/removed.
         const updatedTickets = [...targetRegistration.tickets];
         const checkedInAt = new Date().toISOString();
         
@@ -1134,22 +1135,12 @@ export const checkInTicket = async (req, res) => {
             checkedInBy: organizerId
         };
         
-        // Also update checkInStatuses for consistency with CheckInPortal
-        const checkInStatuses = targetRegistration.check_in_statuses || {};
-        const ticketKey = `${ticket.tierId || ticket.id}-${ticketIndex}-0`;
-        checkInStatuses[ticketKey] = {
-            checkedIn: true,
-            timestamp: Date.now()
-        };
-        
         // Determine if any ticket is checked in (for registration-level flag)
         const anyCheckedIn = updatedTickets.some(t => t.checkedIn);
         
-        // First, try to update with all columns (newer schema)
-        // If that fails due to missing columns, fall back to just updating tickets
+        // Update tickets array + registration-level flags (checked_in, checked_in_at for SQL queries)
         let updateData = { 
             tickets: updatedTickets,
-            check_in_statuses: checkInStatuses,
             checked_in: anyCheckedIn,
             checked_in_at: anyCheckedIn ? checkedInAt : null
         };
