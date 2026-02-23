@@ -59,6 +59,7 @@ export const calculateOrderBreakdown = ({
         taxAmount: 0,
         customFeesAmount: 0,
         platformFee: 0,
+        stripeFee: 0,
         grandTotal: 0,
         currency: 'usd',
     };
