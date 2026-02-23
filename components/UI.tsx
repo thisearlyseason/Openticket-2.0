@@ -695,7 +695,10 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
     const usdTicketCost = registration.tickets?.reduce((acc, t) => acc + (t.status === 'refunded' ? 0 : t.pricePerTicket * t.quantity), 0) || 0;
     const usdAddOnCost = registration.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
     const usdSubtotal = usdTicketCost + usdAddOnCost;
-    const usdFees = (registration.serviceFee || 0) + (registration.customFeesAmount || 0);
+    // Use separate fee fields for full transparency
+    const usdPlatformFee = registration.serviceFee || 0;
+    const usdStripeFee = (registration as any).stripeFee || (registration as any).answers?._metadata?.stripe_fee || 0;
+    const usdCustomFees = registration.customFeesAmount || (registration as any).answers?._metadata?.custom_fees_amount || 0;
     const usdTax = registration.taxAmount || 0;
     const usdPlatformDonation = registration.answers?._metadata?.platform_donation_amount 
         || registration.platformDonationAmount 
@@ -703,7 +706,7 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
     const usdEventDonation = registration.donationAmount || 0;
     const usdTotalDonations = usdPlatformDonation + usdEventDonation;
     const usdDiscount = registration.discountAmount || 0;
-    const usdTotal = usdSubtotal + usdFees + usdTax + usdTotalDonations - usdDiscount;
+    const usdTotal = usdSubtotal + usdPlatformFee + usdStripeFee + usdCustomFees + usdTax + usdTotalDonations - usdDiscount;
 
     // Get actual charged amount from Stripe (in local currency like CAD)
     const chargedAmount = (registration as any).chargedAmount || registration.totalAmount || usdTotal;
