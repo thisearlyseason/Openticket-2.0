@@ -35,7 +35,13 @@ Make the event ticketing platform production-ready.
 - Light-mode visibility fixes across LandingPage, Dashboard, SuperAdminDashboard
 - Fixed button contrast issues in multiple components
 
-### Financial System (Current Session - Feb 2026)
+### Bug Fixes (Current Session - Feb 23, 2026)
+- **owner_id undefined bug FIXED**: `eventController.js` `updateEvent()` was referencing undefined variable `owner_id` (should be `userId`). Fixed on lines 209 and 220. Event save/publish now works.
+- **Rate Limiter Fix**: `paymentLimiter` (10 req/15min) was being applied to ALL `/api/stripe` routes including `calculate-order`. Fixed by adding `skip` function so `calculate-order`, `verify-session`, and `exchange-rates` bypass the strict payment limiter. Now uses its own 120 req/min limiter.
+- **Fee Absorbed Badge**: Added "No Service Fees — Covered by Organizer" badge in ticket selection area when `event.absorbFees=true`. Added "Fees covered by organizer" note in Order Summary.
+- **Fee display confirmed working**: Platform Fee and Payment Processing show correctly in Order Summary when tickets are selected for paid events.
+
+
 - **Pending Balance Fix**: `GET /api/admin/platform-payouts/pending` now subtracts in-flight (scheduled/pending) payouts from available balance. Shows `totalCollected`, `scheduledAmount`, and `amount` (available) breakdown.
 - **at-door Payment Transaction Fix**: Fixed critical bug in `stripeController.js confirmAtDoorPayment()` - was using wrong column names (`type: 'sale'`, `net_amount`, `payment_method`, `payment_source`, `status: 'completed'`). Now uses correct schema: `transaction_type: 'at_door_payment'`, `gross_amount`, `platform_fee`, `stripe_fee`, `organizer_net`, `status: 'succeeded'`.
 - **Data Clarity**: Confirmed `financial_transactions` uses `transaction_type` (not `type`) column. All inserts now use correct schema.
