@@ -212,7 +212,7 @@ export const calculateOrderBreakdown = ({
     // 7. Calculate grand total
     // If organizer absorbs fees, don't add platform fee to attendee's total
     if (breakdown.platformFeeAbsorbedByOrganizer) {
-        // Attendee pays: subtotal + tax + custom fees (NO platform fee)
+        // Attendee pays: subtotal + tax + custom fees (NO platform fee, NO stripe fee)
         breakdown.grandTotal = Number((
             breakdown.discountedSubtotal + 
             breakdown.taxAmount + 
@@ -226,6 +226,16 @@ export const calculateOrderBreakdown = ({
             breakdown.customFeesAmount + 
             breakdown.platformFee
         ).toFixed(2));
+    }
+
+    // 8. Calculate Stripe processing fee (2.9% + $0.30) — passed through to attendee
+    // Only applied for paid transactions where the organizer does NOT absorb fees.
+    // When organizer absorbs fees, they absorb the Stripe fee too.
+    const STRIPE_FEE_RATE = 0.029;
+    const STRIPE_FEE_FIXED = 0.30;
+    if (isPaidTransaction && !breakdown.platformFeeAbsorbedByOrganizer && breakdown.grandTotal > 0) {
+        breakdown.stripeFee = Number(((breakdown.grandTotal * STRIPE_FEE_RATE) + STRIPE_FEE_FIXED).toFixed(2));
+        breakdown.grandTotal = Number((breakdown.grandTotal + breakdown.stripeFee).toFixed(2));
     }
 
     return breakdown;
