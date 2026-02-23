@@ -377,7 +377,19 @@ import stripeRoutes from '../backend/routes/stripeRoutes.js';
 // - calculate-order: permissive (called on every qty change)
 // - All other stripe routes: strict payment limiter
 app.use('/api/stripe/calculate-order', calculateOrderLimiter);
-app.use('/api/stripe', paymentLimiter, stripeRoutes);
+// paymentLimiter skips calculate-order (has its own limiter above)
+const stripePaymentLimiter = rateLimit({
+    ...rateLimitOptions,
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Too many payment attempts. Please try again in 15 minutes.', code: 'RATE_LIMIT_EXCEEDED' },
+    skip: (req) => req.path === '/calculate-order' || req.path === '/verify-session' || req.path === '/exchange-rates',
+    handler: (req, res) => {
+        console.error('[Security] Payment rate limit exceeded', { ip: req.ip, path: req.path });
+        res.status(429).json({ error: 'Too many payment attempts. Please try again in 15 minutes.', code: 'RATE_LIMIT_EXCEEDED' });
+    }
+});
+app.use('/api/stripe', stripePaymentLimiter, stripeRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/admin', adminRoutes);
 
