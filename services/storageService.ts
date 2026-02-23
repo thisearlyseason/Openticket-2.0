@@ -684,6 +684,7 @@ const normalizeEvent = (raw: any): Event => {
         addOns: raw.add_ons || raw.addOns,
         customFees: raw.custom_fees || raw.customFees,
         absorbFees: raw.absorb_fees ?? raw.absorbFees,
+        taxRate: raw.tax_rate !== undefined ? Number(raw.tax_rate) : (raw.taxRate !== undefined ? Number(raw.taxRate) : 0),
         createdAt: new Date(raw.created_at || raw.createdAt).getTime(),
         registeredCount: raw.registeredCount || 0,
         // Email template settings
