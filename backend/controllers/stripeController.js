@@ -505,6 +505,9 @@ export const createOrder = async (req, res) => {
             discount_amount: breakdown.discountAmount,
             total_amount: breakdown.grandTotal + donationAmount,
             service_fee: breakdown.platformFee,
+            stripe_fee: breakdown.stripeFee || 0,
+            subtotal: breakdown.discountedSubtotal,
+            custom_fees_amount: breakdown.customFeesAmount || 0,
             tax_amount: breakdown.taxAmount,
             affiliate_code: affiliateCode || null,
             // Store additional metadata in answers field (definitely exists as JSONB)
@@ -512,10 +515,40 @@ export const createOrder = async (req, res) => {
                 _metadata: {
                     organizer_absorbed_fee: breakdown.platformFeeAbsorbedByOrganizer || false,
                     custom_fees_amount: breakdown.customFeesAmount || 0,
-                    platform_donation_amount: donationAmount || 0
+                    platform_donation_amount: donationAmount || 0,
+                    stripe_fee: breakdown.stripeFee || 0,
+                    subtotal: breakdown.discountedSubtotal,
                 }
             }
         };
+
+        // Reconciliation validation: ensure components sum to total_amount before saving
+        {
+            const feesInTotal = breakdown.platformFeeAbsorbedByOrganizer
+                ? 0
+                : (breakdown.platformFee || 0) + (breakdown.stripeFee || 0);
+            const componentSum = Number((
+                breakdown.discountedSubtotal +
+                feesInTotal +
+                (breakdown.taxAmount || 0) +
+                (breakdown.customFeesAmount || 0) +
+                donationAmount
+            ).toFixed(2));
+            const storedTotal = Number((breakdown.grandTotal + donationAmount).toFixed(2));
+            if (Math.abs(componentSum - storedTotal) > 0.02) {
+                console.error('[Fee Validation] RECONCILIATION MISMATCH — aborting write', {
+                    subtotal: breakdown.discountedSubtotal,
+                    platformFee: breakdown.platformFee,
+                    stripeFee: breakdown.stripeFee,
+                    taxAmount: breakdown.taxAmount,
+                    customFeesAmount: breakdown.customFeesAmount,
+                    platformDonation: donationAmount,
+                    componentSum,
+                    storedTotal,
+                });
+                return res.status(500).json({ error: 'Fee calculation error: totals do not reconcile. Please refresh and try again.' });
+            }
+        }
 
         const { data: insertedReg, error: insertError } = await supabase
             .from('registrations')
