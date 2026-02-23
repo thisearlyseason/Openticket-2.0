@@ -1,0 +1,58 @@
+{
+  "summary": "Fee Transparency feature testing: Backend calculate-order returns stripeFee correctly (verified via direct curl to localhost:8001). All code review tests pass. Local backend shows stripeFee=1.84 for $50 ticket, grandTotal=55.08 (discountedSubtotal=50 + platformFee=3.24 + stripeFee=1.84). Reconciliation code verified in stripeController.js. New fee fields (stripe_fee, subtotal, custom_fees_amount) in registrationPayload. UI code correctly uses Platform Fee / Payment Processing / Additional Fees labels. NOTE: Public URL (https://www.openticket.events) serves OLD production code showing 'Service Fees' - the new code is only in this dev container. Rate limiting (429 after ~3 calls, 15-min window) on calculate-order endpoint prevented full test suite re-run after first successful verification.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/stripe/calculate-order",
+        "issue": "Rate limit of 15 minutes after ~3 calls is too aggressive for a checkout preview endpoint. Users changing ticket quantities hit 429 errors. Consider raising limit or separating rate-limit buckets for calculate-order vs create-order.",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Event page charge summary fee rows",
+        "issue": "Public URL (https://www.openticket.events) still shows 'Service Fees' label and no 'Payment Processing' row. This is because the public URL serves the OLD deployed code. Local frontend code (port 3000) has correct labels. Will resolve after deployment.",
+        "affected_selectors": [".charge-summary", "span:has-text('Service Fees')"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/test_fee_transparency.py",
+    "/app/test_reports/pytest/pytest_fee_transparency.xml"
+  ],
+  "action_items": [
+    "Consider raising calculate-order rate limit (currently 15 min after ~3 calls) - too restrictive for checkout preview use case",
+    "Deploy updated frontend+backend to production so users see Platform Fee / Payment Processing labels and stripeFee included in total",
+    "Run migration SQL /app/migrations/add_fee_transparency_columns.sql in Supabase to add subtotal, stripe_fee, custom_fees_amount columns before deploying backend"
+  ],
+  "critical_code_review_comments": [
+    "VERIFIED: calculate-order returns stripeFee=1.84 for $50 ticket. grandTotal=55.08 = 50+3.24+1.84. Formula: stripeFee = pre_stripe_total * 0.029 + 0.30 = 53.24 * 0.029 + 0.30 = 1.84 CORRECT",
+    "VERIFIED: Reconciliation validation in stripeController.js: componentSum = discountedSubtotal + platformFee + stripeFee + taxAmount + customFees + donation vs storedTotal = grandTotal + donation. Aborts with 500 if |diff| > 0.02",
+    "VERIFIED: registrationPayload includes stripe_fee: breakdown.stripeFee, subtotal: breakdown.discountedSubtotal, custom_fees_amount: breakdown.customFeesAmount",
+    "VERIFIED: applicationFeeAmount in Connect flow includes both platform fee AND stripe fee: convertedPlatformFee + convertedStripeFee + donation + conversionFee",
+    "VERIFIED: EventView.tsx charge summary shows Platform Fee (replaces Service Fee) and Payment Processing (new stripeFee row) from orderBreakdown",
+    "VERIFIED: UI.tsx ReceiptModal: usdStripeFee extracted from registration.stripeFee || answers._metadata.stripe_fee, displayed as 'Payment Processing'",
+    "VERIFIED: UI.tsx ReceiptModal: 'Service Fee' label removed, now 'Platform Fee'. 'Processing Fee' removed, now 'Payment Processing'. Custom fees shown as 'Additional Fees'",
+    "VERIFIED: Migration SQL adds columns with IF NOT EXISTS guard and backfills from answers._metadata",
+    "NOTE: Rate limit tolerance of 0.02 in reconciliation is fine for typical ticket prices but could theoretically fail with extreme floating point on large orders",
+    "NOTE: stripeFee is calculated on grandTotal AFTER platformFee is added, which is the correct formula for Stripe pass-through fees"
+  ],
+  "updated_files": [
+    "/app/tests/test_fee_transparency.py"
+  ],
+  "success_rate": {
+    "backend": "100% (verified: stripeFee>0, fee math correct, reconciliation code exists, new fields in payload, rate limit caused 429s on re-run)",
+    "frontend": "100% code review pass (local code correct). Production URL shows old code - expected"
+  },
+  "test_credentials": "None required",
+  "seed_data_creation": "Used existing test event b8739973-fe02-4c11-ae2d-09f42c2d3213 ($50 General Admission)",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Fee transparency feature: local backend (localhost:8001) returns stripeFee in calculate-order response. Rate limit is 429 after ~3 calls with 15-min window - wait before testing. Public URL (openticket.events) serves production (old code without stripeFee). Local code files are correct. Migration SQL at /app/migrations/add_fee_transparency_columns.sql needs to be run in Supabase before backend deploy. Vite proxy routes /api/* to localhost:8001 for local frontend. Event b8739973-fe02-4c11-ae2d-09f42c2d3213 (MUSIC FEST, $50) is a good test event.",
+  "rca_of_issue": "Root cause analysis: The calculate-order rate limiter uses the same rate limit bucket as create-order ('Too many payment attempts'), which is too restrictive for a preview endpoint. The calculate-order endpoint is designed for real-time fee preview (called on each ticket quantity change) and should have a much higher rate limit than the actual payment creation endpoint. Suggested fix: Apply a separate, more permissive rate limit key for calculate-order (e.g., 30 req/min) vs create-order (e.g., 5 req/15min)."
+}
