@@ -315,8 +315,20 @@ export const buildStripeLineItems = (breakdown, eventTitle, chargeCurrency = 'us
         lineItems.push({
             price_data: {
                 currency: currency,
-                product_data: { name: 'Service Fee' },
+                product_data: { name: 'Platform Fee' },
                 unit_amount: convertToCents(breakdown.platformFee),
+            },
+            quantity: 1,
+        });
+    }
+
+    // Add Stripe processing fee as line item (ONLY if attendee pays it)
+    if (breakdown.stripeFee > 0 && !breakdown.platformFeeAbsorbedByOrganizer) {
+        lineItems.push({
+            price_data: {
+                currency: currency,
+                product_data: { name: 'Payment Processing Fee' },
+                unit_amount: convertToCents(breakdown.stripeFee),
             },
             quantity: 1,
         });
