@@ -2120,6 +2120,14 @@ export const EventView = () => {
                                                                     </div>
                                                                 )}
 
+                                                                {/* Organizer absorbs fees note */}
+                                                                {orderBreakdown?.platformFeeAbsorbedByOrganizer && (
+                                                                    <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 text-xs" data-testid="fee-absorbed-order-note">
+                                                                        <span className="flex items-center gap-1"><Check size={11} /> Fees covered by organizer</span>
+                                                                        <span>—</span>
+                                                                    </div>
+                                                                )}
+
                                                                 {/* Stripe Processing Fee */}
                                                                 {(orderBreakdown?.stripeFee || 0) > 0 && (
                                                                     <div className="flex justify-between text-zinc-500">
