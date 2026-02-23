@@ -1233,19 +1233,27 @@ export const EventView = () => {
                                                                     </div>
                                                                 )}
 
-                                                                {/* Service Fee */}
-                                                                {(completedRegistration?.serviceFee || 0) > 0 && (
+                                                                {/* Platform Fee */}
+                                                                {usdPlatformFee > 0 && (
                                                                     <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                                        <span>Service Fee</span>
-                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.serviceFee || 0)} currency={confirmationCurrency} /></span>
+                                                                        <span>Platform Fee</span>
+                                                                        <span><EventPriceDisplay amount={convert(usdPlatformFee)} currency={confirmationCurrency} /></span>
                                                                     </div>
                                                                 )}
 
-                                                                {/* Custom Fees */}
-                                                                {(completedRegistration?.customFeesAmount || 0) > 0 && (
+                                                                {/* Stripe Processing Fee */}
+                                                                {usdStripeFee > 0 && (
                                                                     <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
-                                                                        <span>Processing Fee</span>
-                                                                        <span><EventPriceDisplay amount={convert(completedRegistration?.customFeesAmount || 0)} currency={confirmationCurrency} /></span>
+                                                                        <span>Payment Processing</span>
+                                                                        <span><EventPriceDisplay amount={convert(usdStripeFee)} currency={confirmationCurrency} /></span>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Additional Fees */}
+                                                                {usdCustomFees > 0 && (
+                                                                    <div className="flex justify-between items-center py-2 text-sm text-zinc-500 font-medium">
+                                                                        <span>Additional Fees</span>
+                                                                        <span><EventPriceDisplay amount={convert(usdCustomFees)} currency={confirmationCurrency} /></span>
                                                                     </div>
                                                                 )}
 
