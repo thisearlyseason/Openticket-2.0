@@ -82,6 +82,9 @@ Make the event ticketing platform production-ready.
 - ✅ Webhook handler now saves charged_currency/charged_amount in both RPC and fallback paths
 - ✅ Removed duplicate session_id template from EventView successUrl
 - ✅ EventView normalization now maps chargedCurrency from reg.charged_currency (snake_case fallback)
+- ✅ **[Feb 23 2026] Post-payment confirmation screen FULLY FIXED**: Changed successUrl from hash-based (`/#/event/ID?success=true`) to real URL params (`/?stripe_return=true&event_id=ID&success=true`). Added early redirect in `index.tsx` before React mounts (no page flash). Removed `window.history.replaceState` cleanup that was causing state reset.
+- ✅ **[Feb 23 2026] Payout 404 FIXED**: Added `POST /api/stripe/request-payout` endpoint to `stripeController.js` and `stripeRoutes.js`. Added CSRF exception for this endpoint in `api/server.js`.
+- ✅ **[Feb 23 2026] Platform fees unified, Stripe processing fees corrected, refund processing repaired, Stripe keys corrected, price validation re-enabled, webhook secret fixed, CSRF tuned**
 
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
