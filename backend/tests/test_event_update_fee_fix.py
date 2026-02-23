@@ -11,7 +11,8 @@ import requests
 import os
 import json
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://www.openticket.events')
+# Local backend URL (the Vite proxy routes /api to this, not the production Vercel server)
+BASE_URL = 'http://localhost:8001'
 
 # Test event from review_request: price=$100, price_type=fixed
 TEST_EVENT_ID = "6583dce0-9c33-4a0c-a1b9-1ac3f5a1135d"
