@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import http from 'http';
+import { watch as fsWatch } from 'fs';
 
 // Load environment variables - check both locations
 const __filename = fileURLToPath(import.meta.url);
