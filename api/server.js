@@ -286,8 +286,10 @@ const csrfMiddleware = (req, res, next) => {
     // Skip CSRF for Stripe order endpoints (they use Stripe's own security)
     if (req.path === '/stripe/calculate-order' || req.path === '/stripe/create-order' ||
         req.path === '/stripe/verify-session' || req.path === '/stripe/sync-refunds' ||
+        req.path === '/stripe/request-payout' ||
         req.originalUrl === '/api/stripe/calculate-order' || req.originalUrl === '/api/stripe/create-order' ||
         req.originalUrl === '/api/stripe/verify-session' || req.originalUrl === '/api/stripe/sync-refunds' ||
+        req.originalUrl === '/api/stripe/request-payout' ||
         req.path.startsWith('/stripe/payment-intent/') || req.originalUrl.startsWith('/api/stripe/payment-intent/')) {
         console.log('[CSRF] Skipping - Stripe order endpoint');
         return next();
