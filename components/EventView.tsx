@@ -59,6 +59,8 @@ export const EventView = () => {
         taxAmount: number;
         customFeesAmount: number;
         platformFee: number;
+        stripeFee: number;
+        platformFeeAbsorbedByOrganizer?: boolean;
         grandTotal: number;
     } | null>(null);
     const [isCalculating, setIsCalculating] = useState(false);
