@@ -4,14 +4,8 @@ import App from './App';
 import { pwaService } from './services/pwaService';
 import './index.css';
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { pwaService } from './services/pwaService';
-import './index.css';
-
-// Handle Stripe return redirect BEFORE React renders to avoid page flash
-// When Stripe redirects back with ?stripe_return=true, we immediately redirect to the hash URL
+// Handle Stripe return redirect BEFORE React renders to avoid page flash.
+// When Stripe redirects back with ?stripe_return=true, immediately redirect to the hash URL.
 const _stripeParams = new URLSearchParams(window.location.search);
 if (_stripeParams.get('stripe_return') === 'true') {
     const _eventId = _stripeParams.get('event_id');
@@ -28,30 +22,18 @@ if (_stripeParams.get('stripe_return') === 'true') {
         window.location.replace(_eventUrl);
     }
 } else {
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+        throw new Error("Could not find root element to mount to");
+    }
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+    // Register Service Worker for PWA
+    if (process.env.NODE_ENV === 'production') {
+        pwaService.register().catch(console.error);
+    }
+
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+        <App />
+    );
 }
-
-// Register Service Worker for PWA
-if (process.env.NODE_ENV === 'production') {
-  pwaService.register().catch(console.error);
-}
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <App />
-);
-
-}
-
-// Register Service Worker for PWA
-if (process.env.NODE_ENV === 'production') {
-  pwaService.register().catch(console.error);
-}
-
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <App />
-);
