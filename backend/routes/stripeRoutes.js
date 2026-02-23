@@ -38,4 +38,7 @@ router.post('/connect/disconnect', verifyToken, stripeConnectController.disconne
 // ========== REFUND SYNC (Admin: re-process past Stripe refunds) ==========
 router.post('/sync-refunds', verifyToken, stripeWebhookController.syncStripeRefunds);
 
+// ========== ORGANIZER PAYOUT REQUEST ==========
+router.post('/request-payout', verifyToken, stripeController.requestPayout);
+
 export default router;
