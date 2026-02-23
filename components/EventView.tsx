@@ -2067,21 +2067,13 @@ export const EventView = () => {
 
                                                                 <div className="border-t border-zinc-200 dark:border-zinc-700 my-2"></div>
 
+                                                                {/* Ticket Subtotal — single source of truth from server breakdown */}
                                                                 <div className="flex justify-between">
                                                                     <span>Subtotal</span>
                                                                     <span>
-                                                                        {(() => {
-                                                                            let sub = 0;
-                                                                            if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
-                                                                            if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                            if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
-                                                                            event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
-                                                                            if (appliedPromo) {
-                                                                                if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
-                                                                                else sub -= appliedPromo.value;
-                                                                            }
-                                                                            return <EventPriceDisplay amount={Math.max(0, sub)} currency={eventCurrency} />;
-                                                                        })()}
+                                                                        {orderBreakdown
+                                                                            ? <EventPriceDisplay amount={orderBreakdown.discountedSubtotal} currency={eventCurrency} />
+                                                                            : <span className="text-zinc-400">—</span>}
                                                                     </span>
                                                                 </div>
 
@@ -2089,84 +2081,39 @@ export const EventView = () => {
                                                                 {appliedPromo && (orderBreakdown?.discountAmount || 0) > 0 && (
                                                                     <div className="flex justify-between text-green-600 dark:text-green-400">
                                                                         <span>Discount ({appliedPromo.code})</span>
-                                                                        <span>-<EventPriceDisplay amount={orderBreakdown?.discountAmount || 0} currency={eventCurrency} /></span>
+                                                                        <span>-<EventPriceDisplay amount={orderBreakdown!.discountAmount} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
 
-                                                                {event.taxRate && event.taxRate > 0 && (
+                                                                {/* Tax */}
+                                                                {event.taxRate && event.taxRate > 0 && (orderBreakdown?.taxAmount || 0) > 0 && (
                                                                     <div className="flex justify-between text-zinc-500">
                                                                         <span>Tax ({event.taxRate}%)</span>
-                                                                        <span>
-                                                                            {orderBreakdown 
-                                                                                ? <EventPriceDisplay amount={orderBreakdown.taxAmount} currency={eventCurrency} />
-                                                                                : (() => {
-                                                                                    let sub = 0;
-                                                                                    if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
-                                                                                    if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                                    if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
-                                                                                    event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
-                                                                                    if (appliedPromo) {
-                                                                                        if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
-                                                                                        else sub -= appliedPromo.value;
-                                                                                    }
-                                                                                    const tax = Math.max(0, sub) * (event.taxRate / 100);
-                                                                                    return <EventPriceDisplay amount={tax} currency={eventCurrency} />;
-                                                                                })()
-                                                                            }
-                                                                        </span>
+                                                                        <span><EventPriceDisplay amount={orderBreakdown!.taxAmount} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
 
-                                                                {event.customFees?.map((fee, idx) => (
-                                                                    <div key={idx} className="flex justify-between text-zinc-500">
-                                                                        <span>{fee.name}</span>
-                                                                        <span>
-                                                                            {(() => {
-                                                                                let sub = 0;
-                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
-                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                                if (event.priceType === 'donation') sub += Number(regData.donation) || 0;
-                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
-                                                                                if (appliedPromo) {
-                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
-                                                                                    else sub -= appliedPromo.value;
-                                                                                }
-                                                                                const amount = fee.type === 'percent' ? Math.max(0, sub) * (fee.amount / 100) : fee.amount;
-                                                                                return <EventPriceDisplay amount={amount} currency={eventCurrency} />;
-                                                                            })()}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
-
-                                                                {!event.absorbFees && event.priceType !== 'free' && event.priceType !== 'donation' && (
+                                                                {/* Additional Fees (organizer custom fees) */}
+                                                                {(orderBreakdown?.customFeesAmount || 0) > 0 && (
                                                                     <div className="flex justify-between text-zinc-500">
-                                                                        <span>Service Fees</span>
-                                                                        <span>
-                                                                            {(() => {
-                                                                                // Use server breakdown if available
-                                                                                if (orderBreakdown) {
-                                                                                    return <EventPriceDisplay amount={orderBreakdown.platformFee} currency={eventCurrency} />;
-                                                                                }
-                                                                                // Fallback calculation
-                                                                                let sub = 0;
-                                                                                if (event.priceType === 'fixed') sub += (ticketSelection['general'] || 0) * event.price;
-                                                                                if (event.priceType === 'tiered') event.ticketTiers?.forEach(t => sub += (ticketSelection[t.id] || 0) * t.price);
-                                                                                if ((event.priceType as string) === 'donation') sub += Number(regData.donation) || 0;
-                                                                                event.addOns?.forEach(a => { if (addOnSelection[a.id]) sub += addOnSelection[a.id].qty * a.price; });
-                                                                                if (appliedPromo) {
-                                                                                    if (appliedPromo.type === 'percent') sub -= sub * (appliedPromo.value / 100);
-                                                                                    else sub -= appliedPromo.value;
-                                                                                }
-                                                                                const base = Math.max(0, sub);
-                                                                                let runningTotal = base;
-                                                                                if (event.taxRate) runningTotal += base * (event.taxRate / 100);
-                                                                                if (event.customFees) event.customFees.forEach(f => runningTotal += (f.type === 'percent' ? base * (f.amount / 100) : f.amount));
+                                                                        <span>Additional Fees</span>
+                                                                        <span><EventPriceDisplay amount={orderBreakdown!.customFeesAmount} currency={eventCurrency} /></span>
+                                                                    </div>
+                                                                )}
 
-                                                                                const plan = organizerUser?.subscription?.plan || 'free';
-                                                                                const fee = StorageService.calculateFees(runningTotal, plan);
-                                                                                return <EventPriceDisplay amount={fee} currency={eventCurrency} />;
-                                                                            })()}
-                                                                        </span>
+                                                                {/* Platform Fee */}
+                                                                {(orderBreakdown?.platformFee || 0) > 0 && !orderBreakdown?.platformFeeAbsorbedByOrganizer && (
+                                                                    <div className="flex justify-between text-zinc-500">
+                                                                        <span>Platform Fee</span>
+                                                                        <span><EventPriceDisplay amount={orderBreakdown!.platformFee} currency={eventCurrency} /></span>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Stripe Processing Fee */}
+                                                                {(orderBreakdown?.stripeFee || 0) > 0 && (
+                                                                    <div className="flex justify-between text-zinc-500">
+                                                                        <span>Payment Processing</span>
+                                                                        <span><EventPriceDisplay amount={orderBreakdown!.stripeFee} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
 
