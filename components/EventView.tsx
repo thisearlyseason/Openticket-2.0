@@ -1163,11 +1163,13 @@ export const EventView = () => {
                                                         const usdTicketTotal = completedRegistration?.tickets?.reduce((acc, t) => acc + (t.pricePerTicket * t.quantity), 0) || 0;
                                                         const usdAddOnTotal = completedRegistration?.addOns?.reduce((acc, a) => acc + (a.price * a.quantity), 0) || 0;
                                                         const usdSubtotal = usdTicketTotal + usdAddOnTotal;
-                                                        const usdFees = (completedRegistration?.serviceFee || 0) + (completedRegistration?.customFeesAmount || 0);
+                                                        const usdPlatformFee = completedRegistration?.serviceFee || 0;
+                                                        const usdStripeFee = (completedRegistration as any)?.stripeFee || 0;
+                                                        const usdCustomFees = completedRegistration?.customFeesAmount || 0;
                                                         const usdTax = completedRegistration?.taxAmount || 0;
                                                         const usdDonation = (completedRegistration?.donationAmount || 0) + (completedRegistration?.platformDonationAmount || 0);
                                                         const usdDiscount = completedRegistration?.discountAmount || 0;
-                                                        const usdTotal = usdSubtotal + usdFees + usdTax + usdDonation - usdDiscount;
+                                                        const usdTotal = usdSubtotal + usdPlatformFee + usdStripeFee + usdCustomFees + usdTax + usdDonation - usdDiscount;
                                                         
                                                         // Get actual charged amount (in local currency like CAD)
                                                         const chargedTotal = (completedRegistration as any)?.chargedAmount || completedRegistration?.totalAmount || usdTotal;
