@@ -2115,7 +2115,15 @@ export const EventView = () => {
                                                                 {/* Platform Fee */}
                                                                 {(orderBreakdown?.platformFee || 0) > 0 && !orderBreakdown?.platformFeeAbsorbedByOrganizer && (
                                                                     <div className="flex justify-between text-zinc-500">
-                                                                        <span>Platform Fee</span>
+                                                                        <span className="flex items-center gap-1">
+                                                                            Platform Fee
+                                                                            <span className="relative group cursor-help inline-flex" data-testid="platform-fee-tooltip-trigger">
+                                                                                <Info size={12} className="text-zinc-400 hover:text-zinc-600 transition-colors" />
+                                                                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg border border-zinc-700 dark:border-zinc-300" data-testid="platform-fee-tooltip">
+                                                                                    Helps keep OpenTicket running
+                                                                                </span>
+                                                                            </span>
+                                                                        </span>
                                                                         <span><EventPriceDisplay amount={orderBreakdown!.platformFee} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
@@ -2131,7 +2139,15 @@ export const EventView = () => {
                                                                 {/* Stripe Processing Fee */}
                                                                 {(orderBreakdown?.stripeFee || 0) > 0 && (
                                                                     <div className="flex justify-between text-zinc-500">
-                                                                        <span>Payment Processing</span>
+                                                                        <span className="flex items-center gap-1">
+                                                                            Payment Processing
+                                                                            <span className="relative group cursor-help inline-flex" data-testid="stripe-fee-tooltip-trigger">
+                                                                                <Info size={12} className="text-zinc-400 hover:text-zinc-600 transition-colors" />
+                                                                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-lg border border-zinc-700 dark:border-zinc-300" data-testid="stripe-fee-tooltip">
+                                                                                    Standard Stripe fee (2.9% + $0.30)
+                                                                                </span>
+                                                                            </span>
+                                                                        </span>
                                                                         <span><EventPriceDisplay amount={orderBreakdown!.stripeFee} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
