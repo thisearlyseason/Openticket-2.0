@@ -1453,7 +1453,7 @@ export const StorageService = {
             add_ons: clean.addOns,
             capacity: clean.capacity,
             promo_codes: clean.promoCodes,
-            tax_rate: clean.taxRate,
+            tax_rate: clean.taxRate ?? 0,
             absorb_fees: clean.absorbFees,
             custom_fees: clean.customFees,
             questions: clean.questions,
