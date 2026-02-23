@@ -1182,7 +1182,6 @@ export const checkInTicket = async (req, res) => {
                 ticketIndex: ticketIndex,
                 updateAttempt: {
                     ticketsArrayLength: updatedTickets.length,
-                    checkInStatusesKeys: Object.keys(checkInStatuses),
                     anyCheckedIn: anyCheckedIn
                 }
             });
