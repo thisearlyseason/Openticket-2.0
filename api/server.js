@@ -501,22 +501,22 @@ if (process.env.NODE_ENV !== 'production') {
         // Hot-reload: watch backend/api files and trigger clean exit so supervisor restarts
         // with fresh module cache (autorestart=true in supervisord.conf handles the restart)
         try {
-            const { createRequire } = await import('module');
-            const require = createRequire(import.meta.url);
-            const chokidar = require('chokidar');
             let restarting = false;
-            const watcher = chokidar.watch(
-                [path.resolve(__dirname, '../backend'), path.resolve(__dirname, '../api/server.js')],
-                { ignoreInitial: true, ignored: /node_modules|\.git/ }
-            );
-            watcher.on('change', (changedPath) => {
-                if (restarting) return;
-                restarting = true;
-                console.log(`[HotReload] File changed: ${path.basename(changedPath)} — restarting server...`);
-                httpServer.close(() => process.exit(0));
-                setTimeout(() => process.exit(0), 2000); // force exit if close hangs
-            });
-            console.log('[HotReload] ✅ File watcher active — backend auto-restarts on changes');
+            const watchDirs = [
+                path.resolve(__dirname, '../backend'),
+                path.resolve(__dirname, '.')
+            ];
+            for (const dir of watchDirs) {
+                fsWatch(dir, { recursive: true }, (_, filename) => {
+                    if (restarting || !filename || !/\.(js|json)$/.test(filename)) return;
+                    if (filename.includes('node_modules') || filename.startsWith('.')) return;
+                    restarting = true;
+                    console.log(`[HotReload] ${filename} changed — restarting server...`);
+                    httpServer.close(() => process.exit(0));
+                    setTimeout(() => process.exit(0), 1500);
+                });
+            }
+            console.log('[HotReload] ✅ File watcher active — server auto-restarts on code changes');
         } catch (err) {
             console.warn('[HotReload] File watcher not available:', err.message);
         }
