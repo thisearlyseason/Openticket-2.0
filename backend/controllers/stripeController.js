@@ -1651,3 +1651,109 @@ export const createDoorCheckoutSession = async (req, res) => {
     }
 };
 
+
+/**
+ * Request payout for organizer (across all ready events)
+ * POST /api/stripe/request-payout
+ */
+export const requestPayout = async (req, res) => {
+    try {
+        const { mode = 'standard' } = req.body;
+        const organizerId = req.user.uid;
+
+        const supabase = (await import('../services/supabase.js')).default;
+
+        // Get all events owned by this organizer
+        const { data: events, error: eventsError } = await supabase
+            .from('events')
+            .select('id, title, date')
+            .eq('owner_id', organizerId);
+
+        if (eventsError) throw eventsError;
+
+        const now = new Date();
+        let totalNetEarnings = 0;
+        const readyEvents = [];
+
+        for (const event of (events || [])) {
+            const eventDate = new Date(event.date);
+            if (eventDate > now) continue; // Event hasn't happened yet
+
+            // Get paid registrations for this event
+            const { data: registrations } = await supabase
+                .from('registrations')
+                .select('tickets, add_ons, donation_amount, service_fee, stripe_fee, total_amount')
+                .eq('event_id', event.id)
+                .eq('payment_status', 'paid');
+
+            if (!registrations || registrations.length === 0) continue;
+
+            let eventNet = 0;
+            registrations.forEach(reg => {
+                const gross = (reg.tickets?.reduce((acc, t) => acc + ((t.price || t.pricePerTicket || 0) * (t.quantity || 1)), 0) || 0)
+                    + (reg.donation_amount || 0)
+                    + ((reg.add_ons || []).reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0));
+                const fees = (reg.service_fee || 0) + (reg.stripe_fee || (gross > 0 ? (gross * 0.029 + 0.30) : 0));
+                eventNet += Math.max(0, gross - fees);
+            });
+
+            if (eventNet > 0) {
+                totalNetEarnings += eventNet;
+                readyEvents.push({ eventId: event.id, eventTitle: event.title, amount: eventNet });
+            }
+        }
+
+        if (totalNetEarnings <= 0) {
+            return res.status(400).json({ error: 'No earnings available for payout.' });
+        }
+
+        // Calculate fee for instant payout
+        const instantFeeRate = 0.015;
+        const fee = mode === 'instant' ? Number((totalNetEarnings * instantFeeRate).toFixed(2)) : 0;
+        const netPayout = Number((totalNetEarnings - fee).toFixed(2));
+
+        // Create payout request records for each ready event
+        for (const evt of readyEvents) {
+            const { data: existing } = await supabase
+                .from('organizer_payouts')
+                .select('id')
+                .eq('event_id', evt.eventId)
+                .eq('organizer_id', organizerId)
+                .in('status', ['pending', 'processing'])
+                .single();
+
+            if (!existing) {
+                await supabase
+                    .from('organizer_payouts')
+                    .insert({
+                        event_id: evt.eventId,
+                        organizer_id: organizerId,
+                        amount: evt.amount,
+                        status: 'pending',
+                        requested_at: now.toISOString(),
+                        payout_mode: mode,
+                    })
+                    .catch(e => console.warn('[Payout] Insert warning:', e.message));
+            }
+        }
+
+        // Log audit
+        await supabase.from('audit_logs').insert({
+            timestamp: now.toISOString(),
+            actor_id: organizerId,
+            actor_type: 'organizer',
+            action: 'request_general_payout',
+            target_type: 'account',
+            target_id: organizerId,
+            details: { totalAmount: totalNetEarnings, mode, fee, eventCount: readyEvents.length }
+        }).catch(e => console.warn('[Payout] Audit log failed:', e.message));
+
+        console.log(`[Stripe] Payout requested for organizer ${organizerId}: $${netPayout} (mode: ${mode}, fee: $${fee})`);
+
+        res.json({ success: true, amount: netPayout, fee });
+    } catch (error) {
+        console.error('[Stripe] Request payout error:', error);
+        res.status(500).json({ error: error.message || 'Failed to request payout' });
+    }
+};
+
