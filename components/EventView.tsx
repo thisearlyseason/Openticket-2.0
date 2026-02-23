@@ -555,6 +555,9 @@ export const EventView = () => {
                 if (response.ok) {
                     const breakdown = await response.json();
                     setOrderBreakdown(breakdown);
+                } else {
+                    const errBody = await response.text().catch(() => response.statusText);
+                    console.error('[OrderBreakdown] calculate-order failed:', response.status, errBody);
                 }
             } catch (error) {
                 console.error('Failed to calculate order:', error);
