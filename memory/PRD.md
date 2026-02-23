@@ -35,10 +35,13 @@ Make the event ticketing platform production-ready.
 - Light-mode visibility fixes across LandingPage, Dashboard, SuperAdminDashboard
 - Fixed button contrast issues in multiple components
 
-### Bug Fixes (Current Session - Feb 23, 2026)
+### Bug Fixes & Features (Current Session - Feb 23, 2026)
 - **owner_id undefined bug FIXED**: `eventController.js` `updateEvent()` was referencing undefined variable `owner_id` (should be `userId`). Fixed on lines 209 and 220. Event save/publish now works.
 - **Rate Limiter Fix**: `paymentLimiter` (10 req/15min) was being applied to ALL `/api/stripe` routes including `calculate-order`. Fixed by adding `skip` function so `calculate-order`, `verify-session`, and `exchange-rates` bypass the strict payment limiter. Now uses its own 120 req/min limiter.
 - **Fee Absorbed Badge**: Added "No Service Fees — Covered by Organizer" badge in ticket selection area when `event.absorbFees=true`. Added "Fees covered by organizer" note in Order Summary.
+- **Fee Breakdown Tooltip**: Added ⓘ info icons with hover tooltips next to "Platform Fee" (→ "Helps keep OpenTicket running") and "Payment Processing" (→ "Standard Stripe fee (2.9% + $0.30)") in Order Summary.
+- **Check-in data model refactor**: Removed redundant `check_in_statuses` writes from `registrationController.js` and `kioskController.js`. `ticket.checkedIn` is now the single source of truth. `checked_in` / `checked_in_at` kept for SQL-level queries.
+- **Backend hot-reload fixed**: Added `fs.watch` watcher to `api/server.js` — server auto-restarts when backend files change (supervisor `autorestart=true` handles the fresh start). No more manual `supervisorctl restart backend` needed for code changes.
 - **Fee display confirmed working**: Platform Fee and Payment Processing show correctly in Order Summary when tickets are selected for paid events.
 
 
