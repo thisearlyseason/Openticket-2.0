@@ -453,13 +453,15 @@ export const createOrder = async (req, res) => {
 
         if (isRealStripeAccount && breakdown.grandTotal > 0) {
             // Calculate application fee (platform commission) - MUST be in charge currency
-            // Convert platform fee and donation to charge currency
+            // Convert platform fee, stripe fee, and donation to charge currency
             const convertedPlatformFee = breakdown.platformFee * currencyConversionRate;
+            const convertedStripeFee = (breakdown.stripeFee || 0) * currencyConversionRate;
             const convertedDonation = donationAmount * currencyConversionRate;
             
-            // ✅ FIX: Add Stripe's 1% currency conversion fee if currency conversion happened
-            const conversionFeeAmount = needsConversion ? (convertedPlatformFee + convertedDonation) * 0.01 : 0;
-            const totalApplicationFee = convertedPlatformFee + convertedDonation + conversionFeeAmount;
+            // Add Stripe's 1% currency conversion fee if currency conversion happened
+            const conversionFeeAmount = needsConversion ? (convertedPlatformFee + convertedDonation + convertedStripeFee) * 0.01 : 0;
+            // application_fee_amount includes platform fee + stripe fee collected from attendee
+            const totalApplicationFee = convertedPlatformFee + convertedStripeFee + convertedDonation + conversionFeeAmount;
             
             const applicationFeeAmount = Math.round(totalApplicationFee * 100); // cents in charge currency
 
@@ -478,7 +480,7 @@ export const createOrder = async (req, res) => {
                 },
             };
 
-            console.log(`[Stripe] Creating session with Connect destination: ${organizerStripeId}, app_fee: ${chargeCurrency.toUpperCase()} ${(applicationFeeAmount/100).toFixed(2)}`);
+            console.log(`[Stripe] Creating session with Connect destination: ${organizerStripeId}, app_fee: ${chargeCurrency.toUpperCase()} ${(applicationFeeAmount/100).toFixed(2)} (platform: ${convertedPlatformFee.toFixed(2)}, stripe: ${convertedStripeFee.toFixed(2)})`);
         } else {
             console.log(`[Stripe] Creating session WITHOUT Connect (mock account or no account)`);
         }
