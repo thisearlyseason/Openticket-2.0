@@ -206,7 +206,7 @@ export const updateEvent = async (req, res) => {
             .from('events')
             .update(safeUpdates)
             .eq('id', id)
-            .eq('owner_id', owner_id)
+            .eq('owner_id', userId)
             .select();
 
         // Handle missing column errors gracefully (until migration is run)
@@ -217,7 +217,7 @@ export const updateEvent = async (req, res) => {
                 .from('events')
                 .update(fallbackUpdates)
                 .eq('id', id)
-                .eq('owner_id', owner_id)
+                .eq('owner_id', userId)
                 .select();
             data = fallbackResult.data;
             error = fallbackResult.error;
