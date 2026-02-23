@@ -471,9 +471,6 @@ export const EventView = () => {
                                             : `Hi ${normalizedReg.attendeeName}, you are registered for ${event.title}.`;
                                         EmailService.sendEmail(organizerUser.id, normalizedReg.attendeeEmail, subject, body).catch(console.error);
                                     }
-
-                                    // Remove query params
-                                    window.history.replaceState({}, '', `/#/event/${event.id}`);
                                     return;
                                 }
                             }
