@@ -1737,6 +1737,14 @@ export const EventView = () => {
                                                     <DisplayCurrencySelector compact className="flex-shrink-0" />
                                                 </div>
                                                 
+                                                {/* Fee Absorbed by Organizer Badge */}
+                                                {event.absorbFees && event.priceType !== 'free' && (
+                                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-bold w-fit mb-4" data-testid="fee-absorbed-badge">
+                                                        <Check size={13} />
+                                                        <span>No Service Fees — Covered by Organizer</span>
+                                                    </div>
+                                                )}
+
                                                 {event.priceType === 'tiered' ? (
                                                     event.ticketTiers?.map(tier => (
                                                         <div key={tier.id} className={`group flex flex-col md:flex-row justify-between items-center p-8 border-2 transition-all rounded-[2rem] ${ticketSelection[tier.id] ? 'border-primary bg-primary/5 shadow-2xl shadow-primary/10' : 'border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 bg-zinc-50 dark:bg-black/20'}`}>
