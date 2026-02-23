@@ -888,16 +888,22 @@ export const ReceiptModal = ({ isOpen, onClose, registration, event, organizer }
                                     <span>-{formatAmount(discount)}</span>
                                 </div>
                             )}
-                            {convert(registration.serviceFee || 0) > 0 && (
+                            {platformFee > 0 && (
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Service Fee</span>
-                                    <span>{formatAmount(convert(registration.serviceFee || 0))}</span>
+                                    <span>Platform Fee</span>
+                                    <span>{formatAmount(platformFee)}</span>
                                 </div>
                             )}
-                            {convert(registration.customFeesAmount || 0) > 0 && (
+                            {stripeFee > 0 && (
                                 <div className="flex justify-between text-gray-600">
-                                    <span>Processing Fee</span>
-                                    <span>{formatAmount(convert(registration.customFeesAmount || 0))}</span>
+                                    <span>Payment Processing</span>
+                                    <span>{formatAmount(stripeFee)}</span>
+                                </div>
+                            )}
+                            {customFees > 0 && (
+                                <div className="flex justify-between text-gray-600">
+                                    <span>Additional Fees</span>
+                                    <span>{formatAmount(customFees)}</span>
                                 </div>
                             )}
                             {tax > 0 && (
