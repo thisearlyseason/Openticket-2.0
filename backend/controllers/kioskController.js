@@ -693,18 +693,6 @@ const checkInGuest = async (req, res) => {
                 .update({ tickets: updatedTickets })
                 .eq('id', registrationId);
             
-            // If update failed due to missing columns, try simpler update
-            if (updateError && (updateError.code === '42703' || updateError.message?.includes('does not exist'))) {
-                console.log('[Kiosk] Schema mismatch detected for ticket check-in, falling back to simple update');
-                
-                const fallbackResult = await supabase
-                    .from('registrations')
-                    .update({ tickets: updatedTickets })
-                    .eq('id', registrationId);
-                    
-                updateError = fallbackResult.error;
-            }
-            
             if (updateError) {
                 console.error('[Kiosk] Ticket check-in update error:', updateError);
                 return res.status(500).json({ error: 'Failed to check in ticket' });
