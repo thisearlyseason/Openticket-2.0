@@ -376,4 +376,3 @@ export const getEventStats = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-// hot reload test Mon Feb 23 18:19:49 UTC 2026
