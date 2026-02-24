@@ -1089,7 +1089,7 @@ export const EventView = () => {
                             <section className="animate-in fade-in slide-in-from-bottom-8 duration-1000 print:m-0 print:p-0">
                                 <div className="max-w-2xl mx-auto space-y-8">
                                     <div className="text-center space-y-4 mb-12 print:hidden">
-                                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto text-white shadow-2xl ${event.requiresApproval ? 'bg-amber-500 shadow-amber-500/40' : 'bg-green-500 shadow-green-500/40'}`}>
+                                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-2xl ${event.requiresApproval ? 'bg-amber-500 text-black shadow-amber-500/40' : 'bg-green-500 text-white shadow-green-500/40'}`}>
                                             {event.requiresApproval ? <Clock size={40} /> : <Check size={40} strokeWidth={4} />}
                                         </div>
                                         <h2 className="text-4xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white">
