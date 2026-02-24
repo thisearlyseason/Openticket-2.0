@@ -103,6 +103,12 @@ Make the event ticketing platform production-ready.
 
 - ✅ **[Feb 23 2026] Payout 404 FIXED**: Added `POST /api/stripe/request-payout` endpoint to `stripeController.js` and `stripeRoutes.js`. Added CSRF exception for this endpoint in `api/server.js`.
 - ✅ **[Feb 23 2026] Platform fees unified, Stripe processing fees corrected, refund processing repaired, Stripe keys corrected, price validation re-enabled, webhook secret fixed, CSRF tuned**
+- ✅ **[Feb 24 2026] Dashboard UI/UX Overhaul (5 sub-tasks)**:
+  - Added 30/60/90/All Time period filter tabs above stats row, stats update dynamically based on selected period
+  - Fixed "No Data Available" bar in LiveRevenueWidget — replaced red-bordered error card with clean empty state (TrendingUp icon + "No sales data yet" message)
+  - SMM Signup Card and Advanced Analytics button now on same row (grid-cols-2 desktop layout)
+  - "Getting Started" card now uses framer-motion AnimatePresence for smooth exit animation when dismissed; X button uses React state (no page reload)
+  - Fixed poor text contrast in KioskCheckIn: "already_checked_in" yellow background now shows black text (text-black) instead of white
 
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
