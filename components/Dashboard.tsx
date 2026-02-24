@@ -397,8 +397,15 @@ export const Dashboard = () => {
     const paidRegistrations = registrations.filter(r => 
         isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus)
     );
-    const totalRevenue = calculatePaidRevenue(paidRegistrations);
-    const totalTicketsSold = calculatePaidTickets(paidRegistrations);
+
+    // Apply period filter for stats
+    const statCutoff = statPeriod === 'all' ? 0 : Date.now() - Number(statPeriod) * 24 * 60 * 60 * 1000;
+    const periodFilteredRegs = paidRegistrations.filter(r => {
+        const ts = r.timestamp || (r.createdAt ? new Date(r.createdAt).getTime() : 0);
+        return ts >= statCutoff;
+    });
+    const totalRevenue = calculatePaidRevenue(periodFilteredRegs);
+    const totalTicketsSold = calculatePaidTickets(periodFilteredRegs);
 
     if (!currentUser) return null; // Don't render while redirecting
 
