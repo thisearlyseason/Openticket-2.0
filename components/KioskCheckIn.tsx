@@ -502,9 +502,9 @@ export const KioskCheckIn: React.FC = () => {
                                 </>
                             ) : currentScan.status === 'already_checked_in' ? (
                                 <>
-                                    <AlertTriangle className="mx-auto mb-4 text-white" size={64} />
-                                    <h2 className="text-2xl font-bold text-white mb-2">Already Checked In</h2>
-                                    <p className="text-xl text-white/90">{currentScan.attendeeName}</p>
+                                    <AlertTriangle className="mx-auto mb-4 text-black" size={64} />
+                                    <h2 className="text-2xl font-bold text-black mb-2">Already Checked In</h2>
+                                    <p className="text-xl text-black/80">{currentScan.attendeeName}</p>
                                     <Button
                                         onClick={handleScanAnother}
                                         variant="secondary"
