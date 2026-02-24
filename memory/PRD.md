@@ -109,6 +109,13 @@ Make the event ticketing platform production-ready.
   - SMM Signup Card and Advanced Analytics button now on same row (grid-cols-2 desktop layout)
   - "Getting Started" card now uses framer-motion AnimatePresence for smooth exit animation when dismissed; X button uses React state (no page reload)
   - Fixed poor text contrast in KioskCheckIn: "already_checked_in" yellow background now shows black text (text-black) instead of white
+- ✅ **[Feb 24 2026] Live Sales Widget Fix + More Contrast Fixes**:
+  - Live Sales API query: added 'succeeded' to payment_status filter (covers all Stripe status variants); extended window from 24h → 48h
+  - Refresh interval: reduced from 60s to 30s for faster live updates
+  - Error state: now distinguishes between "API error" vs "no data yet" with different messages
+  - Fixed `ConfirmContext.tsx` warning button: `bg-amber-500 text-white` → `text-black`
+  - Fixed `EventView.tsx` approval success circle: `bg-amber-500 text-white` → `text-black`
+  - Fixed `KioskCheckIn.tsx` fullscreen warning banner: `bg-amber-600 text-white` → `bg-amber-500 text-black`
 
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
