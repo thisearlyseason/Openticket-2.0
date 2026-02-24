@@ -45,7 +45,13 @@ export const Billing = () => {
         platformFees: number;
         organizerNet: number;
         transactionCount: number;
-    }>({ grossRevenue: 0, stripeFees: 0, platformFees: 0, organizerNet: 0, transactionCount: 0 });
+        events?: { id: string; title: string }[];
+    }>({ grossRevenue: 0, stripeFees: 0, platformFees: 0, organizerNet: 0, transactionCount: 0, events: [] });
+
+    // Financial filter state
+    const [summaryFilterEvent, setSummaryFilterEvent] = useState<string>('all');
+    const [summaryDateFrom, setSummaryDateFrom] = useState<string>('');
+    const [summaryDateTo, setSummaryDateTo] = useState<string>('');
 
     // Payout Balance (from ready payouts)
     const [availablePayout, setAvailablePayout] = useState(0);
