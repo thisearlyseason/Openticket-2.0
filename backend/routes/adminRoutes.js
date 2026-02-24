@@ -253,13 +253,13 @@ router.get('/organizer/live-sales', verifyToken, async (req, res) => {
         // Get last hour start
         const lastHourStart = new Date(now.getTime() - 60 * 60 * 1000);
         
-        // Get recent registrations (last 24 hours, paid only)
+        // Get recent registrations (last 48 hours, paid only)
         const { data: recentRegs, error: regsError } = await supabase
             .from('registrations')
             .select('id, event_id, attendee_name, total_amount, tickets, created_at, payment_status')
             .in('event_id', eventIds)
-            .in('payment_status', ['paid', 'completed'])
-            .gte('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())
+            .in('payment_status', ['paid', 'completed', 'succeeded'])
+            .gte('created_at', new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false })
             .limit(50);
         
