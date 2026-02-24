@@ -247,7 +247,7 @@ export const EventBuilder = () => {
                         pdfUrl: updatedUser.defaultWaiver.pdfUrl || '',
                         fileName: updatedUser.defaultWaiver.fileName || ''
                     } : undefined,
-                    taxRate: updatedUser?.defaultTaxRate || user.defaultTaxRate || 0,
+                    taxRate: 0, // Always start at 0; organizer sets explicitly if needed
                     customFees: updatedUser?.defaultCustomFees || user.defaultCustomFees || [],
                     // Currency is now global (from user's defaultCurrency), not per-event
                     trackingPixels: { ga: '', fb: '', tiktok: '', adwords: '' }
