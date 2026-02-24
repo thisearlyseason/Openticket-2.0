@@ -71,8 +71,8 @@ export const LiveRevenueWidget = () => {
     useEffect(() => {
         fetchLiveSales();
         
-        // Refresh every 60 seconds
-        const interval = setInterval(fetchLiveSales, 60000);
+        // Refresh every 30 seconds
+        const interval = setInterval(fetchLiveSales, 30000);
         
         return () => clearInterval(interval);
     }, [fetchLiveSales]);
