@@ -127,8 +127,6 @@ export const Billing = () => {
                 console.error('Failed to load financial summary:', e);
             }
         };
-
-        };
         loadLedger();
         loadStripeStatus();
     }, [user?.id]);
