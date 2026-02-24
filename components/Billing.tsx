@@ -818,35 +818,75 @@ export const Billing = () => {
             )}
 
             {/* Financial Breakdown Summary */}
-            {financialSummary.transactionCount > 0 && (
-                <Card className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black border-zinc-200 dark:border-zinc-800">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <Card className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black border-zinc-200 dark:border-zinc-800">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <TrendingUp className="text-primary" size={20} /> Financial Summary
                     </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Gross Revenue</div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">${financialSummary.grossRevenue.toFixed(2)}</div>
-                            <div className="text-xs text-zinc-400">{financialSummary.transactionCount} transactions</div>
-                        </div>
-                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Stripe Fees</div>
-                            <div className="text-2xl font-bold text-red-500">-${financialSummary.stripeFees.toFixed(2)}</div>
-                            <div className="text-xs text-zinc-400">Payment processing</div>
-                        </div>
-                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Platform Fees</div>
-                            <div className="text-2xl font-bold text-orange-500">-${financialSummary.platformFees.toFixed(2)}</div>
-                            <div className="text-xs text-zinc-400">OpenTicket service</div>
-                        </div>
-                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                            <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Your Earnings</div>
-                            <div className="text-2xl font-bold text-green-500">${financialSummary.organizerNet.toFixed(2)}</div>
-                            <div className="text-xs text-zinc-400">Net to organizer</div>
-                        </div>
+                    {/* Filters */}
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                        {/* Event filter */}
+                        <select
+                            data-testid="summary-filter-event"
+                            className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={summaryFilterEvent}
+                            onChange={e => setSummaryFilterEvent(e.target.value)}
+                        >
+                            <option value="all">All Events</option>
+                            {(financialSummary.events || []).map(ev => (
+                                <option key={ev.id} value={ev.id}>{ev.title}</option>
+                            ))}
+                        </select>
+                        {/* Date from */}
+                        <input
+                            type="date"
+                            data-testid="summary-filter-date-from"
+                            className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={summaryDateFrom}
+                            onChange={e => setSummaryDateFrom(e.target.value)}
+                            placeholder="From"
+                        />
+                        <span className="text-zinc-400 text-xs">→</span>
+                        <input
+                            type="date"
+                            data-testid="summary-filter-date-to"
+                            className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={summaryDateTo}
+                            onChange={e => setSummaryDateTo(e.target.value)}
+                            placeholder="To"
+                        />
+                        {(summaryFilterEvent !== 'all' || summaryDateFrom || summaryDateTo) && (
+                            <button
+                                data-testid="summary-filter-clear"
+                                onClick={() => { setSummaryFilterEvent('all'); setSummaryDateFrom(''); setSummaryDateTo(''); }}
+                                className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 underline"
+                            >Clear</button>
+                        )}
                     </div>
-                </Card>
-            )}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Gross Revenue</div>
+                        <div className="text-2xl font-bold text-gray-900 dark:text-white">${financialSummary.grossRevenue.toFixed(2)}</div>
+                        <div className="text-xs text-zinc-400">{financialSummary.transactionCount} transactions</div>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Stripe Fees</div>
+                        <div className="text-2xl font-bold text-red-500">-${financialSummary.stripeFees.toFixed(2)}</div>
+                        <div className="text-xs text-zinc-400">Payment processing</div>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Platform Fees</div>
+                        <div className="text-2xl font-bold text-orange-500">-${financialSummary.platformFees.toFixed(2)}</div>
+                        <div className="text-xs text-zinc-400">OpenTicket service</div>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                        <div className="text-xs text-zinc-500 uppercase font-semibold mb-1">Your Earnings</div>
+                        <div className="text-2xl font-bold text-green-500">${financialSummary.organizerNet.toFixed(2)}</div>
+                        <div className="text-xs text-zinc-400">Net to organizer</div>
+                    </div>
+                </div>
+            </Card>
 
             <div className="space-y-4">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
