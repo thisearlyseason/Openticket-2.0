@@ -71,6 +71,10 @@ export const Dashboard = () => {
     // View State
     const [activeTab, setActiveTab] = useState<'all' | 'upcoming' | 'drafts' | 'past'>('upcoming');
     const [searchTerm, setSearchTerm] = useState('');
+    const [statPeriod, setStatPeriod] = useState<'all' | '30' | '60' | '90'>('all');
+
+    // Getting Started card state
+    const [showGettingStarted, setShowGettingStarted] = useState(() => localStorage.getItem('hide_getting_started') !== 'true');
 
     const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
