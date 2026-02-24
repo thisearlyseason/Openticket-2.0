@@ -462,30 +462,47 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
-                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Total Revenue</div>
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(totalRevenue, currentUser?.defaultCurrency || 'USD')}</div>
+            {/* Period Filter + Stats Row */}
+            <div>
+                {/* Period Tabs */}
+                <div className="flex gap-1 mb-3">
+                    {([['all', 'All Time'], ['30', '30 Days'], ['60', '60 Days'], ['90', '90 Days']] as const).map(([val, label]) => (
+                        <button
+                            key={val}
+                            onClick={() => setStatPeriod(val)}
+                            data-testid={`stat-period-${val}`}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${statPeriod === val ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
-                <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
-                    <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Tickets Sold</div>
-                    <div className="text-3xl font-black text-zinc-900 dark:text-white">{totalTicketsSold}</div>
-                </div>
-                <div className="bg-surface border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-secondary transition-colors" onClick={() => navigate('/billing')}>
-                    <div>
-                        <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Available Payout</div>
-                        <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(currentUser?.availablePayout || 0, currentUser?.defaultCurrency || 'USD')}</div>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
+                        <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Total Revenue</div>
+                        <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(totalRevenue, currentUser?.defaultCurrency || 'USD')}</div>
                     </div>
-                    <Wallet size={24} className="text-emerald-600 dark:text-emerald-400" />
-                </div>
-                {/* Affiliate Access */}
-                <div className="bg-gradient-to-br from-accent/20 to-green-500/10 border border-accent/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-accent transition-colors group" onClick={() => navigate('/affiliate')}>
-                    <div className="flex justify-between items-center mb-1">
-                        <div className="text-xs font-bold text-black dark:text-white uppercase">Partner Program</div>
-                        <ArrowRight size={16} className="text-accent group-hover:translate-x-1 transition-transform" />
+                    <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl shadow-sm">
+                        <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Tickets Sold</div>
+                        <div className="text-3xl font-black text-zinc-900 dark:text-white">{totalTicketsSold}</div>
                     </div>
-                    <div className="text-sm font-bold text-zinc-900 dark:text-white">Earn 15% Commissions</div>
+                    <div className="bg-surface border border-zinc-200 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer hover:border-secondary transition-colors" onClick={() => navigate('/billing')}>
+                        <div>
+                            <div className="text-xs font-bold text-zinc-500 uppercase mb-1">Available Payout</div>
+                            <div className="text-3xl font-black text-zinc-900 dark:text-white">{CurrencyService.formatChargeCurrency(currentUser?.availablePayout || 0, currentUser?.defaultCurrency || 'USD')}</div>
+                        </div>
+                        <Wallet size={24} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    {/* Affiliate Access */}
+                    <div className="bg-gradient-to-br from-accent/20 to-green-500/10 border border-accent/30 p-6 rounded-2xl flex flex-col justify-center cursor-pointer hover:border-accent transition-colors group" onClick={() => navigate('/affiliate')}>
+                        <div className="flex justify-between items-center mb-1">
+                            <div className="text-xs font-bold text-black dark:text-white uppercase">Partner Program</div>
+                            <ArrowRight size={16} className="text-accent group-hover:translate-x-1 transition-transform" />
+                        </div>
+                        <div className="text-sm font-bold text-zinc-900 dark:text-white">Earn 15% Commissions</div>
+                    </div>
                 </div>
             </div>
 
