@@ -1158,15 +1158,13 @@ const UpcomingPayoutsCard: React.FC<{ userId: string, onPayoutsLoad?: (payouts: 
 
             <div className="space-y-3">
                 {upcomingPayouts.map((payout, idx) => {
-                    const releaseDate = new Date(payout.releaseDate);
-                    const now = new Date();
-                    const daysUntil = Math.ceil((releaseDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                    const isPastDue = daysUntil < 0;
+                    const isReady = payout.status === 'ready';
+                    const daysUntil = payout.daysUntil ?? 0;
 
                     return (
-                        <div 
-                            key={idx} 
-                            className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-900/50 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                        <div
+                            key={idx}
+                            className={`flex items-center justify-between p-4 rounded-lg border ${isReady ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-zinc-50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800'}`}
                         >
                             <div className="flex-1">
                                 <div className="font-bold text-gray-900 dark:text-white">
@@ -1174,23 +1172,25 @@ const UpcomingPayoutsCard: React.FC<{ userId: string, onPayoutsLoad?: (payouts: 
                                 </div>
                                 <div className="text-xs text-zinc-500 mt-1 flex items-center gap-2">
                                     <Calendar size={12} />
-                                    Release: {releaseDate.toLocaleDateString()}
-                                    {isPastDue ? (
+                                    {payout.eventDate ? new Date(payout.eventDate).toLocaleDateString() : ''}
+                                    {isReady ? (
                                         <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px]">
-                                            Ready
+                                            Available Now
                                         </Badge>
                                     ) : (
-                                        <span className="text-blue-600 dark:text-blue-400">
-                                            in {daysUntil} day{daysUntil !== 1 ? 's' : ''}
+                                        <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                            available in {daysUntil} day{daysUntil !== 1 ? 's' : ''}
                                         </span>
                                     )}
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                                <div className={`text-xl font-bold ${isReady ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
                                     ${payout.amount.toFixed(2)}
                                 </div>
-                                <div className="text-xs text-zinc-500">net earnings</div>
+                                <div className="text-xs text-zinc-500">
+                                    {isReady ? 'ready to withdraw' : 'net earnings'}
+                                </div>
                             </div>
                         </div>
                     );
