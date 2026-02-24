@@ -301,10 +301,12 @@ export const AuditLogService = {
             const grossRevenue = (registrations || []).reduce((sum, r) => sum + (r.total_amount || 0), 0);
             const platformFees = (registrations || []).reduce((sum, r) => sum + (r.service_fee || 0), 0);
             const stripeFees = (registrations || []).reduce((sum, r) => {
-                const sf = r.stripe_fee;
-                if (sf != null) return sum + sf;
-                const amount = r.total_amount || 0;
-                return sum + (amount > 0 ? (amount * 0.029 + 0.30) : 0);
+                const sf = Number(r.stripe_fee || 0);
+                // Only use stored stripe_fee if it was actually captured (> 0).
+                // Legacy rows get DEFAULT 0 from the migration — fall back to estimate for those.
+                if (sf > 0) return sum + sf;
+                const amount = Number(r.total_amount || 0);
+                return sum + (amount > 0 ? Number((amount * 0.029 + 0.30).toFixed(2)) : 0);
             }, 0);
 
             return {
