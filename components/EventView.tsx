@@ -2096,10 +2096,10 @@ export const EventView = () => {
                                                                     </div>
                                                                 )}
 
-                                                                {/* Tax */}
-                                                                {event.taxRate && event.taxRate > 0 && (orderBreakdown?.taxAmount || 0) > 0 && (
-                                                                    <div className="flex justify-between text-zinc-500">
-                                                                        <span>Tax ({event.taxRate}%)</span>
+                                                                {/* Tax — shown whenever the API returns a taxAmount > 0, regardless of frontend event.taxRate */}
+                                                                {(orderBreakdown?.taxAmount || 0) > 0 && (
+                                                                    <div className="flex justify-between text-zinc-500" data-testid="tax-line-item">
+                                                                        <span>Tax{(orderBreakdown?.taxRate || 0) > 0 ? ` (${orderBreakdown!.taxRate}%)` : ''}</span>
                                                                         <span><EventPriceDisplay amount={orderBreakdown!.taxAmount} currency={eventCurrency} /></span>
                                                                     </div>
                                                                 )}
