@@ -118,8 +118,12 @@ export const LiveRevenueWidget = () => {
                 </div>
                 <div className="text-center py-8 text-zinc-400">
                     <TrendingUp size={32} className="mx-auto mb-3 opacity-40" />
-                    <p className="text-sm font-medium text-zinc-500 mb-1">No sales data yet</p>
-                    <p className="text-xs text-zinc-400 mb-4">Sales will appear here once tickets are purchased.</p>
+                    <p className="text-sm font-medium text-zinc-500 mb-1">
+                        {error ? 'Unable to load sales data' : 'No sales data yet'}
+                    </p>
+                    <p className="text-xs text-zinc-400 mb-4">
+                        {error ? 'Check your connection or try refreshing.' : 'Sales will appear here once tickets are purchased.'}
+                    </p>
                     <button 
                         onClick={fetchLiveSales}
                         className="text-primary text-xs font-bold hover:underline flex items-center gap-1 mx-auto"
