@@ -106,14 +106,25 @@ export const LiveRevenueWidget = () => {
 
     if (error || !data) {
         return (
-            <Card className="p-6 border-red-200 dark:border-red-800">
-                <div className="text-center text-zinc-500">
-                    <p>{error || 'No data available'}</p>
+            <Card className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
+                        <Zap size={20} className="text-zinc-400" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-zinc-900 dark:text-white">Live Sales</h3>
+                        <p className="text-xs text-zinc-500">Real-time sales data</p>
+                    </div>
+                </div>
+                <div className="text-center py-8 text-zinc-400">
+                    <TrendingUp size={32} className="mx-auto mb-3 opacity-40" />
+                    <p className="text-sm font-medium text-zinc-500 mb-1">No sales data yet</p>
+                    <p className="text-xs text-zinc-400 mb-4">Sales will appear here once tickets are purchased.</p>
                     <button 
                         onClick={fetchLiveSales}
-                        className="mt-2 text-primary text-sm font-bold hover:underline"
+                        className="text-primary text-xs font-bold hover:underline flex items-center gap-1 mx-auto"
                     >
-                        Try Again
+                        <RefreshCw size={12} /> Refresh
                     </button>
                 </div>
             </Card>
