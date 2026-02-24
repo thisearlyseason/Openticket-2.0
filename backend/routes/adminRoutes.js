@@ -1606,14 +1606,24 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
         for (const event of events) {
             const eventDate = new Date(event.date);
             
-            // Only include events that are upcoming or recently ended (within 30 days)
-            const daysSinceEvent = (now.getTime() - eventDate.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSinceEvent > 30) continue; // Skip old events
+            // Only show payout if event has already occurred
+            if (eventDate > now) continue;
             
+            // Skip events where payout was already completed/paid
+            const { data: existingPayout } = await supabase
+                .from('organizer_payouts')
+                .select('id, status, amount')
+                .eq('event_id', event.id)
+                .eq('organizer_id', userId)
+                .in('status', ['completed', 'paid'])
+                .maybeSingle();
+
+            if (existingPayout) continue; // Already paid out
+
             // Calculate net earnings for this event
             const { data: registrations } = await supabase
                 .from('registrations')
-                .select('*')
+                .select('tickets, add_ons, donation_amount, service_fee, stripe_fee, total_amount')
                 .eq('event_id', event.id)
                 .eq('payment_status', 'paid');
 
@@ -1625,21 +1635,20 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
                     + (reg.donation_amount || 0)
                     + (reg.add_ons?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0);
                 
-                const fees = (reg.service_fee || 0) + (reg.stripe_fee || (gross * 0.029 + 0.30));
-                netEarnings += (gross - fees);
+                const fees = (reg.service_fee || 0) + (reg.stripe_fee || (gross > 0 ? (gross * 0.029 + 0.30) : 0));
+                netEarnings += Math.max(0, gross - fees);
             });
 
             if (netEarnings <= 0) continue;
 
-            // Release date is event date (funds available after event)
             upcomingPayouts.push({
                 eventId: event.id,
                 eventTitle: event.title,
                 eventDate: event.date,
-                releaseDate: eventDate, // Funds released on event date
+                releaseDate: eventDate,
                 amount: netEarnings,
-                status: eventDate <= now ? 'ready' : 'pending',
-                daysUntil: Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                status: 'ready', // All past events with no payout are ready
+                daysUntil: 0
             });
         }
 
