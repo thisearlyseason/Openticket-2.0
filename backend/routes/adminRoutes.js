@@ -1605,14 +1605,11 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
 
         for (const event of events) {
             const eventDate = new Date(event.date);
-            
-            // Only show payout if event has already occurred
-            if (eventDate > now) continue;
-            
+
             // Skip events where payout was already completed/paid
             const { data: existingPayout } = await supabase
                 .from('organizer_payouts')
-                .select('id, status, amount')
+                .select('id, status')
                 .eq('event_id', event.id)
                 .eq('organizer_id', userId)
                 .in('status', ['completed', 'paid'])
@@ -1634,12 +1631,15 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
                 const gross = (reg.tickets?.reduce((acc, t) => acc + ((t.price || t.pricePerTicket || 0) * 1), 0) || 0)
                     + (reg.donation_amount || 0)
                     + (reg.add_ons?.reduce((acc, a) => acc + ((a.price || 0) * (a.quantity || 1)), 0) || 0);
-                
+
                 const fees = (reg.service_fee || 0) + (reg.stripe_fee || (gross > 0 ? (gross * 0.029 + 0.30) : 0));
                 netEarnings += Math.max(0, gross - fees);
             });
 
             if (netEarnings <= 0) continue;
+
+            const isPast = eventDate <= now;
+            const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
             upcomingPayouts.push({
                 eventId: event.id,
@@ -1647,8 +1647,8 @@ router.get('/upcoming-payouts', verifyToken, async (req, res) => {
                 eventDate: event.date,
                 releaseDate: eventDate,
                 amount: netEarnings,
-                status: 'ready', // All past events with no payout are ready
-                daysUntil: 0
+                status: isPast ? 'ready' : 'pending',
+                daysUntil: isPast ? 0 : daysUntil
             });
         }
 
