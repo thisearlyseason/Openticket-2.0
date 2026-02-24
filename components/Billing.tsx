@@ -110,10 +110,7 @@ export const Billing = () => {
             try {
                 const token = await getAuthToken();
                 const response = await fetch('/api/admin/organizer/financial-summary', {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     const summary = await response.json();
@@ -122,12 +119,44 @@ export const Billing = () => {
                         stripeFees: summary.stripeFees || 0,
                         platformFees: summary.platformFees || 0,
                         organizerNet: summary.organizerNet || 0,
-                        transactionCount: summary.transactionCount || 0
+                        transactionCount: summary.transactionCount || 0,
+                        events: summary.events || []
                     });
                 }
             } catch (e) {
                 console.error('Failed to load financial summary:', e);
             }
+        };
+
+        const loadFilteredSummary = async (eventId: string, dateFrom: string, dateTo: string) => {
+            try {
+                const token = await getAuthToken();
+                const params = new URLSearchParams();
+                if (eventId && eventId !== 'all') params.set('eventId', eventId);
+                if (dateFrom) params.set('dateFrom', dateFrom);
+                if (dateTo) params.set('dateTo', dateTo);
+                const url = `/api/admin/organizer/financial-summary${params.toString() ? '?' + params.toString() : ''}`;
+                const response = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const summary = await response.json();
+                    setFinancialSummary(prev => ({
+                        ...prev,
+                        grossRevenue: summary.grossRevenue || 0,
+                        stripeFees: summary.stripeFees || 0,
+                        platformFees: summary.platformFees || 0,
+                        organizerNet: summary.organizerNet || 0,
+                        transactionCount: summary.transactionCount || 0,
+                    }));
+                }
+            } catch (e) {
+                console.error('Failed to load filtered summary:', e);
+            }
+        };
+
+        // Expose to outer scope for filter changes
+        (window as any).__loadFilteredSummary = loadFilteredSummary;
         };
         loadLedger();
         loadStripeStatus();
