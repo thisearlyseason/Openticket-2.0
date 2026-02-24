@@ -57,6 +57,7 @@ export const calculateOrderBreakdown = ({
         discountedSubtotal: 0,
         taxableAmount: 0,
         taxAmount: 0,
+        taxRate: 0,
         customFeesAmount: 0,
         platformFee: 0,
         stripeFee: 0,
@@ -175,6 +176,7 @@ export const calculateOrderBreakdown = ({
     });
 
     if (event.tax_rate && event.tax_rate > 0) {
+        breakdown.taxRate = Number(event.tax_rate);
         breakdown.taxAmount = Number((breakdown.taxableAmount * (event.tax_rate / 100)).toFixed(2));
     }
 
