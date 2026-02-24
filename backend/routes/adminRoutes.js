@@ -49,7 +49,7 @@ router.post('/events/:eventId/request-payout', verifyToken, async (req, res) => 
         // Verify event ownership
         const { data: event, error: eventError } = await supabase
             .from('events')
-            .select('id, title, organizer_id, end_date')
+            .select('id, title, owner_id, end_date')
             .eq('id', eventId)
             .single();
 
@@ -57,7 +57,7 @@ router.post('/events/:eventId/request-payout', verifyToken, async (req, res) => 
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        if (event.organizer_id !== req.user.uid) {
+        if (event.owner_id !== req.user.uid) {
             return res.status(403).json({ error: 'Access denied. You can only request payouts for your own events.' });
         }
 
