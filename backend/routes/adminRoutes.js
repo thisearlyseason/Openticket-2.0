@@ -209,7 +209,8 @@ router.get('/organizer/audit-logs', verifyToken, async (req, res) => {
 
 router.get('/organizer/financial-summary', verifyToken, async (req, res) => {
     try {
-        const summary = await AuditLogService.getOrganizerSummary(req.user.uid);
+        const { eventId, dateFrom, dateTo } = req.query;
+        const summary = await AuditLogService.getOrganizerSummary(req.user.uid, { eventId, dateFrom, dateTo });
         res.json(summary);
     } catch (error) {
         res.status(500).json({ error: error.message });
