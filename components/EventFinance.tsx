@@ -714,10 +714,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Gross Sales</span>
                     </div>
                     <div className="text-3xl font-black text-gray-900 dark:text-white">
-                        ${filteredSummary.grossSales.toFixed(2)}
+                        ${displaySummary.grossSales.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        {filteredSummary.transactionCount} transaction{filteredSummary.transactionCount !== 1 ? 's' : ''}
+                        {displaySummary.transactionCount} transaction{displaySummary.transactionCount !== 1 ? 's' : ''}
                     </div>
                 </Card>
 
@@ -729,10 +729,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Total Fees</span>
                     </div>
                     <div className="text-3xl font-black text-gray-900 dark:text-white">
-                        ${(filteredSummary.platformFees + filteredSummary.stripeFees).toFixed(2)}
+                        ${(displaySummary.platformFees + displaySummary.stripeFees).toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        Platform: ${filteredSummary.platformFees.toFixed(2)} | Stripe: ${filteredSummary.stripeFees.toFixed(2)}
+                        Platform: ${displaySummary.platformFees.toFixed(2)} | Stripe: ${displaySummary.stripeFees.toFixed(2)}
                     </div>
                 </Card>
 
@@ -744,7 +744,7 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Net Earnings</span>
                     </div>
                     <div className="text-3xl font-black text-green-600">
-                        ${filteredSummary.netEarnings.toFixed(2)}
+                        ${displaySummary.netEarnings.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
                         After all fees
@@ -759,10 +759,10 @@ export const EventFinance = () => {
                         <span className="text-sm text-zinc-500">Refunded</span>
                     </div>
                     <div className="text-3xl font-black text-red-600">
-                        ${filteredSummary.refundedAmount.toFixed(2)}
+                        ${displaySummary.refundedAmount.toFixed(2)}
                     </div>
                     <div className="text-xs text-zinc-500 mt-1">
-                        {filteredSummary.refundCount} refund{filteredSummary.refundCount !== 1 ? 's' : ''}
+                        {displaySummary.refundCount} refund{displaySummary.refundCount !== 1 ? 's' : ''}
                     </div>
                 </Card>
             </div>
@@ -796,14 +796,14 @@ export const EventFinance = () => {
             </div>
 
             {/* Tax Collected */}
-            {filteredSummary.taxCollected > 0 && (
+            {displaySummary.taxCollected > 0 && (
                 <Card className="p-4 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Receipt className="text-blue-600" size={20} />
                             <span className="font-medium">Tax Collected</span>
                         </div>
-                        <span className="text-xl font-bold">${filteredSummary.taxCollected.toFixed(2)}</span>
+                        <span className="text-xl font-bold">${displaySummary.taxCollected.toFixed(2)}</span>
                     </div>
                     <p className="text-xs text-zinc-500 mt-1">
                         Note: Tax is collected on behalf of the organizer and should be remitted to the appropriate tax authority.
