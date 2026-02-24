@@ -128,17 +128,23 @@ export const Billing = () => {
             }
         };
 
-        const loadFilteredSummary = async (eventId: string, dateFrom: string, dateTo: string) => {
+        };
+        loadLedger();
+        loadStripeStatus();
+    }, [user?.id]);
+
+    // Reload financial summary whenever filters change
+    useEffect(() => {
+        if (!user?.id) return;
+        const reload = async () => {
             try {
                 const token = await getAuthToken();
                 const params = new URLSearchParams();
-                if (eventId && eventId !== 'all') params.set('eventId', eventId);
-                if (dateFrom) params.set('dateFrom', dateFrom);
-                if (dateTo) params.set('dateTo', dateTo);
+                if (summaryFilterEvent && summaryFilterEvent !== 'all') params.set('eventId', summaryFilterEvent);
+                if (summaryDateFrom) params.set('dateFrom', summaryDateFrom);
+                if (summaryDateTo)   params.set('dateTo', summaryDateTo);
                 const url = `/api/admin/organizer/financial-summary${params.toString() ? '?' + params.toString() : ''}`;
-                const response = await fetch(url, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-                });
+                const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (response.ok) {
                     const summary = await response.json();
                     setFinancialSummary(prev => ({
@@ -150,17 +156,10 @@ export const Billing = () => {
                         transactionCount: summary.transactionCount || 0,
                     }));
                 }
-            } catch (e) {
-                console.error('Failed to load filtered summary:', e);
-            }
+            } catch (e) { /* silent */ }
         };
-
-        // Expose to outer scope for filter changes
-        (window as any).__loadFilteredSummary = loadFilteredSummary;
-        };
-        loadLedger();
-        loadStripeStatus();
-    }, [user?.id]);
+        reload();
+    }, [summaryFilterEvent, summaryDateFrom, summaryDateTo, user?.id]);
 
     if (!user || user.role !== 'organizer') {
         return (
