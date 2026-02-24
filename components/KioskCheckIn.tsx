@@ -310,7 +310,7 @@ export const KioskCheckIn: React.FC = () => {
             
             {/* Fullscreen Indicator */}
             {!isFullscreen && (
-                <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-amber-600 text-white text-sm rounded-lg font-bold">
+                <div className="fixed top-4 right-4 z-50 px-4 py-2 bg-amber-500 text-black text-sm rounded-lg font-bold">
                     Not in fullscreen mode
                 </div>
             )}
