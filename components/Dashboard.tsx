@@ -509,71 +509,83 @@ export const Dashboard = () => {
             {/* Live Revenue Widget */}
             <LiveRevenueWidget />
 
-            {/* SMM Signup Card */}
-            <div className="my-6">
+            {/* SMM + Analytics on same row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SMMSignupCard userType="organizer" />
-            </div>
-
-            {/* Tools Row - Analytics */}
-            <div 
-                className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-purple-500/50 transition-colors group"
-                onClick={() => navigate('/analytics')}
-            >
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                    <BarChart3 size={24} className="text-white" />
-                </div>
-                <div className="flex-1">
-                    <div className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                        Advanced Analytics
-                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                {/* Advanced Analytics */}
+                <div 
+                    className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-purple-500/50 transition-colors group"
+                    onClick={() => navigate('/analytics')}
+                    data-testid="analytics-button"
+                >
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shrink-0">
+                        <BarChart3 size={24} className="text-white" />
                     </div>
-                    <p className="text-xs text-zinc-500">Revenue trends, ticket insights & performance metrics</p>
+                    <div className="flex-1">
+                        <div className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                            Advanced Analytics
+                            <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <p className="text-xs text-zinc-500">Revenue trends, ticket insights & performance metrics</p>
+                    </div>
                 </div>
             </div>
 
             {/* Getting Started Checklist */}
-            {(() => {
-                const dismissed = localStorage.getItem('hide_getting_started') === 'true';
-                if (dismissed && events.length > 0) return null; // Hide if dismissed AND they know what they are doing (have events)
-
-                const steps = [
-                    { id: 1, label: 'Create Account', done: true },
-                    { id: 2, label: 'Complete Profile', done: !!currentUser?.businessName || currentUser?.role === 'organizer' }, // Approximate check
-                    { id: 3, label: 'Create First Event', done: events.length > 0 },
-                    { id: 4, label: 'Sell a Ticket', done: registrations.length > 0 }
-                ];
-                const progress = (steps.filter(s => s.done).length / steps.length) * 100;
-
-                if (progress === 100 && dismissed) return null; // Totally done
-
-                return (
-                    <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div>
-                                <h3 className="text-lg font-bold flex items-center gap-2"><Target className="text-primary" /> Getting Started</h3>
-                                <p className="text-zinc-500 text-sm">Follow these steps to launch your ticketing business.</p>
-                            </div>
-                            <button onClick={() => { localStorage.setItem('hide_getting_started', 'true'); window.dispatchEvent(new Event('storage')); navigate(0); }} className="text-zinc-400 hover:text-zinc-600"><X size={16} /></button>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="h-2 bg-zinc-100 dark:bg-zinc-900 rounded-full mb-6 overflow-hidden">
-                            <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            {steps.map((step, i) => (
-                                <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${step.done ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'} transition-colors`}>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-green-500 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-400'}`}>
-                                        {step.done ? <Check size={14} strokeWidth={3} /> : <span className="text-[10px] font-bold">{i + 1}</span>}
-                                    </div>
-                                    <span className={`text-sm font-bold ${step.done ? 'text-green-700 dark:text-green-400' : 'text-zinc-500'}`}>{step.label}</span>
+            <AnimatePresence>
+                {showGettingStarted && (() => {
+                    const steps = [
+                        { id: 1, label: 'Create Account', done: true },
+                        { id: 2, label: 'Complete Profile', done: !!currentUser?.businessName || currentUser?.role === 'organizer' },
+                        { id: 3, label: 'Create First Event', done: events.length > 0 },
+                        { id: 4, label: 'Sell a Ticket', done: registrations.length > 0 }
+                    ];
+                    const progress = (steps.filter(s => s.done).length / steps.length) * 100;
+                    return (
+                        <motion.div
+                            key="getting-started"
+                            initial={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20, scale: 0.97 }}
+                            transition={{ duration: 0.35, ease: 'easeInOut' }}
+                            className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 relative overflow-hidden"
+                            data-testid="getting-started-card"
+                        >
+                            <div className="flex justify-between items-start mb-4 relative z-10">
+                                <div>
+                                    <h3 className="text-lg font-bold flex items-center gap-2"><Target className="text-primary" /> Getting Started</h3>
+                                    <p className="text-zinc-500 text-sm">Follow these steps to launch your ticketing business.</p>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })()}
+                                <button
+                                    data-testid="getting-started-dismiss"
+                                    onClick={() => {
+                                        localStorage.setItem('hide_getting_started', 'true');
+                                        setShowGettingStarted(false);
+                                    }}
+                                    className="text-zinc-400 hover:text-zinc-600 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="h-2 bg-zinc-100 dark:bg-zinc-900 rounded-full mb-6 overflow-hidden">
+                                <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                {steps.map((step, i) => (
+                                    <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${step.done ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30' : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800'} transition-colors`}>
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-green-500 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-400'}`}>
+                                            {step.done ? <Check size={14} strokeWidth={3} /> : <span className="text-[10px] font-bold">{i + 1}</span>}
+                                        </div>
+                                        <span className={`text-sm font-bold ${step.done ? 'text-green-700 dark:text-green-400' : 'text-zinc-500'}`}>{step.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    );
+                })()}
+            </AnimatePresence>
 
             {/* Tabs & Search */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
