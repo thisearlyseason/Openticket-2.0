@@ -619,6 +619,20 @@ export const EventFinance = () => {
         return sum + (r.tickets?.filter(t => t.status === 'refunded').reduce((tSum, t) => tSum + (t.quantity || 1), 0) || 0);
     }, 0);
 
+    // Use API-provided summary when transactions table is empty (pre-dating financial_transactions)
+    const displaySummary = (transactions.length > 0 || !summary)
+        ? filteredSummary
+        : {
+            grossSales: summary.grossSales ?? 0,
+            platformFees: summary.platformFees ?? 0,
+            stripeFees: summary.stripeFees ?? 0,
+            taxCollected: summary.taxCollected ?? 0,
+            netEarnings: summary.netEarnings ?? 0,
+            refundedAmount: summary.refundedAmount ?? 0,
+            transactionCount: summary.transactionCount ?? 0,
+            refundCount: summary.refundCount ?? 0,
+          };
+
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 space-y-8">
             {/* Header */}
