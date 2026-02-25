@@ -1,0 +1,48 @@
+{
+  "summary": "Full backend + code review testing for 3 previously reported bugs: (1) Tax proportionality, (2) Purchases saving to DB, (3) Live Sales Widget periodic refresh. All 27 tests PASSED. All 3 fixes confirmed working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/stripe/create-order",
+        "issue": "MAX_TRANSACTION_AMOUNT is hardcoded at $50,000 in createOrder. For the high-price test event ($55,000 ticket), grandTotal = $62,100.18 which exceeds the limit. This means the $55,000 high-price event CANNOT be purchased through Stripe checkout (would get AMOUNT_TOO_HIGH error). Note: calculate-order (preview) works fine since it doesn't have this limit.",
+        "priority": "MEDIUM - only affects very high-price events"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_tax_purchase_dashboard.py",
+    "/app/test_reports/pytest/pytest_tax_purchase_dashboard.xml"
+  ],
+  "action_items": [
+    "OPTIONAL: Review MAX_TRANSACTION_AMOUNT ($50,000) limit in stripeController.js createOrder handler (line 322). The high-price test event ($55,000 ticket) would fail checkout with AMOUNT_TOO_HIGH error. If $55k+ ticket sales are expected, consider raising or removing this cap."
+  ],
+  "critical_code_review_comments": [
+    "TAX FIX CONFIRMED: priceCalculator.js calculates tax as taxableAmount * (tax_rate / 100). For $200 ticket at 5% → $10 tax. For $400 (2 tickets) at 5% → $20 tax. Tax is correctly proportional.",
+    "PURCHASE PERSISTENCE CONFIRMED: 54 paid registrations in DB. 4 from 2026-02-25 (Tyler Anskkjjk). Purchases are saving correctly.",
+    "DASHBOARD PERIODIC REFRESH CONFIRMED: Lines 94 (userIdRef=useRef), 131-147 (useEffect with setInterval(30000) + visibilitychange + cleanup). Stale closure avoided by using userIdRef.current instead of currentUser state.",
+    "LIVE REVENUE WIDGET CONFIRMED: useMemo, isPaidStatus/isRefundedStatus filters, 48h feed, timestamp-based filtering, LIVE indicator, empty state has no red border.",
+    "HIGH-PRICE EVENT TAX CONFIRMED: $55,000 × 5% = $2,750 tax (exactly). grandTotal = $62,100.18.",
+    "GRAND TOTAL RECONCILIATION CONFIRMED: $200 subtotal + $10 tax + $10.44 platformFee + $6.69 stripeFee = $227.13 ✓"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (27/27 tests pass)",
+    "frontend": "N/A (code review only for Dashboard.tsx and LiveRevenueWidget.tsx)"
+  },
+  "test_credentials": "Supabase service role key used for DB verification",
+  "seed_data_creation": "No seed data created - used existing test events and registrations in DB",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 3 bugs from the original report are confirmed fixed: (1) Tax is proportional at 5% of subtotal (not a flat $5). (2) Purchases save to DB (54 paid, 4 from Feb 25 2026). (3) Dashboard has 30s setInterval + visibilitychange for Live Widget refresh. Test events: EVENT_ID_STANDARD='6583dce0-9c33-4a0c-a1b9-1ac3f5a1135d' ($200/ticket, 5% tax, simple pricing), EVENT_ID_HIGH_PRICE='dbb13101-f615-4536-9f15-d7f1fad78e2e' ($55,000/ticket, 5% tax, simple pricing). MAX_TRANSACTION_AMOUNT=$50k cap in createOrder would block the $55k ticket from checkout.",
+  "rca_of_issues": {
+    "tax_bug": "Tax was previously a flat $5. Fix in priceCalculator.js now correctly applies: taxAmount = taxableAmount * (tax_rate / 100). Verified: $200@5%=$10, $400@5%=$20, $55000@5%=$2750.",
+    "purchase_not_saving": "Confirmed resolved: 54 paid registrations exist in DB including 4 from 2026-02-25. The stripeController.js insert logic at line 558 correctly persists registrations.",
+    "live_widget_not_updating": "Fixed by adding periodic refresh in Dashboard.tsx: useRef(userIdRef) for userId to avoid stale closures, setInterval(doRefresh, 30000) for 30s polling, visibilitychange listener to refresh on tab re-focus. Proper cleanup on unmount (clearInterval + removeEventListener)."
+  }
+}
