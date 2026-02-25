@@ -516,44 +516,34 @@ function testSettingsTsxBrandingState() {
 function testEventViewThemeApplication() {
     console.log('\n--- Test Suite: EventView.tsx Theme Application ---');
 
-    test('EventView.tsx: applies organizerUser.defaultTheme for Pro/Premium', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+
+    test('EventView.tsx: applies organizerUser.defaultTheme for Pro/Premium', () => {
         assert(src.includes('isPro && organizerTheme && !savedTheme'), 
             'EventView must apply theme only for Pro and when no saved user pref');
     });
 
-    test('EventView.tsx: checks subscription plan is pro or premium', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    test('EventView.tsx: checks subscription plan is pro or premium', () => {
         assert(src.includes("subscription?.plan === 'pro' || organizerUser?.subscription?.plan === 'premium'"), 
             'EventView must check both pro and premium plans');
     });
 
-    test('EventView.tsx: uses localStorage openticket_theme to check saved preference', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    test('EventView.tsx: uses localStorage openticket_theme to check saved preference', () => {
         assert(src.includes("localStorage.getItem('openticket_theme')"), 
             'EventView must read saved theme preference from localStorage');
     });
 
-    test('EventView.tsx: toggles dark class on documentElement', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    test('EventView.tsx: toggles dark class on documentElement', () => {
         assert(src.includes("classList.toggle('dark', organizerTheme === 'dark')"), 
             'EventView must toggle dark CSS class based on organizerTheme');
     });
 
-    test('EventView.tsx: cleanup restores user theme on unmount', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    test('EventView.tsx: cleanup restores user theme on unmount', () => {
         assert(src.includes('Clean up branding when leaving'), 
             'EventView must clean up branding theme on unmount');
     });
 
-    test('EventView.tsx: reads defaultTheme from organizerUser', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/EventView.tsx'), 'utf-8');
+    test('EventView.tsx: reads defaultTheme from organizerUser', () => {
         assert(src.includes('defaultTheme') && src.includes('organizerUser'), 
             'EventView must reference organizerUser.defaultTheme');
     });
