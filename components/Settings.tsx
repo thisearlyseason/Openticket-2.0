@@ -161,7 +161,8 @@ export const Settings = () => {
                 setShowPhonePublicly(currentUser.showPhonePublicly || false);
                 setBio(currentUser.bio || '');
                 setPrimaryColor(currentUser.primaryColor || '#00c9cc');
-                setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
+                setBrandTagline((currentUser as any).brandTagline || '');
+                setDefaultTheme(((currentUser as any).defaultTheme as 'light' | 'dark') || 'light');                setDefaultRefundPolicy(currentUser.defaultRefundPolicy || '');
                 setDefaultRefundPolicyEnabled(currentUser.defaultRefundPolicyEnabled || false);
                 setDefaultWaiver(currentUser.defaultWaiver || {});
                 setDefaultTaxRate(currentUser.defaultTaxRate || 0);
