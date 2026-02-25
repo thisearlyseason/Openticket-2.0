@@ -200,7 +200,7 @@ const generateQRCodeSection = (tickets, qrCodeBaseUrl) => {
 // ============== EMAIL GENERATORS ==============
 
 /**
- * Purchase Confirmation Email
+ * Purchase Confirmation Email — Professional design with QR codes per ticket
  */
 export const purchaseConfirmation = ({
     attendeeName,
@@ -209,86 +209,213 @@ export const purchaseConfirmation = ({
     eventDate,
     eventTime,
     eventLocation,
+    eventDescription,
     tickets,
     totalPaid,
     orderId,
     organizerName,
     eventImageUrl,
-    logoUrl,
-    currency = 'USD'
+    currency = 'USD',
+    subtotal,
+    serviceFee = 0,
+    stripeFee = 0,
+    taxAmount = 0,
+    discountAmount = 0,
+    promoCode = null,
 }) => {
-    const eventDetails = generateEventDetailsBox(eventTitle, eventDate, eventTime, eventLocation);
-    
-    const ticketsList = (tickets || []).map(t => `
-        <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">
-                <span style="font-weight: 600; color: #111827;">🎫 ${t.name || 'Ticket'}</span>
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #6b7280;">
-                × ${t.quantity || 1}
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 600; color: #111827;">
-                $${((t.price || 0) * (t.quantity || 1)).toFixed(2)}
-            </td>
-        </tr>
-    `).join('');
+    const styles = GLOBAL_STYLES;
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.openticket.events';
+    const LOGO_URL = `${FRONTEND_URL}/logo-dark.png`;
+    const ticketsUrl = `${FRONTEND_URL}/#/my-tickets`;
 
-    const content = `
-        <p style="color: #111827; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
-            Hi <strong>${attendeeName}</strong>,<br><br>
-            Your purchase is confirmed! Here are your ticket details:
-        </p>
-        
-        ${eventDetails}
-        
-        <!-- Tickets Table -->
-        <table width="100%" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
-            <thead>
-                <tr style="background: #f9fafb;">
-                    <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Ticket</th>
-                    <th style="padding: 12px; text-align: center; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Qty</th>
-                    <th style="padding: 12px; text-align: right; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${ticketsList}
-                <tr style="background: #f9fafb;">
-                    <td colspan="2" style="padding: 12px; font-weight: 700; color: #111827;">Total Paid</td>
-                    <td style="padding: 12px; text-align: right; font-weight: 700; font-size: 18px; color: ${GLOBAL_STYLES.primaryColor};">
-                        $${(totalPaid || 0).toFixed(2)}
+    // Format a currency amount (always show 2 decimal places)
+    const fmt = (val) => {
+        const n = Number(val) || 0;
+        if (currency === 'USD' || currency === 'CAD') return `$${n.toFixed(2)}`;
+        if (currency === 'EUR') return `€${n.toFixed(2)}`;
+        if (currency === 'GBP') return `£${n.toFixed(2)}`;
+        return `${currency} ${n.toFixed(2)}`;
+    };
+
+    // Per-ticket cards with QR codes
+    const ticketCards = (tickets || []).map((t) => {
+        const ticketId = t.id || t.ticketNumber || '';
+        const ticketPrice = t.pricePerTicket || t.price || 0;
+        const qrUrl = ticketId
+            ? `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(ticketId)}&bgcolor=ffffff&color=111827&margin=4`
+            : '';
+
+        return `
+        <tr>
+            <td style="padding: 0 24px 16px 24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                    <tr>
+                        <td style="padding: 20px; vertical-align: middle; width: 65%;">
+                            <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px;">Ticket Type</p>
+                            <p style="margin: 0 0 14px 0; font-size: 15px; font-weight: 700; color: #111827;">${t.name || 'Ticket'}</p>
+                            <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px;">Attendee</p>
+                            <p style="margin: 0 0 14px 0; font-size: 14px; color: #374151;">${t.attendeeName || attendeeName || 'Guest'}</p>
+                            <p style="margin: 0 0 4px 0; font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px;">Ticket Cost</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #111827;">${fmt(ticketPrice)}</p>
+                            ${ticketId ? `<p style="margin: 10px 0 0 0; font-size: 10px; font-family: monospace; color: #9ca3af;">${ticketId}</p>` : ''}
+                        </td>
+                        <td style="padding: 20px; vertical-align: middle; text-align: center; width: 35%; border-left: 1px dashed #e5e7eb;">
+                            ${qrUrl
+                                ? `<img src="${qrUrl}" alt="QR Code" width="110" height="110" style="display: block; margin: 0 auto; border-radius: 8px;" />`
+                                : `<div style="width: 110px; height: 110px; background: #f3f4f6; border-radius: 8px; margin: 0 auto;"></div>`
+                            }
+                            <p style="margin: 6px 0 0 0; font-size: 10px; color: #9ca3af; text-align: center;">Scan at entry</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Fee breakdown rows (only show non-zero fees)
+    const computedSubtotal = subtotal !== undefined ? subtotal : (tickets || []).reduce((s, t) => s + (t.pricePerTicket || t.price || 0), 0);
+    const feeRows = [
+        { label: 'Subtotal', value: computedSubtotal, always: true },
+        { label: 'Platform Cost', value: serviceFee, always: false },
+        { label: 'Stripe Fee', value: stripeFee, always: false },
+        { label: 'Tax', value: taxAmount, always: false },
+        promoCode && discountAmount > 0 ? { label: `Promo (${promoCode})`, value: -discountAmount, always: false } : null,
+    ].filter(r => r && (r.always || r.value !== 0)).map(r =>
+        `<tr><td style="padding: 3px 0; text-align: right; font-size: 13px; color: #6b7280;">${r.label}: <strong style="color: #374151;">${fmt(r.value)}</strong></td></tr>`
+    ).join('');
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're In! – ${eventTitle}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: ${styles.fontFamily}; -webkit-font-smoothing: antialiased;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+    <tr>
+        <td align="center" style="padding: 40px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);">
+
+                <!-- LOGO + DATE ROW -->
+                <tr>
+                    <td style="padding: 24px 24px 0 24px;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <img src="${LOGO_URL}" alt="OpenTicket" height="32" style="display: block; height: 32px; width: auto;" onerror="this.style.display='none'" />
+                                </td>
+                                <td align="right">
+                                    <span style="font-size: 11px; color: #9ca3af;">${new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
-            </tbody>
-        </table>
-        
-        <p style="color: #6b7280; font-size: 13px; text-align: center; margin: 0;">
-            Order ID: <strong style="font-family: monospace;">${orderId}</strong>
-        </p>
-        
-        <!-- Account Reminder -->
-        <div style="background-color: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
-            <p style="color: #0f766e; font-size: 13px; line-height: 1.5; margin: 0;">
-                💡 <strong>Tip:</strong> To view your tickets online, make sure to sign up or log in using this email address${attendeeEmail ? ` (<strong>${attendeeEmail}</strong>)` : ''}.
-            </p>
-        </div>
-    `;
 
-    const ticketSection = generateQRCodeSection(tickets, null);
+                <!-- HERO HEADLINE -->
+                <tr>
+                    <td align="center" style="padding: 28px 24px 20px 24px;">
+                        <h1 style="margin: 0; font-size: 52px; font-weight: 900; color: #111827; letter-spacing: -1px; text-transform: uppercase; line-height: 1;">YOU'RE IN!</h1>
+                        <p style="margin: 8px 0 0 0; font-size: 18px; font-weight: 600; color: #374151;">${eventTitle}</p>
+                    </td>
+                </tr>
+
+                <!-- EVENT IMAGE -->
+                ${eventImageUrl ? `
+                <tr>
+                    <td style="padding: 0 24px 24px 24px;">
+                        <img src="${eventImageUrl}" alt="${eventTitle}" style="width: 100%; max-height: 280px; object-fit: cover; border-radius: 12px; display: block;" />
+                    </td>
+                </tr>
+                ` : ''}
+
+                <!-- EVENT DETAILS BOX -->
+                <tr>
+                    <td style="padding: 0 24px 20px 24px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="border: 2px solid ${styles.primaryColor}; border-radius: 12px;">
+                            <tr>
+                                <td style="padding: 18px 20px;">
+                                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151;">📅 ${eventDate}</p>
+                                    ${eventTime && eventTime !== 'TBD' ? `<p style="margin: 0 0 8px 0; font-size: 14px; color: #374151;">🕐 ${eventTime}</p>` : ''}
+                                    ${eventLocation && eventLocation !== 'TBD' ? `<p style="margin: 0; font-size: 14px; color: #374151;">📍 ${eventLocation}</p>` : ''}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- DESCRIPTION (optional) -->
+                ${eventDescription ? `
+                <tr>
+                    <td style="padding: 0 24px 20px 24px;">
+                        <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">${eventDescription.substring(0, 300)}${eventDescription.length > 300 ? '...' : ''}</p>
+                    </td>
+                </tr>
+                ` : ''}
+
+                <!-- VIEW TICKETS BUTTON -->
+                <tr>
+                    <td align="center" style="padding: 0 24px 12px 24px;">
+                        <a href="${ticketsUrl}" style="display: inline-block; padding: 14px 44px; background-color: #111827; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px; letter-spacing: 0.5px;">VIEW TICKETS</a>
+                    </td>
+                </tr>
+
+                <!-- TIP -->
+                <tr>
+                    <td style="padding: 0 24px 28px 24px; text-align: center;">
+                        <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
+                            Tip: To view your tickets online, make sure to sign up or log in using this email address${attendeeEmail ? ` <span style="color: #374151; font-weight: 600;">(${attendeeEmail})</span>` : ''}.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- TICKET CARDS (one per ticket with QR code) -->
+                ${ticketCards}
+
+                <!-- FEE BREAKDOWN -->
+                <tr>
+                    <td style="padding: 8px 24px 8px 24px;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            ${feeRows}
+                            <tr>
+                                <td style="padding: 10px 0 4px 0; text-align: right; border-top: 2px solid #e5e7eb;">
+                                    <span style="font-size: 16px; font-weight: 800; color: #111827;">Total Paid: ${fmt(totalPaid)}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- ORDER NUMBER -->
+                <tr>
+                    <td align="center" style="padding: 16px 24px 28px 24px;">
+                        <p style="margin: 0; font-size: 13px; color: #9ca3af;">
+                            ORDER # <strong style="font-family: monospace; color: #374151; letter-spacing: 1px;">${orderId}</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                    <td style="padding: 20px 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
+                        <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                            Organized by <strong style="color: #6b7280;">${organizerName || 'Event Organizer'}</strong> &bull; Powered by OpenTicket
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>`.trim();
 
     return {
-        subject: `🎟️ Your tickets for ${eventTitle}`,
-        html: universalEmailWrapper({
-            eventImageUrl,
-            logoUrl,
-            title: "You're In! 🎉",
-            subtitle: 'Your purchase is confirmed',
-            content,
-            ctaButtons: [
-                { label: 'View Your Tickets', url: `${process.env.FRONTEND_URL || 'https://www.openticket.events'}/#/my-tickets`, primary: true }
-            ],
-            footer: `Organized by ${organizerName} • Powered by OpenTicket`,
-            ticketSection
-        })
+        subject: `You're In! Your tickets for ${eventTitle}`,
+        html
     };
 };
 
