@@ -370,7 +370,7 @@ export const purchaseConfirmation = ({
                 <!-- VIEW TICKETS BUTTON -->
                 <tr>
                     <td align="center" style="padding: 0 24px 12px 24px;">
-                        <a href="${ticketsUrl}" style="display: inline-block; padding: 14px 44px; background-color: #111827; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px; letter-spacing: 0.5px;">VIEW TICKETS</a>
+                        <a href="${ticketsUrl}" style="display: inline-block; padding: 14px 44px; background-color: ${hasPro && organizerBranding?.primaryColor ? organizerBranding.primaryColor : '#111827'}; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; border-radius: 8px; letter-spacing: 0.5px;">VIEW TICKETS</a>
                     </td>
                 </tr>
 
