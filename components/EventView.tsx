@@ -376,12 +376,25 @@ export const EventView = () => {
             document.documentElement.style.removeProperty('--color-primary-fg');
         }
 
+        // Apply organizer's default theme (Pro/Premium only) — only if visitor has no explicit saved preference
+        const isPro = organizerUser?.subscription?.plan === 'pro' || organizerUser?.subscription?.plan === 'premium';
+        const organizerTheme = (organizerUser as any)?.defaultTheme as 'light' | 'dark' | undefined;
+        const savedTheme = localStorage.getItem('openticket_theme');
+        if (isPro && organizerTheme && !savedTheme) {
+            document.documentElement.classList.toggle('dark', organizerTheme === 'dark');
+        }
+
         return () => {
             // Clean up branding when leaving the event page to restore global site branding
             document.documentElement.style.removeProperty('--color-primary');
             document.documentElement.style.removeProperty('--color-primary-fg');
+            // Restore the user's own theme preference when leaving
+            const userTheme = localStorage.getItem('openticket_theme');
+            if (userTheme) {
+                document.documentElement.classList.toggle('dark', userTheme === 'dark');
+            }
         };
-    }, [organizerUser?.primaryColor]);
+    }, [organizerUser?.primaryColor, (organizerUser as any)?.defaultTheme]);
 
     useEffect(() => {
         const user = StorageService.getCurrentUser();
