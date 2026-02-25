@@ -1,107 +1,65 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { Card } from './UI';
 import { CurrencyService } from '../services/currencyService';
 import { StorageService } from '../services/storageService';
-import { 
-    TrendingUp, 
-    DollarSign, 
-    Ticket, 
-    Zap, 
-    RefreshCw,
-    Clock
-} from 'lucide-react';
+import { isPaidStatus, isRefundedStatus, calculateRegistrationRevenue, calculateRegistrationTickets } from '../services/paymentUtils';
+import type { Event, Registration } from '../types';
+import { TrendingUp, DollarSign, Ticket, Zap, Clock } from 'lucide-react';
 
-interface Sale {
-    id: string;
-    eventTitle: string;
-    attendeeName: string;
-    amount: number;
-    ticketCount: number;
-    timestamp: string;
+interface LiveRevenueWidgetProps {
+    events: Event[];
+    registrations: Registration[];
 }
 
-interface LiveSalesData {
-    recentSales: Sale[];
-    todayRevenue: number;
-    todayTickets: number;
-    salesVelocity: number;
-    lastHourSales: number;
-}
-
-export const LiveRevenueWidget = () => {
-    const [data, setData] = useState<LiveSalesData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-    
+export const LiveRevenueWidget = ({ events, registrations }: LiveRevenueWidgetProps) => {
     const user = StorageService.getCurrentUser();
     const currency = user?.defaultCurrency || 'USD';
 
-    const fetchLiveSales = useCallback(async () => {
-        try {
-            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
-            const authToken = await StorageService.getAuthToken();
+    const { recentSales, todayRevenue, todayTickets, lastHourSales } = useMemo(() => {
+        const eventMap: Record<string, string> = {};
+        events.forEach(e => { eventMap[e.id] = (e as any).title || (e as any).name || 'Unknown Event'; });
 
-            const response = await fetch(`${API_URL}/api/admin/organizer/live-sales`, {
-                headers: {
-                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`API returned ${response.status}`);
-            }
-            
-            const result = await response.json();
-            setData(result);
-            setLastUpdated(new Date());
-            setError(null);
-        } catch (err) {
-            console.error('[LiveRevenue] Error:', err);
-            setError('Failed to load live sales');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+        const paidRegs = registrations.filter(r =>
+            isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus)
+        );
 
-    useEffect(() => {
-        fetchLiveSales();
-        
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchLiveSales, 30000);
-        
-        return () => clearInterval(interval);
-    }, [fetchLiveSales]);
+        const now = Date.now();
+        const todayStartMs = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
+        const lastHourMs = now - 60 * 60 * 1000;
+        const last48hMs = now - 48 * 60 * 60 * 1000;
 
-    const formatTimeAgo = (timestamp: string) => {
-        const now = new Date();
-        const time = new Date(timestamp);
-        const diffMs = now.getTime() - time.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        
+        const todayRegs = paidRegs.filter(r => (r.timestamp || 0) >= todayStartMs);
+        const todayRevenue = todayRegs.reduce((sum, r) => sum + calculateRegistrationRevenue(r), 0);
+        const todayTickets = todayRegs.reduce((sum, r) => sum + calculateRegistrationTickets(r), 0);
+        const lastHourSales = paidRegs.filter(r => (r.timestamp || 0) >= lastHourMs).length;
+
+        const recentSales = paidRegs
+            .filter(r => (r.timestamp || 0) >= last48hMs)
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+            .slice(0, 10)
+            .map(r => ({
+                id: r.id,
+                eventTitle: eventMap[r.eventId] || 'Unknown Event',
+                attendeeName: r.attendeeName || 'Guest',
+                amount: calculateRegistrationRevenue(r),
+                ticketCount: calculateRegistrationTickets(r),
+                timestamp: r.timestamp || 0,
+            }));
+
+        return { recentSales, todayRevenue, todayTickets, lastHourSales };
+    }, [events, registrations]);
+
+    const formatTimeAgo = (timestampMs: number) => {
+        if (!timestampMs) return '';
+        const diffMins = Math.floor((Date.now() - timestampMs) / 60000);
         if (diffMins < 1) return 'Just now';
         if (diffMins < 60) return `${diffMins}m ago`;
         const diffHours = Math.floor(diffMins / 60);
         if (diffHours < 24) return `${diffHours}h ago`;
-        return time.toLocaleDateString();
+        return new Date(timestampMs).toLocaleDateString();
     };
 
-    if (loading) {
-        return (
-            <Card className="p-6 animate-pulse">
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-1/3 mb-4"></div>
-                <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-1/2 mb-6"></div>
-                <div className="space-y-3">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-12 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-                    ))}
-                </div>
-            </Card>
-        );
-    }
-
-    if (error || !data) {
+    if (registrations.length === 0) {
         return (
             <Card className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -113,20 +71,10 @@ export const LiveRevenueWidget = () => {
                         <p className="text-xs text-zinc-500">Real-time sales data</p>
                     </div>
                 </div>
-                <div className="text-center py-8 text-zinc-400">
-                    <TrendingUp size={32} className="mx-auto mb-3 opacity-40" />
-                    <p className="text-sm font-medium text-zinc-500 mb-1">
-                        {error ? 'Unable to load sales data' : 'No sales data yet'}
-                    </p>
-                    <p className="text-xs text-zinc-400 mb-4">
-                        {error ? 'Check your connection or try refreshing.' : 'Sales will appear here once tickets are purchased.'}
-                    </p>
-                    <button 
-                        onClick={fetchLiveSales}
-                        className="text-primary text-xs font-bold hover:underline flex items-center gap-1 mx-auto"
-                    >
-                        <RefreshCw size={12} /> Refresh
-                    </button>
+                <div className="text-center py-8">
+                    <TrendingUp size={32} className="mx-auto mb-3 text-zinc-300 dark:text-zinc-700" />
+                    <p className="text-sm font-medium text-zinc-500 mb-1">No sales data yet</p>
+                    <p className="text-xs text-zinc-400">Sales will appear here once tickets are purchased.</p>
                 </div>
             </Card>
         );
@@ -143,18 +91,14 @@ export const LiveRevenueWidget = () => {
                     <div>
                         <h3 className="font-bold text-zinc-900 dark:text-white">Live Sales</h3>
                         <p className="text-xs text-zinc-500 flex items-center gap-1">
-                            <Clock size={10} />
-                            {lastUpdated ? `Updated ${formatTimeAgo(lastUpdated.toISOString())}` : 'Loading...'}
+                            <Clock size={10} /> Live
                         </p>
                     </div>
                 </div>
-                <button 
-                    onClick={fetchLiveSales}
-                    className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                    title="Refresh"
-                >
-                    <RefreshCw size={16} className="text-zinc-400" />
-                </button>
+                <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">LIVE</span>
+                </div>
             </div>
 
             {/* Stats Grid */}
@@ -162,21 +106,21 @@ export const LiveRevenueWidget = () => {
                 <div className="text-center p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <DollarSign size={16} className="mx-auto text-emerald-500 mb-1" />
                     <div className="text-lg font-black text-zinc-900 dark:text-white">
-                        {CurrencyService.formatChargeCurrency(data.todayRevenue, currency)}
+                        {CurrencyService.formatChargeCurrency(todayRevenue, currency)}
                     </div>
                     <div className="text-[10px] uppercase font-bold text-zinc-400">Today</div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <Ticket size={16} className="mx-auto text-blue-500 mb-1" />
                     <div className="text-lg font-black text-zinc-900 dark:text-white">
-                        {data.todayTickets}
+                        {todayTickets}
                     </div>
                     <div className="text-[10px] uppercase font-bold text-zinc-400">Tickets Today</div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <TrendingUp size={16} className="mx-auto text-orange-500 mb-1" />
                     <div className="text-lg font-black text-zinc-900 dark:text-white">
-                        {data.salesVelocity}/hr
+                        {lastHourSales}/hr
                     </div>
                     <div className="text-[10px] uppercase font-bold text-zinc-400">Velocity</div>
                 </div>
@@ -184,15 +128,15 @@ export const LiveRevenueWidget = () => {
 
             {/* Recent Sales Feed */}
             <div>
-                <h4 className="text-xs font-bold text-zinc-500 uppercase mb-3">Recent Sales</h4>
-                {data.recentSales.length === 0 ? (
-                    <div className="text-center py-8 text-zinc-400 text-sm">
-                        No sales in the last 24 hours
+                <h4 className="text-xs font-bold text-zinc-500 uppercase mb-3">Recent Sales (48h)</h4>
+                {recentSales.length === 0 ? (
+                    <div className="text-center py-6 text-zinc-400 text-sm">
+                        No sales in the last 48 hours
                     </div>
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {data.recentSales.map((sale, i) => (
-                            <div 
+                        {recentSales.map((sale, i) => (
+                            <div
                                 key={sale.id || i}
                                 className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors"
                             >
@@ -201,7 +145,7 @@ export const LiveRevenueWidget = () => {
                                         {sale.attendeeName}
                                     </div>
                                     <div className="text-xs text-zinc-500 truncate">
-                                        {sale.eventTitle} • {sale.ticketCount} ticket{sale.ticketCount !== 1 ? 's' : ''}
+                                        {sale.eventTitle} &bull; {sale.ticketCount} ticket{sale.ticketCount !== 1 ? 's' : ''}
                                     </div>
                                 </div>
                                 <div className="text-right ml-3">
