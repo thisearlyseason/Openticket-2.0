@@ -40,15 +40,11 @@ export const LiveRevenueWidget = () => {
     const fetchLiveSales = useCallback(async () => {
         try {
             const API_URL = import.meta.env.VITE_BACKEND_URL || '';
-            
             const authToken = await StorageService.getAuthToken();
-            if (!authToken) {
-                return; // Not logged in, skip silently
-            }
 
             const response = await fetch(`${API_URL}/api/admin/organizer/live-sales`, {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
                     'Content-Type': 'application/json'
                 }
             });
