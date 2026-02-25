@@ -413,7 +413,13 @@ export const purchaseConfirmation = ({
                 <tr>
                     <td style="padding: 20px 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
                         <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                            Organized by <strong style="color: #6b7280;">${organizerName || 'Event Organizer'}</strong> &bull; Powered by OpenTicket
+                            Organized by <strong style="color: #6b7280;">${organizerName || 'Event Organizer'}</strong>
+                            ${brandTagline
+                                ? ` &bull; <span style="color: #6b7280;">${brandTagline}</span>`
+                                : showOpenTicketBranding
+                                    ? ' &bull; Powered by OpenTicket'
+                                    : ''
+                            }
                         </p>
                     </td>
                 </tr>
