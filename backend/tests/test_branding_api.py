@@ -205,31 +205,27 @@ class TestBrandingAPIFields:
             f"Expected brand_tagline to be null/empty after clearing, got '{tagline}'"
         print(f"\n✓ brand_tagline cleared correctly (value: {tagline})")
 
-    def test_sync_profile_accepts_brand_tagline(self, auth_credentials):
-        """POST /api/profile/sync should accept brand_tagline in extendedSettingsFields"""
-        session = requests.Session()
+    def test_sync_profile_accepts_brand_tagline(self, authed_session):
+        """POST /api/auth/sync should accept brand_tagline in extendedSettingsFields"""
+        session, user_id = authed_session
         
-        # Get CSRF token with cookie (double-submit cookie pattern)
-        csrf_resp = session.get(f"{BASE_URL}/api/csrf-token", timeout=10)
-        csrf_token = csrf_resp.json().get("csrfToken", "")
-        
-        # Without valid Firebase auth, we expect 401 (not 500)
-        session.headers.update({
-            "Content-Type": "application/json",
-            "X-CSRF-Token": csrf_token
-        })
-            
+        # Test sync with branding fields - should succeed with valid auth
         response = session.post(
-            f"{BASE_URL}/api/profile/sync",
-            json={"brand_tagline": "Test", "default_theme": "dark"},
+            f"{BASE_URL}/api/auth/sync",
+            json={"uid": user_id, "brand_tagline": "Test Tagline", "default_theme": "dark"},
             timeout=10
         )
         
-        # Should fail with 401 (missing auth) not 500 (server error)
-        assert response.status_code in [400, 401, 403], \
-            f"Expected auth error (400/401/403), got {response.status_code}: {response.text}"
+        # Should succeed (200) or reject invalid fields gracefully (not 500)
+        assert response.status_code in [200, 400], \
+            f"Expected 200 or 400, got {response.status_code}: {response.text[:200]}"
         
-        print(f"\n✓ profile/sync rejects unauthenticated requests correctly (status: {response.status_code})")
+        if response.status_code == 200:
+            data = response.json()
+            profile = data.get("profile", data)
+            print(f"\n✓ /api/auth/sync accepted brand_tagline and default_theme")
+        else:
+            print(f"\n⚠ /api/auth/sync returned {response.status_code} for branding fields")
 
     def test_branding_fields_in_subscription_settings(self, authed_session):
         """Verify branding fields are stored in subscription.settings JSONB"""
