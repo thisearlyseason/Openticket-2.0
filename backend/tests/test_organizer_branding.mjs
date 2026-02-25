@@ -10,6 +10,7 @@
 
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 
 // Set FRONTEND_URL before importing templates
 process.env.FRONTEND_URL = 'https://www.openticket.events';
