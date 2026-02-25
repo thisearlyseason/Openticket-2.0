@@ -565,13 +565,13 @@ async function runAllTests() {
     testBrandingLogicEdgeCases();
     testShowOpenTicketBrandingLogic();
 
-    // Source code validation tests (async file reads)
-    await testStripeControllerBrandingStructure();
-    await testServerEmailSignature();
-    await testProfileControllerBrandingFields();
-    await testStorageServiceBrandingFields();
-    await testSettingsTsxBrandingState();
-    await testEventViewThemeApplication();
+    // Source code validation tests
+    testStripeControllerBrandingStructure();
+    testServerEmailSignature();
+    testProfileControllerBrandingFields();
+    testStorageServiceBrandingFields();
+    testSettingsTsxBrandingState();
+    testEventViewThemeApplication();
 
     console.log('\n=================================================');
     console.log(`  RESULTS: ${passed} passed, ${failed} failed`);
