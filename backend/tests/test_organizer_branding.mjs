@@ -399,39 +399,29 @@ function testServerEmailSignature() {
 function testProfileControllerBrandingFields() {
     console.log('\n--- Test Suite: profileController.js extendedSettingsFields ---');
 
-    test('profileController.js: syncProfile extendedSettingsFields includes brand_tagline', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
-        // Find the extendedSettingsFields in syncProfile (first occurrence)
+    const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
+
+    test('profileController.js: syncProfile extendedSettingsFields includes brand_tagline', () => {
         const firstIdx = src.indexOf("'brand_tagline'");
         assert(firstIdx !== -1, "brand_tagline must be in extendedSettingsFields");
     });
 
-    test('profileController.js: syncProfile extendedSettingsFields includes default_theme', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
+    test('profileController.js: syncProfile extendedSettingsFields includes default_theme', () => {
         const firstIdx = src.indexOf("'default_theme'");
         assert(firstIdx !== -1, "default_theme must be in extendedSettingsFields");
     });
 
-    test('profileController.js: updateProfile extendedSettingsFields includes brand_tagline', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
-        // Both syncProfile and updateProfile should have brand_tagline - count occurrences
+    test('profileController.js: updateProfile extendedSettingsFields includes brand_tagline', () => {
         const count = (src.match(/'brand_tagline'/g) || []).length;
         assert(count >= 2, `brand_tagline must appear in BOTH syncProfile and updateProfile (found ${count} times)`);
     });
 
-    test('profileController.js: updateProfile extendedSettingsFields includes default_theme', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
+    test('profileController.js: updateProfile extendedSettingsFields includes default_theme', () => {
         const count = (src.match(/'default_theme'/g) || []).length;
         assert(count >= 2, `default_theme must appear in BOTH syncProfile and updateProfile (found ${count} times)`);
     });
 
-    test('profileController.js: getProfile response includes brand_tagline mapping', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../controllers/profileController.js'), 'utf-8');
+    test('profileController.js: getProfile response includes brand_tagline mapping', () => {
         assert(src.includes('brand_tagline: extendedSettings.brand_tagline'), 'getProfile must map brand_tagline to response');
         assert(src.includes('default_theme: extendedSettings.default_theme'), 'getProfile must map default_theme to response');
     });
