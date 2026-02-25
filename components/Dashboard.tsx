@@ -507,7 +507,7 @@ export const Dashboard = () => {
             </div>
 
             {/* Live Revenue Widget */}
-            <LiveRevenueWidget />
+            <LiveRevenueWidget events={events} registrations={registrations} />
 
             {/* SMM + Analytics on same row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
