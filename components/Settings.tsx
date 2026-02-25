@@ -117,6 +117,8 @@ export const Settings = () => {
                         setNonprofitStatus(freshUser.nonProfitStatus || null);
                         setNonprofitName(freshUser.nonProfitName || '');
                         setPrimaryColor(freshUser.primaryColor || '#00c9cc');
+                        setBrandTagline(freshUser.brandTagline || '');
+                        setDefaultTheme((freshUser.defaultTheme as 'light' | 'dark') || 'light');
                         setDefaultRefundPolicy(freshUser.defaultRefundPolicy || '');
                         setDefaultRefundPolicyEnabled(freshUser.defaultRefundPolicyEnabled || false);
                         setDefaultWaiver(freshUser.defaultWaiver || {});
