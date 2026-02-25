@@ -90,6 +90,9 @@ export const Dashboard = () => {
     const [nonprofitStatus, setNonprofitStatus] = useState<any>(null);
     const [showResubmitForm, setShowResubmitForm] = useState(false);
 
+    // Ref to hold userId for use in intervals/event listeners
+    const userIdRef = useRef<string | null>(null);
+
     useEffect(() => {
         const user = StorageService.getCurrentUser();
         if (!user) {
@@ -109,6 +112,7 @@ export const Dashboard = () => {
         }
 
         setCurrentUser(user);
+        userIdRef.current = user.id;
         refreshData(user.id);
 
         const note = StorageService.getSystemNotification();
@@ -122,6 +126,25 @@ export const Dashboard = () => {
         return () => document.removeEventListener('click', handleClickOutside);
 
     }, [navigate]);
+
+    // Periodic refresh for Live Sales Widget — every 30s + on tab re-focus
+    useEffect(() => {
+        const doRefresh = () => {
+            if (userIdRef.current) refreshData(userIdRef.current);
+        };
+
+        const interval = setInterval(doRefresh, 30000);
+
+        const handleVisibility = () => {
+            if (!document.hidden) doRefresh();
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, []);
 
     // ... rest of the dashboard code remains the same ...
 
