@@ -1,21 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="9" time="3.563" timestamp="2026-02-25T20:59:25.071548+00:00" hostname="agent-env-2ab1c7fa-4ca7-4b56-9694-d72590a81959"><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_health_check" time="0.004" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_profile_get_includes_branding_fields" time="0.535" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_brand_tagline" time="0.627" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_default_theme" time="0.575" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_both_branding_fields" time="0.565" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_brand_tagline_null_clears_value" time="1.151" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_sync_profile_accepts_brand_tagline" time="0.004"><failure message="AssertionError: Expected auth error (400/401/403), got 404: &lt;!DOCTYPE html&gt;&#10;  &lt;html lang=&quot;en&quot;&gt;&#10;  &lt;head&gt;&#10;  &lt;meta charset=&quot;utf-8&quot;&gt;&#10;  &lt;title&gt;Error&lt;/title&gt;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;  &lt;pre&gt;Cannot POST /api/profile/sync&lt;/pre&gt;&#10;  &lt;/body&gt;&#10;  &lt;/html&gt;&#10;  &#10;assert 404 in [400, 401, 403]&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_branding_api.py:229: in test_sync_profile_accepts_brand_tagline
-    assert response.status_code in [400, 401, 403], \
-E   AssertionError: Expected auth error (400/401/403), got 404: &lt;!DOCTYPE html&gt;
-E     &lt;html lang="en"&gt;
-E     &lt;head&gt;
-E     &lt;meta charset="utf-8"&gt;
-E     &lt;title&gt;Error&lt;/title&gt;
-E     &lt;/head&gt;
-E     &lt;body&gt;
-E     &lt;pre&gt;Cannot POST /api/profile/sync&lt;/pre&gt;
-E     &lt;/body&gt;
-E     &lt;/html&gt;
-E     
-E   assert 404 in [400, 401, 403]
-E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_branding_fields_in_subscription_settings" time="0.004"><failure message="assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:248: in test_branding_fields_in_subscription_settings
-    assert get_response.status_code == 200
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="9" time="5.369" timestamp="2026-02-25T21:01:05.713323+00:00" hostname="agent-env-2ab1c7fa-4ca7-4b56-9694-d72590a81959"><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_health_check" time="0.057" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_profile_get_includes_branding_fields" time="0.357" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_brand_tagline" time="0.635" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_default_theme" time="0.562" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_both_branding_fields" time="0.557" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_brand_tagline_null_clears_value" time="1.036" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_sync_profile_accepts_brand_tagline" time="0.002"><failure message="AssertionError: Expected 200 or 400, got 429: {&quot;error&quot;:&quot;Too many authentication attempts. Please try again in a minute.&quot;}&#10;assert 429 in [200, 400]&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:220: in test_sync_profile_accepts_brand_tagline
+    assert response.status_code in [200, 400], \
+E   AssertionError: Expected 200 or 400, got 429: {"error":"Too many authentication attempts. Please try again in a minute."}
+E   assert 429 in [200, 400]
+E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_branding_fields_in_subscription_settings" time="1.003"><failure message="AssertionError: GET failed: 429&#10;assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:238: in test_branding_fields_in_subscription_settings
+    assert get_response.status_code == 200, f"GET failed: {get_response.status_code}"
+E   AssertionError: GET failed: 429
 E   assert 429 == 200
-E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_cleanup_test_data" time="0.002"><failure message="assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:275: in test_cleanup_test_data
+E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_cleanup_test_data" time="1.003"><failure message="assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:271: in test_cleanup_test_data
     assert response.status_code == 200
 E   assert 429 == 200
 E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase></testsuite></testsuites>
