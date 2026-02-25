@@ -117,6 +117,12 @@ Make the event ticketing platform production-ready.
   - Fixed `EventView.tsx` approval success circle: `bg-amber-500 text-white` → `text-black`
   - Fixed `KioskCheckIn.tsx` fullscreen warning banner: `bg-amber-600 text-white` → `bg-amber-500 text-black`
 
+- ✅ **[Feb 25 2026] Live Sales Widget + Bug Investigation**:
+  - Dashboard.tsx: Added periodic refresh (30s setInterval + visibilitychange handler) so Live Sales Widget updates after new purchases. Used userIdRef to avoid stale closure problem.
+  - CONFIRMED: Tax calculation is proportional (5% of subtotal, not fixed $5). The "$5 tax" the user saw was 5% of $100 tickets.
+  - CONFIRMED: Purchase flow is working. 54 paid registrations in DB including 4 from Feb 25, 2026. No data loss.
+  - CONFIRMED: Fee calculations correct. grandTotal = subtotal + tax + platformFee + stripeFee ✓
+
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
 
