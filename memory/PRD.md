@@ -117,7 +117,12 @@ Make the event ticketing platform production-ready.
   - Fixed `EventView.tsx` approval success circle: `bg-amber-500 text-white` → `text-black`
   - Fixed `KioskCheckIn.tsx` fullscreen warning banner: `bg-amber-600 text-white` → `bg-amber-500 text-black`
 
-- ✅ **[Feb 25 2026] Live Sales Widget + Bug Investigation**:
+- ✅ **[Feb 25 2026] Email Confirmation Redesign**:
+  - Fixed ticket price showing $0 (was using `t.price`, now uses `t.pricePerTicket || t.price`)
+  - Added real QR codes per ticket (via api.qrserver.com) — previously showed gray placeholder
+  - Complete professional redesign: "YOU'RE IN!" hero, event image, per-ticket cards with QR codes, fee breakdown (Subtotal/Platform Cost/Stripe Fee/Tax/Total Paid), VIEW TICKETS button, organizer footer
+  - stripeController now passes `image_url`, `description`, `stripe_fee` to email service
+  - Other email types (presaleSignupConfirmation, eventReminder) unaffected
   - Dashboard.tsx: Added periodic refresh (30s setInterval + visibilitychange handler) so Live Sales Widget updates after new purchases. Used userIdRef to avoid stale closure problem.
   - CONFIRMED: Tax calculation is proportional (5% of subtotal, not fixed $5). The "$5 tax" the user saw was 5% of $100 tickets.
   - CONFIRMED: Purchase flow is working. 54 paid registrations in DB including 4 from Feb 25, 2026. No data loss.
