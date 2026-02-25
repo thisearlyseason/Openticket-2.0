@@ -146,8 +146,6 @@ export const Dashboard = () => {
         };
     }, []);
 
-    // ... rest of the dashboard code remains the same ...
-
     useEffect(() => {
         if (location.state && (location.state as any).showSuccess) {
             setShowSuccessOverlay(true);
