@@ -11,8 +11,8 @@ import requests
 import os
 import json
 
-# Use public URL for external testing
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://www.openticket.events').rstrip('/')
+# Use localhost for backend testing (CSRF + cookie session works correctly)
+BASE_URL = "http://localhost:8001"
 
 # Test credentials (from previous iterations)
 TEST_EMAIL = "test_organizer_1767755527@test.com"
