@@ -40,7 +40,7 @@
   "context_for_next_testing_agent": "Ingress is returning HTTP 520 error. Services are running correctly locally - curl to localhost:3000 and localhost:8001 works fine. The issue is with the Kubernetes ingress/infrastructure, not the code. Code review of all 4 fixes shows they are implemented correctly. Once ingress is fixed, test: 1) Navigate to organizer profile page and verify profile image is not cut off, 2) Click favorites button on event detail page and verify toast notification appears, 3) Click favorites filter on Explore page and verify only events from favorited organizers are shown, 4) Login as organizer and verify profile completeness indicator appears on Settings page.",
   "infrastructure_issue": {
     "error": "HTTP 520 - Web server returned an unknown error",
-    "preview_url": "https://organizer-ui-refresh.preview.emergentagent.com",
+    "preview_url": "https://tax-calc-repair-1.preview.emergentagent.com",
     "localhost_status": "Working - both frontend (3000) and backend (8001) respond correctly",
     "supervisor_status": "All services running (frontend, backend, mongodb)"
   }

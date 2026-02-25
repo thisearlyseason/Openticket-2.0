@@ -192,7 +192,7 @@ curl http://localhost:8001/api/health
 
 ### External URLs:
 - **Live Site**: `https://www.openticket.events`
-- **Preview**: `https://organizer-ui-refresh.preview.emergentagent.com`
+- **Preview**: `https://tax-calc-repair-1.preview.emergentagent.com`
 
 ---
 
