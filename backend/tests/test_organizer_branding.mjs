@@ -385,15 +385,13 @@ function testStripeControllerBrandingStructure() {
 function testServerEmailSignature() {
     console.log('\n--- Test Suite: serverEmail.js sendTicketConfirmation Signature ---');
 
-    test('serverEmail.js: sendTicketConfirmation accepts organizerBranding parameter', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../services/serverEmail.js'), 'utf-8');
+    const src = readFileSync(resolve(__dirname, '../services/serverEmail.js'), 'utf-8');
+
+    test('serverEmail.js: sendTicketConfirmation accepts organizerBranding parameter', () => {
         assert(src.includes('organizerBranding = {}'), 'sendTicketConfirmation must have organizerBranding default param');
     });
 
-    test('serverEmail.js: passes organizerBranding to purchaseConfirmation', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../services/serverEmail.js'), 'utf-8');
+    test('serverEmail.js: passes organizerBranding to purchaseConfirmation', () => {
         assert(src.includes('organizerBranding:'), 'serverEmail must pass organizerBranding to purchaseConfirmation');
     });
 }
