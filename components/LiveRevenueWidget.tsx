@@ -39,21 +39,22 @@ export const LiveRevenueWidget = () => {
 
     const fetchLiveSales = useCallback(async () => {
         try {
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            if (!backendUrl) {
-                console.warn('[LiveRevenue] VITE_BACKEND_URL not set');
-                return;
-            }
+            const API_URL = import.meta.env.VITE_BACKEND_URL || '';
             
-            const response = await fetch(`${backendUrl}/api/admin/organizer/live-sales`, {
+            const authToken = await StorageService.getAuthToken();
+            if (!authToken) {
+                return; // Not logged in, skip silently
+            }
+
+            const response = await fetch(`${API_URL}/api/admin/organizer/live-sales`, {
                 headers: {
-                    'Authorization': `Bearer ${await StorageService.getAuthToken()}`,
+                    'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
                 }
             });
             
             if (!response.ok) {
-                throw new Error('Failed to fetch live sales');
+                throw new Error(`API returned ${response.status}`);
             }
             
             const result = await response.json();
