@@ -266,6 +266,8 @@ export const updateProfile = async (req, res) => {
             'default_refund_policy', 'default_refund_policy_enabled', 'default_confirmation_template',
             'logo_url', 'header_image_url', 'primary_color', 'organizer_subtitle', 'business_type',
             'notifications', 'email_templates', 'gemini_api_key', 'gmail_config',
+            // Branding (Pro/Premium only)
+            'brand_tagline', 'default_theme',
             // Organizer profile fields (stored in subscription.settings JSONB)
             'bio', 'phone', 'business_email', 'business_phone', 
             'use_business_name', 'show_phone_publicly'
