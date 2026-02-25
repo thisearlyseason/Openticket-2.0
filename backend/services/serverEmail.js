@@ -38,7 +38,7 @@ class EmailService {
      * @param {Object} eventDetails - Event information
      * @param {Object} orderDetails - Full order details including fees, currency, donations
      */
-    static async sendTicketConfirmation(to, tickets, eventDetails, orderDetails = {}) {
+    static async sendTicketConfirmation(to, tickets, eventDetails, orderDetails = {}, organizerBranding = {}) {
         if (!to || !tickets || !Array.isArray(tickets) || tickets.length === 0) {
             console.error("[EmailService] Invalid parameters", { to, ticketsCount: tickets?.length });
             return false;
