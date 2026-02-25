@@ -430,6 +430,8 @@ export const Settings = () => {
                 bio,
                 logoUrl: finalLogoUrl,
                 primaryColor,
+                brandTagline: brandTagline || null,
+                defaultTheme,
                 notifications,
                 defaultRefundPolicy,
                 defaultRefundPolicyEnabled,
@@ -442,7 +444,7 @@ export const Settings = () => {
                 defaultCustomFees: defaultCustomFees,
                 defaultCurrency: defaultCurrency,
                 geminiApiKey: geminiApiKey
-            });
+            } as any);
 
             if (updatedUser) {
                 setUser(updatedUser);
