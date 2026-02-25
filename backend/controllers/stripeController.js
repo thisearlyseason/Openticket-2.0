@@ -1060,7 +1060,8 @@ export const verifySession = async (req, res) => {
                     platformDonation: donationAmount,
                     discountAmount: discountAmount,
                     promoCode: reg.promo_code_used || null
-                }
+                },
+                organizerBranding
             );
             console.log(`[Stripe] ✅ Confirmation email sent successfully`);
         } catch (emailError) {
