@@ -55,6 +55,8 @@ export const Settings = () => {
 
     // Branding State - Default to teal, ensure text contrast
     const [primaryColor, setPrimaryColor] = useState('#00c9cc');
+    const [brandTagline, setBrandTagline] = useState('');
+    const [defaultTheme, setDefaultTheme] = useState<'light' | 'dark'>('light');
 
     // Organizer Defaults
     const [defaultRefundPolicy, setDefaultRefundPolicy] = useState('');
