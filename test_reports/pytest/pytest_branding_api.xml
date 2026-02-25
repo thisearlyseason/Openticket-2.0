@@ -1,26 +1,21 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="9" time="2.806" timestamp="2026-02-25T20:57:53.546011+00:00" hostname="agent-env-2ab1c7fa-4ca7-4b56-9694-d72590a81959"><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_health_check" time="0.294" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_profile_get_includes_branding_fields" time="0.555"><failure message="AssertionError: brand_tagline field must be present in profile response&#10;assert 'brand_tagline' in {'address': None, 'affiliate_clicks': 0, 'affiliate_code': None, 'available_payout': 0, ...}">backend/tests/test_branding_api.py:81: in test_profile_get_includes_branding_fields
-    assert "brand_tagline" in profile, "brand_tagline field must be present in profile response"
-E   AssertionError: brand_tagline field must be present in profile response
-E   assert 'brand_tagline' in {'address': None, 'affiliate_clicks': 0, 'affiliate_code': None, 'available_payout': 0, ...}</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_brand_tagline" time="0.121"><failure message="AssertionError: PUT failed: 403: {&quot;error&quot;:&quot;invalid csrf token&quot;,&quot;code&quot;:&quot;EBADCSRFTOKEN&quot;}&#10;assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_branding_api.py:98: in test_put_profile_saves_brand_tagline
-    assert response.status_code == 200, f"PUT failed: {response.status_code}: {response.text}"
-E   AssertionError: PUT failed: 403: {"error":"invalid csrf token","code":"EBADCSRFTOKEN"}
-E   assert 403 == 200
-E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_default_theme" time="0.118"><failure message="AssertionError: PUT failed: 403: {&quot;error&quot;:&quot;invalid csrf token&quot;,&quot;code&quot;:&quot;EBADCSRFTOKEN&quot;}&#10;assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_branding_api.py:123: in test_put_profile_saves_default_theme
-    assert response.status_code == 200, f"PUT failed: {response.status_code}: {response.text}"
-E   AssertionError: PUT failed: 403: {"error":"invalid csrf token","code":"EBADCSRFTOKEN"}
-E   assert 403 == 200
-E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_both_branding_fields" time="0.118"><failure message="AssertionError: PUT failed: 403: {&quot;error&quot;:&quot;invalid csrf token&quot;,&quot;code&quot;:&quot;EBADCSRFTOKEN&quot;}&#10;assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_branding_api.py:153: in test_put_profile_saves_both_branding_fields
-    assert response.status_code == 200, f"PUT failed: {response.status_code}: {response.text}"
-E   AssertionError: PUT failed: 403: {"error":"invalid csrf token","code":"EBADCSRFTOKEN"}
-E   assert 403 == 200
-E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_brand_tagline_null_clears_value" time="0.242"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_branding_api.py:188: in test_put_profile_brand_tagline_null_clears_value
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="9" time="3.563" timestamp="2026-02-25T20:59:25.071548+00:00" hostname="agent-env-2ab1c7fa-4ca7-4b56-9694-d72590a81959"><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_health_check" time="0.004" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_profile_get_includes_branding_fields" time="0.535" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_brand_tagline" time="0.627" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_default_theme" time="0.575" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_saves_both_branding_fields" time="0.565" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_put_profile_brand_tagline_null_clears_value" time="1.151" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_sync_profile_accepts_brand_tagline" time="0.004"><failure message="AssertionError: Expected auth error (400/401/403), got 404: &lt;!DOCTYPE html&gt;&#10;  &lt;html lang=&quot;en&quot;&gt;&#10;  &lt;head&gt;&#10;  &lt;meta charset=&quot;utf-8&quot;&gt;&#10;  &lt;title&gt;Error&lt;/title&gt;&#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;  &lt;pre&gt;Cannot POST /api/profile/sync&lt;/pre&gt;&#10;  &lt;/body&gt;&#10;  &lt;/html&gt;&#10;  &#10;assert 404 in [400, 401, 403]&#10; +  where 404 = &lt;Response [404]&gt;.status_code">backend/tests/test_branding_api.py:229: in test_sync_profile_accepts_brand_tagline
+    assert response.status_code in [400, 401, 403], \
+E   AssertionError: Expected auth error (400/401/403), got 404: &lt;!DOCTYPE html&gt;
+E     &lt;html lang="en"&gt;
+E     &lt;head&gt;
+E     &lt;meta charset="utf-8"&gt;
+E     &lt;title&gt;Error&lt;/title&gt;
+E     &lt;/head&gt;
+E     &lt;body&gt;
+E     &lt;pre&gt;Cannot POST /api/profile/sync&lt;/pre&gt;
+E     &lt;/body&gt;
+E     &lt;/html&gt;
+E     
+E   assert 404 in [400, 401, 403]
+E    +  where 404 = &lt;Response [404]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_branding_fields_in_subscription_settings" time="0.004"><failure message="assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:248: in test_branding_fields_in_subscription_settings
+    assert get_response.status_code == 200
+E   assert 429 == 200
+E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_cleanup_test_data" time="0.002"><failure message="assert 429 == 200&#10; +  where 429 = &lt;Response [429]&gt;.status_code">backend/tests/test_branding_api.py:275: in test_cleanup_test_data
     assert response.status_code == 200
-E   assert 403 == 200
-E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_sync_profile_accepts_brand_tagline" time="0.385" /><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_branding_fields_in_subscription_settings" time="0.624"><failure message="AssertionError: assert None == 'BRANDING_TEST_696775'&#10; +  where None = &lt;built-in method get of dict object at 0xfb613f2a2c80&gt;('brand_tagline')&#10; +    where &lt;built-in method get of dict object at 0xfb613f2a2c80&gt; = {'address': None, 'affiliate_clicks': 0, 'affiliate_code': None, 'available_payout': 0, ...}.get">backend/tests/test_branding_api.py:248: in test_branding_fields_in_subscription_settings
-    assert profile.get("brand_tagline") == test_tagline
-E   AssertionError: assert None == 'BRANDING_TEST_696775'
-E    +  where None = &lt;built-in method get of dict object at 0xfb613f2a2c80&gt;('brand_tagline')
-E    +    where &lt;built-in method get of dict object at 0xfb613f2a2c80&gt; = {'address': None, 'affiliate_clicks': 0, 'affiliate_code': None, 'available_payout': 0, ...}.get</failure></testcase><testcase classname="backend.tests.test_branding_api.TestBrandingAPIFields" name="test_cleanup_test_data" time="0.114"><failure message="assert 403 == 200&#10; +  where 403 = &lt;Response [403]&gt;.status_code">backend/tests/test_branding_api.py:270: in test_cleanup_test_data
-    assert response.status_code == 200
-E   assert 403 == 200
-E    +  where 403 = &lt;Response [403]&gt;.status_code</failure></testcase></testsuite></testsuites>
+E   assert 429 == 200
+E    +  where 429 = &lt;Response [429]&gt;.status_code</failure></testcase></testsuite></testsuites>
