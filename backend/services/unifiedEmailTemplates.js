@@ -346,7 +346,7 @@ export const purchaseConfirmation = ({
                 <!-- EVENT DETAILS BOX -->
                 <tr>
                     <td style="padding: 0 24px 20px 24px;">
-                        <table width="100%" cellpadding="0" cellspacing="0" style="border: 2px solid ${styles.primaryColor}; border-radius: 12px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="border: 2px solid ${primaryColor}; border-radius: 12px;">
                             <tr>
                                 <td style="padding: 18px 20px;">
                                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #374151;">📅 ${eventDate}</p>
