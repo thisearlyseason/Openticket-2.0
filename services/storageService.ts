@@ -848,6 +848,8 @@ export const StorageService = {
                     logoUrl: profile.logo_url,
                     headerImageUrl: profile.header_image_url,
                     primaryColor: profile.primary_color,
+                    brandTagline: profile.brand_tagline || null,
+                    defaultTheme: (profile.default_theme as 'light' | 'dark') || null,
                     phone: profile.phone,
                     businessPhone: profile.business_phone,
                     showPhonePublicly: profile.show_phone_publicly,
