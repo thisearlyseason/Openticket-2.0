@@ -352,39 +352,32 @@ function testShowOpenTicketBrandingLogic() {
 function testStripeControllerBrandingStructure() {
     console.log('\n--- Test Suite: stripeController Branding Structure (Code Review) ---');
 
-    // Read stripeController.js source and verify branding extraction code
-    const { readFileSync } = await import('fs');
-    
-    test('stripeController.js: isPaidPlan checks for pro and premium', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+
+    test('stripeController.js: isPaidPlan checks for pro and premium', () => {
         assert(src.includes("ownerPlan === 'pro' || ownerPlan === 'premium'"), 
             'stripeController must check both pro and premium');
     });
 
-    test('stripeController.js: builds organizerBranding with isPro field', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    test('stripeController.js: builds organizerBranding with isPro field', () => {
         assert(src.includes('organizerBranding'), 'stripeController must build organizerBranding');
         assert(src.includes('isPro: true'), 'organizerBranding must set isPro: true for paid plans');
         assert(src.includes('isPro: false'), 'organizerBranding must set isPro: false for free plan');
     });
 
-    test('stripeController.js: extracts logo_url from ownerSettings', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    test('stripeController.js: extracts logo_url from ownerSettings', () => {
         assert(src.includes('ownerSettings.logo_url'), 'Must extract logo_url from settings');
     });
 
-    test('stripeController.js: extracts primary_color from ownerSettings', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    test('stripeController.js: extracts primary_color from ownerSettings', () => {
         assert(src.includes('ownerSettings.primary_color'), 'Must extract primary_color from settings');
     });
 
-    test('stripeController.js: extracts brand_tagline from ownerSettings', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    test('stripeController.js: extracts brand_tagline from ownerSettings', () => {
         assert(src.includes('ownerSettings.brand_tagline'), 'Must extract brand_tagline from settings');
     });
 
-    test('stripeController.js: passes organizerBranding to sendTicketConfirmation', async () => {
-        const src = readFileSync(resolve(__dirname, '../controllers/stripeController.js'), 'utf-8');
+    test('stripeController.js: passes organizerBranding to sendTicketConfirmation', () => {
         assert(src.includes('organizerBranding'), 'organizerBranding must be passed to sendTicketConfirmation');
     });
 }
