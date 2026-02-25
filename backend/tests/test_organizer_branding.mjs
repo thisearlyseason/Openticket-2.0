@@ -430,27 +430,21 @@ function testProfileControllerBrandingFields() {
 function testStorageServiceBrandingFields() {
     console.log('\n--- Test Suite: storageService.ts Branding Normalization ---');
 
-    test('storageService.ts: getUserById normalizes brand_tagline to brandTagline', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../services/storageService.ts'), 'utf-8');
+    const src = readFileSync(resolve(__dirname, '../../services/storageService.ts'), 'utf-8');
+
+    test('storageService.ts: getUserById normalizes brand_tagline to brandTagline', () => {
         assert(src.includes('brandTagline: profile.brand_tagline'), 'Must normalize brand_tagline -> brandTagline');
     });
 
-    test('storageService.ts: getUserById normalizes default_theme to defaultTheme', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../services/storageService.ts'), 'utf-8');
+    test('storageService.ts: getUserById normalizes default_theme to defaultTheme', () => {
         assert(src.includes('defaultTheme: (profile.default_theme'), 'Must normalize default_theme -> defaultTheme');
     });
 
-    test('storageService.ts: updateUser passes brand_tagline in payload', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../services/storageService.ts'), 'utf-8');
+    test('storageService.ts: updateUser passes brand_tagline in payload', () => {
         assert(src.includes('payload.brand_tagline = updates.brandTagline'), 'updateUser must pass brand_tagline');
     });
 
-    test('storageService.ts: updateUser passes default_theme in payload', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../services/storageService.ts'), 'utf-8');
+    test('storageService.ts: updateUser passes default_theme in payload', () => {
         assert(src.includes('payload.default_theme = updates.defaultTheme'), 'updateUser must pass default_theme');
     });
 }
