@@ -1069,41 +1069,136 @@ export const Settings = () => {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Brand Customization</h2>
-                                        <p className="text-sm text-zinc-500 mt-1">Customize the look of your event pages.</p>
+                                        <p className="text-sm text-zinc-500 mt-1">Control how your brand appears in emails, tickets, and event pages.</p>
                                     </div>
                                     {!isPro && <Badge color="purple">PRO Feature</Badge>}
                                 </div>
 
                                 <div className={`space-y-6 ${!isPro ? 'opacity-40 pointer-events-none filter blur-sm select-none' : ''}`}>
-                                    <div>
-                                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Primary Accent Color</label>
+
+                                    {/* ── Section 1: Email & Ticket Branding ── */}
+                                    <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-5">
+                                        <div>
+                                            <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-1">
+                                                <Mail size={16} /> Email &amp; Ticket Branding
+                                            </h3>
+                                            <p className="text-xs text-zinc-500">Shown in confirmation emails and ticket cards. Replaces the OpenTicket logo &amp; "Powered by OpenTicket" footer.</p>
+                                        </div>
+
+                                        {/* Logo URL */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Brand Logo</label>
+                                            <p className="text-xs text-zinc-500 mb-3">Upload your logo or paste a public image URL. Shown in the top-left of all confirmation emails.</p>
+                                            <ImageUploader
+                                                label="Upload Logo"
+                                                currentImage={logoUrl}
+                                                onFileSelect={(b64) => setLogoUrl(b64 as string)}
+                                                onClear={() => setLogoUrl('')}
+                                                data-testid="branding-logo-uploader"
+                                            />
+                                            {logoUrl && (
+                                                <div className="mt-3 p-3 bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-3">
+                                                    <img src={logoUrl} alt="Logo preview" className="h-8 w-auto object-contain" />
+                                                    <span className="text-xs text-zinc-500">Logo preview</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Brand Tagline */}
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Brand Tagline</label>
+                                            <p className="text-xs text-zinc-500 mb-2">Shown in email footers instead of "Powered by OpenTicket". Keep it short (e.g. "Powered by Acme Events").</p>
+                                            <Input
+                                                data-testid="branding-tagline-input"
+                                                value={brandTagline}
+                                                onChange={(e) => setBrandTagline(e.target.value)}
+                                                placeholder="e.g. Powered by Acme Events"
+                                                maxLength={80}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* ── Section 2: Brand Color ── */}
+                                    <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-4">
+                                        <div>
+                                            <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-1">
+                                                <Palette size={16} /> Brand Color
+                                            </h3>
+                                            <p className="text-xs text-zinc-500">Used for buttons, borders, and highlights across emails, tickets, and your event pages.</p>
+                                        </div>
                                         <div className="flex items-center gap-4">
                                             <input
                                                 type="color"
+                                                data-testid="branding-color-picker"
                                                 value={primaryColor}
                                                 onChange={(e) => setPrimaryColor(e.target.value)}
                                                 className="w-12 h-12 rounded-lg border-2 border-zinc-200 dark:border-zinc-700 cursor-pointer p-0 bg-transparent"
                                             />
-                                            <div className="flex-1">
-                                                <Input
-                                                    value={primaryColor}
-                                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                                    placeholder="#E0FF20"
-                                                />
+                                            <Input
+                                                value={primaryColor}
+                                                onChange={(e) => setPrimaryColor(e.target.value)}
+                                                placeholder="#00c9cc"
+                                                className="flex-1"
+                                            />
+                                        </div>
+                                        <div className="p-4 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                                            <div className="text-xs font-bold text-zinc-400 uppercase mb-3">Preview</div>
+                                            <div className="flex gap-2 flex-wrap items-center">
+                                                <button style={{ backgroundColor: primaryColor }} className="px-4 py-2 rounded-lg font-bold text-sm text-white shadow">Primary Button</button>
+                                                <button style={{ borderColor: primaryColor, color: primaryColor }} className="px-4 py-2 rounded-lg font-bold text-sm border-2 bg-transparent">Outline</button>
+                                                <div style={{ borderColor: primaryColor }} className="px-3 py-2 rounded-lg border-2 text-xs font-semibold text-zinc-700 dark:text-zinc-200">Event Detail Box</div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-zinc-500 mt-2">
-                                            This color will be used for buttons, links, and highlights on your event pages.
-                                        </p>
                                     </div>
 
-                                    <div className="p-4 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
-                                        <div className="text-xs font-bold text-zinc-400 uppercase mb-2">Preview</div>
-                                        <div className="flex gap-2">
-                                            <button style={{ backgroundColor: primaryColor, color: '#000' }} className="px-4 py-2 rounded-lg font-bold text-sm shadow-lg">Primary Button</button>
-                                            <button style={{ borderColor: primaryColor, color: primaryColor }} className="px-4 py-2 rounded-lg font-bold text-sm border-2">Secondary</button>
+                                    {/* ── Section 3: Website / Event Pages ── */}
+                                    <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-4">
+                                        <div>
+                                            <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2 mb-1">
+                                                <Monitor size={16} /> Event Page Appearance
+                                            </h3>
+                                            <p className="text-xs text-zinc-500">Controls the default visual theme attendees see when visiting your event pages.</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-zinc-500 uppercase mb-3">Default Page Theme</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    data-testid="branding-theme-light"
+                                                    onClick={() => setDefaultTheme('light')}
+                                                    className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${defaultTheme === 'light' ? 'border-primary bg-primary/5' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'}`}
+                                                >
+                                                    <div className="w-full h-10 rounded-lg bg-white border border-zinc-200 flex items-center justify-center">
+                                                        <div className="w-16 h-2 rounded bg-zinc-200" />
+                                                    </div>
+                                                    <span className={`text-sm font-semibold ${defaultTheme === 'light' ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400'}`}>Light Mode</span>
+                                                </button>
+                                                <button
+                                                    data-testid="branding-theme-dark"
+                                                    onClick={() => setDefaultTheme('dark')}
+                                                    className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${defaultTheme === 'dark' ? 'border-primary bg-primary/5' : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'}`}
+                                                >
+                                                    <div className="w-full h-10 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center">
+                                                        <div className="w-16 h-2 rounded bg-zinc-600" />
+                                                    </div>
+                                                    <span className={`text-sm font-semibold ${defaultTheme === 'dark' ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400'}`}>Dark Mode</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {/* ── Branding Summary ── */}
+                                    <div className="p-4 bg-zinc-900 dark:bg-zinc-950 rounded-xl border border-zinc-700 text-white">
+                                        <div className="text-xs font-bold uppercase text-zinc-400 mb-3">Email Footer Preview</div>
+                                        <div className="text-xs text-zinc-400 text-center py-2 border-t border-zinc-700">
+                                            Organized by <strong className="text-zinc-200">{user?.displayName || 'Your Organization'}</strong>
+                                            {brandTagline ? (
+                                                <> &bull; <span className="text-zinc-300">{brandTagline}</span></>
+                                            ) : (
+                                                <> &bull; Powered by OpenTicket</>
+                                            )}
+                                        </div>
+                                    </div>
+
                                 </div>
 
                                 {!isPro && (
@@ -1111,7 +1206,8 @@ export const Settings = () => {
                                         <div className="bg-gradient-to-br from-zinc-900 to-black text-white p-8 rounded-2xl shadow-2xl border border-zinc-800 max-w-sm">
                                             <Palette size={48} className="mx-auto mb-4 text-purple-400" />
                                             <h3 className="text-xl font-bold mb-2">Unlock Brand Customization</h3>
-                                            <p className="text-zinc-400 mb-6 text-sm">Upgrade to Pro to customize your event page colors and remove Openticket branding.</p>
+                                            <p className="text-zinc-400 mb-2 text-sm">Available on <strong className="text-white">Pro</strong> and <strong className="text-white">Premium</strong> plans.</p>
+                                            <p className="text-zinc-400 mb-6 text-sm">Add your own logo, brand color, tagline, and set dark/light mode on your event pages. Remove "Powered by OpenTicket" from all emails.</p>
                                             <Button onClick={() => navigate('/pricing')} className="w-full bg-purple-600 hover:bg-purple-500 border-none text-white">
                                                 Upgrade Now
                                             </Button>
