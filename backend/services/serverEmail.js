@@ -88,25 +88,25 @@ class EmailService {
             console.log(`[EmailService] Event ticket_design:`, JSON.stringify(eventDetails?.ticket_design));
             const { subject, html } = purchaseConfirmation({
                 attendeeName: tickets[0]?.attendeeName || orderDetails.attendeeName || 'Guest',
-                attendeeEmail: to, // Pass the recipient email for the account reminder
+                attendeeEmail: to,
                 eventTitle: eventDetails?.title || 'Event',
                 eventDate,
-                eventTime: eventDetails?.time || 'TBD',
-                eventLocation: eventDetails?.location || eventDetails?.venue_name || 'TBD',
-                tickets: tickets, // Pass unique tickets directly
+                eventTime: eventDetails?.time || '',
+                eventLocation: eventDetails?.location || eventDetails?.venue_name || '',
+                eventDescription: eventDetails?.description || '',
+                eventImageUrl: eventDetails?.image_url || eventDetails?.image || null,
+                tickets: tickets,
                 totalPaid,
                 orderId,
                 organizerName: eventDetails?.organizer || 'Event Organizer',
-                ticketDesign: eventDetails?.ticket_design,
-                // New fields for full breakdown
                 currency: orderDetails.currency || eventDetails?.currency || 'USD',
                 subtotal,
                 serviceFee: orderDetails.serviceFee || 0,
+                stripeFee: orderDetails.stripeFee || 0,
                 taxAmount: orderDetails.taxAmount || 0,
                 platformDonation: orderDetails.platformDonation || 0,
                 discountAmount: orderDetails.discountAmount || 0,
                 promoCode: orderDetails.promoCode || null,
-                qrCodeBaseUrl: null // Can be customized per organizer
             });
 
             console.log(`[EmailService] Sending confirmation email to ${to} with ${tickets.length} unique ticket(s)...`);
