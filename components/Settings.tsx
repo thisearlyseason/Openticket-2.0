@@ -1089,8 +1089,8 @@ export const Settings = () => {
                                         <div>
                                             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Brand Logo</label>
                                             <p className="text-xs text-zinc-500 mb-3">Upload your logo or paste a public image URL. Shown in the top-left of all confirmation emails.</p>
-                                            <ImageUploader
-                                                label="Upload Logo"
+                                            <FileDropZone
+                                                label="Upload Brand Logo"
                                                 currentImage={logoUrl}
                                                 onFileSelect={(b64) => setLogoUrl(b64 as string)}
                                                 onClear={() => setLogoUrl('')}
