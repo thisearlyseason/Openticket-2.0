@@ -452,84 +452,62 @@ function testStorageServiceBrandingFields() {
 function testSettingsTsxBrandingState() {
     console.log('\n--- Test Suite: Settings.tsx Branding State & UI ---');
 
-    test('Settings.tsx: has brandTagline state variable', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+
+    test('Settings.tsx: has brandTagline state variable', () => {
         assert(src.includes("const [brandTagline, setBrandTagline] = useState('')"), 
             'Settings.tsx must have brandTagline state variable');
     });
 
-    test('Settings.tsx: has defaultTheme state variable', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: has defaultTheme state variable', () => {
         assert(src.includes("const [defaultTheme, setDefaultTheme] = useState<'light' | 'dark'>('light')"), 
             'Settings.tsx must have defaultTheme state variable');
     });
 
-    test('Settings.tsx: loads brandTagline from user profile', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: loads brandTagline from user profile', () => {
         assert(src.includes("setBrandTagline(freshUser.brandTagline || '')"), 
             'Settings.tsx must load brandTagline from freshUser');
     });
 
-    test('Settings.tsx: loads defaultTheme from user profile', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: loads defaultTheme from user profile', () => {
         assert(src.includes("setDefaultTheme((freshUser.defaultTheme as 'light' | 'dark') || 'light')"), 
             'Settings.tsx must load defaultTheme from freshUser');
     });
 
-    test('Settings.tsx: handleSave includes brandTagline in payload', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: handleSave includes brandTagline in payload', () => {
         assert(src.includes('brandTagline: brandTagline || null'), 
             'handleSave must include brandTagline in updateUser payload');
     });
 
-    test('Settings.tsx: handleSave includes defaultTheme in payload', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: handleSave includes defaultTheme in payload', () => {
         assert(src.includes('defaultTheme,'), 
             'handleSave must include defaultTheme in updateUser payload');
     });
 
-    test('Settings.tsx: branding tab has Email & Ticket Branding section', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab has Email & Ticket Branding section', () => {
         assert(src.includes('Email &amp; Ticket Branding') || src.includes('Email & Ticket Branding'), 
             'Branding tab must have "Email & Ticket Branding" section');
     });
 
-    test('Settings.tsx: branding tab has Brand Color section', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab has Brand Color section', () => {
         assert(src.includes('Brand Color'), 'Branding tab must have "Brand Color" section');
     });
 
-    test('Settings.tsx: branding tab has Event Page Appearance section', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab has Event Page Appearance section', () => {
         assert(src.includes('Event Page Appearance'), 'Branding tab must have "Event Page Appearance" section');
     });
 
-    test('Settings.tsx: branding tab has light/dark theme toggle buttons', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab has light/dark theme toggle buttons', () => {
         assert(src.includes('data-testid="branding-theme-light"'), 'Must have light theme toggle button with data-testid');
         assert(src.includes('data-testid="branding-theme-dark"'), 'Must have dark theme toggle button with data-testid');
     });
 
-    test('Settings.tsx: branding tab shows upgrade overlay for free users', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab shows upgrade overlay for free users', () => {
         assert(src.includes('Unlock Brand Customization'), 'Must show upgrade overlay with unlock message');
         assert(src.includes('Upgrade Now'), 'Must have "Upgrade Now" button in overlay');
     });
 
-    test('Settings.tsx: branding tab uses pointer-events-none blur for non-Pro users', async () => {
-        const { readFileSync } = await import('fs');
-        const src = readFileSync(resolve(__dirname, '../../components/Settings.tsx'), 'utf-8');
+    test('Settings.tsx: branding tab uses pointer-events-none blur for non-Pro users', () => {
         assert(src.includes('pointer-events-none filter blur-sm'), 
             'Branding content must be blurred/disabled for free users');
     });
