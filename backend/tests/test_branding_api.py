@@ -207,26 +207,25 @@ class TestBrandingAPIFields:
 
     def test_sync_profile_accepts_brand_tagline(self, auth_credentials):
         """POST /api/profile/sync should accept brand_tagline in extendedSettingsFields"""
-        # Get CSRF token first
-        csrf_response = requests.get(f"{BASE_URL}/api/csrf-token", timeout=10)
-        csrf_token = None
-        if csrf_response.status_code == 200:
-            csrf_token = csrf_response.json().get("csrfToken")
+        session = requests.Session()
         
-        # Without auth/CSRF, we expect 400 or 403 (not 500)
-        # This confirms the backend handles the field gracefully
-        headers = {"Content-Type": "application/json"}
-        if csrf_token:
-            headers["X-CSRF-Token"] = csrf_token
+        # Get CSRF token with cookie (double-submit cookie pattern)
+        csrf_resp = session.get(f"{BASE_URL}/api/csrf-token", timeout=10)
+        csrf_token = csrf_resp.json().get("csrfToken", "")
+        
+        # Without valid Firebase auth, we expect 401 (not 500)
+        session.headers.update({
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrf_token
+        })
             
-        response = requests.post(
+        response = session.post(
             f"{BASE_URL}/api/profile/sync",
             json={"brand_tagline": "Test", "default_theme": "dark"},
-            headers=headers,
             timeout=10
         )
         
-        # Should fail with 400 (missing auth) not 500 (server error)
+        # Should fail with 401 (missing auth) not 500 (server error)
         assert response.status_code in [400, 401, 403], \
             f"Expected auth error (400/401/403), got {response.status_code}: {response.text}"
         
