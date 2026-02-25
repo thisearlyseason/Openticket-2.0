@@ -468,8 +468,9 @@ async function runServerEmailCodeReviewTests() {
     });
 
     // Verify the eventImageUrl mapping: eventDetails?.image_url || eventDetails?.image
-    test('serverEmail.js maps eventDetails.image_url to eventImageUrl', () => {
-        assertContains(serverEmailCode, "image_url:", 'image_url key in serverEmail call to purchaseConfirmation');
+    test('serverEmail.js maps eventDetails.image_url to eventImageUrl parameter', () => {
+        // eventImageUrl: eventDetails?.image_url || ... is the correct pattern
+        assertContains(serverEmailCode, "eventDetails?.image_url", 'eventDetails.image_url is the source for eventImageUrl in serverEmail');
     });
 }
 
