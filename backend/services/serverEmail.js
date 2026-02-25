@@ -107,6 +107,8 @@ class EmailService {
                 platformDonation: orderDetails.platformDonation || 0,
                 discountAmount: orderDetails.discountAmount || 0,
                 promoCode: orderDetails.promoCode || null,
+                // Organizer branding (Pro/Premium only — null values fall back to OpenTicket defaults)
+                organizerBranding: organizerBranding || {},
             });
 
             console.log(`[EmailService] Sending confirmation email to ${to} with ${tickets.length} unique ticket(s)...`);
