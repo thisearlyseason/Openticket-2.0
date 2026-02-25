@@ -225,6 +225,9 @@ export const getProfile = async (req, res) => {
             email_templates: extendedSettings.email_templates,
             gemini_api_key: extendedSettings.gemini_api_key,
             gmail_config: extendedSettings.gmail_config,
+            // Branding fields (Pro/Premium only)
+            brand_tagline: extendedSettings.brand_tagline,
+            default_theme: extendedSettings.default_theme,
             // Organizer profile fields (stored in subscription.settings JSONB)
             bio: extendedSettings.bio,
             phone: extendedSettings.phone,
