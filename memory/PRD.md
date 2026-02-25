@@ -117,7 +117,14 @@ Make the event ticketing platform production-ready.
   - Fixed `EventView.tsx` approval success circle: `bg-amber-500 text-white` → `text-black`
   - Fixed `KioskCheckIn.tsx` fullscreen warning banner: `bg-amber-600 text-white` → `bg-amber-500 text-black`
 
-- ✅ **[Feb 25 2026] Email Confirmation Redesign**:
+- ✅ **[Feb 25 2026] Organizer Branding System (Pro/Premium only)**:
+  - Added `brand_tagline` and `default_theme` to profiles.subscription.settings JSONB (no migration needed)
+  - profileController.js: Both syncProfile and updateProfile handle new branding fields
+  - storageService.ts: Normalizes brandTagline and defaultTheme in user profile
+  - Settings.tsx branding tab redesigned into 3 sections: Email & Ticket Branding (logo + tagline), Brand Color (color picker + preview), Event Page Appearance (light/dark theme toggle). Free users see upgrade overlay.
+  - Email branding logic: Pro+custom = organizer logo/color/tagline, removes "Powered by OpenTicket"; Free = always OpenTicket logo + "Powered by OpenTicket"
+  - stripeController.js extracts owner branding from subscription.settings and passes to email
+  - EventView.tsx applies organizer's defaultTheme on event pages (only if Pro/Premium and visitor has no saved preference)
   - Fixed ticket price showing $0 (was using `t.price`, now uses `t.pricePerTicket || t.price`)
   - Added real QR codes per ticket (via api.qrserver.com) — previously showed gray placeholder
   - Complete professional redesign: "YOU'RE IN!" hero, event image, per-ticket cards with QR codes, fee breakdown (Subtotal/Platform Cost/Stripe Fee/Tax/Total Paid), VIEW TICKETS button, organizer footer
