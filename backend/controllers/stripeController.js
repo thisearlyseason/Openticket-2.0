@@ -1019,7 +1019,18 @@ export const verifySession = async (req, res) => {
             const actualCurrency = session.currency?.toUpperCase() || 'USD';
             // Note: Supabase joins create 'events' not 'event' 
             const eventData = reg.event || reg.events || {};
-            console.log(`[Stripe] Sending confirmation email - Currency: ${actualCurrency}, Total: ${grossAmount}, Event: ${eventData.title || 'Unknown'}`);
+            const ownerProfile = eventData.owner || {};
+            const ownerSettings = ownerProfile.subscription?.settings || {};
+            const ownerPlan = ownerProfile.subscription?.plan || 'free';
+            const isPaidPlan = ownerPlan === 'pro' || ownerPlan === 'premium';
+            // Build organizer branding (only applied if Pro/Premium plan)
+            const organizerBranding = isPaidPlan ? {
+                logoUrl: ownerSettings.logo_url || null,
+                primaryColor: ownerSettings.primary_color || null,
+                brandTagline: ownerSettings.brand_tagline || null,
+                isPro: true
+            } : { isPro: false };
+            console.log(`[Stripe] Sending confirmation email - Currency: ${actualCurrency}, Total: ${grossAmount}, Event: ${eventData.title || 'Unknown'}, Branding: ${isPaidPlan ? 'custom' : 'default'}`);
             
             await EmailService.sendTicketConfirmation(
                 reg.attendee_email,
