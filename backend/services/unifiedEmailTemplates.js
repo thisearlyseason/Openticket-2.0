@@ -222,10 +222,22 @@ export const purchaseConfirmation = ({
     taxAmount = 0,
     discountAmount = 0,
     promoCode = null,
+    organizerBranding = {},
 }) => {
     const styles = GLOBAL_STYLES;
     const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.openticket.events';
-    const LOGO_URL = `${FRONTEND_URL}/logo-dark.png`;
+
+    // --- Branding logic ---
+    // Pro/Premium organizers with custom settings override OpenTicket defaults
+    const hasPro = organizerBranding?.isPro === true;
+    const customLogo = hasPro && organizerBranding?.logoUrl ? organizerBranding.logoUrl : null;
+    const primaryColor = (hasPro && organizerBranding?.primaryColor) ? organizerBranding.primaryColor : styles.primaryColor;
+    const brandTagline = hasPro && organizerBranding?.brandTagline ? organizerBranding.brandTagline : null;
+    // Show OpenTicket footer when: free plan OR pro with no custom branding
+    const showOpenTicketBranding = !hasPro || (!customLogo && !brandTagline);
+
+    // Logo: organizer's custom logo (Pro) or OpenTicket logo (Free/default)
+    const LOGO_URL = customLogo || `${FRONTEND_URL}/logo-dark.png`;
     const ticketsUrl = `${FRONTEND_URL}/#/my-tickets`;
 
     // Format a currency amount (always show 2 decimal places)
