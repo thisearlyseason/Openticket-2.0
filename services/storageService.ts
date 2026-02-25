@@ -1283,7 +1283,9 @@ export const StorageService = {
         if (updates.defaultRefundPolicyEnabled !== undefined) payload.default_refund_policy_enabled = updates.defaultRefundPolicyEnabled;
         if (updates.logoUrl !== undefined) payload.logo_url = updates.logoUrl;
         if (updates.headerImageUrl !== undefined) payload.header_image_url = updates.headerImageUrl;
-        if (updates.primaryColor) payload.primary_color = updates.primaryColor;
+        if (updates.primaryColor !== undefined) payload.primary_color = updates.primaryColor;
+        if (updates.brandTagline !== undefined) payload.brand_tagline = updates.brandTagline;
+        if (updates.defaultTheme !== undefined) payload.default_theme = updates.defaultTheme;
         if (updates.organizerSubtitle !== undefined) payload.organizer_subtitle = updates.organizerSubtitle;
         if (updates.businessType) payload.business_type = updates.businessType;
         if (updates.commissionRate !== undefined) payload.commission_rate = updates.commissionRate;
