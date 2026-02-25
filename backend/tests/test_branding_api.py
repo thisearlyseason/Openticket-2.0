@@ -47,11 +47,17 @@ def auth_credentials():
 
 @pytest.fixture(scope="module")
 def authed_session(auth_credentials):
-    """Create requests session with auth headers"""
+    """Create requests session with auth headers and CSRF token via cookie jar"""
     session = requests.Session()
+    
+    # Get CSRF token with cookie (double-submit cookie pattern)
+    csrf_resp = session.get(f"{BASE_URL}/api/csrf-token", timeout=10)
+    csrf_token = csrf_resp.json().get("csrfToken", "")
+    
     session.headers.update({
         "Authorization": f"Bearer {auth_credentials['token']}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrf_token
     })
     return session, auth_credentials['user_id']
 
