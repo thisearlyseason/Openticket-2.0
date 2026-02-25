@@ -3,7 +3,7 @@ import { Card } from './UI';
 import { CurrencyService } from '../services/currencyService';
 import { StorageService } from '../services/storageService';
 import { isPaidStatus, isRefundedStatus, calculateRegistrationRevenue, calculateRegistrationTickets } from '../services/paymentUtils';
-import type { Event, Registration } from '../types';  // eslint-disable-line @typescript-eslint/no-unused-vars
+import { Event, Registration } from '../types';
 import { TrendingUp, DollarSign, Ticket, Zap, Clock } from 'lucide-react';
 
 interface LiveRevenueWidgetProps {
