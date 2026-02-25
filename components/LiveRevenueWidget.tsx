@@ -17,7 +17,7 @@ export const LiveRevenueWidget = ({ events, registrations }: LiveRevenueWidgetPr
 
     const { recentSales, todayRevenue, todayTickets, lastHourSales } = useMemo(() => {
         const eventMap: Record<string, string> = {};
-        events.forEach(e => { eventMap[e.id] = (e as any).title || (e as any).name || 'Unknown Event'; });
+        events.forEach(e => { eventMap[e.id] = e.title || 'Unknown Event'; });
 
         const paidRegs = registrations.filter(r =>
             isPaidStatus(r.paymentStatus) && !isRefundedStatus(r.paymentStatus)
