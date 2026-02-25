@@ -1032,7 +1032,9 @@ export const verifySession = async (req, res) => {
                     location: eventData.location || eventData.venue_name,
                     organizer: eventData.organizer_name || 'Event Organizer',
                     ticket_design: eventData.ticket_design,
-                    currency: actualCurrency
+                    currency: actualCurrency,
+                    image_url: eventData.image_url || null,
+                    description: eventData.description || null
                 },
                 // Order details for full breakdown - use the actual paid amounts
                 {
@@ -1042,6 +1044,7 @@ export const verifySession = async (req, res) => {
                     // Use gross amount from Stripe session for accurate total
                     totalPaid: grossAmount,
                     serviceFee: platformFee,
+                    stripeFee: reg.stripe_fee || 0,
                     taxAmount: taxAmount,
                     platformDonation: donationAmount,
                     discountAmount: discountAmount,
