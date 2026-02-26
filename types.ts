@@ -102,7 +102,9 @@ export interface User {
   logoUrl?: string;
   headerImageUrl?: string;
   primaryColor?: string;
-  
+  brandTagline?: string;
+  defaultTheme?: 'light' | 'dark';
+
   // Contact Info
   phone?: string; // Personal phone
   businessPhone?: string; // Business phone
