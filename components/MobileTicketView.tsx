@@ -234,6 +234,7 @@ export const MobileTicketView = () => {
     const navigate = useNavigate();
     const [registration, setRegistration] = useState<Registration | null>(null);
     const [event, setEvent] = useState<Event | null>(null);
+    const [organizer, setOrganizer] = useState<UserType | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
 
@@ -263,6 +264,14 @@ export const MobileTicketView = () => {
                     return;
                 }
                 setEvent(evt);
+
+                // Fetch organizer for branding
+                if (evt.ownerId) {
+                    StorageService.getUserById(evt.ownerId)
+                        .then(org => setOrganizer(org))
+                        .catch(() => {});
+                }
+
                 setLoading(false);
             } catch (err: any) {
                 setError(err.message || 'Failed to load ticket');
