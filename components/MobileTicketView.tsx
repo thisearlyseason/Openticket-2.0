@@ -3,13 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, MapPin, Clock, Download, Share2, Ticket, User, Mail, QrCode, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
 import QRCode from 'qrcode';
 import { StorageService } from '../services/storageService';
-import { Registration, Event } from '../types';
+import { Registration, Event, User as UserType } from '../types';
 import { Button, Badge } from './UI';
 
 interface TicketDisplayProps {
     registration: Registration;
     event: Event;
     ticket: any; // Individual ticket object with unique ID
+    organizer?: UserType | null;
 }
 
 const TicketCard: React.FC<TicketDisplayProps> = ({ 
