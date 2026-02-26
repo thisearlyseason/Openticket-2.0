@@ -340,6 +340,7 @@ export const MobileTicketView = () => {
                             registration={registration}
                             event={event}
                             ticket={ticket}
+                            organizer={organizer}
                         />
                     ))
                 ) : (
@@ -355,6 +356,7 @@ export const MobileTicketView = () => {
                             attendeeName: registration.attendeeName,
                             checkedIn: registration.checkedIn || false
                         }}
+                        organizer={organizer}
                     />
                 )}
 
