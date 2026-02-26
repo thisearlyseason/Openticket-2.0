@@ -440,13 +440,14 @@ export const MyTickets = () => {
                     <div class="ticket">
                         <div class="stub">
                             <div class="stub-header">
-                                <img src="/logo-dark.png" alt="OpenTicket" style="height: 20px; width: auto;" />
+                                ${logoHtml}
                                 <span class="admit">ADMIT ONE</span>
                             </div>
                             <div class="stub-body">
                                 <div class="stub-qr"><img src="${qrUrl}" /></div>
                                 <div class="stub-id">${ticket.ticketIdDisplay}</div>
                             </div>
+                            ${poweredByHtml ? `<div style="text-align:center;">${poweredByHtml}</div>` : ''}
                         </div>
                         <div class="main">
                             <div class="main-header">
