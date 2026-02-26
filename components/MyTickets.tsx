@@ -395,6 +395,34 @@ export const MyTickets = () => {
         const tickets = ticketsToPrint || selectedGroup?.tickets;
         if (!tickets || tickets.length === 0) return;
 
+        // Fetch organizer branding for the event
+        const eventOwnerId = tickets[0]?.event?.ownerId;
+        let orgBranding: { logoUrl?: string; primaryColor?: string; brandTagline?: string; isPro: boolean } = { isPro: false };
+        if (eventOwnerId) {
+            try {
+                const org = await StorageService.getUserById(eventOwnerId);
+                if (org) {
+                    const isPro = org.subscription?.plan === 'pro' || org.subscription?.plan === 'premium';
+                    orgBranding = {
+                        isPro,
+                        logoUrl: isPro ? org.logoUrl : undefined,
+                        primaryColor: isPro ? org.primaryColor : undefined,
+                        brandTagline: isPro ? org.brandTagline : undefined,
+                    };
+                }
+            } catch (e) {
+                // Branding fetch failure is non-critical; fall back to defaults
+            }
+        }
+
+        const stubBg = orgBranding.isPro && orgBranding.primaryColor ? orgBranding.primaryColor : '#000000';
+        const logoHtml = orgBranding.isPro && orgBranding.logoUrl
+            ? `<img src="${orgBranding.logoUrl}" alt="Organizer" style="height: 24px; width: auto; object-fit: contain; filter: brightness(0) invert(1);" />`
+            : `<img src="/logo-dark.png" alt="OpenTicket" style="height: 20px; width: auto;" />`;
+        const poweredByHtml = orgBranding.isPro
+            ? (orgBranding.brandTagline ? `<span style="font-size: 10px; color: rgba(255,255,255,0.6); font-style: italic;">${orgBranding.brandTagline}</span>` : '')
+            : `<span style="font-size: 10px; color: rgba(255,255,255,0.5);">Powered by OpenTicket</span>`;
+
         const printWindow = window.open('', '_blank');
         if (!printWindow) return;
 
