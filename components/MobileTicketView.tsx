@@ -219,6 +219,11 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
                 <p className="text-xs text-zinc-400 font-mono">
                     Order: {registration.id.slice(0, 8).toUpperCase()}
                 </p>
+                {!isPro && (
+                    <p className="text-xs text-zinc-300 dark:text-zinc-600 mt-1">
+                        Powered by OpenTicket
+                    </p>
+                )}
             </div>
         </div>
     );
