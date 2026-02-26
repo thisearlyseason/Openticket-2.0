@@ -73,6 +73,39 @@ export const OrganizerProfile = () => {
 
     const isFavorited = currentUser?.favoriteOrganizers?.includes(id || '') || false;
 
+    // Apply organizer branding for Pro/Premium plans
+    const isPro = organizer?.subscription?.plan === 'pro' || organizer?.subscription?.plan === 'premium';
+
+    useEffect(() => {
+        if (!organizer) return;
+
+        if (isPro && organizer.primaryColor) {
+            const hex = organizer.primaryColor.replace(/^#/, '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            document.documentElement.style.setProperty('--color-primary', organizer.primaryColor);
+            document.documentElement.style.setProperty('--color-primary-fg', luminance > 0.5 ? '#000000' : '#ffffff');
+        }
+
+        if (isPro && organizer.defaultTheme) {
+            const savedTheme = localStorage.getItem('openticket_theme');
+            if (!savedTheme) {
+                document.documentElement.classList.toggle('dark', organizer.defaultTheme === 'dark');
+            }
+        }
+
+        return () => {
+            document.documentElement.style.removeProperty('--color-primary');
+            document.documentElement.style.removeProperty('--color-primary-fg');
+            const userTheme = localStorage.getItem('openticket_theme');
+            if (userTheme) {
+                document.documentElement.classList.toggle('dark', userTheme === 'dark');
+            }
+        };
+    }, [organizer?.primaryColor, organizer?.defaultTheme, isPro]);
+
     if (!id) {
         return <div className="text-center py-20 text-gray-500">Organizer not found.</div>;
     }
