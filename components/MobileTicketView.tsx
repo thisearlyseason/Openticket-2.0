@@ -16,10 +16,16 @@ interface TicketDisplayProps {
 const TicketCard: React.FC<TicketDisplayProps> = ({ 
     registration, 
     event, 
-    ticket
+    ticket,
+    organizer
 }) => {
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const [isExpanded, setIsExpanded] = useState(true);
+
+    const isPro = organizer?.subscription?.plan === 'pro' || organizer?.subscription?.plan === 'premium';
+    const brandColor = isPro && organizer?.primaryColor ? organizer.primaryColor : '#ec4899';
+    const brandLogo = isPro && organizer?.logoUrl ? organizer.logoUrl : null;
+    const brandTagline = isPro && organizer?.brandTagline ? organizer.brandTagline : null;
 
     useEffect(() => {
         // Generate QR code with UNIQUE ticket ID
