@@ -176,7 +176,13 @@ export const OrganizerProfile = () => {
                         className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400"></div>
+                    <div
+                        className="w-full h-full"
+                        style={isPro && organizer?.primaryColor
+                            ? { background: organizer.primaryColor }
+                            : { background: 'linear-gradient(135deg, #7c3aed, #ec4899, #f97316)' }
+                        }
+                    ></div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
             </div>
