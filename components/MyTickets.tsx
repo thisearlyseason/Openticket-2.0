@@ -507,7 +507,7 @@ export const MyTickets = () => {
                         .ticket { display: flex; width: 800px; height: 300px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e4e4e7; }
                         
                         /* STUB SIDE */
-                        .stub { width: 250px; background: #000; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; position: relative; border-right: 2px dashed #333; }
+                        .stub { width: 250px; background: ${stubBg}; color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; position: relative; border-right: 2px dashed #333; }
                         .stub::after { content: ''; position: absolute; right: -10px; top: 50%; width: 20px; height: 20px; background: #f4f4f5; border-radius: 50%; transform: translateY(-50%); z-index: 10; }
                         .stub-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: 1px; color: #E0FF20; font-weight: bold; }
                         .stub-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
