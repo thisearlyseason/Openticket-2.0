@@ -92,11 +92,17 @@ const TicketCard: React.FC<TicketDisplayProps> = ({
                 : 'border-zinc-200 dark:border-zinc-800'
         }`}>
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#ec4899] to-[#f472b6] p-5 text-white">
+            <div className="p-5 text-white" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}cc)` }}>
                 <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
+                        {brandLogo && (
+                            <img src={brandLogo} alt="Organizer" className="h-7 w-auto object-contain mb-2 brightness-0 invert" />
+                        )}
                         <h3 className="font-black text-lg leading-tight">{event.title}</h3>
                         <p className="text-white/80 text-sm mt-1">{ticketName}</p>
+                        {brandTagline && (
+                            <p className="text-white/60 text-xs mt-1 italic">{brandTagline}</p>
+                        )}
                     </div>
                     {isCheckedIn && (
                         <Badge className="bg-white text-green-600 font-bold">CHECKED IN</Badge>
