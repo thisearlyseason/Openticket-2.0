@@ -135,6 +135,13 @@ Make the event ticketing platform production-ready.
   - CONFIRMED: Purchase flow is working. 54 paid registrations in DB including 4 from Feb 25, 2026. No data loss.
   - CONFIRMED: Fee calculations correct. grandTotal = subtotal + tax + platformFee + stripeFee ✓
 
+- ✅ **[Feb 26 2026] Custom Branding — Phase 2 Complete (Event Page, Ticket, Organizer Page)**:
+  - types.ts: Added `brandTagline?: string` and `defaultTheme?: 'light' | 'dark'` to User interface
+  - OrganizerProfile.tsx: Injects `--color-primary` + `--color-primary-fg` CSS variables for Pro/Premium organizers. Applies organizer's `defaultTheme` if no user preference saved. Cleanup on unmount. Cover gradient replaced with organizer's primaryColor for Pro/Premium.
+  - MobileTicketView.tsx: Fetches organizer profile after loading event. TicketCard accepts `organizer` prop. Header gradient uses organizer's `brandColor` (primaryColor) for Pro/Premium. Shows organizer logo and brandTagline. "Powered by OpenTicket" footer hidden for Pro/Premium, shown for Free.
+  - MyTickets.tsx (printable ticket): handlePrint fetches organizer profile before generating HTML. Stub background uses organizer primaryColor (Pro/Premium) or defaults to #000. Ticket stub logo uses organizer logo (Pro/Premium) or OpenTicket logo (Free). Footer shows brandTagline (Pro/Premium) or "Powered by OpenTicket" (Free).
+  - All branding conditional: only Pro/Premium plans get custom branding; Free always shows OpenTicket defaults.
+
 ### P1 - High Priority
 - User should re-test full purchase flow end-to-end to confirm confirmation emails and receipt screen
 
